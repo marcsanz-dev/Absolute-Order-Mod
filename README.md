@@ -24,7 +24,7 @@ The user experience focuses on fluidity and speed ("Drag & Paint"), minimizing c
 | **Integrated Tooling** | **Universal Support** |
 | :---: | :---: |
 | <img src="img/editor-ui-tools.png" width="300"> | <img src="img/entity-support.png" width="300"> |
-| *Contextual Editor UI. Features a palette, eraser, and clipboard logic.* | *Robust architecture. Works on static blocks (Chests) and dynamic entities (Donkeys).* |
+| *Contextual Editor UI. Features a palette, eraser, and clipboard logic.* | *Robust architecture. Works on static blocks (Chests) and dynamic entities (Minecart with chest, boats...).* |
 
 ---
 
