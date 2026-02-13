@@ -16,15 +16,38 @@
 
 The user experience focuses on fluidity ("Drag & Paint") and deep customization via the new RGB Engine.
 
-| **Modular UI Architecture** | **HSV Color Engine** |
-| :---: | :---: |
-| <img src="img/rendering_layers_architecture.png" width="300"> | <img src="img/hsv_color_picker_integration.gif" width="300"> |
-| *New in v1.1: Layered UI rendering with depth control. The editor now floats independently over the container grid.* | *Real-time color math. Users can manipulate Hue/Saturation/Value to generate any RGB color and save it to custom NBT slots.* |
+### 1. Modular UI Architecture
+New in v1.1: Layered UI rendering with depth control. The editor now floats independently over the container grid, preventing Z-fighting artifacts.
 
-| **Raycast Drag & Paint** | **NBT Serialization** |
-| :---: | :---: |
-| <img src="img/raycast_drag_paint.gif" width="300"> | <img src="img/nbt_serialization_clipboard.gif" width="300"> |
-| *Fluid input handling. Custom slot-hitting algorithm allows for instant painting without input lag.* | *Deep-Copy Clipboard. Serializes the entire visual layout into NBT to replicate designs across multiple containers.* |
+![Modular UI Architecture](img/rendering_layers_architecture.png)
+
+<br>
+
+### 2. HSV Color Engine & Persistence
+Moving away from static byte arrays, the mod now uses real-time `Math.hsvToRgb` conversion. Users can generate any color (16.7M possibilities) and persist them into custom NBT slots.
+
+![HSV Color Picker Integration](img/hsv_color_picker_integration.gif)
+
+<br>
+
+### 3. Raycast Drag & Paint
+Utilizes a custom slot-hitting algorithm to allow fluid "painting" across the GUI. Updates are rendered in real-time on the client tick event, ensuring zero input lag.
+
+![Raycast Drag System](img/raycast_drag_paint.gif)
+
+<br>
+
+### 4. NBT Clipboard Serialization
+Implements a deep-copy mechanism. Complex layouts are serialized into NBT data to replicate designs across multiple containers (Chests, Barrels, Shulkers) instantly.
+
+![Clipboard System](img/nbt_serialization_clipboard.gif)
+
+<br>
+
+### 5. State Management Tools
+Precise control over the visual layer. The **Smart Eraser** modifies specific bits in the array, while the **Trash Can** triggers a full array reset for the container.
+
+![State Tools](img/state_management_tools.gif)
 
 ---
 
@@ -32,38 +55,15 @@ The user experience focuses on fluidity ("Drag & Paint") and deep customization 
 
 The core engineering challenge in v1.1 was integrating a complex UI state (Color Picker) while maintaining the zero-conflict rendering pipeline.
 
-### 1. The Rendering Pipeline (Dual-Layer Strategy)
+### The Rendering Pipeline (Dual-Layer Strategy)
 To achieve the visual effect where lines appear *behind* items but *above* the background texture, the rendering logic is split:
 * **Layer 1 (Background):** Injected at the `HEAD` of the `drawSlots` method. This renders the persistent separator data relative to the container's coordinate system.
-* **Layer 2 (Transient UI):** The new v1.1 Editor and Color Picker are rendered at the `TAIL` of the render loop. This ensures high Z-Index priority for the floating windows and tooltips, preventing them from being obscured by items.
+* **Layer 2 (Transient UI):** The new v1.1 Editor and Color Picker are rendered at the `TAIL` of the render loop. This ensures high Z-Index priority for the floating windows and tooltips.
 
-### 2. Dynamic Color Model (New in v1.1)
-Moving away from the static 16-color byte array, the mod now implements a hybrid storage system:
-* **Legacy Support:** Basic colors are still stored as efficient 4-bit integers.
-* **RGB Expansion:** Custom colors are serialized as 32-bit Integers (ARGB) within a separate NBT compound, allowing for 16.7 million colors without bloating the file size.
-* **Math:** The picker uses real-time `Math.hsvToRgb` conversion algorithms to render the gradient texture dynamically on the client tick.
-
-### 3. Context-Aware Persistence
+### Context-Aware Persistence
 The mod employs a **Polymorphic Data Strategy** to save configurations:
-* **Static Blocks:** Uses `BlockPos` + `DimensionID` to create unique NBT files for chests and barrels.
-* **Dynamic Entities:** Detects if the inventory belongs to an entity (e.g., Llama, Minecart) and switches strategy to use the entity's persistent `UUID`.
-
----
-
-## 🚀 Key Features
-
-### 🎨 Non-Destructive Visualization
-* **Zero Slot Waste:** Separators are purely visual client-side renderings. They do not exist as items, leaving 100% of the inventory available for storage.
-* **Server-Agnostic:** Works on any multiplayer server (Vanilla, Spigot, Modded) as no packets are sent to the server.
-
-### 🛠️ Professional Editor Suite
-* **RGB Color Picker:** Full spectrum selection with brightness control and hex-code display.
-* **Custom Palette Slots:** Save up to 8 custom colors to your local config for quick access.
-* **Smart Erase & Clipboard:** Context-sensitive tools to modify or replicate layouts instantly.
-
-### ⚡ Performance Optimization
-* **Lazy Loading:** Configuration data is only loaded from disk (NBT I/O) when a specific container is opened.
-* **Bitwise Packing:** Line data is compressed into efficient integer bitmasks rather than heavy objects to minimize RAM usage.
+* **Static Blocks:** Uses `BlockPos` + `DimensionID` to create unique NBT files.
+* **Dynamic Entities:** Detects if the inventory belongs to an entity (e.g., Llama, Minecart) and uses the entity's persistent `UUID`.
 
 ---
 
