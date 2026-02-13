@@ -71,7 +71,7 @@ The mod employs a **Polymorphic Data Strategy** to save configurations:
 
 1.  **Prerequisites:** Install [Minecraft Java Edition](https://www.minecraft.net/) and [Fabric Loader](https://fabricmc.net/).
 2.  **Fabric API:** Ensure the [Fabric API](https://modrinth.com/mod/fabric-api) is installed.
-3.  **Deployment:** Drop the `ChestSeparators-v1.1.0.jar` file into your `.minecraft/mods` folder.
+3.  **Deployment:** Drop the [ChestSeparators-v1.1.0.jar](https://modrinth.com/mod/chest-separators) file into your `.minecraft/mods` folder.
 4.  **Usage:** Open any chest and click the **Pencil (✎)** icon to access the new UI.
 
 ---
