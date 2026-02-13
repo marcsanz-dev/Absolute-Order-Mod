@@ -18,13 +18,13 @@ The user experience focuses on fluidity and speed ("Drag & Paint"), minimizing c
 
 | **The "Hero" View** | **Efficient Interaction** |
 | :---: | :---: |
-| <img src="hero-showcase.png" width="300"> | <img src="drag-paint-feature.png" width="300"> |
+| <img src="img/hero-showcase.png" width="300"> | <img src="img/drag-paint-feature.png" width="300"> |
 | *Clean visualization. Separators render seamlessly behind items.* | *Fluid input handling. Users can click and drag to paint lines instantly across slots.* |
 
 | **Integrated Tooling** | **Universal Support** |
 | :---: | :---: |
-| <img src="editor-ui-tools.png" width="300"> | <img src="entity-support.png" width="300"> |
-| *Contextual Editor UI. Features a palette, eraser, and clipboard logic.* | *Robust architecture. Works on static blocks (Chests) and dynamic entities (Donkeys).* |
+| <img src="img/editor-ui-tools.png" width="300"> | <img src="img/entity-support.png" width="300"> |
+| *Contextual Editor UI. Features a palette, eraser, and clipboard logic.* | *Robust architecture. Works on static blocks (Chests) and dynamic entities (Minecart with chest, boats...).* |
 
 ---
 
