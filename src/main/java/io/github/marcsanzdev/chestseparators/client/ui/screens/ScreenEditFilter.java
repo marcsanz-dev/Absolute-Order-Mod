@@ -567,7 +567,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 if (!itemsToPreview.isEmpty() || session.previewType == 3) {
                     session.isPreviewing = true;
                     session.previewItems = itemsToPreview;
-                    session.previewScrollY = (session.previewType == 3) ? session.listScrollY : 0f;
+                    session.previewScrollY = 0f;
                     session.previewScrollDirectionDown = true;
                     session.userOverrodePreviewScroll = false;
                     long now = System.currentTimeMillis();
@@ -578,9 +578,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 long now = System.currentTimeMillis();
                 float dt = (now - session.lastPreviewTime) / 1000f;
                 session.lastPreviewTime = now;
-                if (!session.userOverrodePreviewScroll
-                        && (now - session.previewStartTime > 1000)
-                        && session.previewType != 3) {
+                if (!session.userOverrodePreviewScroll && (now - session.previewStartTime > 1000)) {
                     float maxScroll = Math.max(0, session.previewItems.size() * 18 - (layout.listH - 48));
                     if (maxScroll > 0) {
                         float speed = (session.previewType == 2) ? 80f : 25f;
