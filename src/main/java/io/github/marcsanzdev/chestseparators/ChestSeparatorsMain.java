@@ -194,6 +194,25 @@ public class ChestSeparatorsMain implements ModInitializer {
     }
 
     /**
+     * Returns the direction toward the other half of a double chest, or null when the block is not
+     * part of a double chest (single chest, shulker box, barrel, or any non-chest container).
+     */
+    private static net.minecraft.util.math.Direction getDoubleChestNeighborDirection(
+            net.minecraft.block.BlockState state) {
+        if (!(state.getBlock() instanceof net.minecraft.block.ChestBlock)) {
+            return null;
+        }
+        net.minecraft.block.enums.ChestType type = state.get(net.minecraft.block.ChestBlock.CHEST_TYPE);
+        if (type == net.minecraft.block.enums.ChestType.SINGLE) {
+            return null;
+        }
+        net.minecraft.util.math.Direction facing = state.get(net.minecraft.block.ChestBlock.FACING);
+        return type == net.minecraft.block.enums.ChestType.LEFT
+                ? facing.rotateYClockwise()
+                : facing.rotateYCounterclockwise();
+    }
+
+    /**
      * Returns the effective inventory for the given position, merging both halves for double chests.
      */
     private static net.minecraft.inventory.Inventory getChestInventorySafe(
@@ -201,25 +220,19 @@ public class ChestSeparatorsMain implements ModInitializer {
         net.minecraft.block.BlockState state = world.getBlockState(pos);
         net.minecraft.block.entity.BlockEntity be = world.getBlockEntity(pos);
 
-        if (state.getBlock() instanceof net.minecraft.block.ChestBlock) {
+        net.minecraft.util.math.Direction neighborDir = getDoubleChestNeighborDirection(state);
+        if (neighborDir != null) {
             net.minecraft.block.enums.ChestType type = state.get(net.minecraft.block.ChestBlock.CHEST_TYPE);
-            if (type != net.minecraft.block.enums.ChestType.SINGLE) {
-                net.minecraft.util.math.Direction facing = state.get(net.minecraft.block.ChestBlock.FACING);
-                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT
-                        ? facing.rotateYClockwise()
-                        : facing.rotateYCounterclockwise();
+            net.minecraft.block.entity.BlockEntity neighborBe = world.getBlockEntity(pos.offset(neighborDir));
 
-                net.minecraft.block.entity.BlockEntity neighborBe = world.getBlockEntity(pos.offset(neighborDir));
-
-                if (be instanceof net.minecraft.inventory.Inventory
-                        && neighborBe instanceof net.minecraft.inventory.Inventory) {
-                    if (type == net.minecraft.block.enums.ChestType.RIGHT) {
-                        return new net.minecraft.inventory.DoubleInventory(
-                                (net.minecraft.inventory.Inventory) be, (net.minecraft.inventory.Inventory) neighborBe);
-                    } else {
-                        return new net.minecraft.inventory.DoubleInventory(
-                                (net.minecraft.inventory.Inventory) neighborBe, (net.minecraft.inventory.Inventory) be);
-                    }
+            if (be instanceof net.minecraft.inventory.Inventory
+                    && neighborBe instanceof net.minecraft.inventory.Inventory) {
+                if (type == net.minecraft.block.enums.ChestType.RIGHT) {
+                    return new net.minecraft.inventory.DoubleInventory(
+                            (net.minecraft.inventory.Inventory) be, (net.minecraft.inventory.Inventory) neighborBe);
+                } else {
+                    return new net.minecraft.inventory.DoubleInventory(
+                            (net.minecraft.inventory.Inventory) neighborBe, (net.minecraft.inventory.Inventory) be);
                 }
             }
         }
@@ -238,16 +251,9 @@ public class ChestSeparatorsMain implements ModInitializer {
         List<net.minecraft.util.math.BlockPos> list = new ArrayList<>();
         list.add(pos);
 
-        net.minecraft.block.BlockState state = world.getBlockState(pos);
-        if (state.getBlock() instanceof net.minecraft.block.ChestBlock) {
-            net.minecraft.block.enums.ChestType type = state.get(net.minecraft.block.ChestBlock.CHEST_TYPE);
-            if (type != net.minecraft.block.enums.ChestType.SINGLE) {
-                net.minecraft.util.math.Direction facing = state.get(net.minecraft.block.ChestBlock.FACING);
-                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT
-                        ? facing.rotateYClockwise()
-                        : facing.rotateYCounterclockwise();
-                list.add(pos.offset(neighborDir));
-            }
+        net.minecraft.util.math.Direction neighborDir = getDoubleChestNeighborDirection(world.getBlockState(pos));
+        if (neighborDir != null) {
+            list.add(pos.offset(neighborDir));
         }
         return list;
     }
