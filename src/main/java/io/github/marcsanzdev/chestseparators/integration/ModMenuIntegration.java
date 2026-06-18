@@ -4,12 +4,15 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import java.util.function.BiConsumer;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.text.Text;
 
 @Environment(EnvType.CLIENT)
@@ -151,22 +154,19 @@ public class ModMenuIntegration implements ModMenuApi {
             ConfigCategory hotkeysCategory =
                     builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.hotkeys"));
 
-            java.util.function.BiConsumer<net.minecraft.client.option.KeyBinding, String> addKeyEntry =
-                    (keyBinding, translationKey) -> {
-                        hotkeysCategory.addEntry(entryBuilder
-                                .startKeyCodeField(
-                                        Text.translatable(translationKey),
-                                        net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
-                                                keyBinding))
-                                .setDefaultValue(keyBinding.getDefaultKey())
-                                .setKeySaveConsumer(newValue -> {
-                                    keyBinding.setBoundKey(newValue);
-                                    MinecraftClient.getInstance().options.write();
-                                    // Flush Minecraft's key-code cache so the new binding takes effect immediately.
-                                    net.minecraft.client.option.KeyBinding.updateKeysByCode();
-                                })
-                                .build());
-                    };
+            BiConsumer<KeyBinding, String> addKeyEntry = (keyBinding, translationKey) -> {
+                hotkeysCategory.addEntry(entryBuilder
+                        .startKeyCodeField(
+                                Text.translatable(translationKey), KeyBindingHelper.getBoundKeyOf(keyBinding))
+                        .setDefaultValue(keyBinding.getDefaultKey())
+                        .setKeySaveConsumer(newValue -> {
+                            keyBinding.setBoundKey(newValue);
+                            MinecraftClient.getInstance().options.write();
+                            // Flush Minecraft's key-code cache so the new binding takes effect immediately.
+                            KeyBinding.updateKeysByCode();
+                        })
+                        .build());
+            };
 
             addKeyEntry.accept(ModKeyBindings.toggleButtonKey, "config.chestseparators.toggle_edit_buttons");
             addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");

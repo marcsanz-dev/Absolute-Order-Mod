@@ -3,8 +3,11 @@ package io.github.marcsanzdev.chestseparators.event;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {
 
@@ -44,13 +47,11 @@ public class KeyInputHandler {
     }
 
     public static boolean isModifierPressed() {
-        if (net.minecraft.client.MinecraftClient.getInstance().getWindow() == null) return false;
-        long window =
-                net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
+        if (MinecraftClient.getInstance().getWindow() == null) return false;
+        long window = MinecraftClient.getInstance().getWindow().getHandle();
 
-        int currentKeyCode = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
-                        ModKeyBindings.showPanelModifierKey)
+        int currentKeyCode = KeyBindingHelper.getBoundKeyOf(ModKeyBindings.showPanelModifierKey)
                 .getCode();
-        return org.lwjgl.glfw.GLFW.glfwGetKey(window, currentKeyCode) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        return GLFW.glfwGetKey(window, currentKeyCode) == GLFW.GLFW_PRESS;
     }
 }
