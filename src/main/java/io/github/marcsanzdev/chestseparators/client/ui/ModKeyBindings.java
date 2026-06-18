@@ -1,6 +1,5 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -14,7 +13,8 @@ public class ModKeyBindings {
     public static KeyBinding depositFilterKey;
     public static KeyBinding depositAllKey;
 
-    private static final KeyBinding.Category CATEGORY = KeyBinding.Category.create(Identifier.of("chestseparators", "keys"));
+    private static final KeyBinding.Category CATEGORY =
+            KeyBinding.Category.create(Identifier.of("chestseparators", "keys"));
 
     public static void register() {
         // Al usar GLFW.GLFW_KEY_... directamente en el constructor,
@@ -24,36 +24,24 @@ public class ModKeyBindings {
                 "key.chestseparators.toggle_preview_panel",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_O, // Valor hardcoded para el Reset
-                CATEGORY
-        ));
+                CATEGORY));
 
         showPanelModifierKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.chestseparators.show_panel_modifier",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_LEFT_ALT, // Valor hardcoded para el Reset
-                CATEGORY
-        ));
+                CATEGORY));
 
         toggleButtonKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.chestseparators.toggle_edit_buttons",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_H, // Valor hardcoded para el Reset
-                CATEGORY
-        ));
+                CATEGORY));
 
-        depositFilterKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.deposit_filter",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_S,
-                CATEGORY
-        ));
+        depositFilterKey = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding("key.chestseparators.deposit_filter", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_S, CATEGORY));
 
-        depositAllKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.deposit_all",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_D,
-                CATEGORY
-        ));
+        depositAllKey = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding("key.chestseparators.deposit_all", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_D, CATEGORY));
     }
-
 }

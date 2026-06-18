@@ -32,7 +32,8 @@ public class ChestInteractionMixin {
      * the resulting container screen is initialized on the client.
      */
     @Inject(method = "interactBlock", at = @At("HEAD"))
-    private void captureChestPos(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir) {
+    private void captureChestPos(
+            ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir) {
         if (hand == Hand.MAIN_HAND) {
             BlockPos clickedPos = hitResult.getBlockPos();
 
@@ -41,9 +42,14 @@ public class ChestInteractionMixin {
             ChestPosStorage.lastOpenedShulkerUUID = null;
 
             if (MinecraftClient.getInstance().world != null) {
-                ChestPosStorage.lastClickedDimension = MinecraftClient.getInstance().world.getRegistryKey().getValue().toString();
+                ChestPosStorage.lastClickedDimension = MinecraftClient.getInstance()
+                        .world
+                        .getRegistryKey()
+                        .getValue()
+                        .toString();
 
-                net.minecraft.block.entity.BlockEntity be = MinecraftClient.getInstance().world.getBlockEntity(clickedPos);
+                net.minecraft.block.entity.BlockEntity be =
+                        MinecraftClient.getInstance().world.getBlockEntity(clickedPos);
                 if (be instanceof io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider provider) {
                     ChestPosStorage.lastOpenedShulkerUUID = provider.getShulkerUUID();
                 }
@@ -56,15 +62,21 @@ public class ChestInteractionMixin {
      * Donkeys, Llamas, etc.) so the editor can use UUID-keyed storage instead of BlockPos.
      */
     @Inject(method = "interactEntity", at = @At("HEAD"))
-    private void captureEntity(PlayerEntity player, Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+    private void captureEntity(
+            PlayerEntity player, Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (hand == Hand.MAIN_HAND) {
-            if (entity instanceof VehicleInventory || entity.getClass().getName().contains("Chest")) {
+            if (entity instanceof VehicleInventory
+                    || entity.getClass().getName().contains("Chest")) {
                 ChestPosStorage.lastClickedEntityUUID = entity.getUuid();
                 ChestPosStorage.isEntityOpened = true;
                 ChestPosStorage.lastOpenedShulkerUUID = null;
 
                 if (MinecraftClient.getInstance().world != null) {
-                    ChestPosStorage.lastClickedDimension = MinecraftClient.getInstance().world.getRegistryKey().getValue().toString();
+                    ChestPosStorage.lastClickedDimension = MinecraftClient.getInstance()
+                            .world
+                            .getRegistryKey()
+                            .getValue()
+                            .toString();
                 }
             }
         }

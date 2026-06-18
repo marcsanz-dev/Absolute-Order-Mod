@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider;
 import io.github.marcsanzdev.chestseparators.network.ShulkerUUIDPayload;
+import java.util.UUID;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -17,8 +18,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.UUID;
 
 /**
  * Injects a persistent mod UUID into each Shulker Box block entity.
@@ -62,7 +61,8 @@ public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements 
             if (!uuidString.isEmpty()) {
                 try {
                     this.chestSeparatorsUUID = UUID.fromString(uuidString);
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         });
     }

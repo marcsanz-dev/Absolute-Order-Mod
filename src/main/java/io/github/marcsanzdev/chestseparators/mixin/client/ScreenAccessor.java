@@ -8,5 +8,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Screen.class)
 public interface ScreenAccessor {
     @Invoker("addDrawableChild")
-    <T extends Element & net.minecraft.client.gui.Drawable & net.minecraft.client.gui.Selectable> T invokeAddDrawableChild(T drawableElement);
+    <T extends Element & net.minecraft.client.gui.Drawable & net.minecraft.client.gui.Selectable>
+            T invokeAddDrawableChild(T drawableElement);
 }

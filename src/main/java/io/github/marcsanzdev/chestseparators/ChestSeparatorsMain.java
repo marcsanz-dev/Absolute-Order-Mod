@@ -3,17 +3,16 @@ package io.github.marcsanzdev.chestseparators;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.network.*;
 import io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.util.math.BlockPos;
 
 /**
  * Common mod initializer. Registers networking payloads, data components,
@@ -50,14 +49,16 @@ public class ChestSeparatorsMain implements ModInitializer {
                     net.minecraft.world.World world = context.player().getEntityWorld();
 
                     // Resolve all block positions occupied by this container (1 for single, 2 for double).
-                    java.util.List<net.minecraft.util.math.BlockPos> associatedPositions = getAssociatedPositions(world, targetPos);
+                    java.util.List<net.minecraft.util.math.BlockPos> associatedPositions =
+                            getAssociatedPositions(world, targetPos);
 
                     if (payload.isLocking()) {
                         boolean canLock = true;
 
                         // Deny the lock if any part of the container is held by a different player.
                         for (net.minecraft.util.math.BlockPos p : associatedPositions) {
-                            if (LOCKED_CHESTS.containsKey(p) && !LOCKED_CHESTS.get(p).equals(playerUuid)) {
+                            if (LOCKED_CHESTS.containsKey(p)
+                                    && !LOCKED_CHESTS.get(p).equals(playerUuid)) {
                                 canLock = false;
                                 break;
                             }
@@ -69,17 +70,20 @@ public class ChestSeparatorsMain implements ModInitializer {
                                 LOCKED_CHESTS.put(p, playerUuid);
                             }
                             if (ServerPlayNetworking.canSend(context.player(), EditorLockResponsePayload.ID)) {
-                                ServerPlayNetworking.send(context.player(), new EditorLockResponsePayload(targetPos, true));
+                                ServerPlayNetworking.send(
+                                        context.player(), new EditorLockResponsePayload(targetPos, true));
                             }
                         } else {
                             if (ServerPlayNetworking.canSend(context.player(), EditorLockResponsePayload.ID)) {
-                                ServerPlayNetworking.send(context.player(), new EditorLockResponsePayload(targetPos, false));
+                                ServerPlayNetworking.send(
+                                        context.player(), new EditorLockResponsePayload(targetPos, false));
                             }
                         }
                     } else {
                         // Release all associated positions when the player exits the editor.
                         for (net.minecraft.util.math.BlockPos p : associatedPositions) {
-                            if (LOCKED_CHESTS.containsKey(p) && LOCKED_CHESTS.get(p).equals(playerUuid)) {
+                            if (LOCKED_CHESTS.containsKey(p)
+                                    && LOCKED_CHESTS.get(p).equals(playerUuid)) {
                                 LOCKED_CHESTS.remove(p);
                             }
                         }
@@ -95,9 +99,11 @@ public class ChestSeparatorsMain implements ModInitializer {
                     net.minecraft.world.World world = context.player().getEntityWorld();
                     net.minecraft.inventory.Inventory targetInventory = getChestInventorySafe(world, payload.pos());
 
-                    if (targetInventory instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
+                    if (targetInventory
+                            instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
                         if (ServerPlayNetworking.canSend(context.player(), WhitelistPayload.ID)) {
-                            ServerPlayNetworking.send(context.player(), new WhitelistPayload(payload.pos(), provider.getWhitelists()));
+                            ServerPlayNetworking.send(
+                                    context.player(), new WhitelistPayload(payload.pos(), provider.getWhitelists()));
                         }
                     }
                 }
@@ -117,14 +123,18 @@ public class ChestSeparatorsMain implements ModInitializer {
 
                     net.minecraft.inventory.Inventory targetInventory = getChestInventorySafe(world, payload.pos());
 
-                    if (targetInventory instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
+                    if (targetInventory
+                            instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
                         provider.setWhitelists(payload.whitelists());
                         targetInventory.markDirty();
 
                         // Broadcast the updated whitelist to all other players currently viewing this container.
                         if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {
-                            for (net.minecraft.server.network.ServerPlayerEntity trackingPlayer : net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(serverWorld, payload.pos())) {
-                                if (trackingPlayer != context.player() && ServerPlayNetworking.canSend(trackingPlayer, WhitelistPayload.ID)) {
+                            for (net.minecraft.server.network.ServerPlayerEntity trackingPlayer :
+                                    net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(
+                                            serverWorld, payload.pos())) {
+                                if (trackingPlayer != context.player()
+                                        && ServerPlayNetworking.canSend(trackingPlayer, WhitelistPayload.ID)) {
                                     ServerPlayNetworking.send(trackingPlayer, payload);
                                 }
                             }
@@ -135,10 +145,13 @@ public class ChestSeparatorsMain implements ModInitializer {
                             for (int i = 0; i < targetInventory.size(); i++) {
                                 net.minecraft.item.ItemStack stack = targetInventory.getStack(i);
                                 if (!stack.isEmpty() && payload.whitelists().containsKey(i)) {
-                                    io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = payload.whitelists().get(i);
+                                    io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
+                                            payload.whitelists().get(i);
 
                                     if (wl.allowManual() && wl.allowShift() && wl.allowHopper()) {
-                                        String itemId = net.minecraft.registry.Registries.ITEM.getId(stack.getItem()).toString();
+                                        String itemId = net.minecraft.registry.Registries.ITEM
+                                                .getId(stack.getItem())
+                                                .toString();
 
                                         if (!wl.allowedItems().contains(itemId)) {
                                             net.minecraft.item.ItemStack extracted = targetInventory.removeStack(i);
@@ -147,7 +160,9 @@ public class ChestSeparatorsMain implements ModInitializer {
                                             double dropY = payload.pos().getY() + 0.5D;
                                             double dropZ = payload.pos().getZ() + 0.5D;
 
-                                            net.minecraft.entity.ItemEntity itemEntity = new net.minecraft.entity.ItemEntity(world, dropX, dropY, dropZ, extracted);
+                                            net.minecraft.entity.ItemEntity itemEntity =
+                                                    new net.minecraft.entity.ItemEntity(
+                                                            world, dropX, dropY, dropZ, extracted);
 
                                             double dirX = context.player().getX() - dropX;
                                             double dirY = context.player().getEyeY() - dropY;
@@ -163,8 +178,7 @@ public class ChestSeparatorsMain implements ModInitializer {
                                             itemEntity.setVelocity(
                                                     dirX * force + random.nextGaussian() * 0.05D,
                                                     dirY * force + random.nextGaussian() * 0.05D + 0.1D,
-                                                    dirZ * force + random.nextGaussian() * 0.05D
-                                            );
+                                                    dirZ * force + random.nextGaussian() * 0.05D);
 
                                             itemEntity.setToDefaultPickupDelay();
                                             world.spawnEntity(itemEntity);
@@ -177,13 +191,13 @@ public class ChestSeparatorsMain implements ModInitializer {
                 }
             });
         });
-
     }
 
     /**
      * Returns the effective inventory for the given position, merging both halves for double chests.
      */
-    private static net.minecraft.inventory.Inventory getChestInventorySafe(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
+    private static net.minecraft.inventory.Inventory getChestInventorySafe(
+            net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
         net.minecraft.block.BlockState state = world.getBlockState(pos);
         net.minecraft.block.entity.BlockEntity be = world.getBlockEntity(pos);
 
@@ -191,17 +205,20 @@ public class ChestSeparatorsMain implements ModInitializer {
             net.minecraft.block.enums.ChestType type = state.get(net.minecraft.block.ChestBlock.CHEST_TYPE);
             if (type != net.minecraft.block.enums.ChestType.SINGLE) {
                 net.minecraft.util.math.Direction facing = state.get(net.minecraft.block.ChestBlock.FACING);
-                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT ?
-                        facing.rotateYClockwise() :
-                        facing.rotateYCounterclockwise();
+                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT
+                        ? facing.rotateYClockwise()
+                        : facing.rotateYCounterclockwise();
 
                 net.minecraft.block.entity.BlockEntity neighborBe = world.getBlockEntity(pos.offset(neighborDir));
 
-                if (be instanceof net.minecraft.inventory.Inventory && neighborBe instanceof net.minecraft.inventory.Inventory) {
+                if (be instanceof net.minecraft.inventory.Inventory
+                        && neighborBe instanceof net.minecraft.inventory.Inventory) {
                     if (type == net.minecraft.block.enums.ChestType.RIGHT) {
-                        return new net.minecraft.inventory.DoubleInventory((net.minecraft.inventory.Inventory) be, (net.minecraft.inventory.Inventory) neighborBe);
+                        return new net.minecraft.inventory.DoubleInventory(
+                                (net.minecraft.inventory.Inventory) be, (net.minecraft.inventory.Inventory) neighborBe);
                     } else {
-                        return new net.minecraft.inventory.DoubleInventory((net.minecraft.inventory.Inventory) neighborBe, (net.minecraft.inventory.Inventory) be);
+                        return new net.minecraft.inventory.DoubleInventory(
+                                (net.minecraft.inventory.Inventory) neighborBe, (net.minecraft.inventory.Inventory) be);
                     }
                 }
             }
@@ -216,7 +233,8 @@ public class ChestSeparatorsMain implements ModInitializer {
     /**
      * Resolves all block positions occupied by a container (2 for double chests, 1 for all others).
      */
-    private static List<BlockPos> getAssociatedPositions(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
+    private static List<BlockPos> getAssociatedPositions(
+            net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
         List<net.minecraft.util.math.BlockPos> list = new ArrayList<>();
         list.add(pos);
 
@@ -225,9 +243,9 @@ public class ChestSeparatorsMain implements ModInitializer {
             net.minecraft.block.enums.ChestType type = state.get(net.minecraft.block.ChestBlock.CHEST_TYPE);
             if (type != net.minecraft.block.enums.ChestType.SINGLE) {
                 net.minecraft.util.math.Direction facing = state.get(net.minecraft.block.ChestBlock.FACING);
-                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT ?
-                        facing.rotateYClockwise() :
-                        facing.rotateYCounterclockwise();
+                net.minecraft.util.math.Direction neighborDir = type == net.minecraft.block.enums.ChestType.LEFT
+                        ? facing.rotateYClockwise()
+                        : facing.rotateYCounterclockwise();
                 list.add(pos.offset(neighborDir));
             }
         }

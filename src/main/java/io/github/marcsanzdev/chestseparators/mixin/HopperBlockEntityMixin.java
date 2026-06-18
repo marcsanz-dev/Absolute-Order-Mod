@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.Map;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -12,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Map;
-
 /**
  * Enforces the Hopper insertion rule on all containers that implement {@link IWhitelistProvider}.
  * When the Hopper rule is enabled for a slot, only whitelisted items may be deposited by automation.
@@ -23,7 +22,8 @@ import java.util.Map;
 public abstract class HopperBlockEntityMixin {
 
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
-    private static void onCanInsert(Inventory inventory, ItemStack stack, int slot, Direction side, CallbackInfoReturnable<Boolean> cir) {
+    private static void onCanInsert(
+            Inventory inventory, ItemStack stack, int slot, Direction side, CallbackInfoReturnable<Boolean> cir) {
         if (inventory instanceof IWhitelistProvider provider) {
             Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
 

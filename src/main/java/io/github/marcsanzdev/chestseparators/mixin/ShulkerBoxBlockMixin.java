@@ -28,7 +28,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ShulkerBoxBlockMixin {
 
     @Inject(method = "onBreak", at = @At("HEAD"))
-    private void forceDropEmptyCustomShulker(World world, BlockPos pos, BlockState state, PlayerEntity player, CallbackInfoReturnable<BlockState> cir) {
+    private void forceDropEmptyCustomShulker(
+            World world, BlockPos pos, BlockState state, PlayerEntity player, CallbackInfoReturnable<BlockState> cir) {
         // Survival mode always drops the item; only Creative needs special handling.
         if (!world.isClient() && player.isCreative()) {
             BlockEntity be = world.getBlockEntity(pos);
@@ -40,15 +41,18 @@ public class ShulkerBoxBlockMixin {
                     hasCustomData = true;
                 }
 
-                if (shulker instanceof IWhitelistProvider provider && provider.getWhitelists() != null && !provider.getWhitelists().isEmpty()) {
+                if (shulker instanceof IWhitelistProvider provider
+                        && provider.getWhitelists() != null
+                        && !provider.getWhitelists().isEmpty()) {
                     hasCustomData = true;
                 }
 
                 if (hasCustomData) {
-                    ItemStack itemStack = new ItemStack(((ShulkerBoxBlock)(Object)this).asItem());
+                    ItemStack itemStack = new ItemStack(((ShulkerBoxBlock) (Object) this).asItem());
                     itemStack.applyComponentsFrom(shulker.createComponentMap());
 
-                    ItemEntity itemEntity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack);
+                    ItemEntity itemEntity =
+                            new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack);
                     itemEntity.setToDefaultPickupDelay();
                     world.spawnEntity(itemEntity);
                 }

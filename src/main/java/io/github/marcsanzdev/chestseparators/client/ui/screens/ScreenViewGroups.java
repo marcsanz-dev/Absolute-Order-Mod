@@ -9,6 +9,13 @@ import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.player.PlayerInventory;
@@ -17,28 +24,20 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 public class ScreenViewGroups extends AbstractEditorScreen {
 
     private final List<CustomWidget> popupWidgets = new ArrayList<>();
     private final List<CustomWidget> selectSlotsWidgets = new ArrayList<>();
 
     private static final int[] GROUP_PALETTE = {
-            0x99E53935, 0x99F57C00, 0x99FBC02D, 0x997CB342,
-            0x99388E3C, 0x9900897B, 0x9900ACC1, 0x991E88E5,
-            0x993949AB, 0x998E24AA, 0x99D81B60, 0x99795548,
-            0x99D50000, 0x99C51162, 0x99AA00FF, 0x996200EA,
-            0x99304FFE, 0x992962FF, 0x9900B8D4, 0x9900BFA5,
-            0x9900C853, 0x9964DD17, 0x99AEEA00, 0x99FFD600,
-            0x99FFAB00, 0x99FF6D00, 0x99DD2C00, 0x995D4037,
-            0x99827717, 0x99E65100, 0x99F4511E, 0x99C0CA33
+        0x99E53935, 0x99F57C00, 0x99FBC02D, 0x997CB342,
+        0x99388E3C, 0x9900897B, 0x9900ACC1, 0x991E88E5,
+        0x993949AB, 0x998E24AA, 0x99D81B60, 0x99795548,
+        0x99D50000, 0x99C51162, 0x99AA00FF, 0x996200EA,
+        0x99304FFE, 0x992962FF, 0x9900B8D4, 0x9900BFA5,
+        0x9900C853, 0x9964DD17, 0x99AEEA00, 0x99FFD600,
+        0x99FFAB00, 0x99FF6D00, 0x99DD2C00, 0x995D4037,
+        0x99827717, 0x99E65100, 0x99F4511E, 0x99C0CA33
     };
 
     private final Map<UUID, Integer> stableGroupColors = new HashMap<>();
@@ -71,166 +70,278 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         int bH = layout.bH;
 
         // --- Block 1: Edit & Clear All ---
-        WideButtonWidget btnEditFilter = new WideButtonWidget(sx, sy, btnW, bH, Text.translatable("button.chestseparators.edit_filter").getString(), ModTextures.BTN_WHITELIST, () -> {
-            editor.playClickSound(1.0f);
-            if (session.selectedSlots.isEmpty()) {
-                editor.showStatus(Text.translatable("message.chestseparators.select_first"), Formatting.RED);
-                return;
-            }
-            boolean conflictFound = false;
-            var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-            if (whitelists != null) {
-                for (int slotIdx : session.selectedSlots) {
-                    if (whitelists.containsKey(slotIdx)) { conflictFound = true; break; }
-                }
-            }
-            if (conflictFound) session.hasSelectionConflict = true;
-            else {
-                session.selectedGroupId = UUID.randomUUID();
-                transitionToEditFilter();
-            }
-        });
-        btnEditFilter.tooltipText = Text.translatable("tooltip.chestseparators.desc.edit_filter").getString();
+        WideButtonWidget btnEditFilter = new WideButtonWidget(
+                sx,
+                sy,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.edit_filter").getString(),
+                ModTextures.BTN_WHITELIST,
+                () -> {
+                    editor.playClickSound(1.0f);
+                    if (session.selectedSlots.isEmpty()) {
+                        editor.showStatus(Text.translatable("message.chestseparators.select_first"), Formatting.RED);
+                        return;
+                    }
+                    boolean conflictFound = false;
+                    var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
+                    if (whitelists != null) {
+                        for (int slotIdx : session.selectedSlots) {
+                            if (whitelists.containsKey(slotIdx)) {
+                                conflictFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (conflictFound) session.hasSelectionConflict = true;
+                    else {
+                        session.selectedGroupId = UUID.randomUUID();
+                        transitionToEditFilter();
+                    }
+                });
+        btnEditFilter.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.edit_filter").getString();
         widgets.add(btnEditFilter);
 
-        WideButtonWidget btnClearAll = new WideButtonWidget(sx, sy + 24, btnW, bH, Text.translatable("button.chestseparators.delete_all_filters").getString(), ModTextures.ICON_TRASH, () -> {
-            btnClearAllClickTime = System.currentTimeMillis();
-            var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-            if (whitelists != null && !whitelists.isEmpty()) {
-                ChestConfigManager.getInstance().saveWhitelistSnapshot();
-                whitelists.clear();
-                editor.saveSmart();
-                editor.sendWhitelistToServer();
+        WideButtonWidget btnClearAll = new WideButtonWidget(
+                sx,
+                sy + 24,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.delete_all_filters").getString(),
+                ModTextures.ICON_TRASH,
+                () -> {
+                    btnClearAllClickTime = System.currentTimeMillis();
+                    var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
+                    if (whitelists != null && !whitelists.isEmpty()) {
+                        ChestConfigManager.getInstance().saveWhitelistSnapshot();
+                        whitelists.clear();
+                        editor.saveSmart();
+                        editor.sendWhitelistToServer();
 
-                editor.syncClientInventoryWhitelists(whitelists);
+                        editor.syncClientInventoryWhitelists(whitelists);
 
-                editor.showStatus(Text.translatable("message.chestseparators.all_filters_deleted"), Formatting.RED);
-                editor.playClickSound(0.8f);
-            }
-        });
-        btnClearAll.tooltipText = Text.translatable("tooltip.chestseparators.desc.delete_all_filters").getString();
+                        editor.showStatus(
+                                Text.translatable("message.chestseparators.all_filters_deleted"), Formatting.RED);
+                        editor.playClickSound(0.8f);
+                    }
+                });
+        btnClearAll.tooltipText = Text.translatable("tooltip.chestseparators.desc.delete_all_filters")
+                .getString();
         btnClearAll.keepNormalTextColor = true;
         widgets.add(btnClearAll);
 
         // --- Block 2: Selection Tools ---
-        WideButtonWidget btnAreaSelect = new WideButtonWidget(sx, sy + 53, btnW, bH, Text.translatable("button.chestseparators.area_select").getString(), ModTextures.ICON_AREA_SELECT, () -> {
-            session.wlToolMode = 0; editor.playClickSound(1.2f);
-        });
-        btnAreaSelect.tooltipText = Text.translatable("tooltip.chestseparators.desc.area_select").getString();
+        WideButtonWidget btnAreaSelect = new WideButtonWidget(
+                sx,
+                sy + 53,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.area_select").getString(),
+                ModTextures.ICON_AREA_SELECT,
+                () -> {
+                    session.wlToolMode = 0;
+                    editor.playClickSound(1.2f);
+                });
+        btnAreaSelect.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.area_select").getString();
         widgets.add(btnAreaSelect);
 
-        WideButtonWidget btnTraceSelect = new WideButtonWidget(sx, sy + 77, btnW, bH, Text.translatable("button.chestseparators.trace_select").getString(), ModTextures.ICON_TRACE_SELECT, () -> {
-            session.wlToolMode = 1; editor.playClickSound(1.2f);
-        });
-        btnTraceSelect.tooltipText = Text.translatable("tooltip.chestseparators.desc.trace_select").getString();
+        WideButtonWidget btnTraceSelect = new WideButtonWidget(
+                sx,
+                sy + 77,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.trace_select").getString(),
+                ModTextures.ICON_TRACE_SELECT,
+                () -> {
+                    session.wlToolMode = 1;
+                    editor.playClickSound(1.2f);
+                });
+        btnTraceSelect.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.trace_select").getString();
         widgets.add(btnTraceSelect);
 
-        WideButtonWidget btnClearSelect = new WideButtonWidget(sx, sy + 101, btnW, bH, Text.translatable("button.chestseparators.clear_selection").getString(), ModTextures.ICON_DELETE, () -> {
-            btnClearSelectClickTime = System.currentTimeMillis();
-            session.selectedSlots.clear(); editor.playClickSound(0.8f);
-        });
-        btnClearSelect.tooltipText = Text.translatable("tooltip.chestseparators.desc.clear_selection").getString();
+        WideButtonWidget btnClearSelect = new WideButtonWidget(
+                sx,
+                sy + 101,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.clear_selection").getString(),
+                ModTextures.ICON_DELETE,
+                () -> {
+                    btnClearSelectClickTime = System.currentTimeMillis();
+                    session.selectedSlots.clear();
+                    editor.playClickSound(0.8f);
+                });
+        btnClearSelect.tooltipText = Text.translatable("tooltip.chestseparators.desc.clear_selection")
+                .getString();
         btnClearSelect.keepNormalTextColor = true;
         widgets.add(btnClearSelect);
 
         // --- Block 3: Global Actions ---
-        WideButtonWidget btnCopy = new WideButtonWidget(sx, sy + 130, btnW, bH, Text.translatable("button.chestseparators.copy_filters").getString(), ModTextures.ICON_COPY, () -> {
-            btnCopyClickTime = System.currentTimeMillis();
-            ChestConfigManager.getInstance().copyWhitelistsToClipboard();
-            editor.showStatus(Text.translatable("message.chestseparators.filters_copied"), Formatting.GRAY);
-            editor.playClickSound(1.0f);
-        });
-        btnCopy.tooltipText = Text.translatable("tooltip.chestseparators.desc.copy_filters").getString();
+        WideButtonWidget btnCopy = new WideButtonWidget(
+                sx,
+                sy + 130,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.copy_filters").getString(),
+                ModTextures.ICON_COPY,
+                () -> {
+                    btnCopyClickTime = System.currentTimeMillis();
+                    ChestConfigManager.getInstance().copyWhitelistsToClipboard();
+                    editor.showStatus(Text.translatable("message.chestseparators.filters_copied"), Formatting.GRAY);
+                    editor.playClickSound(1.0f);
+                });
+        btnCopy.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.copy_filters").getString();
         btnCopy.keepNormalTextColor = true;
         widgets.add(btnCopy);
 
-        WideButtonWidget btnPaste = new WideButtonWidget(sx, sy + 154, btnW, bH, Text.translatable("button.chestseparators.paste_filters").getString(), ModTextures.ICON_PASTE, () -> {
-            btnPasteClickTime = System.currentTimeMillis();
+        WideButtonWidget btnPaste = new WideButtonWidget(
+                sx,
+                sy + 154,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.paste_filters").getString(),
+                ModTextures.ICON_PASTE,
+                () -> {
+                    btnPasteClickTime = System.currentTimeMillis();
 
-            if (ChestConfigManager.getInstance().hasWhitelistClipboardData()) {
-                ChestConfigManager.getInstance().saveWhitelistSnapshot();
-                ChestConfigManager.getInstance().pasteWhitelistsFromClipboard();
-                editor.saveSmart();
-                editor.sendWhitelistToServer();
+                    if (ChestConfigManager.getInstance().hasWhitelistClipboardData()) {
+                        ChestConfigManager.getInstance().saveWhitelistSnapshot();
+                        ChestConfigManager.getInstance().pasteWhitelistsFromClipboard();
+                        editor.saveSmart();
+                        editor.sendWhitelistToServer();
 
-                editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
+                        editor.syncClientInventoryWhitelists(
+                                ChestConfigManager.getInstance().getCurrentWhitelists());
 
-                editor.showStatus(Text.translatable("message.chestseparators.filters_pasted"), Formatting.GREEN);
-                editor.playClickSound(1.0f);
-            }
-        });
-        btnPaste.tooltipText = Text.translatable("tooltip.chestseparators.desc.paste_filters").getString();
+                        editor.showStatus(
+                                Text.translatable("message.chestseparators.filters_pasted"), Formatting.GREEN);
+                        editor.playClickSound(1.0f);
+                    }
+                });
+        btnPaste.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.paste_filters").getString();
         btnPaste.keepNormalTextColor = true;
         widgets.add(btnPaste);
 
         int halfW = (btnW - 4) / 2;
-        WideButtonWidget btnUndo = new WideButtonWidget(sx, sy + 178, halfW, bH, Text.translatable("button.chestseparators.undo").getString(), ModTextures.ICON_UNDO, () -> {
-            btnUndoClickTime = System.currentTimeMillis();
-            if (ChestConfigManager.getInstance().canUndoWhitelist()) {
-                ChestConfigManager.getInstance().undoWhitelist();
+        WideButtonWidget btnUndo = new WideButtonWidget(
+                sx,
+                sy + 178,
+                halfW,
+                bH,
+                Text.translatable("button.chestseparators.undo").getString(),
+                ModTextures.ICON_UNDO,
+                () -> {
+                    btnUndoClickTime = System.currentTimeMillis();
+                    if (ChestConfigManager.getInstance().canUndoWhitelist()) {
+                        ChestConfigManager.getInstance().undoWhitelist();
 
-                // Sync inventory to reflect the reverted whitelist state.
-                var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-                editor.saveSmart();
-                editor.sendWhitelistToServer();
-                editor.syncClientInventoryWhitelists(currentWhitelists);
+                        // Sync inventory to reflect the reverted whitelist state.
+                        var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
+                        editor.saveSmart();
+                        editor.sendWhitelistToServer();
+                        editor.syncClientInventoryWhitelists(currentWhitelists);
 
-                editor.playClickSound(0.8f);
-            }
-        });
-        btnUndo.tooltipText = Text.translatable("tooltip.chestseparators.desc.undo").getString();
+                        editor.playClickSound(0.8f);
+                    }
+                });
+        btnUndo.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.undo").getString();
         btnUndo.keepNormalTextColor = true;
         widgets.add(btnUndo);
 
-        WideButtonWidget btnRedo = new WideButtonWidget(sx + halfW + 4, sy + 178, halfW, bH, Text.translatable("button.chestseparators.redo").getString(), ModTextures.ICON_REDO, () -> {
-            btnRedoClickTime = System.currentTimeMillis();
-            if (ChestConfigManager.getInstance().canRedoWhitelist()) {
-                ChestConfigManager.getInstance().redoWhitelist();
+        WideButtonWidget btnRedo = new WideButtonWidget(
+                sx + halfW + 4,
+                sy + 178,
+                halfW,
+                bH,
+                Text.translatable("button.chestseparators.redo").getString(),
+                ModTextures.ICON_REDO,
+                () -> {
+                    btnRedoClickTime = System.currentTimeMillis();
+                    if (ChestConfigManager.getInstance().canRedoWhitelist()) {
+                        ChestConfigManager.getInstance().redoWhitelist();
 
-                // Sync inventory to reflect the re-applied whitelist state.
-                var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-                editor.saveSmart();
-                editor.sendWhitelistToServer();
-                editor.syncClientInventoryWhitelists(currentWhitelists);
+                        // Sync inventory to reflect the re-applied whitelist state.
+                        var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
+                        editor.saveSmart();
+                        editor.sendWhitelistToServer();
+                        editor.syncClientInventoryWhitelists(currentWhitelists);
 
-                editor.playClickSound(0.8f);
-            }
-        });
-        btnRedo.tooltipText = Text.translatable("tooltip.chestseparators.desc.redo").getString();
+                        editor.playClickSound(0.8f);
+                    }
+                });
+        btnRedo.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.redo").getString();
         btnRedo.keepNormalTextColor = true;
         widgets.add(btnRedo);
     }
 
     private void buildPopupWidgets() {
-        ActionIconButtonWidget btnOverwrite = new ActionIconButtonWidget(layout.conflictPopupX + 10, layout.conflictPopupY + 45, 240, 16, "1. " + Text.translatable("button.chestseparators.conflict.overwrite").getString(), null, 0xFF852D2D, () -> {
-            ChestConfigManager.getInstance().saveWhitelistSnapshot();
-            session.hasSelectionConflict = false;
-            session.selectedGroupId = UUID.randomUUID();
-            editor.playClickSound(1.0f);
-            transitionToEditFilter();
-        });
-        btnOverwrite.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.overwrite").getString();
+        ActionIconButtonWidget btnOverwrite = new ActionIconButtonWidget(
+                layout.conflictPopupX + 10,
+                layout.conflictPopupY + 45,
+                240,
+                16,
+                "1. "
+                        + Text.translatable("button.chestseparators.conflict.overwrite")
+                                .getString(),
+                null,
+                0xFF852D2D,
+                () -> {
+                    ChestConfigManager.getInstance().saveWhitelistSnapshot();
+                    session.hasSelectionConflict = false;
+                    session.selectedGroupId = UUID.randomUUID();
+                    editor.playClickSound(1.0f);
+                    transitionToEditFilter();
+                });
+        btnOverwrite.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.overwrite")
+                .getString();
         popupWidgets.add(btnOverwrite);
 
-        ActionIconButtonWidget btnDeselect = new ActionIconButtonWidget(layout.conflictPopupX + 10, layout.conflictPopupY + 63, 240, 16, "2. " + Text.translatable("button.chestseparators.conflict.deselect").getString(), null, 0xFF2D852D, () -> {
-            var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-            if (whitelists != null) session.selectedSlots.removeIf(whitelists::containsKey);
-            session.hasSelectionConflict = false;
-            editor.playClickSound(1.0f);
-            if (!session.selectedSlots.isEmpty()) {
-                transitionToEditFilter();
-            } else {
-                editor.showStatus(Text.translatable("message.chestseparators.empty_selection"), Formatting.RED);
-            }
-        });
-        btnDeselect.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.deselect").getString();
+        ActionIconButtonWidget btnDeselect = new ActionIconButtonWidget(
+                layout.conflictPopupX + 10,
+                layout.conflictPopupY + 63,
+                240,
+                16,
+                "2. "
+                        + Text.translatable("button.chestseparators.conflict.deselect")
+                                .getString(),
+                null,
+                0xFF2D852D,
+                () -> {
+                    var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
+                    if (whitelists != null) session.selectedSlots.removeIf(whitelists::containsKey);
+                    session.hasSelectionConflict = false;
+                    editor.playClickSound(1.0f);
+                    if (!session.selectedSlots.isEmpty()) {
+                        transitionToEditFilter();
+                    } else {
+                        editor.showStatus(Text.translatable("message.chestseparators.empty_selection"), Formatting.RED);
+                    }
+                });
+        btnDeselect.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.deselect")
+                .getString();
         popupWidgets.add(btnDeselect);
 
-        ActionIconButtonWidget btnCancel = new ActionIconButtonWidget(layout.conflictPopupX + 10, layout.conflictPopupY + 81, 240, 16, "3. " + Text.translatable("button.chestseparators.cancel").getString(), null, 0xFF444444, () -> {
-            session.hasSelectionConflict = false;
-            editor.playClickSound(0.8f);
-        });
-        btnCancel.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.cancel").getString();
+        ActionIconButtonWidget btnCancel = new ActionIconButtonWidget(
+                layout.conflictPopupX + 10,
+                layout.conflictPopupY + 81,
+                240,
+                16,
+                "3. " + Text.translatable("button.chestseparators.cancel").getString(),
+                null,
+                0xFF444444,
+                () -> {
+                    session.hasSelectionConflict = false;
+                    editor.playClickSound(0.8f);
+                });
+        btnCancel.tooltipText = Text.translatable("tooltip.chestseparators.desc.conflict.cancel")
+                .getString();
         popupWidgets.add(btnCancel);
     }
 
@@ -238,17 +349,33 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         int btnX = layout.guiX + layout.bgWidth + 4;
         int btnY = layout.guiY;
 
-        selectSlotsWidgets.add(new ActionIconButtonWidget(btnX, btnY, 60, 20, Text.translatable("button.chestseparators.confirm").getString(), null, 0xFF2D852D, () -> {
-            if (!session.selectedSlots.isEmpty()) {
-                transitionToEditFilter();
-            }
-            editor.playClickSound(1.0f);
-        }));
+        selectSlotsWidgets.add(new ActionIconButtonWidget(
+                btnX,
+                btnY,
+                60,
+                20,
+                Text.translatable("button.chestseparators.confirm").getString(),
+                null,
+                0xFF2D852D,
+                () -> {
+                    if (!session.selectedSlots.isEmpty()) {
+                        transitionToEditFilter();
+                    }
+                    editor.playClickSound(1.0f);
+                }));
 
-        selectSlotsWidgets.add(new ActionIconButtonWidget(btnX, btnY + 25, 60, 20, Text.translatable("button.chestseparators.cancel").getString(), null, 0xFF852D2D, () -> {
-            editor.toggleState(EditorState.VIEW_GROUPS);
-            editor.playClickSound(1.0f);
-        }));
+        selectSlotsWidgets.add(new ActionIconButtonWidget(
+                btnX,
+                btnY + 25,
+                60,
+                20,
+                Text.translatable("button.chestseparators.cancel").getString(),
+                null,
+                0xFF852D2D,
+                () -> {
+                    editor.toggleState(EditorState.VIEW_GROUPS);
+                    editor.playClickSound(1.0f);
+                }));
     }
 
     @Override
@@ -281,17 +408,34 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         }
 
         // Slot selection logic for VIEW_GROUPS and SELECT_SLOTS.
-        if (button == 0 && (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS)) {
+        if (button == 0
+                && (session.currentState == EditorState.VIEW_GROUPS
+                        || session.currentState == EditorState.SELECT_SLOTS)) {
             Slot slot = editor.accessor.getFocusedSlot();
             if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
                 java.util.UUID groupId = editor.geometry.getGroupIdForSlot(slot.getIndex());
                 long now = System.currentTimeMillis();
-                boolean isDoubleClick = (slot.getIndex() == session.lastClickedSlotIndex && (now - session.lastSlotClickTime) < 300);
+                boolean isDoubleClick =
+                        (slot.getIndex() == session.lastClickedSlotIndex && (now - session.lastSlotClickTime) < 300);
 
-                boolean isShiftDown = org.lwjgl.glfw.GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS ||
-                        org.lwjgl.glfw.GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+                boolean isShiftDown = org.lwjgl.glfw.GLFW.glfwGetKey(
+                                        MinecraftClient.getInstance()
+                                                .getWindow()
+                                                .getHandle(),
+                                        org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT)
+                                == org.lwjgl.glfw.GLFW.GLFW_PRESS
+                        || org.lwjgl.glfw.GLFW.glfwGetKey(
+                                        MinecraftClient.getInstance()
+                                                .getWindow()
+                                                .getHandle(),
+                                        org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT)
+                                == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
-                if (session.currentState == EditorState.VIEW_GROUPS && groupId != null && session.selectedSlots.isEmpty() && !isShiftDown && !isDoubleClick) {
+                if (session.currentState == EditorState.VIEW_GROUPS
+                        && groupId != null
+                        && session.selectedSlots.isEmpty()
+                        && !isShiftDown
+                        && !isDoubleClick) {
                     session.selectedGroupId = groupId;
                     session.selectedSlots.clear();
                     var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
@@ -305,10 +449,10 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                     transitionToEditFilter();
                     editor.playClickSound(1.0f);
                     return true;
-                }
-                else if (isDoubleClick) {
+                } else if (isDoubleClick) {
                     int maxSlots = editor.geometry.getContainerSlotCount();
-                    java.util.Set<Integer> contiguous = ChestConfigManager.getInstance().getContiguousSlots(slot.getIndex(), maxSlots);
+                    java.util.Set<Integer> contiguous =
+                            ChestConfigManager.getInstance().getContiguousSlots(slot.getIndex(), maxSlots);
 
                     if (session.isSelecting) session.selectedSlots.addAll(contiguous);
                     else session.selectedSlots.removeAll(contiguous);
@@ -317,8 +461,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                     session.lastSlotClickTime = now;
                     editor.playClickSound(1.2f);
                     return true;
-                }
-                else {
+                } else {
                     if (session.selectedSlots.contains(slot.getIndex())) {
                         session.selectedSlots.remove(slot.getIndex());
                         session.isSelecting = false;
@@ -340,12 +483,22 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         }
         // --- CLICK OUTSIDE TO CLOSE ---
         if (button == 0 && !session.hasSelectionConflict && GlobalChestConfig.instance.closeOnClickOutside) {
-            boolean isInsideMain = mouseX >= layout.guiX && mouseX <= layout.guiX + layout.bgWidth && mouseY >= layout.guiY && mouseY <= layout.guiY + layout.bgHeight;
-            boolean isInsideRight = mouseX >= layout.rightX && mouseX <= layout.rightX + layout.btnW && mouseY >= layout.mainY && mouseY <= layout.mainY + 178 + layout.bH;
+            boolean isInsideMain = mouseX >= layout.guiX
+                    && mouseX <= layout.guiX + layout.bgWidth
+                    && mouseY >= layout.guiY
+                    && mouseY <= layout.guiY + layout.bgHeight;
+            boolean isInsideRight = mouseX >= layout.rightX
+                    && mouseX <= layout.rightX + layout.btnW
+                    && mouseY >= layout.mainY
+                    && mouseY <= layout.mainY + 178 + layout.bH;
 
             boolean isInsideLeft = false;
-            if (GlobalChestConfig.instance.showLeftPanel || io.github.marcsanzdev.chestseparators.event.KeyInputHandler.isModifierPressed()) {
-                isInsideLeft = mouseX >= layout.listX && mouseX <= layout.listX + layout.listW && mouseY >= layout.listY && mouseY <= layout.listY + layout.listH;
+            if (GlobalChestConfig.instance.showLeftPanel
+                    || io.github.marcsanzdev.chestseparators.event.KeyInputHandler.isModifierPressed()) {
+                isInsideLeft = mouseX >= layout.listX
+                        && mouseX <= layout.listX + layout.listW
+                        && mouseY >= layout.listY
+                        && mouseY <= layout.listY + layout.listH;
             }
 
             if (!isInsideMain && !isInsideRight && !isInsideLeft) {
@@ -385,17 +538,25 @@ public class ScreenViewGroups extends AbstractEditorScreen {
     }
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && session.isDraggingLine && (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS)) {
+        if (button == 0
+                && session.isDraggingLine
+                && (session.currentState == EditorState.VIEW_GROUPS
+                        || session.currentState == EditorState.SELECT_SLOTS)) {
             // Area mode: commit the rectangular selection on mouse release.
             if (session.wlToolMode == 0 && session.dragStartSlot != null && session.dragCurrentSlot != null) {
-                int sRow = session.dragStartSlot.getIndex() / 9; int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9; int cCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(sRow, cRow); int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol); int maxCol = Math.max(sCol, cCol);
+                int sRow = session.dragStartSlot.getIndex() / 9;
+                int sCol = session.dragStartSlot.getIndex() % 9;
+                int cRow = session.dragCurrentSlot.getIndex() / 9;
+                int cCol = session.dragCurrentSlot.getIndex() % 9;
+                int minRow = Math.min(sRow, cRow);
+                int maxRow = Math.max(sRow, cRow);
+                int minCol = Math.min(sCol, cCol);
+                int maxCol = Math.max(sCol, cCol);
 
                 for (Slot s : editor.accessor.getHandler().slots) {
                     if (s.inventory instanceof PlayerInventory) continue;
-                    int r = s.getIndex() / 9; int c = s.getIndex() % 9;
+                    int r = s.getIndex() / 9;
+                    int c = s.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (session.isSelecting) session.selectedSlots.add(s.getIndex());
                         else session.selectedSlots.remove(s.getIndex());
@@ -461,8 +622,19 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0xAA000000);
 
         boolean isDark = GlobalChestConfig.instance.darkMode;
-        context.fill(layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupX + layout.conflictPopupW, layout.conflictPopupY + layout.conflictPopupH, isDark ? 0xFF212121 : 0xFFC6C6C6);
-        drawDarkBevel(context, layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupW, layout.conflictPopupH, false);
+        context.fill(
+                layout.conflictPopupX,
+                layout.conflictPopupY,
+                layout.conflictPopupX + layout.conflictPopupW,
+                layout.conflictPopupY + layout.conflictPopupH,
+                isDark ? 0xFF212121 : 0xFFC6C6C6);
+        drawDarkBevel(
+                context,
+                layout.conflictPopupX,
+                layout.conflictPopupY,
+                layout.conflictPopupW,
+                layout.conflictPopupH,
+                false);
 
         MinecraftClient client = MinecraftClient.getInstance();
         int maxTextWidth = 240; // Max width matching the buttons
@@ -473,7 +645,10 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         float titleScale = titleWidth > maxTextWidth ? (float) maxTextWidth / titleWidth : 1.0f;
 
         context.getMatrices().pushMatrix();
-        context.getMatrices().translate(layout.conflictPopupX + layout.conflictPopupW / 2.0f, layout.conflictPopupY + 12 + (4 * (1 - titleScale)));
+        context.getMatrices()
+                .translate(
+                        layout.conflictPopupX + layout.conflictPopupW / 2.0f,
+                        layout.conflictPopupY + 12 + (4 * (1 - titleScale)));
         context.getMatrices().scale(titleScale, titleScale);
         context.drawCenteredTextWithShadow(client.textRenderer, title, 0, 0, 0xFFFF5555);
         context.getMatrices().popMatrix();
@@ -528,7 +703,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
 
         Slot hoveredSlot = null;
         for (Slot slot : editor.accessor.getHandler().slots) {
-            if (!(slot.inventory instanceof PlayerInventory) && editor.isHovering(guiX + slot.x - 1, guiY + slot.y - 1, 18, 18, mouseX, mouseY)) {
+            if (!(slot.inventory instanceof PlayerInventory)
+                    && editor.isHovering(guiX + slot.x - 1, guiY + slot.y - 1, 18, 18, mouseX, mouseY)) {
                 hoveredSlot = slot;
                 break;
             }
@@ -565,15 +741,29 @@ public class ScreenViewGroups extends AbstractEditorScreen {
             }
         }
 
-        Text title = session.isPreviewing ? Text.translatable("gui.chestseparators.group_filter") : Text.translatable("gui.chestseparators.no_filter");
+        Text title = session.isPreviewing
+                ? Text.translatable("gui.chestseparators.group_filter")
+                : Text.translatable("gui.chestseparators.no_filter");
         int colorTitle = session.isPreviewing ? 0xFF55FF55 : 0xFFAAAAAA;
         int itemCount = session.isPreviewing ? session.previewItems.size() : 0;
 
         context.getMatrices().pushMatrix();
         float scaleC = 0.8f;
         context.getMatrices().scale(scaleC, scaleC);
-        context.drawText(MinecraftClient.getInstance().textRenderer, title, (int)((listX + 8) / scaleC), (int)((listY + 8) / scaleC), colorTitle, false);
-        context.drawText(MinecraftClient.getInstance().textRenderer, Text.translatable("gui.chestseparators.items_count", itemCount), (int)((listX + 8) / scaleC), (int)((listY + 18) / scaleC), 0xFFFFFFFF, false);
+        context.drawText(
+                MinecraftClient.getInstance().textRenderer,
+                title,
+                (int) ((listX + 8) / scaleC),
+                (int) ((listY + 8) / scaleC),
+                colorTitle,
+                false);
+        context.drawText(
+                MinecraftClient.getInstance().textRenderer,
+                Text.translatable("gui.chestseparators.items_count", itemCount),
+                (int) ((listX + 8) / scaleC),
+                (int) ((listY + 18) / scaleC),
+                0xFFFFFFFF,
+                false);
         context.getMatrices().popMatrix();
 
         int listViewY = listY + 32;
@@ -587,7 +777,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
             int textY = listViewY + 10;
             int maxTextW = listW - 24;
 
-            for (net.minecraft.text.OrderedText line : MinecraftClient.getInstance().textRenderer.wrapLines(hoverText, maxTextW)) {
+            for (net.minecraft.text.OrderedText line :
+                    MinecraftClient.getInstance().textRenderer.wrapLines(hoverText, maxTextW)) {
                 context.drawText(MinecraftClient.getInstance().textRenderer, line, textX, textY, 0xFF666666, false);
                 textY += MinecraftClient.getInstance().textRenderer.fontHeight + 2;
             }
@@ -626,7 +817,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         session.listScrollY = MathHelper.clamp(session.listScrollY, 0, maxListScroll);
 
         context.enableScissor(listX + 6, listViewY + 1, listX + listW - 14, listViewY + listViewH - 1);
-        int startIndex = (int)(session.listScrollY / 18);
+        int startIndex = (int) (session.listScrollY / 18);
         int visibleCount = (listViewH / 18) + 2;
 
         if (session.previewItems.isEmpty()) {
@@ -635,7 +826,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
             int textY = listViewY + 10;
             int maxTextW = listW - 24;
 
-            for (net.minecraft.text.OrderedText line : MinecraftClient.getInstance().textRenderer.wrapLines(emptyText, maxTextW)) {
+            for (net.minecraft.text.OrderedText line :
+                    MinecraftClient.getInstance().textRenderer.wrapLines(emptyText, maxTextW)) {
                 context.drawText(MinecraftClient.getInstance().textRenderer, line, textX, textY, 0xFF888888, false);
                 textY += MinecraftClient.getInstance().textRenderer.fontHeight + 2;
             }
@@ -646,21 +838,28 @@ public class ScreenViewGroups extends AbstractEditorScreen {
             if (idx >= totalListItems) break;
 
             String itemIdStr = session.previewItems.get(idx);
-            net.minecraft.item.Item item = net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(itemIdStr));
+            net.minecraft.item.Item item =
+                    net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(itemIdStr));
 
-            int itemY = listViewY + (i * 18) - (int)(session.listScrollY % 18) + 2;
+            int itemY = listViewY + (i * 18) - (int) (session.listScrollY % 18) + 2;
             context.drawItem(item.getDefaultStack(), listX + 8, itemY);
 
             String name = item.getName().getString();
             context.getMatrices().pushMatrix();
             float scale = 0.75f;
             context.getMatrices().scale(scale, scale);
-            int maxNameW = (int)((listW - 35) / scale);
+            int maxNameW = (int) ((listW - 35) / scale);
             if (MinecraftClient.getInstance().textRenderer.getWidth(name) > maxNameW) {
                 name = MinecraftClient.getInstance().textRenderer.trimToWidth(name, maxNameW - 6) + "...";
             }
             int textColor = isDark ? 0xFFDDDDDD : 0xFF222222;
-            context.drawText(MinecraftClient.getInstance().textRenderer, name, (int)((listX + 26) / scale), (int)((itemY + 6) / scale), textColor, false);
+            context.drawText(
+                    MinecraftClient.getInstance().textRenderer,
+                    name,
+                    (int) ((listX + 26) / scale),
+                    (int) ((itemY + 6) / scale),
+                    textColor,
+                    false);
             context.getMatrices().popMatrix();
         }
         context.disableScissor();
@@ -691,17 +890,24 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         int lsbX = listX + listW - 13;
         int lsbH = listViewH - 1;
         context.fill(lsbX, listViewY, lsbX + 6, listViewY + lsbH, isDark ? 0xFF000000 : 0xFFAAAAAA);
-        int listThumbH = maxListScroll > 0 ? Math.max(10, (int)((listViewH / (float)Math.max(1, totalListHeight)) * lsbH)) : lsbH;
-        int listThumbY = maxListScroll > 0 ? listViewY + (int)((session.listScrollY / maxListScroll) * (lsbH - listThumbH)) : listViewY;
+        int listThumbH = maxListScroll > 0
+                ? Math.max(10, (int) ((listViewH / (float) Math.max(1, totalListHeight)) * lsbH))
+                : lsbH;
+        int listThumbY = maxListScroll > 0
+                ? listViewY + (int) ((session.listScrollY / maxListScroll) * (lsbH - listThumbH))
+                : listViewY;
         context.fill(lsbX + 1, listThumbY + 1, lsbX + 5, listThumbY + listThumbH - 1, isDark ? 0xFF888888 : 0xFF666666);
 
         for (int i = 0; i < visibleCount; i++) {
             int idx = startIndex + i;
             if (idx >= totalListItems) break;
-            net.minecraft.item.Item item = net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(session.previewItems.get(idx)));
-            int itemY = listViewY + (i * 18) - (int)(session.listScrollY % 18) + 2;
+            net.minecraft.item.Item item = net.minecraft.registry.Registries.ITEM.get(
+                    net.minecraft.util.Identifier.tryParse(session.previewItems.get(idx)));
+            int itemY = listViewY + (i * 18) - (int) (session.listScrollY % 18) + 2;
 
-            if (editor.isHovering(listX + 8, itemY, 16, 16, mouseX, mouseY) && mouseY >= listViewY && mouseY <= listViewY + listViewH) {
+            if (editor.isHovering(listX + 8, itemY, 16, 16, mouseX, mouseY)
+                    && mouseY >= listViewY
+                    && mouseY <= listViewY + listViewH) {
                 context.drawStrokedRectangle(listX + 7, itemY - 1, 18, 18, 0xFFFFFFFF);
                 context.drawTooltip(MinecraftClient.getInstance().textRenderer, item.getName(), mouseX, mouseY);
             }
@@ -716,19 +922,26 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         Set<Integer> activeGreenSlots = new HashSet<>(session.selectedSlots);
         Set<Integer> activeRedSlots = new HashSet<>();
 
-        boolean isPreviewArea = session.currentState == EditorState.VIEW_GROUPS && session.isDraggingLine && session.wlToolMode == 0 && session.dragStartSlot != null && session.dragCurrentSlot != null;
+        boolean isPreviewArea = session.currentState == EditorState.VIEW_GROUPS
+                && session.isDraggingLine
+                && session.wlToolMode == 0
+                && session.dragStartSlot != null
+                && session.dragCurrentSlot != null;
 
         if (isPreviewArea) {
             int sRow = session.dragStartSlot.getIndex() / 9;
             int sCol = session.dragStartSlot.getIndex() % 9;
             int cRow = session.dragCurrentSlot.getIndex() / 9;
             int cCol = session.dragCurrentSlot.getIndex() % 9;
-            int minRow = Math.min(sRow, cRow); int maxRow = Math.max(sRow, cRow);
-            int minCol = Math.min(sCol, cCol); int maxCol = Math.max(sCol, cCol);
+            int minRow = Math.min(sRow, cRow);
+            int maxRow = Math.max(sRow, cRow);
+            int minCol = Math.min(sCol, cCol);
+            int maxCol = Math.max(sCol, cCol);
 
             for (Slot slot : editor.accessor.getHandler().slots) {
                 if (slot.inventory instanceof PlayerInventory) continue;
-                int r = slot.getIndex() / 9; int c = slot.getIndex() % 9;
+                int r = slot.getIndex() / 9;
+                int c = slot.getIndex() % 9;
                 if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                     if (session.isSelecting) {
                         activeGreenSlots.add(slot.getIndex());
@@ -758,7 +971,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         if (whitelists != null) {
             Map<UUID, Set<Integer>> groups = new HashMap<>();
             for (Map.Entry<Integer, SlotWhitelist> entry : whitelists.entrySet()) {
-                groups.computeIfAbsent(entry.getValue().groupId(), k -> new HashSet<>()).add(entry.getKey());
+                groups.computeIfAbsent(entry.getValue().groupId(), k -> new HashSet<>())
+                        .add(entry.getKey());
             }
 
             List<UUID> orderedGroupIds = new ArrayList<>(groups.keySet());
@@ -825,7 +1039,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 context.getMatrices().translate(guiX + slot.x + 4, guiY + slot.y + 4);
                 context.getMatrices().scale(0.5f, 0.5f);
 
-                com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
+                com.mojang.blaze3d.pipeline.RenderPipeline pipeline =
+                        net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
                 context.drawTexture(pipeline, ModTextures.ICON_CONFLICT, 0, 0, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, -1);
 
                 context.getMatrices().popMatrix();
@@ -913,7 +1128,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 int listViewH = layout.listH - 38;
                 float maxListScroll = Math.max(0, session.previewItems.size() * 18 - listViewH);
 
-                session.listScrollY = MathHelper.clamp(session.listScrollY - (float)(verticalAmount * scrollSpeed), 0, maxListScroll);
+                session.listScrollY = MathHelper.clamp(
+                        session.listScrollY - (float) (verticalAmount * scrollSpeed), 0, maxListScroll);
                 session.userOverrodePreviewScroll = true;
                 return true;
             }

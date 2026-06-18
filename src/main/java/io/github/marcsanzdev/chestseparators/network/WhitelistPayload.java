@@ -1,23 +1,24 @@
 package io.github.marcsanzdev.chestseparators.network;
 
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
-import java.util.Map;
-
 // Payload for synchronizing whitelist data between the Server and the Client.
 // Used bidirectionally (C2S for saving, S2C for loading the GUI).
 public record WhitelistPayload(BlockPos pos, Map<Integer, SlotWhitelist> whitelists) implements CustomPayload {
 
-    public static final CustomPayload.Id<WhitelistPayload> ID = new CustomPayload.Id<>(Identifier.of("chestseparators", "whitelist_sync"));
+    public static final CustomPayload.Id<WhitelistPayload> ID =
+            new CustomPayload.Id<>(Identifier.of("chestseparators", "whitelist_sync"));
 
     // Custom codec for safe network transmission.
-    public static final PacketCodec<PacketByteBuf, WhitelistPayload> CODEC = PacketCodec.of(WhitelistPayload::write, WhitelistPayload::new);
+    public static final PacketCodec<PacketByteBuf, WhitelistPayload> CODEC =
+            PacketCodec.of(WhitelistPayload::write, WhitelistPayload::new);
 
     private WhitelistPayload(PacketByteBuf buf) {
         this(buf.readBlockPos(), readMap(buf));

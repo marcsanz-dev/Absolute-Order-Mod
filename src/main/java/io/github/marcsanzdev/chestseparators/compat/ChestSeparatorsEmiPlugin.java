@@ -16,7 +16,9 @@ public class ChestSeparatorsEmiPlugin implements EmiPlugin {
             ChestSeparatorsEditor editor = ChestSeparatorsEditor.getInstance();
 
             // While the editor is active, claim the entire screen to prevent EMI from rendering over it.
-            if (editor != null && editor.getSession() != null && editor.getSession().currentState != EditorState.HIDDEN) {
+            if (editor != null
+                    && editor.getSession() != null
+                    && editor.getSession().currentState != EditorState.HIDDEN) {
                 consumer.accept(new Bounds(0, 0, 10000, 10000));
             }
         });

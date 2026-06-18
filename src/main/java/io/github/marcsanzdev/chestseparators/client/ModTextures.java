@@ -51,7 +51,6 @@ public class ModTextures {
 
     public static final Identifier ICON_SEARCH = Identifier.of(MOD_ID, "textures/gui/icon_search.png");
 
-
     public static final Identifier ICON_UNDO = Identifier.of(MOD_ID, "textures/gui/icon_ctrl_z.png");
     public static final Identifier ICON_REDO = Identifier.of(MOD_ID, "textures/gui/icon_ctrl_y.png");
 

@@ -2,10 +2,9 @@ package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
+import java.util.UUID;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
-
-import java.util.UUID;
 
 public class EditorGeometry {
 
@@ -36,14 +35,18 @@ public class EditorGeometry {
     }
 
     public int calculateAction(Slot slot, double mouseX, double mouseY) {
-        int guiX = accessor.getX(); int guiY = accessor.getY();
-        double relativeX = mouseX - (guiX + slot.x); double relativeY = mouseY - (guiY + slot.y);
+        int guiX = accessor.getX();
+        int guiY = accessor.getY();
+        double relativeX = mouseX - (guiX + slot.x);
+        double relativeY = mouseY - (guiY + slot.y);
 
         // Shrink the dead zone (ACTION_BG) to a small 4x4 pixel square in the exact center.
         if (relativeX >= 6 && relativeX <= 10 && relativeY >= 6 && relativeY <= 10) return ChestConfigManager.ACTION_BG;
 
-        double distTop = Math.abs(relativeY); double distBottom = Math.abs(relativeY - 16);
-        double distLeft = Math.abs(relativeX); double distRight = Math.abs(relativeX - 16);
+        double distTop = Math.abs(relativeY);
+        double distBottom = Math.abs(relativeY - 16);
+        double distLeft = Math.abs(relativeX);
+        double distRight = Math.abs(relativeX - 16);
         double minDist = Math.min(Math.min(distTop, distBottom), Math.min(distLeft, distRight));
 
         // Increase the edge detection range to cover the rest of the slot
@@ -57,15 +60,18 @@ public class EditorGeometry {
     }
 
     public String calculateTraceStep(Slot hoverSlot, double mouseX, double mouseY) {
-        int guiX = accessor.getX(); int guiY = accessor.getY();
+        int guiX = accessor.getX();
+        int guiY = accessor.getY();
 
         if (session.lockedTraceAxis == 1) {
             // A pull of more than 7.5 px away from the locked horizontal axis transitions to vertical rail.
             if (Math.abs(mouseY - session.lockedLineCoord) > 7.5) {
                 session.lockedTraceAxis = 2;
                 double relativeX = mouseX - (guiX + hoverSlot.x);
-                double distLeft = Math.abs(relativeX); double distRight = Math.abs(relativeX - 16);
-                session.lockedTraceAction = (distLeft <= distRight) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
+                double distLeft = Math.abs(relativeX);
+                double distRight = Math.abs(relativeX - 16);
+                session.lockedTraceAction =
+                        (distLeft <= distRight) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
                 session.lockedLineCoord = (distLeft <= distRight) ? (guiX + hoverSlot.x) : (guiX + hoverSlot.x + 16);
                 session.lockedTraceRowCol = hoverSlot.getIndex() % 9;
                 return hoverSlot.getIndex() + "_" + session.lockedTraceAction;
@@ -79,8 +85,10 @@ public class EditorGeometry {
             if (Math.abs(mouseX - session.lockedLineCoord) > 7.5) {
                 session.lockedTraceAxis = 1;
                 double relativeY = mouseY - (guiY + hoverSlot.y);
-                double distTop = Math.abs(relativeY); double distBottom = Math.abs(relativeY - 16);
-                session.lockedTraceAction = (distTop <= distBottom) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
+                double distTop = Math.abs(relativeY);
+                double distBottom = Math.abs(relativeY - 16);
+                session.lockedTraceAction =
+                        (distTop <= distBottom) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
                 session.lockedLineCoord = (distTop <= distBottom) ? (guiY + hoverSlot.y) : (guiY + hoverSlot.y + 16);
                 session.lockedTraceRowCol = hoverSlot.getIndex() / 9;
                 return hoverSlot.getIndex() + "_" + session.lockedTraceAction;
@@ -104,27 +112,35 @@ public class EditorGeometry {
         // Spanning multiple rows AND columns is always a 2-D rectangle.
         if (minRow != maxRow && minCol != maxCol) return true;
 
-        int guiX = accessor.getX(); int guiY = accessor.getY();
+        int guiX = accessor.getX();
+        int guiY = accessor.getY();
 
         if (minRow == maxRow) {
             // Crossing the slot midpoint vertically while on a horizontal edge converts to a rectangle.
-            if (session.currentDragAction == ChestConfigManager.ACTION_TOP && mouseY > (guiY + session.dragStartSlot.y + 8)) return true;
-            if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && mouseY < (guiY + session.dragStartSlot.y + 8)) return true;
+            if (session.currentDragAction == ChestConfigManager.ACTION_TOP
+                    && mouseY > (guiY + session.dragStartSlot.y + 8)) return true;
+            if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM
+                    && mouseY < (guiY + session.dragStartSlot.y + 8)) return true;
 
             // Dragging a left/right edge across multiple columns also forms a rectangle.
-            if (minCol != maxCol && (session.currentDragAction == ChestConfigManager.ACTION_LEFT || session.currentDragAction == ChestConfigManager.ACTION_RIGHT)) return true;
+            if (minCol != maxCol
+                    && (session.currentDragAction == ChestConfigManager.ACTION_LEFT
+                            || session.currentDragAction == ChestConfigManager.ACTION_RIGHT)) return true;
         }
 
         if (minCol == maxCol) {
             // Crossing the slot midpoint horizontally while on a vertical edge converts to a rectangle.
-            if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && mouseX > (guiX + session.dragStartSlot.x + 8)) return true;
-            if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && mouseX < (guiX + session.dragStartSlot.x + 8)) return true;
+            if (session.currentDragAction == ChestConfigManager.ACTION_LEFT
+                    && mouseX > (guiX + session.dragStartSlot.x + 8)) return true;
+            if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT
+                    && mouseX < (guiX + session.dragStartSlot.x + 8)) return true;
 
             // Dragging a top/bottom edge across multiple rows also forms a rectangle.
-            if (minRow != maxRow && (session.currentDragAction == ChestConfigManager.ACTION_TOP || session.currentDragAction == ChestConfigManager.ACTION_BOTTOM)) return true;
+            if (minRow != maxRow
+                    && (session.currentDragAction == ChestConfigManager.ACTION_TOP
+                            || session.currentDragAction == ChestConfigManager.ACTION_BOTTOM)) return true;
         }
 
         return false;
     }
-
 }

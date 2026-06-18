@@ -13,7 +13,8 @@ public class WideButtonWidget extends CustomWidget {
     public Identifier disabledIconFallback;
     public boolean keepNormalTextColor = false;
 
-    public WideButtonWidget(int x, int y, int width, int height, String label, Identifier icon, Runnable onClickAction) {
+    public WideButtonWidget(
+            int x, int y, int width, int height, String label, Identifier icon, Runnable onClickAction) {
         super(x, y, width, height, onClickAction);
         this.label = label;
         this.icon = icon;
@@ -62,7 +63,7 @@ public class WideButtonWidget extends CustomWidget {
         }
 
         context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float)(x + 22), (float)(y + (height - 9 * scale) / 2));
+        context.getMatrices().translate((float) (x + 22), (float) (y + (height - 9 * scale) / 2));
         context.getMatrices().scale(scale, scale);
         // Shadow only when in dark mode
         context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, iconColor, isDark);
@@ -71,7 +72,8 @@ public class WideButtonWidget extends CustomWidget {
         if (hover) {
             context.drawStrokedRectangle(x, y, width, height, 0x40FFFFFF);
             if (this.tooltipText != null && !this.isDisabled) {
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
+                context.drawTooltip(
+                        MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
             }
         }
     }
@@ -106,7 +108,7 @@ public class WideButtonWidget extends CustomWidget {
         }
 
         context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float)(x + 22), (float)(y + (height - 9 * scale) / 2));
+        context.getMatrices().translate((float) (x + 22), (float) (y + (height - 9 * scale) / 2));
         context.getMatrices().scale(scale, scale);
         context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, disabledColor, isDark);
         context.getMatrices().popMatrix();

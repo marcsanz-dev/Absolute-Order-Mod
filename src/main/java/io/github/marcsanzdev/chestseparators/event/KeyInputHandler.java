@@ -22,9 +22,9 @@ public class KeyInputHandler {
                 GlobalChestConfig.instance.showEditButtons = !GlobalChestConfig.instance.showEditButtons;
                 GlobalChestConfig.saveConfig();
 
-                Text msg = GlobalChestConfig.instance.showEditButtons ?
-                        Text.translatable("message.chestseparators.edit_buttons_visible") :
-                        Text.translatable("message.chestseparators.edit_buttons_hidden");
+                Text msg = GlobalChestConfig.instance.showEditButtons
+                        ? Text.translatable("message.chestseparators.edit_buttons_visible")
+                        : Text.translatable("message.chestseparators.edit_buttons_hidden");
                 client.player.sendMessage(msg.copy().formatted(Formatting.GRAY), true);
             }
 
@@ -33,9 +33,9 @@ public class KeyInputHandler {
                 GlobalChestConfig.instance.showLeftPanel = !GlobalChestConfig.instance.showLeftPanel;
                 GlobalChestConfig.saveConfig();
 
-                Text msg = GlobalChestConfig.instance.showLeftPanel ?
-                        Text.translatable("message.chestseparators.preview_panel_visible") :
-                        Text.translatable("message.chestseparators.preview_panel_hidden");
+                Text msg = GlobalChestConfig.instance.showLeftPanel
+                        ? Text.translatable("message.chestseparators.preview_panel_visible")
+                        : Text.translatable("message.chestseparators.preview_panel_hidden");
                 client.player.sendMessage(msg.copy().formatted(Formatting.GRAY), true);
             }
 
@@ -45,9 +45,12 @@ public class KeyInputHandler {
 
     public static boolean isModifierPressed() {
         if (net.minecraft.client.MinecraftClient.getInstance().getWindow() == null) return false;
-        long window = net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
+        long window =
+                net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
 
-        int currentKeyCode = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(ModKeyBindings.showPanelModifierKey).getCode();
+        int currentKeyCode = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
+                        ModKeyBindings.showPanelModifierKey)
+                .getCode();
         return org.lwjgl.glfw.GLFW.glfwGetKey(window, currentKeyCode) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
     }
 }

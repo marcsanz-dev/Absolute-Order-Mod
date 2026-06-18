@@ -5,14 +5,14 @@ import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import org.lwjgl.glfw.GLFW;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.client.MinecraftClient;
+import org.lwjgl.glfw.GLFW;
 
 public class EditorInputHandler {
 
@@ -24,7 +24,13 @@ public class EditorInputHandler {
 
     private final EditorLayout layout;
 
-    public EditorInputHandler(ChestSeparatorsEditor editor, EditorSessionData session, EditorGeometry geometry, EditorLayout layout, HandledScreen<?> screen, HandledScreenAccessor accessor) {
+    public EditorInputHandler(
+            ChestSeparatorsEditor editor,
+            EditorSessionData session,
+            EditorGeometry geometry,
+            EditorLayout layout,
+            HandledScreen<?> screen,
+            HandledScreenAccessor accessor) {
         this.editor = editor;
         this.session = session;
         this.geometry = geometry;
@@ -48,7 +54,8 @@ public class EditorInputHandler {
             }
 
             if (button == 0 && session.isDraggingLine) {
-                if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS) {
+                if (session.currentState == EditorState.VIEW_GROUPS
+                        || session.currentState == EditorState.SELECT_SLOTS) {
 
                     editor.screenViewGroups.mouseReleased(context.x(), context.y(), button);
 
@@ -90,25 +97,37 @@ public class EditorInputHandler {
                 int lsbH = layout.lsbH;
 
                 if (session.isDraggingMainScroll) {
-                    int totalGridHeight = (int)Math.ceil(session.filteredItems.size() / 9.0) * 18;
+                    int totalGridHeight = (int) Math.ceil(session.filteredItems.size() / 9.0) * 18;
                     float maxGridScroll = Math.max(0, totalGridHeight - gridViewH);
-                    int thumbH = maxGridScroll > 0 ? Math.max(10, (int)((gridViewH / (float)Math.max(1, totalGridHeight)) * msbH)) : msbH;
-                    float percent = (float)(mouseY - msbY - (thumbH / 2.0f)) / (msbH - thumbH);
+                    int thumbH = maxGridScroll > 0
+                            ? Math.max(10, (int) ((gridViewH / (float) Math.max(1, totalGridHeight)) * msbH))
+                            : msbH;
+                    float percent = (float) (mouseY - msbY - (thumbH / 2.0f)) / (msbH - thumbH);
                     session.gridScrollY = MathHelper.clamp(percent * maxGridScroll, 0, maxGridScroll);
                     return false;
                 }
                 if (session.isDraggingListScroll) {
                     java.util.List<String> displayedAllowedItems = new java.util.ArrayList<>();
-                    String wlSearch = editor.whitelistSearchBox != null ? editor.whitelistSearchBox.getText().toLowerCase() : "";
+                    String wlSearch = editor.whitelistSearchBox != null
+                            ? editor.whitelistSearchBox.getText().toLowerCase()
+                            : "";
                     for (String id : session.currentAllowedItems) {
-                        net.minecraft.item.Item item = net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(id));
-                        if (item != null && (wlSearch.isEmpty() || item.getName().getString().toLowerCase().contains(wlSearch))) displayedAllowedItems.add(id);
+                        net.minecraft.item.Item item =
+                                net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(id));
+                        if (item != null
+                                && (wlSearch.isEmpty()
+                                        || item.getName()
+                                                .getString()
+                                                .toLowerCase()
+                                                .contains(wlSearch))) displayedAllowedItems.add(id);
                     }
 
                     int totalListHeight = displayedAllowedItems.size() * 18;
                     float maxListScroll = Math.max(0, totalListHeight - listViewH);
-                    int thumbH = maxListScroll > 0 ? Math.max(10, (int)((listViewH / (float)Math.max(1, totalListHeight)) * lsbH)) : lsbH;
-                    float percent = (float)(mouseY - lsbY - (thumbH / 2.0f)) / (lsbH - thumbH);
+                    int thumbH = maxListScroll > 0
+                            ? Math.max(10, (int) ((listViewH / (float) Math.max(1, totalListHeight)) * lsbH))
+                            : lsbH;
+                    float percent = (float) (mouseY - lsbY - (thumbH / 2.0f)) / (lsbH - thumbH);
                     session.listScrollY = MathHelper.clamp(percent * maxListScroll, 0, maxListScroll);
                     return false;
                 }
@@ -132,22 +151,31 @@ public class EditorInputHandler {
     }
 
     private void registerScrollEvent() {
-        net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents.allowMouseScroll(screen).register((_screen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
+        net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents.allowMouseScroll(screen)
+                .register((_screen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
+                    if (session.currentState == EditorState.VIEW_GROUPS
+                            || session.currentState == EditorState.SELECT_SLOTS) {
+                        if (editor.screenViewGroups.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount))
+                            return false;
+                    }
+                    if (session.currentState == EditorState.EDIT_FILTER) {
+                        if (editor.screenEditFilter.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount))
+                            return false;
+                    }
 
-            if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS) {
-                if (editor.screenViewGroups.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return false;
-            }
-            if (session.currentState == EditorState.EDIT_FILTER) {
-                if (editor.screenEditFilter.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return false;
-            }
-
-            return true;
-        });
+                    return true;
+                });
     }
 
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
-        boolean isControlDown = org.lwjgl.glfw.GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) == org.lwjgl.glfw.GLFW.GLFW_PRESS ||
-                org.lwjgl.glfw.GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        boolean isControlDown = org.lwjgl.glfw.GLFW.glfwGetKey(
+                                MinecraftClient.getInstance().getWindow().getHandle(),
+                                org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL)
+                        == org.lwjgl.glfw.GLFW.GLFW_PRESS
+                || org.lwjgl.glfw.GLFW.glfwGetKey(
+                                MinecraftClient.getInstance().getWindow().getHandle(),
+                                org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL)
+                        == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
         if (session.currentState == EditorState.EDIT_FILTER) {
             if (editor.screenEditFilter.keyPressed(input)) {
@@ -156,9 +184,9 @@ public class EditorInputHandler {
         }
 
         if (isControlDown && session.currentState != EditorState.HIDDEN) {
-            boolean isTyping = (session.currentState == EditorState.EDIT_FILTER) &&
-                    ((editor.searchBox != null && editor.searchBox.isFocused()) ||
-                            (editor.whitelistSearchBox != null && editor.whitelistSearchBox.isFocused()));
+            boolean isTyping = (session.currentState == EditorState.EDIT_FILTER)
+                    && ((editor.searchBox != null && editor.searchBox.isFocused())
+                            || (editor.whitelistSearchBox != null && editor.whitelistSearchBox.isFocused()));
 
             if (!isTyping) {
                 // Undo
@@ -167,7 +195,9 @@ public class EditorInputHandler {
                         ChestConfigManager.getInstance().undo();
                         editor.saveSmart();
                         editor.playClickSound(0.8f);
-                    } else { editor.playClickSound(0.5f); }
+                    } else {
+                        editor.playClickSound(0.5f);
+                    }
                     return true;
                 }
                 // Redo
@@ -176,7 +206,9 @@ public class EditorInputHandler {
                         ChestConfigManager.getInstance().redo();
                         editor.saveSmart();
                         editor.playClickSound(0.8f);
-                    } else { editor.playClickSound(0.5f); }
+                    } else {
+                        editor.playClickSound(0.5f);
+                    }
                     return true;
                 }
                 // Copy
@@ -204,14 +236,24 @@ public class EditorInputHandler {
                             editor.saveSmart();
                             editor.sendWhitelistToServer();
 
-                            if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().player.currentScreenHandler instanceof net.minecraft.screen.GenericContainerScreenHandler genericHandler) {
-                                if (genericHandler.getInventory() instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
-                                    provider.setWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
+                            if (MinecraftClient.getInstance().player != null
+                                    && MinecraftClient.getInstance().player.currentScreenHandler
+                                            instanceof
+                                            net.minecraft.screen.GenericContainerScreenHandler
+                                            genericHandler) {
+                                if (genericHandler.getInventory()
+                                        instanceof
+                                        io.github.marcsanzdev.chestseparators.access.IWhitelistProvider
+                                        provider) {
+                                    provider.setWhitelists(
+                                            ChestConfigManager.getInstance().getCurrentWhitelists());
                                 }
                             }
                             editor.showStatus(Text.literal("Filters Pasted!"), Formatting.GREEN);
                             editor.playClickSound(1.0f);
-                        } else { editor.playClickSound(0.5f); }
+                        } else {
+                            editor.playClickSound(0.5f);
+                        }
                     } else if (session.currentState == EditorState.DRAW_LINES) {
                         int tabMode = session.currentTab;
                         boolean pasted = false;
@@ -220,11 +262,13 @@ public class EditorInputHandler {
                             ChestConfigManager.getInstance().saveSnapshot();
                             ChestConfigManager.getInstance().pasteLinesFromClipboard();
                             pasted = true;
-                        } else if (tabMode == 1 && ChestConfigManager.getInstance().hasBackgroundsClipboardData()) {
+                        } else if (tabMode == 1
+                                && ChestConfigManager.getInstance().hasBackgroundsClipboardData()) {
                             ChestConfigManager.getInstance().saveSnapshot();
                             ChestConfigManager.getInstance().pasteBackgroundsFromClipboard();
                             pasted = true;
-                        } else if (tabMode == 2 && ChestConfigManager.getInstance().hasClipboardData()) {
+                        } else if (tabMode == 2
+                                && ChestConfigManager.getInstance().hasClipboardData()) {
                             ChestConfigManager.getInstance().saveSnapshot();
                             ChestConfigManager.getInstance().pasteFromClipboard();
                             pasted = true;
@@ -234,7 +278,9 @@ public class EditorInputHandler {
                             editor.saveSmart();
                             editor.showStatus(Text.literal("Pasted!"), Formatting.GREEN);
                             editor.playClickSound(1.0f);
-                        } else { editor.playClickSound(0.5f); }
+                        } else {
+                            editor.playClickSound(0.5f);
+                        }
                     }
                     return true;
                 }

@@ -2,10 +2,9 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.Map;
 import net.minecraft.inventory.SimpleInventory;
 import org.spongepowered.asm.mixin.Mixin;
-
-import java.util.Map;
 
 /**
  * Adds {@link IWhitelistProvider} to {@link SimpleInventory}, which is used in two contexts:

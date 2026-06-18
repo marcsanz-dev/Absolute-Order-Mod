@@ -10,8 +10,10 @@ import net.minecraft.util.math.BlockPos;
 // or to release the lock when closing the editor.
 public record EditorLockRequestPayload(BlockPos pos, boolean isLocking) implements CustomPayload {
 
-    public static final CustomPayload.Id<EditorLockRequestPayload> ID = new CustomPayload.Id<>(Identifier.of("chestseparators", "editor_lock_request"));
-    public static final PacketCodec<PacketByteBuf, EditorLockRequestPayload> CODEC = PacketCodec.of(EditorLockRequestPayload::write, EditorLockRequestPayload::new);
+    public static final CustomPayload.Id<EditorLockRequestPayload> ID =
+            new CustomPayload.Id<>(Identifier.of("chestseparators", "editor_lock_request"));
+    public static final PacketCodec<PacketByteBuf, EditorLockRequestPayload> CODEC =
+            PacketCodec.of(EditorLockRequestPayload::write, EditorLockRequestPayload::new);
 
     private EditorLockRequestPayload(PacketByteBuf buf) {
         this(buf.readBlockPos(), buf.readBoolean());

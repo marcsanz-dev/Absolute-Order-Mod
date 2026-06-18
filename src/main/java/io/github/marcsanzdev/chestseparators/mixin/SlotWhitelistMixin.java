@@ -3,6 +3,7 @@ package io.github.marcsanzdev.chestseparators.mixin;
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.util.ClickTracker;
+import java.util.Map;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -13,8 +14,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.Map;
 
 /**
  * Intercepts {@link Slot#canInsert} to enforce whitelist rules for direct (cursor) and
@@ -27,8 +26,12 @@ import java.util.Map;
 @Mixin(Slot.class)
 public abstract class SlotWhitelistMixin {
 
-    @Shadow @Final public Inventory inventory;
-    @Shadow public abstract int getIndex();
+    @Shadow
+    @Final
+    public Inventory inventory;
+
+    @Shadow
+    public abstract int getIndex();
 
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
     public void onCanInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {

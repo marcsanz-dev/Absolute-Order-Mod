@@ -13,7 +13,8 @@ public class ActionIconButtonWidget extends CustomWidget {
     public Identifier icon;
     public int baseColor;
 
-    public ActionIconButtonWidget(int x, int y, int width, int height, String label, Identifier icon, int baseColor, Runnable onClickAction) {
+    public ActionIconButtonWidget(
+            int x, int y, int width, int height, String label, Identifier icon, int baseColor, Runnable onClickAction) {
         super(x, y, width, height, onClickAction);
         this.label = label;
         this.icon = icon;
@@ -71,7 +72,7 @@ public class ActionIconButtonWidget extends CustomWidget {
             }
         }
 
-        int scaledTextWidth = (int)(MinecraftClient.getInstance().textRenderer.getWidth(displayText) * scale);
+        int scaledTextWidth = (int) (MinecraftClient.getInstance().textRenderer.getWidth(displayText) * scale);
         int contentWidth = iconSpace + scaledTextWidth;
         int startX = x + (width - contentWidth) / 2;
 
@@ -86,13 +87,14 @@ public class ActionIconButtonWidget extends CustomWidget {
         boolean drawShadow = (isDark || renderBaseColor != 0xFFC6C6C6);
 
         context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float)startX, (float)(y + (height - 9 * scale) / 2));
+        context.getMatrices().translate((float) startX, (float) (y + (height - 9 * scale) / 2));
         context.getMatrices().scale(scale, scale);
         context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, textColor, drawShadow);
         context.getMatrices().popMatrix();
 
         if (hover && this.tooltipText != null && !this.isDisabled) {
-            context.drawTooltip(MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
+            context.drawTooltip(
+                    MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
         }
     }
 }

@@ -6,7 +6,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -14,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.input.CharInput;
 
 // Injects custom rendering and input handling logic into the base HandledScreen class.
 // This allows the mod to overlay the editor UI onto existing vanilla container screens.
@@ -36,9 +33,9 @@ public abstract class GenericContainerScreenMixin extends Screen {
         // GenericContainerScreen handles standard Chests, Barrels, Chest Minecarts, and Chest Boats.
         // ShulkerBoxScreen is explicitly allowed for Shulker Box support.
         // HorseScreen is allowed for donkeys, mules, llamas, and alpacas (entities with cargo slots).
-        boolean isValidScreen = (Object) this instanceof GenericContainerScreen ||
-                (Object) this instanceof ShulkerBoxScreen ||
-                isHorseScreenWithCargo();
+        boolean isValidScreen = (Object) this instanceof GenericContainerScreen
+                || (Object) this instanceof ShulkerBoxScreen
+                || isHorseScreenWithCargo();
 
         if (!isValidScreen) return;
 
@@ -110,11 +107,16 @@ public abstract class GenericContainerScreenMixin extends Screen {
             }
 
             // Deposit hotkeys only fire when no editor sub-menu is active.
-            if (!this.editor.isEditMode() && io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showDepositButton) {
+            if (!this.editor.isEditMode()
+                    && io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showDepositButton) {
 
                 int currentKey = input.key();
-                int depositFilterKey = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings.depositFilterKey).getCode();
-                int depositAllKey = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings.depositAllKey).getCode();
+                int depositFilterKey = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
+                                io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings.depositFilterKey)
+                        .getCode();
+                int depositAllKey = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
+                                io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings.depositAllKey)
+                        .getCode();
 
                 if (currentKey == depositFilterKey) {
                     this.editor.depositClickTime = System.currentTimeMillis();
@@ -122,8 +124,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
                     this.editor.playClickSound(1.2f);
                     cir.setReturnValue(true);
                     return;
-                }
-                else if (currentKey == depositAllKey) {
+                } else if (currentKey == depositAllKey) {
                     this.editor.depositClickTime = System.currentTimeMillis();
                     this.editor.executeDeposit(true);
                     this.editor.playClickSound(1.2f);
@@ -159,7 +160,12 @@ public abstract class GenericContainerScreenMixin extends Screen {
     }
 
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
-    private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
+    private void onMouseScrolled(
+            double mouseX,
+            double mouseY,
+            double horizontalAmount,
+            double verticalAmount,
+            CallbackInfoReturnable<Boolean> cir) {
         if (this.editor != null && this.editor.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }

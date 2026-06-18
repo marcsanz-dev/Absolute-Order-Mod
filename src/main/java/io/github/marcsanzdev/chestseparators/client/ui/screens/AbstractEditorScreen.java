@@ -6,10 +6,9 @@ import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.CustomWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
-import net.minecraft.client.gui.DrawContext;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.gui.DrawContext;
 
 public abstract class AbstractEditorScreen implements IEditorSubScreen {
 
@@ -53,10 +52,25 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
     }
 
     // Default no-op implementations so sub-screens only override what they need.
-    @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) { return false; }
-    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) { return false; }
-    @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) { return false; }
-    @Override public boolean charTyped(char chr, int modifiers) { return false; }
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return false;
+    }
+
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        return false;
+    }
 
     protected void drawDarkBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
         boolean isDark = GlobalChestConfig.instance.darkMode;

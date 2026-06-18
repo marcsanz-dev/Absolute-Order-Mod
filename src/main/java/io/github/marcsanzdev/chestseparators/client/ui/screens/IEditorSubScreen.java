@@ -11,8 +11,12 @@ public interface IEditorSubScreen {
 
     // Mouse and keyboard event delegates.
     boolean mouseClicked(double mouseX, double mouseY, int button);
+
     boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY);
+
     boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount);
+
     boolean keyPressed(int keyCode, int scanCode, int modifiers);
+
     boolean charTyped(char chr, int modifiers);
 }

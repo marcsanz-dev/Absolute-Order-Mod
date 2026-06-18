@@ -9,8 +9,10 @@ import net.minecraft.util.math.BlockPos;
 // Sent by the server to inform the client if the lock was granted or denied.
 public record EditorLockResponsePayload(BlockPos pos, boolean granted) implements CustomPayload {
 
-    public static final CustomPayload.Id<EditorLockResponsePayload> ID = new CustomPayload.Id<>(Identifier.of("chestseparators", "editor_lock_response"));
-    public static final PacketCodec<PacketByteBuf, EditorLockResponsePayload> CODEC = PacketCodec.of(EditorLockResponsePayload::write, EditorLockResponsePayload::new);
+    public static final CustomPayload.Id<EditorLockResponsePayload> ID =
+            new CustomPayload.Id<>(Identifier.of("chestseparators", "editor_lock_response"));
+    public static final PacketCodec<PacketByteBuf, EditorLockResponsePayload> CODEC =
+            PacketCodec.of(EditorLockResponsePayload::write, EditorLockResponsePayload::new);
 
     private EditorLockResponsePayload(PacketByteBuf buf) {
         this(buf.readBlockPos(), buf.readBoolean());

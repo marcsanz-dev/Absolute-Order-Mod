@@ -1,27 +1,25 @@
 package io.github.marcsanzdev.chestseparators.data;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtSizeTracker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.enums.ChestType;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.ArrayList;
 
 @Environment(EnvType.CLIENT)
 public class ChestConfigManager {
@@ -68,6 +66,7 @@ public class ChestConfigManager {
 
     private static class Snapshot {
         final Map<Integer, int[]> configState;
+
         Snapshot(Map<Integer, int[]> config) {
             this.configState = new HashMap<>();
             for (Map.Entry<Integer, int[]> entry : config.entrySet()) {
@@ -86,8 +85,13 @@ public class ChestConfigManager {
         redoStack.clear();
     }
 
-    public boolean canUndo() { return !undoStack.isEmpty(); }
-    public boolean canRedo() { return !redoStack.isEmpty(); }
+    public boolean canUndo() {
+        return !undoStack.isEmpty();
+    }
+
+    public boolean canRedo() {
+        return !redoStack.isEmpty();
+    }
 
     public void undo() {
         if (!canUndo()) return;
@@ -110,14 +114,19 @@ public class ChestConfigManager {
 
     private static class WhitelistSnapshot {
         final Map<Integer, SlotWhitelist> whitelistState;
+
         WhitelistSnapshot(Map<Integer, SlotWhitelist> whitelists) {
             this.whitelistState = new HashMap<>();
             for (Map.Entry<Integer, SlotWhitelist> entry : whitelists.entrySet()) {
                 SlotWhitelist orig = entry.getValue();
-                this.whitelistState.put(entry.getKey(), new SlotWhitelist(
-                        orig.groupId(), new ArrayList<>(orig.allowedItems()),
-                        orig.allowManual(), orig.allowShift(), orig.allowHopper()
-                ));
+                this.whitelistState.put(
+                        entry.getKey(),
+                        new SlotWhitelist(
+                                orig.groupId(),
+                                new ArrayList<>(orig.allowedItems()),
+                                orig.allowManual(),
+                                orig.allowShift(),
+                                orig.allowHopper()));
             }
         }
     }
@@ -131,8 +140,13 @@ public class ChestConfigManager {
         wlRedoStack.clear();
     }
 
-    public boolean canUndoWhitelist() { return !wlUndoStack.isEmpty(); }
-    public boolean canRedoWhitelist() { return !wlRedoStack.isEmpty(); }
+    public boolean canUndoWhitelist() {
+        return !wlUndoStack.isEmpty();
+    }
+
+    public boolean canRedoWhitelist() {
+        return !wlRedoStack.isEmpty();
+    }
 
     public void undoWhitelist() {
         if (!canUndoWhitelist()) return;
@@ -150,10 +164,14 @@ public class ChestConfigManager {
         this.currentWhitelists.clear();
         for (Map.Entry<Integer, SlotWhitelist> entry : snapshot.whitelistState.entrySet()) {
             SlotWhitelist orig = entry.getValue();
-            this.currentWhitelists.put(entry.getKey(), new SlotWhitelist(
-                    orig.groupId(), new ArrayList<>(orig.allowedItems()),
-                    orig.allowManual(), orig.allowShift(), orig.allowHopper()
-            ));
+            this.currentWhitelists.put(
+                    entry.getKey(),
+                    new SlotWhitelist(
+                            orig.groupId(),
+                            new ArrayList<>(orig.allowedItems()),
+                            orig.allowManual(),
+                            orig.allowShift(),
+                            orig.allowHopper()));
         }
     }
 
@@ -164,7 +182,6 @@ public class ChestConfigManager {
         wlRedoStack.clear();
     }
 
-
     // --- PATH MANAGEMENT (NIO) ---
 
     private String getWorldFolderName() {
@@ -172,7 +189,11 @@ public class ChestConfigManager {
         String name = "unknown_world";
 
         if (client.isInSingleplayer() && client.getServer() != null) {
-            name = "sp_" + client.getServer().getSavePath(net.minecraft.util.WorldSavePath.ROOT).getFileName().toString();
+            name = "sp_"
+                    + client.getServer()
+                            .getSavePath(net.minecraft.util.WorldSavePath.ROOT)
+                            .getFileName()
+                            .toString();
         } else if (client.getCurrentServerEntry() != null) {
             name = "mp_" + client.getCurrentServerEntry().address;
         }
@@ -231,7 +252,6 @@ public class ChestConfigManager {
         return dir.resolve("shulker_" + uuid.toString() + ".dat");
     }
 
-
     // --- CHEST LOGIC ---
 
     private int[] getSlotColors(int slotIndex) {
@@ -275,16 +295,21 @@ public class ChestConfigManager {
     public void clearAllBackgrounds() {
         for (Map.Entry<Integer, int[]> entry : currentChestConfig.entrySet()) entry.getValue()[IDX_BG] = 0;
         currentChestConfig.entrySet().removeIf(entry -> {
-            int[] c = entry.getValue(); return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
+            int[] c = entry.getValue();
+            return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
         });
     }
 
     public void clearAllLines() {
         for (Map.Entry<Integer, int[]> entry : currentChestConfig.entrySet()) {
-            entry.getValue()[IDX_TOP] = 0; entry.getValue()[IDX_BOTTOM] = 0; entry.getValue()[IDX_LEFT] = 0; entry.getValue()[IDX_RIGHT] = 0;
+            entry.getValue()[IDX_TOP] = 0;
+            entry.getValue()[IDX_BOTTOM] = 0;
+            entry.getValue()[IDX_LEFT] = 0;
+            entry.getValue()[IDX_RIGHT] = 0;
         }
         currentChestConfig.entrySet().removeIf(entry -> {
-            int[] c = entry.getValue(); return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
+            int[] c = entry.getValue();
+            return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
         });
     }
 
@@ -313,7 +338,7 @@ public class ChestConfigManager {
         for (Map.Entry<Integer, int[]> entry : this.currentChestConfig.entrySet()) {
             int[] c = entry.getValue();
             if (c[0] != 0 || c[1] != 0 || c[2] != 0 || c[3] != 0) {
-                this.linesClipboard.put(entry.getKey(), new int[]{c[0], c[1], c[2], c[3], 0});
+                this.linesClipboard.put(entry.getKey(), new int[] {c[0], c[1], c[2], c[3], 0});
             }
         }
     }
@@ -323,7 +348,10 @@ public class ChestConfigManager {
             for (Map.Entry<Integer, int[]> entry : this.linesClipboard.entrySet()) {
                 int[] current = getSlotColors(entry.getKey());
                 int[] clip = entry.getValue();
-                current[0] = clip[0]; current[1] = clip[1]; current[2] = clip[2]; current[3] = clip[3];
+                current[0] = clip[0];
+                current[1] = clip[1];
+                current[2] = clip[2];
+                current[3] = clip[3];
             }
         }
     }
@@ -336,7 +364,7 @@ public class ChestConfigManager {
         this.bgClipboard = new HashMap<>();
         for (Map.Entry<Integer, int[]> entry : this.currentChestConfig.entrySet()) {
             if (entry.getValue()[4] != 0) {
-                this.bgClipboard.put(entry.getKey(), new int[]{0, 0, 0, 0, entry.getValue()[4]});
+                this.bgClipboard.put(entry.getKey(), new int[] {0, 0, 0, 0, entry.getValue()[4]});
             }
         }
     }
@@ -364,7 +392,11 @@ public class ChestConfigManager {
     public void clearChest(BlockPos pos, String dimensionId) {
         Path path = getFileForPos(pos, dimensionId);
         if (path != null) {
-            try { Files.deleteIfExists(path); } catch (IOException e) { e.printStackTrace(); }
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -380,7 +412,8 @@ public class ChestConfigManager {
             ChestType type = state.get(ChestBlock.CHEST_TYPE);
             if (type != ChestType.SINGLE) {
                 Direction facing = state.get(ChestBlock.FACING);
-                Direction neighborDir = type == ChestType.LEFT ? facing.rotateYClockwise() : facing.rotateYCounterclockwise();
+                Direction neighborDir =
+                        type == ChestType.LEFT ? facing.rotateYClockwise() : facing.rotateYCounterclockwise();
                 BlockPos neighborPos = pos.offset(neighborDir);
 
                 BlockPos primaryPos = pos.compareTo(neighborPos) < 0 ? pos : neighborPos;
@@ -390,7 +423,7 @@ public class ChestConfigManager {
                 currentChestConfig.putAll(firstData.visual);
 
                 RawData secondData = readRawData(getFileForPos(secondaryPos, dimensionId));
-                for(Map.Entry<Integer, int[]> entry : secondData.visual.entrySet()) {
+                for (Map.Entry<Integer, int[]> entry : secondData.visual.entrySet()) {
                     currentChestConfig.put(entry.getKey() + 27, entry.getValue());
                 }
                 return;
@@ -433,14 +466,17 @@ public class ChestConfigManager {
             ChestType type = state.get(ChestBlock.CHEST_TYPE);
             if (type != ChestType.SINGLE) {
                 Direction facing = state.get(ChestBlock.FACING);
-                Direction neighborDir = type == ChestType.LEFT ? facing.rotateYClockwise() : facing.rotateYCounterclockwise();
+                Direction neighborDir =
+                        type == ChestType.LEFT ? facing.rotateYClockwise() : facing.rotateYCounterclockwise();
                 BlockPos neighborPos = pos.offset(neighborDir);
 
                 BlockPos primaryPos = pos.compareTo(neighborPos) < 0 ? pos : neighborPos;
                 BlockPos secondaryPos = pos.compareTo(neighborPos) < 0 ? neighborPos : pos;
 
-                Map<Integer, int[]> firstVis = new HashMap<>(); Map<Integer, int[]> secondVis = new HashMap<>();
-                Map<Integer, SlotWhitelist> firstFil = new HashMap<>(); Map<Integer, SlotWhitelist> secondFil = new HashMap<>();
+                Map<Integer, int[]> firstVis = new HashMap<>();
+                Map<Integer, int[]> secondVis = new HashMap<>();
+                Map<Integer, SlotWhitelist> firstFil = new HashMap<>();
+                Map<Integer, SlotWhitelist> secondFil = new HashMap<>();
 
                 for (Map.Entry<Integer, int[]> entry : currentChestConfig.entrySet()) {
                     if (entry.getKey() < 27) firstVis.put(entry.getKey(), entry.getValue());
@@ -459,9 +495,17 @@ public class ChestConfigManager {
         writeRawData(currentChestConfig, currentWhitelists, getFileForPos(pos, dimensionId));
     }
 
-    public void saveEnderConfig() { writeRawData(currentChestConfig, currentWhitelists, getEnderChestFile()); }
-    public void saveEntityConfig(UUID uuid) { writeRawData(currentChestConfig, currentWhitelists, getFileForEntity(uuid)); }
-    public void saveShulkerConfig(UUID uuid) { writeRawData(currentChestConfig, currentWhitelists, getFileForShulker(uuid)); }
+    public void saveEnderConfig() {
+        writeRawData(currentChestConfig, currentWhitelists, getEnderChestFile());
+    }
+
+    public void saveEntityConfig(UUID uuid) {
+        writeRawData(currentChestConfig, currentWhitelists, getFileForEntity(uuid));
+    }
+
+    public void saveShulkerConfig(UUID uuid) {
+        writeRawData(currentChestConfig, currentWhitelists, getFileForShulker(uuid));
+    }
 
     private static class RawData {
         Map<Integer, int[]> visual = new HashMap<>();
@@ -480,10 +524,12 @@ public class ChestConfigManager {
                         try {
                             int slot = Integer.parseInt(key);
                             separatorsTag.getIntArray(key).ifPresent(arr -> {
-                                if (arr.length == 4) data.visual.put(slot, new int[]{arr[0], arr[1], arr[2], arr[3], 0});
+                                if (arr.length == 4)
+                                    data.visual.put(slot, new int[] {arr[0], arr[1], arr[2], arr[3], 0});
                                 else if (arr.length >= 5) data.visual.put(slot, arr);
                             });
-                        } catch (NumberFormatException ignored) {}
+                        } catch (NumberFormatException ignored) {
+                        }
                     }
                 });
             }
@@ -496,21 +542,25 @@ public class ChestConfigManager {
                             wlRoot.getCompound(key).ifPresent(wlTag -> {
 
                                 // Safely extract UUID from an Optional String
-                                UUID groupId = wlTag.getString("GroupId").map(str -> {
-                                    try {
-                                        return UUID.fromString(str);
-                                    } catch (Exception e) {
-                                        return UUID.randomUUID();
-                                    }
-                                }).orElseGet(UUID::randomUUID);
+                                UUID groupId = wlTag.getString("GroupId")
+                                        .map(str -> {
+                                            try {
+                                                return UUID.fromString(str);
+                                            } catch (Exception e) {
+                                                return UUID.randomUUID();
+                                            }
+                                        })
+                                        .orElseGet(UUID::randomUUID);
 
                                 java.util.List<String> items = new ArrayList<>();
 
-                                // getList() does not exist in these mappings; retrieve the raw element and cast directly.
+                                // getList() does not exist in these mappings; retrieve the raw element and cast
+                                // directly.
                                 net.minecraft.nbt.NbtElement elem = wlTag.get("AllowedItems");
                                 if (elem instanceof net.minecraft.nbt.NbtList list) {
                                     for (int i = 0; i < list.size(); i++) {
-                                        // getString(i) returns Optional in these mappings; use ifPresent to extract safely.
+                                        // getString(i) returns Optional in these mappings; use ifPresent to extract
+                                        // safely.
                                         list.getString(i).ifPresent(items::add);
                                     }
                                 }
@@ -522,18 +572,24 @@ public class ChestConfigManager {
 
                                 data.filters.put(slot, new SlotWhitelist(groupId, items, manual, shift, hopper));
                             });
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 });
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return data;
     }
 
     private void writeRawData(Map<Integer, int[]> visualConfig, Map<Integer, SlotWhitelist> filters, Path path) {
         if (path == null) return;
         if (visualConfig.isEmpty() && (filters == null || filters.isEmpty())) {
-            try { Files.deleteIfExists(path); } catch (IOException ignored) {}
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException ignored) {
+            }
             return;
         }
 
@@ -570,7 +626,11 @@ public class ChestConfigManager {
             root.put("Whitelists", wlRoot);
         }
 
-        try { NbtIo.writeCompressed(root, path); } catch (IOException e) { e.printStackTrace(); }
+        try {
+            NbtIo.writeCompressed(root, path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // --- WHITELIST DATA ---
@@ -580,7 +640,8 @@ public class ChestConfigManager {
         return currentWhitelists;
     }
 
-    public void setCurrentWhitelists(Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists) {
+    public void setCurrentWhitelists(
+            Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists) {
         this.currentWhitelists = new HashMap<>(whitelists);
     }
 
@@ -662,13 +723,19 @@ public class ChestConfigManager {
             NbtCompound root = NbtIo.readCompressed(path, NbtSizeTracker.ofUnlimitedBytes());
 
             if (root.contains("PaletteLines")) {
-                root.getIntArray("PaletteLines").ifPresent(loaded -> System.arraycopy(loaded, 0, worldCustomLineColors, 0, Math.min(loaded.length, 8)));
+                root.getIntArray("PaletteLines")
+                        .ifPresent(loaded ->
+                                System.arraycopy(loaded, 0, worldCustomLineColors, 0, Math.min(loaded.length, 8)));
             }
             if (root.contains("PaletteBg")) {
-                root.getIntArray("PaletteBg").ifPresent(loaded -> System.arraycopy(loaded, 0, worldCustomBgColors, 0, Math.min(loaded.length, 8)));
+                root.getIntArray("PaletteBg")
+                        .ifPresent(loaded ->
+                                System.arraycopy(loaded, 0, worldCustomBgColors, 0, Math.min(loaded.length, 8)));
             }
             if (root.contains("PaletteCombo")) {
-                root.getIntArray("PaletteCombo").ifPresent(loaded -> System.arraycopy(loaded, 0, worldCustomComboColors, 0, Math.min(loaded.length, 8)));
+                root.getIntArray("PaletteCombo")
+                        .ifPresent(loaded ->
+                                System.arraycopy(loaded, 0, worldCustomComboColors, 0, Math.min(loaded.length, 8)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -717,8 +784,7 @@ public class ChestConfigManager {
                         new ArrayList<>(clipboardItem.allowedItems()),
                         clipboardItem.allowManual(),
                         clipboardItem.allowShift(),
-                        clipboardItem.allowHopper()
-                );
+                        clipboardItem.allowHopper());
                 currentWhitelists.put(entry.getKey(), independentCopy);
             }
         }

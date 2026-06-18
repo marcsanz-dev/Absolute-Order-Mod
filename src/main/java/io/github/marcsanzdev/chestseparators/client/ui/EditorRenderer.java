@@ -7,11 +7,8 @@ import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class EditorRenderer {
 
@@ -22,7 +19,12 @@ public class EditorRenderer {
 
     private final EditorLayout layout;
 
-    public EditorRenderer(ChestSeparatorsEditor editor, EditorSessionData session, EditorLayout layout, HandledScreen<?> screen, HandledScreenAccessor accessor) {
+    public EditorRenderer(
+            ChestSeparatorsEditor editor,
+            EditorSessionData session,
+            EditorLayout layout,
+            HandledScreen<?> screen,
+            HandledScreenAccessor accessor) {
         this.editor = editor;
         this.session = session;
         this.layout = layout;
@@ -46,9 +48,9 @@ public class EditorRenderer {
             editor.entryButton.isActive = (session.currentState == EditorState.DRAW_LINES);
         }
         if (editor.whitelistButton != null) {
-            editor.whitelistButton.isActive = (session.currentState == EditorState.VIEW_GROUPS ||
-                    session.currentState == EditorState.SELECT_SLOTS ||
-                    session.currentState == EditorState.EDIT_FILTER);
+            editor.whitelistButton.isActive = (session.currentState == EditorState.VIEW_GROUPS
+                    || session.currentState == EditorState.SELECT_SLOTS
+                    || session.currentState == EditorState.EDIT_FILTER);
         }
         if (editor.depositButton != null) {
             // Hold the pressed state for 150 ms after the click for visual feedback.
@@ -86,7 +88,7 @@ public class EditorRenderer {
             }
 
             context.getMatrices().pushMatrix();
-            context.getMatrices().translate((float)accessor.getX(), (float)accessor.getY());
+            context.getMatrices().translate((float) accessor.getX(), (float) accessor.getY());
             renderSavedLinesLayer(context);
             context.getMatrices().popMatrix();
 
@@ -117,10 +119,34 @@ public class EditorRenderer {
             int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
             if (bgColor != 0) context.fill(s.x, s.y, s.x + 16, s.y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
 
-            renderLineRaw(context, s.x, s.y, manager.getColor(s.getIndex(), ChestConfigManager.ACTION_TOP), ChestConfigManager.ACTION_TOP, lineAlpha);
-            renderLineRaw(context, s.x, s.y, manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BOTTOM), ChestConfigManager.ACTION_BOTTOM, lineAlpha);
-            renderLineRaw(context, s.x, s.y, manager.getColor(s.getIndex(), ChestConfigManager.ACTION_LEFT), ChestConfigManager.ACTION_LEFT, lineAlpha);
-            renderLineRaw(context, s.x, s.y, manager.getColor(s.getIndex(), ChestConfigManager.ACTION_RIGHT), ChestConfigManager.ACTION_RIGHT, lineAlpha);
+            renderLineRaw(
+                    context,
+                    s.x,
+                    s.y,
+                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_TOP),
+                    ChestConfigManager.ACTION_TOP,
+                    lineAlpha);
+            renderLineRaw(
+                    context,
+                    s.x,
+                    s.y,
+                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BOTTOM),
+                    ChestConfigManager.ACTION_BOTTOM,
+                    lineAlpha);
+            renderLineRaw(
+                    context,
+                    s.x,
+                    s.y,
+                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_LEFT),
+                    ChestConfigManager.ACTION_LEFT,
+                    lineAlpha);
+            renderLineRaw(
+                    context,
+                    s.x,
+                    s.y,
+                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_RIGHT),
+                    ChestConfigManager.ACTION_RIGHT,
+                    lineAlpha);
         }
     }
 
@@ -141,7 +167,12 @@ public class EditorRenderer {
                 int alpha = 255;
                 if (elapsed > 1500) alpha = (int) (255 * (1.0f - (elapsed - 1500) / 500.0f));
                 int color = (alpha << 24) | 0xFFFFFF;
-                context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, session.statusMessage, screen.width / 2, screen.height - 40, color);
+                context.drawCenteredTextWithShadow(
+                        MinecraftClient.getInstance().textRenderer,
+                        session.statusMessage,
+                        screen.width / 2,
+                        screen.height - 40,
+                        color);
             } else {
                 session.statusMessage = null;
             }
@@ -150,21 +181,28 @@ public class EditorRenderer {
 
     public void renderNormalModeOverlay(DrawContext context, int mouseX, int mouseY) {
         if (!editor.isEditMode()) {
-            if (io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showLeftPanel ||
-                    io.github.marcsanzdev.chestseparators.event.KeyInputHandler.isModifierPressed()) {
+            if (io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showLeftPanel
+                    || io.github.marcsanzdev.chestseparators.event.KeyInputHandler.isModifierPressed()) {
                 editor.screenViewGroups.renderWhitelistPreviewPanel(context, mouseX, mouseY);
             }
         }
 
-        long window = net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
-        boolean shift = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS ||
-                org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        long window =
+                net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
+        boolean shift = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT)
+                        == org.lwjgl.glfw.GLFW.GLFW_PRESS
+                || org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT)
+                        == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
         boolean hover = false;
-        if (!editor.isEditMode() && io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showDepositButton && editor.depositButton != null) {
-            editor.depositButton.tooltipText = shift ?
-                    net.minecraft.text.Text.translatable("key.chestseparators.deposit_all").getString() :
-                    net.minecraft.text.Text.translatable("key.chestseparators.deposit_filter").getString();
+        if (!editor.isEditMode()
+                && io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showDepositButton
+                && editor.depositButton != null) {
+            editor.depositButton.tooltipText = shift
+                    ? net.minecraft.text.Text.translatable("key.chestseparators.deposit_all")
+                            .getString()
+                    : net.minecraft.text.Text.translatable("key.chestseparators.deposit_filter")
+                            .getString();
 
             hover = editor.isHovering(editor.depositButton.x, editor.depositButton.y, 20, 20, mouseX, mouseY);
         }
@@ -226,7 +264,8 @@ public class EditorRenderer {
         }
 
         // Container — incoming items (ghost overlay with projected total).
-        for (java.util.Map.Entry<Integer, net.minecraft.item.ItemStack> entry : editor.previewTargetIncoming.entrySet()) {
+        for (java.util.Map.Entry<Integer, net.minecraft.item.ItemStack> entry :
+                editor.previewTargetIncoming.entrySet()) {
             net.minecraft.screen.slot.Slot slot = accessor.getHandler().getSlot(entry.getKey());
             net.minecraft.item.ItemStack incoming = entry.getValue();
             int x = guiX + slot.x;
@@ -260,8 +299,15 @@ public class EditorRenderer {
 
     private void drawProjectedCount(DrawContext context, int x, int y, int count, int color) {
         String text = String.valueOf(count);
-        int textW = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(text);
-        context.drawText(net.minecraft.client.MinecraftClient.getInstance().textRenderer, text, x + 17 - textW, y + 9, color, true);
+        int textW =
+                net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(text);
+        context.drawText(
+                net.minecraft.client.MinecraftClient.getInstance().textRenderer,
+                text,
+                x + 17 - textW,
+                y + 9,
+                color,
+                true);
     }
 
     private void drawVanillaSlotBevel(DrawContext context, int x, int y) {
@@ -289,9 +335,33 @@ public class EditorRenderer {
 
         // Draw separator lines at the user-configured opacity so they read over the vanilla bevel.
         int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-        renderLineRaw(context, x, y, manager.getColor(slotIndex, ChestConfigManager.ACTION_TOP), ChestConfigManager.ACTION_TOP, lineAlpha);
-        renderLineRaw(context, x, y, manager.getColor(slotIndex, ChestConfigManager.ACTION_BOTTOM), ChestConfigManager.ACTION_BOTTOM, lineAlpha);
-        renderLineRaw(context, x, y, manager.getColor(slotIndex, ChestConfigManager.ACTION_LEFT), ChestConfigManager.ACTION_LEFT, lineAlpha);
-        renderLineRaw(context, x, y, manager.getColor(slotIndex, ChestConfigManager.ACTION_RIGHT), ChestConfigManager.ACTION_RIGHT, lineAlpha);
+        renderLineRaw(
+                context,
+                x,
+                y,
+                manager.getColor(slotIndex, ChestConfigManager.ACTION_TOP),
+                ChestConfigManager.ACTION_TOP,
+                lineAlpha);
+        renderLineRaw(
+                context,
+                x,
+                y,
+                manager.getColor(slotIndex, ChestConfigManager.ACTION_BOTTOM),
+                ChestConfigManager.ACTION_BOTTOM,
+                lineAlpha);
+        renderLineRaw(
+                context,
+                x,
+                y,
+                manager.getColor(slotIndex, ChestConfigManager.ACTION_LEFT),
+                ChestConfigManager.ACTION_LEFT,
+                lineAlpha);
+        renderLineRaw(
+                context,
+                x,
+                y,
+                manager.getColor(slotIndex, ChestConfigManager.ACTION_RIGHT),
+                ChestConfigManager.ACTION_RIGHT,
+                lineAlpha);
     }
 }

@@ -26,81 +26,121 @@ public class ModMenuIntegration implements ModMenuApi {
             ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
             // --- CATEGORY 1: CLIENT / VISUALS & DEFAULTS ---
-            ConfigCategory clientCategory = builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.client"));
+            ConfigCategory clientCategory =
+                    builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.client"));
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.dark_mode"), GlobalChestConfig.instance.darkMode)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.dark_mode"), GlobalChestConfig.instance.darkMode)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.dark_mode.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.darkMode = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.show_left_panel"), GlobalChestConfig.instance.showLeftPanel)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.show_left_panel"),
+                            GlobalChestConfig.instance.showLeftPanel)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.show_left_panel.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.showLeftPanel = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.enable_preview_animation"), GlobalChestConfig.instance.enablePreviewAnimation)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.enable_preview_animation"),
+                            GlobalChestConfig.instance.enablePreviewAnimation)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.enable_preview_animation.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.enablePreviewAnimation = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.show_edit_buttons"), GlobalChestConfig.instance.showEditButtons)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.show_edit_buttons"),
+                            GlobalChestConfig.instance.showEditButtons)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.show_edit_buttons.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.showEditButtons = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.show_deposit_button"), GlobalChestConfig.instance.showDepositButton)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.show_deposit_button"),
+                            GlobalChestConfig.instance.showDepositButton)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.show_deposit_button.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.showDepositButton = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.close_on_click_outside"), GlobalChestConfig.instance.closeOnClickOutside)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.close_on_click_outside"),
+                            GlobalChestConfig.instance.closeOnClickOutside)
                     .setDefaultValue(false)
                     .setTooltip(Text.translatable("config.chestseparators.close_on_click_outside.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.closeOnClickOutside = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startIntSlider(Text.translatable("config.chestseparators.bg_transparency"), GlobalChestConfig.instance.bgTransparency, 0, 100)
+            clientCategory.addEntry(entryBuilder
+                    .startIntSlider(
+                            Text.translatable("config.chestseparators.bg_transparency"),
+                            GlobalChestConfig.instance.bgTransparency,
+                            0,
+                            100)
                     .setDefaultValue(40)
                     .setTooltip(Text.translatable("config.chestseparators.bg_transparency.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.bgTransparency = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startIntSlider(Text.translatable("config.chestseparators.line_transparency"), GlobalChestConfig.instance.lineTransparency, 0, 100)
+            clientCategory.addEntry(entryBuilder
+                    .startIntSlider(
+                            Text.translatable("config.chestseparators.line_transparency"),
+                            GlobalChestConfig.instance.lineTransparency,
+                            0,
+                            100)
                     .setDefaultValue(100)
                     .setTooltip(Text.translatable("config.chestseparators.line_transparency.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.lineTransparency = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.default_rule_manual"), GlobalChestConfig.instance.defaultRuleManual)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.default_rule_manual"),
+                            GlobalChestConfig.instance.defaultRuleManual)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.default_rule_manual.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleManual = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.default_rule_shift"), GlobalChestConfig.instance.defaultRuleShift)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.default_rule_shift"),
+                            GlobalChestConfig.instance.defaultRuleShift)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.default_rule_shift.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleShift = newValue)
                     .build());
 
-            clientCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.default_rule_hopper"), GlobalChestConfig.instance.defaultRuleHopper)
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.default_rule_hopper"),
+                            GlobalChestConfig.instance.defaultRuleHopper)
                     .setDefaultValue(true)
                     .setTooltip(Text.translatable("config.chestseparators.default_rule_hopper.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleHopper = newValue)
                     .build());
 
-
             // --- CATEGORY 2: SERVER / MECHANICS ---
             // Server mechanics options are only exposed in singleplayer, where the server and client share a JVM.
             if (MinecraftClient.getInstance().isInSingleplayer()) {
-                ConfigCategory serverCategory = builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.server"));
+                ConfigCategory serverCategory =
+                        builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.server"));
 
-                serverCategory.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.chestseparators.expel_invalid_items"), GlobalChestConfig.instance.expelInvalidItems)
+                serverCategory.addEntry(entryBuilder
+                        .startBooleanToggle(
+                                Text.translatable("config.chestseparators.expel_invalid_items"),
+                                GlobalChestConfig.instance.expelInvalidItems)
                         .setDefaultValue(false)
                         .setTooltip(Text.translatable("config.chestseparators.expel_invalid_items.tooltip"))
                         .setSaveConsumer(newValue -> GlobalChestConfig.instance.expelInvalidItems = newValue)
@@ -108,22 +148,25 @@ public class ModMenuIntegration implements ModMenuApi {
             }
 
             // --- CATEGORY 3: HOTKEYS ---
-            ConfigCategory hotkeysCategory = builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.hotkeys"));
+            ConfigCategory hotkeysCategory =
+                    builder.getOrCreateCategory(Text.translatable("config.chestseparators.category.hotkeys"));
 
-            java.util.function.BiConsumer<net.minecraft.client.option.KeyBinding, String> addKeyEntry = (keyBinding, translationKey) -> {
-                hotkeysCategory.addEntry(entryBuilder.startKeyCodeField(
-                                Text.translatable(translationKey),
-                                net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(keyBinding)
-                        )
-                        .setDefaultValue(keyBinding.getDefaultKey())
-                        .setKeySaveConsumer(newValue -> {
-                            keyBinding.setBoundKey(newValue);
-                            MinecraftClient.getInstance().options.write();
-                            // Flush Minecraft's key-code cache so the new binding takes effect immediately.
-                            net.minecraft.client.option.KeyBinding.updateKeysByCode();
-                        })
-                        .build());
-            };
+            java.util.function.BiConsumer<net.minecraft.client.option.KeyBinding, String> addKeyEntry =
+                    (keyBinding, translationKey) -> {
+                        hotkeysCategory.addEntry(entryBuilder
+                                .startKeyCodeField(
+                                        Text.translatable(translationKey),
+                                        net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
+                                                keyBinding))
+                                .setDefaultValue(keyBinding.getDefaultKey())
+                                .setKeySaveConsumer(newValue -> {
+                                    keyBinding.setBoundKey(newValue);
+                                    MinecraftClient.getInstance().options.write();
+                                    // Flush Minecraft's key-code cache so the new binding takes effect immediately.
+                                    net.minecraft.client.option.KeyBinding.updateKeysByCode();
+                                })
+                                .build());
+                    };
 
             addKeyEntry.accept(ModKeyBindings.toggleButtonKey, "config.chestseparators.toggle_edit_buttons");
             addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");

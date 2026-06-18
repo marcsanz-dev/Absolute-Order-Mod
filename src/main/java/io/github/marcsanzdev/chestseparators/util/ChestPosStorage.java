@@ -1,11 +1,12 @@
 package io.github.marcsanzdev.chestseparators.util;
 
-import net.minecraft.util.math.BlockPos;
 import java.util.UUID;
+import net.minecraft.util.math.BlockPos;
 
 // Functions as a transient state container for context propagation across disjoint system boundaries.
 // Specifically designed to bridge the gap between the initial player interaction event (ClientPlayerInteractionManager)
-// and the subsequent GUI initialization (HandledScreen), where direct parameter passing is restricted by the vanilla architecture.
+// and the subsequent GUI initialization (HandledScreen), where direct parameter passing is restricted by the vanilla
+// architecture.
 public class ChestPosStorage {
 
     // Buffer for the coordinate vectors of static block-entities (Chests, Barrels, Shulker Boxes).

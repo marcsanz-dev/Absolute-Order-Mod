@@ -4,6 +4,8 @@ import io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider;
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.component.ComponentMap;
 import net.minecraft.component.ComponentsAccess;
@@ -11,9 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Transfers mod data between placed BlockEntities and dropped ItemStacks via Minecraft's
@@ -54,7 +53,8 @@ public abstract class BlockEntityComponentMixin {
             if (uuidStr != null && !uuidStr.isEmpty()) {
                 try {
                     shulkerProvider.setShulkerUUID(UUID.fromString(uuidStr));
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
 

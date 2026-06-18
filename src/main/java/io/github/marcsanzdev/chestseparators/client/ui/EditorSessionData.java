@@ -1,18 +1,17 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.client.EditorState;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 public class EditorSessionData {
     // State UI
@@ -140,7 +139,8 @@ public class EditorSessionData {
         public boolean isSearchTab;
         public boolean isCustomChestTab;
 
-        public CreativeTabInfo(Text name, ItemStack icon, ItemGroup group, boolean isSearchTab, boolean isCustomChestTab) {
+        public CreativeTabInfo(
+                Text name, ItemStack icon, ItemGroup group, boolean isSearchTab, boolean isCustomChestTab) {
             this.name = name;
             this.icon = icon;
             this.group = group;

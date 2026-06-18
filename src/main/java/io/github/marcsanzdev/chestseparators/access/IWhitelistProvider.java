@@ -1,7 +1,6 @@
 package io.github.marcsanzdev.chestseparators.access;
 
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
-
 import java.util.Map;
 
 // Duck interface applied to BlockEntities to expose their internal whitelist data.

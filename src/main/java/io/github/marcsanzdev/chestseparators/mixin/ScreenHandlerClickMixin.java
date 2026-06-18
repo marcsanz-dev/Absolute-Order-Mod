@@ -19,12 +19,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ScreenHandlerClickMixin {
 
     @Inject(method = "insertItem", at = @At("HEAD"))
-    protected void onInsertItemBegin(ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
+    protected void onInsertItemBegin(
+            ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
         ClickTracker.IS_SHIFT_CLICK.set(true);
     }
 
     @Inject(method = "insertItem", at = @At("RETURN"))
-    protected void onInsertItemEnd(ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
+    protected void onInsertItemEnd(
+            ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
         ClickTracker.IS_SHIFT_CLICK.set(false);
     }
 }

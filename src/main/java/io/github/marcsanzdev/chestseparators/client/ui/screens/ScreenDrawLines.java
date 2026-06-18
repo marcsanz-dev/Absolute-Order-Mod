@@ -26,17 +26,17 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     private ToolButtonWidget btnColorPicker;
 
     public static final int[] STANDARD_PALETTE = {
-            0xFF993333, 0xFFD87F33, 0xFFE5E533, 0xFF7FCC19,
-            0xFF667F33, 0xFF4C7F99, 0xFF6699D8, 0xFF334CB2,
-            0xFF7F3FB2, 0xFFB24CD8, 0xFFF27FA5, 0xFF664C33,
-            0xFFFFFFFF, 0xFF999999, 0xFF4C4C4C, 0xFF191919
+        0xFF993333, 0xFFD87F33, 0xFFE5E533, 0xFF7FCC19,
+        0xFF667F33, 0xFF4C7F99, 0xFF6699D8, 0xFF334CB2,
+        0xFF7F3FB2, 0xFFB24CD8, 0xFFF27FA5, 0xFF664C33,
+        0xFFFFFFFF, 0xFF999999, 0xFF4C4C4C, 0xFF191919
     };
 
     public static final String[] STANDARD_COLOR_KEYS = {
-            "red", "orange", "yellow", "lime",
-            "green", "cyan", "light_blue", "blue",
-            "purple", "magenta", "pink", "brown",
-            "white", "light_gray", "gray", "black"
+        "red", "orange", "yellow", "lime",
+        "green", "cyan", "light_blue", "blue",
+        "purple", "magenta", "pink", "brown",
+        "white", "light_gray", "gray", "black"
     };
 
     private long lastCustomColorClickTime = 0;
@@ -48,7 +48,6 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     private long btnRedoClickTime = 0;
     private long btnClearClickTime = 0;
     private long btnColorPickerClickTime = 0;
-
 
     public ScreenDrawLines(ChestSeparatorsEditor editor) {
         super(editor);
@@ -62,52 +61,84 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         int btnW = layout.btnW;
         int bH = layout.bH;
 
-        WideButtonWidget btnCopy = new WideButtonWidget(rightX, sy, btnW, bH, Text.translatable("button.chestseparators.copy_layout").getString(), ModTextures.ICON_COPY, () -> {
-            btnCopyClickTime = System.currentTimeMillis();
-            ChestConfigManager.getInstance().copyAllToClipboard();
-            editor.showStatus(Text.translatable("message.chestseparators.layout_copied"), Formatting.GRAY);
-            editor.playClickSound(1.0f);
-        });
+        WideButtonWidget btnCopy = new WideButtonWidget(
+                rightX,
+                sy,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.copy_layout").getString(),
+                ModTextures.ICON_COPY,
+                () -> {
+                    btnCopyClickTime = System.currentTimeMillis();
+                    ChestConfigManager.getInstance().copyAllToClipboard();
+                    editor.showStatus(Text.translatable("message.chestseparators.layout_copied"), Formatting.GRAY);
+                    editor.playClickSound(1.0f);
+                });
         btnCopy.keepNormalTextColor = true;
-        btnCopy.tooltipText = Text.translatable("tooltip.chestseparators.desc.copy_layout").getString();
+        btnCopy.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.copy_layout").getString();
         widgets.add(btnCopy);
 
-        WideButtonWidget btnPaste = new WideButtonWidget(rightX, sy + 24, btnW, bH, Text.translatable("button.chestseparators.paste_layout").getString(), ModTextures.ICON_PASTE, () -> {
-            btnPasteClickTime = System.currentTimeMillis();
-            if (ChestConfigManager.getInstance().hasClipboardData()) {
-                ChestConfigManager.getInstance().saveSnapshot();
-                ChestConfigManager.getInstance().pasteFromClipboard();
-                editor.saveSmart();
-                editor.showStatus(Text.translatable("message.chestseparators.layout_pasted"), Formatting.GREEN);
-                editor.playClickSound(1.0f);
-            }
-        });
+        WideButtonWidget btnPaste = new WideButtonWidget(
+                rightX,
+                sy + 24,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.paste_layout").getString(),
+                ModTextures.ICON_PASTE,
+                () -> {
+                    btnPasteClickTime = System.currentTimeMillis();
+                    if (ChestConfigManager.getInstance().hasClipboardData()) {
+                        ChestConfigManager.getInstance().saveSnapshot();
+                        ChestConfigManager.getInstance().pasteFromClipboard();
+                        editor.saveSmart();
+                        editor.showStatus(Text.translatable("message.chestseparators.layout_pasted"), Formatting.GREEN);
+                        editor.playClickSound(1.0f);
+                    }
+                });
         btnPaste.keepNormalTextColor = true;
-        btnPaste.tooltipText = Text.translatable("tooltip.chestseparators.desc.paste_layout").getString();
+        btnPaste.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.paste_layout").getString();
         widgets.add(btnPaste);
 
-        WideButtonWidget btnUndo = new WideButtonWidget(rightX, sy + 48, btnW, bH, Text.translatable("button.chestseparators.undo_action").getString(), ModTextures.ICON_UNDO, () -> {
-            btnUndoClickTime = System.currentTimeMillis();
-            if (ChestConfigManager.getInstance().canUndo()) {
-                ChestConfigManager.getInstance().undo();
-                editor.saveSmart();
-                editor.playClickSound(0.8f);
-            }
-        });
+        WideButtonWidget btnUndo = new WideButtonWidget(
+                rightX,
+                sy + 48,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.undo_action").getString(),
+                ModTextures.ICON_UNDO,
+                () -> {
+                    btnUndoClickTime = System.currentTimeMillis();
+                    if (ChestConfigManager.getInstance().canUndo()) {
+                        ChestConfigManager.getInstance().undo();
+                        editor.saveSmart();
+                        editor.playClickSound(0.8f);
+                    }
+                });
         btnUndo.keepNormalTextColor = true;
-        btnUndo.tooltipText = Text.translatable("tooltip.chestseparators.desc.undo_action").getString();
+        btnUndo.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.undo_action").getString();
         widgets.add(btnUndo);
 
-        WideButtonWidget btnRedo = new WideButtonWidget(rightX, sy + 72, btnW, bH, Text.translatable("button.chestseparators.redo_action").getString(), ModTextures.ICON_REDO, () -> {
-            btnRedoClickTime = System.currentTimeMillis();
-            if (ChestConfigManager.getInstance().canRedo()) {
-                ChestConfigManager.getInstance().redo();
-                editor.saveSmart();
-                editor.playClickSound(0.8f);
-            }
-        });
+        WideButtonWidget btnRedo = new WideButtonWidget(
+                rightX,
+                sy + 72,
+                btnW,
+                bH,
+                Text.translatable("button.chestseparators.redo_action").getString(),
+                ModTextures.ICON_REDO,
+                () -> {
+                    btnRedoClickTime = System.currentTimeMillis();
+                    if (ChestConfigManager.getInstance().canRedo()) {
+                        ChestConfigManager.getInstance().redo();
+                        editor.saveSmart();
+                        editor.playClickSound(0.8f);
+                    }
+                });
         btnRedo.keepNormalTextColor = true;
-        btnRedo.tooltipText = Text.translatable("tooltip.chestseparators.desc.redo_action").getString();
+        btnRedo.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.redo_action").getString();
         widgets.add(btnRedo);
 
         // --- 2. LEFT SIDEBAR TOOLS ---
@@ -116,57 +147,143 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         int currentY = layout.guiY + editor.getSidebarYOffset();
         int row2Y = currentY + 22;
 
-        btnPencilArea = new ToolButtonWidget(contentX, currentY, ModTextures.PENCIL_BASE, Text.translatable("tooltip.chestseparators.draw_area").getString(), () -> {
-            int tabMode = session.currentTab;
-            if (tabMode == 0) { session.lineToolMode = 0; if (session.lineColorIndex == -1) session.lineColorIndex = 0; }
-            else if (tabMode == 1) { session.bgToolMode = 0; if (session.bgColorIndex == -1) session.bgColorIndex = 0; }
-            else { session.comboToolMode = 0; if (session.comboColorIndex == -1) session.comboColorIndex = 0; }
-            editor.playClickSound(1.0f);
-        });
+        btnPencilArea = new ToolButtonWidget(
+                contentX,
+                currentY,
+                ModTextures.PENCIL_BASE,
+                Text.translatable("tooltip.chestseparators.draw_area").getString(),
+                () -> {
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0) {
+                        session.lineToolMode = 0;
+                        if (session.lineColorIndex == -1) session.lineColorIndex = 0;
+                    } else if (tabMode == 1) {
+                        session.bgToolMode = 0;
+                        if (session.bgColorIndex == -1) session.bgColorIndex = 0;
+                    } else {
+                        session.comboToolMode = 0;
+                        if (session.comboColorIndex == -1) session.comboColorIndex = 0;
+                    }
+                    editor.playClickSound(1.0f);
+                });
 
-        btnEraserArea = new ToolButtonWidget(contentX + 22, currentY, ModTextures.ERASER_AREA, Text.translatable("tooltip.chestseparators.erase_area").getString(), () -> {
-            int tabMode = session.currentTab;
-            if (tabMode == 0) { session.lineToolMode = 0; session.lineColorIndex = -1; session.editingLineCustomIndex = -1; }
-            else if (tabMode == 1) { session.bgToolMode = 0; session.bgColorIndex = -1; session.editingBgCustomIndex = -1; }
-            else { session.comboToolMode = 0; session.comboColorIndex = -1; session.editingComboCustomIndex = -1; }
-            editor.playClickSound(1.0f);
-        });
+        btnEraserArea = new ToolButtonWidget(
+                contentX + 22,
+                currentY,
+                ModTextures.ERASER_AREA,
+                Text.translatable("tooltip.chestseparators.erase_area").getString(),
+                () -> {
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0) {
+                        session.lineToolMode = 0;
+                        session.lineColorIndex = -1;
+                        session.editingLineCustomIndex = -1;
+                    } else if (tabMode == 1) {
+                        session.bgToolMode = 0;
+                        session.bgColorIndex = -1;
+                        session.editingBgCustomIndex = -1;
+                    } else {
+                        session.comboToolMode = 0;
+                        session.comboColorIndex = -1;
+                        session.editingComboCustomIndex = -1;
+                    }
+                    editor.playClickSound(1.0f);
+                });
 
-        btnClear = new ToolButtonWidget(contentX + 44, currentY, ModTextures.ICON_DELETE, Text.translatable("tooltip.chestseparators.clear_layer").getString(), () -> {
-            btnClearClickTime = System.currentTimeMillis();
-            ChestConfigManager.getInstance().saveSnapshot();
-            int tabMode = session.currentTab;
-            if (tabMode == 0 || tabMode == 2) ChestConfigManager.getInstance().clearAllLines();
-            if (tabMode == 1 || tabMode == 2) ChestConfigManager.getInstance().clearAllBackgrounds();
-            editor.saveSmart();
-            editor.showStatus(Text.translatable("message.chestseparators.cleared"), Formatting.RED);
-            editor.playClickSound(0.8f);
-        });
+        btnClear = new ToolButtonWidget(
+                contentX + 44,
+                currentY,
+                ModTextures.ICON_DELETE,
+                Text.translatable("tooltip.chestseparators.clear_layer").getString(),
+                () -> {
+                    btnClearClickTime = System.currentTimeMillis();
+                    ChestConfigManager.getInstance().saveSnapshot();
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0 || tabMode == 2)
+                        ChestConfigManager.getInstance().clearAllLines();
+                    if (tabMode == 1 || tabMode == 2)
+                        ChestConfigManager.getInstance().clearAllBackgrounds();
+                    editor.saveSmart();
+                    editor.showStatus(Text.translatable("message.chestseparators.cleared"), Formatting.RED);
+                    editor.playClickSound(0.8f);
+                });
 
-        btnPencilTrace = new ToolButtonWidget(contentX, row2Y, ModTextures.PENCIL_BASE, Text.translatable("tooltip.chestseparators.draw_trace").getString(), () -> {
-            int tabMode = session.currentTab;
-            if (tabMode == 0) { session.lineToolMode = 1; if (session.lineColorIndex == -1) session.lineColorIndex = 0; }
-            else if (tabMode == 1) { session.bgToolMode = 1; if (session.bgColorIndex == -1) session.bgColorIndex = 0; }
-            else { session.comboToolMode = 1; if (session.comboColorIndex == -1) session.comboColorIndex = 0; }
-            editor.playClickSound(1.0f);
-        });
+        btnPencilTrace = new ToolButtonWidget(
+                contentX,
+                row2Y,
+                ModTextures.PENCIL_BASE,
+                Text.translatable("tooltip.chestseparators.draw_trace").getString(),
+                () -> {
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0) {
+                        session.lineToolMode = 1;
+                        if (session.lineColorIndex == -1) session.lineColorIndex = 0;
+                    } else if (tabMode == 1) {
+                        session.bgToolMode = 1;
+                        if (session.bgColorIndex == -1) session.bgColorIndex = 0;
+                    } else {
+                        session.comboToolMode = 1;
+                        if (session.comboColorIndex == -1) session.comboColorIndex = 0;
+                    }
+                    editor.playClickSound(1.0f);
+                });
 
-        btnEraserTrace = new ToolButtonWidget(contentX + 22, row2Y, ModTextures.ERASER_TRACE, Text.translatable("tooltip.chestseparators.erase_trace").getString(), () -> {
-            int tabMode = session.currentTab;
-            if (tabMode == 0) { session.lineToolMode = 1; session.lineColorIndex = -1; session.editingLineCustomIndex = -1; }
-            else if (tabMode == 1) { session.bgToolMode = 1; session.bgColorIndex = -1; session.editingBgCustomIndex = -1; }
-            else { session.comboToolMode = 1; session.comboColorIndex = -1; session.editingComboCustomIndex = -1; }
-            editor.playClickSound(1.0f);
-        });
+        btnEraserTrace = new ToolButtonWidget(
+                contentX + 22,
+                row2Y,
+                ModTextures.ERASER_TRACE,
+                Text.translatable("tooltip.chestseparators.erase_trace").getString(),
+                () -> {
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0) {
+                        session.lineToolMode = 1;
+                        session.lineColorIndex = -1;
+                        session.editingLineCustomIndex = -1;
+                    } else if (tabMode == 1) {
+                        session.bgToolMode = 1;
+                        session.bgColorIndex = -1;
+                        session.editingBgCustomIndex = -1;
+                    } else {
+                        session.comboToolMode = 1;
+                        session.comboColorIndex = -1;
+                        session.editingComboCustomIndex = -1;
+                    }
+                    editor.playClickSound(1.0f);
+                });
 
-        btnColorPicker = new ToolButtonWidget(contentX + 44, row2Y, ModTextures.ICON_PALETTE, Text.translatable("tooltip.chestseparators.open_palette").getString(), () -> {
-            btnColorPickerClickTime = System.currentTimeMillis();
-            int tabMode = session.currentTab;
-            if (tabMode == 0) { if (session.editingLineCustomIndex == -1) { session.editingLineCustomIndex = 0; session.lineColorIndex = 16; } editor.openColorPicker(ChestConfigManager.getInstance().getCustomColors(0)[session.editingLineCustomIndex], 0); }
-            else if (tabMode == 1) { if (session.editingBgCustomIndex == -1) { session.editingBgCustomIndex = 0; session.bgColorIndex = 16; } editor.openColorPicker(ChestConfigManager.getInstance().getCustomColors(1)[session.editingBgCustomIndex], 1); }
-            else { if (session.editingComboCustomIndex == -1) { session.editingComboCustomIndex = 0; session.comboColorIndex = 16; } editor.openColorPicker(ChestConfigManager.getInstance().getCustomColors(2)[session.editingComboCustomIndex], 2); }
-            editor.playClickSound(1.0f);
-        });
+        btnColorPicker = new ToolButtonWidget(
+                contentX + 44,
+                row2Y,
+                ModTextures.ICON_PALETTE,
+                Text.translatable("tooltip.chestseparators.open_palette").getString(),
+                () -> {
+                    btnColorPickerClickTime = System.currentTimeMillis();
+                    int tabMode = session.currentTab;
+                    if (tabMode == 0) {
+                        if (session.editingLineCustomIndex == -1) {
+                            session.editingLineCustomIndex = 0;
+                            session.lineColorIndex = 16;
+                        }
+                        editor.openColorPicker(
+                                ChestConfigManager.getInstance().getCustomColors(0)[session.editingLineCustomIndex], 0);
+                    } else if (tabMode == 1) {
+                        if (session.editingBgCustomIndex == -1) {
+                            session.editingBgCustomIndex = 0;
+                            session.bgColorIndex = 16;
+                        }
+                        editor.openColorPicker(
+                                ChestConfigManager.getInstance().getCustomColors(1)[session.editingBgCustomIndex], 1);
+                    } else {
+                        if (session.editingComboCustomIndex == -1) {
+                            session.editingComboCustomIndex = 0;
+                            session.comboColorIndex = 16;
+                        }
+                        editor.openColorPicker(
+                                ChestConfigManager.getInstance().getCustomColors(2)[session.editingComboCustomIndex],
+                                2);
+                    }
+                    editor.playClickSound(1.0f);
+                });
 
         widgets.add(btnPencilArea);
         widgets.add(btnEraserArea);
@@ -195,9 +312,13 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         int fixedSidebarHeight = (bottomOfLastColor - panelStartY) + margin;
 
         boolean isDark = GlobalChestConfig.instance.darkMode;
-        context.fill(sx, panelStartY, sx + layout.sidebarWidth, panelStartY + fixedSidebarHeight, isDark ? 0xFF212121 : 0xFFC6C6C6);
+        context.fill(
+                sx,
+                panelStartY,
+                sx + layout.sidebarWidth,
+                panelStartY + fixedSidebarHeight,
+                isDark ? 0xFF212121 : 0xFFC6C6C6);
         drawDarkBevel(context, sx, panelStartY, layout.sidebarWidth, fixedSidebarHeight, false);
-
 
         // While the color picker is open, pass (-1, -1) as mouse coordinates so background
         // buttons do not react to hover or draw tooltips behind the picker window.
@@ -218,13 +339,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         if (!session.isDraggingLine && !session.isColorPickerOpen) {
             renderHoverPreview(context, mouseX, mouseY);
         }
-
     }
 
     private void updateWidgetStates() {
         int tabMode = session.currentTab;
         int tMode = (tabMode == 0) ? session.lineToolMode : (tabMode == 1 ? session.bgToolMode : session.comboToolMode);
-        int cIndex = (tabMode == 0) ? session.lineColorIndex : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
+        int cIndex = (tabMode == 0)
+                ? session.lineColorIndex
+                : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
 
         int dynamicColor = 0;
         if (tabMode == 0) dynamicColor = getCurrentSelectedLineColorValue();
@@ -239,9 +361,15 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnEraserTrace.isActive = (tMode == 1 && cIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
 
         // Tool Icons & Colors
-        Identifier baseTex = (tabMode == 0) ? ModTextures.PENCIL_BASE : ((tabMode == 1) ? ModTextures.BRUSH_BASE : ModTextures.BTN_EDIT_LINES);
-        Identifier maskAreaTex = (tabMode == 1) ? ModTextures.BRUSH_MASK_AREA : ((tabMode == 2) ? ModTextures.COMBO_MASK_AREA : ModTextures.PENCIL_MASK_AREA);
-        Identifier maskTraceTex = (tabMode == 1) ? ModTextures.BRUSH_MASK_TRACE : ((tabMode == 2) ? ModTextures.COMBO_MASK_TRACE : ModTextures.PENCIL_MASK_TRACE);
+        Identifier baseTex = (tabMode == 0)
+                ? ModTextures.PENCIL_BASE
+                : ((tabMode == 1) ? ModTextures.BRUSH_BASE : ModTextures.BTN_EDIT_LINES);
+        Identifier maskAreaTex = (tabMode == 1)
+                ? ModTextures.BRUSH_MASK_AREA
+                : ((tabMode == 2) ? ModTextures.COMBO_MASK_AREA : ModTextures.PENCIL_MASK_AREA);
+        Identifier maskTraceTex = (tabMode == 1)
+                ? ModTextures.BRUSH_MASK_TRACE
+                : ((tabMode == 2) ? ModTextures.COMBO_MASK_TRACE : ModTextures.PENCIL_MASK_TRACE);
 
         btnPencilArea.baseIcon = baseTex;
         btnPencilArea.maskIcon = maskAreaTex;
@@ -306,17 +434,19 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                     session.tracePath.add(slot.getIndex() + "_" + ChestConfigManager.ACTION_BG);
 
                     int tIndex = (session.currentTab == 1) ? session.bgColorIndex : session.comboColorIndex;
-                    int colorVal = (session.currentTab == 1) ? getCurrentSelectedBgColorValue() : getCurrentSelectedComboColorValue();
+                    int colorVal = (session.currentTab == 1)
+                            ? getCurrentSelectedBgColorValue()
+                            : getCurrentSelectedComboColorValue();
 
                     if (tIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) {
                         session.isDragModeErasing = true;
                     } else {
                         if (colorVal == 0) return false;
-                        int existingColor = ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG);
+                        int existingColor = ChestConfigManager.getInstance()
+                                .getColor(slot.getIndex(), ChestConfigManager.ACTION_BG);
                         session.isDragModeErasing = (existingColor == (colorVal | 0xFF000000));
                     }
                     return true;
-
                 }
 
                 if (session.currentTab == 0) {
@@ -332,11 +462,15 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                         if (action == ChestConfigManager.ACTION_TOP || action == ChestConfigManager.ACTION_BOTTOM) {
                             session.lockedTraceAxis = 1;
                             session.lockedTraceRowCol = slot.getIndex() / 9;
-                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_TOP) ? (layout.guiY + slot.y) : (layout.guiY + slot.y + 16);
+                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_TOP)
+                                    ? (layout.guiY + slot.y)
+                                    : (layout.guiY + slot.y + 16);
                         } else {
                             session.lockedTraceAxis = 2;
                             session.lockedTraceRowCol = slot.getIndex() % 9;
-                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_LEFT) ? (layout.guiX + slot.x) : (layout.guiX + slot.x + 16);
+                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_LEFT)
+                                    ? (layout.guiX + slot.x)
+                                    : (layout.guiX + slot.x + 16);
                         }
 
                         int tIndex = session.lineColorIndex;
@@ -356,9 +490,18 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         }
 
         // --- CLICK OUTSIDE TO CLOSE ---
-        boolean isInsideMain = mouseX >= layout.guiX && mouseX <= layout.guiX + layout.bgWidth && mouseY >= layout.guiY && mouseY <= layout.guiY + layout.bgHeight;
-        boolean isInsideLeft = mouseX >= layout.sidebarX && mouseX <= layout.sidebarX + layout.sidebarWidth && mouseY >= layout.guiY + editor.getSidebarYOffset() - 4 && mouseY <= layout.guiY + editor.getSidebarYOffset() + layout.sidebarHeight;
-        boolean isInsideRight = mouseX >= layout.rightX && mouseX <= layout.rightX + layout.btnW && mouseY >= layout.mainY && mouseY <= layout.mainY + (layout.bH * 4) + (4 * 3);
+        boolean isInsideMain = mouseX >= layout.guiX
+                && mouseX <= layout.guiX + layout.bgWidth
+                && mouseY >= layout.guiY
+                && mouseY <= layout.guiY + layout.bgHeight;
+        boolean isInsideLeft = mouseX >= layout.sidebarX
+                && mouseX <= layout.sidebarX + layout.sidebarWidth
+                && mouseY >= layout.guiY + editor.getSidebarYOffset() - 4
+                && mouseY <= layout.guiY + editor.getSidebarYOffset() + layout.sidebarHeight;
+        boolean isInsideRight = mouseX >= layout.rightX
+                && mouseX <= layout.rightX + layout.btnW
+                && mouseY >= layout.mainY
+                && mouseY <= layout.mainY + (layout.bH * 4) + (4 * 3);
 
         if (!isInsideMain && !isInsideLeft && !isInsideRight && !session.isEyedropperActive) {
             if (GlobalChestConfig.instance.closeOnClickOutside) {
@@ -408,9 +551,16 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                     editor.playClickSound(0.8f);
                     return true;
                 } else if (button == 0) {
-                    if (tabMode == 0) { session.lineColorIndex = i; session.editingLineCustomIndex = -1; }
-                    else if (tabMode == 1) { session.bgColorIndex = i; session.editingBgCustomIndex = -1; }
-                    else { session.comboColorIndex = i; session.editingComboCustomIndex = -1; }
+                    if (tabMode == 0) {
+                        session.lineColorIndex = i;
+                        session.editingLineCustomIndex = -1;
+                    } else if (tabMode == 1) {
+                        session.bgColorIndex = i;
+                        session.editingBgCustomIndex = -1;
+                    } else {
+                        session.comboColorIndex = i;
+                        session.editingComboCustomIndex = -1;
+                    }
                     editor.playClickSound(1.0f);
                     return true;
                 }
@@ -429,8 +579,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                         editor.playClickSound(0.8f);
                     }
                     return true;
-                }
-                else if (button == 0) {
+                } else if (button == 0) {
                     if (session.copiedColorRGB != 0) {
                         ChestConfigManager.getInstance().setCustomColor(i, session.copiedColorRGB, tabMode);
                         ChestConfigManager.getInstance().saveWorldPalette();
@@ -439,32 +588,56 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                         editor.playClickSound(1.2f);
                     } else {
                         // Save the current color index so it can be restored if the picker is dismissed without saving.
-                        editor.restoreColorIndex = (tabMode == 0) ? session.lineColorIndex : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
+                        editor.restoreColorIndex = (tabMode == 0)
+                                ? session.lineColorIndex
+                                : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
 
                         if (currentColor == 0) {
                             // Empty slot: one click opens the color picker immediately.
-                            if (tabMode == 0) { session.lineColorIndex = 16 + i; session.editingLineCustomIndex = i; }
-                            else if (tabMode == 1) { session.bgColorIndex = 16 + i; session.editingBgCustomIndex = i; }
-                            else { session.comboColorIndex = 16 + i; session.editingComboCustomIndex = i; }
+                            if (tabMode == 0) {
+                                session.lineColorIndex = 16 + i;
+                                session.editingLineCustomIndex = i;
+                            } else if (tabMode == 1) {
+                                session.bgColorIndex = 16 + i;
+                                session.editingBgCustomIndex = i;
+                            } else {
+                                session.comboColorIndex = 16 + i;
+                                session.editingComboCustomIndex = i;
+                            }
                             editor.openColorPicker(0, tabMode);
                             editor.playClickSound(1.0f);
                         } else {
                             // Occupied slot: single click selects for painting, double click opens the picker.
                             long now = System.currentTimeMillis();
-                            boolean isDoubleClick = (i == lastCustomColorClickIndex) && (now - lastCustomColorClickTime < 300);
+                            boolean isDoubleClick =
+                                    (i == lastCustomColorClickIndex) && (now - lastCustomColorClickTime < 300);
                             lastCustomColorClickIndex = i;
                             lastCustomColorClickTime = now;
 
                             if (isDoubleClick) {
-                                if (tabMode == 0) { session.lineColorIndex = 16 + i; session.editingLineCustomIndex = i; }
-                                else if (tabMode == 1) { session.bgColorIndex = 16 + i; session.editingBgCustomIndex = i; }
-                                else { session.comboColorIndex = 16 + i; session.editingComboCustomIndex = i; }
+                                if (tabMode == 0) {
+                                    session.lineColorIndex = 16 + i;
+                                    session.editingLineCustomIndex = i;
+                                } else if (tabMode == 1) {
+                                    session.bgColorIndex = 16 + i;
+                                    session.editingBgCustomIndex = i;
+                                } else {
+                                    session.comboColorIndex = 16 + i;
+                                    session.editingComboCustomIndex = i;
+                                }
                                 editor.openColorPicker(currentColor, tabMode);
                                 editor.playClickSound(1.0f);
                             } else {
-                                if (tabMode == 0) { session.lineColorIndex = 16 + i; session.editingLineCustomIndex = i; }
-                                else if (tabMode == 1) { session.bgColorIndex = 16 + i; session.editingBgCustomIndex = i; }
-                                else { session.comboColorIndex = 16 + i; session.editingComboCustomIndex = i; }
+                                if (tabMode == 0) {
+                                    session.lineColorIndex = 16 + i;
+                                    session.editingLineCustomIndex = i;
+                                } else if (tabMode == 1) {
+                                    session.bgColorIndex = 16 + i;
+                                    session.editingBgCustomIndex = i;
+                                } else {
+                                    session.comboColorIndex = 16 + i;
+                                    session.editingComboCustomIndex = i;
+                                }
                                 editor.playClickSound(1.0f);
                             }
                         }
@@ -476,9 +649,20 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         return false;
     }
 
-    public void drawSwatch(DrawContext context, int x, int y, int color, int index, int mouseX, int mouseY, boolean isCustom, int tabMode) {
+    public void drawSwatch(
+            DrawContext context,
+            int x,
+            int y,
+            int color,
+            int index,
+            int mouseX,
+            int mouseY,
+            boolean isCustom,
+            int tabMode) {
         boolean disabled = session.isColorPickerOpen && !isCustom;
-        int selectedIndexToCheck = (tabMode == 0) ? session.lineColorIndex : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
+        int selectedIndexToCheck = (tabMode == 0)
+                ? session.lineColorIndex
+                : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
         boolean selected = (index == selectedIndexToCheck);
         boolean hover = !disabled && editor.isHovering(x, y, layout.swatchSize, layout.swatchSize, mouseX, mouseY);
 
@@ -493,7 +677,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             drawColorBevel(context, x, y, layout.swatchSize, layout.swatchSize, color, selected);
         }
 
-        if (hover && !selected) context.drawStrokedRectangle(x, y, layout.swatchSize, layout.swatchSize, isCustom ? 0x80FFFFFF : 0xFFFFFFFF);
+        if (hover && !selected)
+            context.drawStrokedRectangle(
+                    x, y, layout.swatchSize, layout.swatchSize, isCustom ? 0x80FFFFFF : 0xFFFFFFFF);
         if (disabled) context.fill(x, y, x + layout.swatchSize, y + layout.swatchSize, 0x80000000);
     }
 
@@ -507,8 +693,13 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             int x = (i / 8 == 0) ? col1X : col2X;
             int y = pY + ((i % 8) * (layout.swatchSize + 4));
             drawSwatch(context, x, y, STANDARD_PALETTE[i], i, mouseX, mouseY, false, tabMode);
-            if (!session.isColorPickerOpen && editor.isHovering(x, y, layout.swatchSize, layout.swatchSize, mouseX, mouseY)) {
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, Text.translatable("color.minecraft." + STANDARD_COLOR_KEYS[i]), mouseX, mouseY);
+            if (!session.isColorPickerOpen
+                    && editor.isHovering(x, y, layout.swatchSize, layout.swatchSize, mouseX, mouseY)) {
+                context.drawTooltip(
+                        MinecraftClient.getInstance().textRenderer,
+                        Text.translatable("color.minecraft." + STANDARD_COLOR_KEYS[i]),
+                        mouseX,
+                        mouseY);
             }
         }
 
@@ -516,13 +707,19 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         for (int i = 0; i < 8; i++) {
             int y = pY + (i * (layout.swatchSize + 4));
             drawSwatch(context, col3X, y, worldColors[i], 16 + i, mouseX, mouseY, true, tabMode);
-            if (!session.isColorPickerOpen && editor.isHovering(col3X, y, layout.swatchSize, layout.swatchSize, mouseX, mouseY)) {
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, Text.translatable("color.chestseparators.custom", (i + 1)), mouseX, mouseY);
+            if (!session.isColorPickerOpen
+                    && editor.isHovering(col3X, y, layout.swatchSize, layout.swatchSize, mouseX, mouseY)) {
+                context.drawTooltip(
+                        MinecraftClient.getInstance().textRenderer,
+                        Text.translatable("color.chestseparators.custom", (i + 1)),
+                        mouseX,
+                        mouseY);
             }
         }
     }
 
-    private void drawBaseBevel(DrawContext context, int x, int y, int width, int height, int light, int dark, int shadow, boolean sunken) {
+    private void drawBaseBevel(
+            DrawContext context, int x, int y, int width, int height, int light, int dark, int shadow, boolean sunken) {
         if (sunken) {
             context.fill(x, y, x + width - 1, y + 1, dark);
             context.fill(x, y, x + 1, y + height - 1, dark);
@@ -538,7 +735,8 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         }
     }
 
-    private void drawColorBevel(DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
+    private void drawColorBevel(
+            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
         int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
         int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
         int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
@@ -546,7 +744,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     }
 
     private void drawStandardBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
-        int light = 0xFFFFFFFF; int dark = 0xFF373737; int shadow = 0xFF8B8B8B;
+        int light = 0xFFFFFFFF;
+        int dark = 0xFF373737;
+        int shadow = 0xFF8B8B8B;
         drawBaseBevel(context, x, y, width, height, light, dark, shadow, sunken);
     }
 
@@ -559,7 +759,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             boolean isSelected = (session.currentTab == i);
             boolean hover = !session.isColorPickerOpen && editor.isHovering(tabX, tabY, 20, 20, mouseX, mouseY);
             boolean isDark = GlobalChestConfig.instance.darkMode;
-            int bgColor = isDark ? (isSelected ? 0xFF212121 : (hover ? 0xFF303030 : 0xFF151515)) : (isSelected ? 0xFFC6C6C6 : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
+            int bgColor = isDark
+                    ? (isSelected ? 0xFF212121 : (hover ? 0xFF303030 : 0xFF151515))
+                    : (isSelected ? 0xFFC6C6C6 : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
 
             context.fill(tabX, tabY, tabX + 20, tabY + 20, bgColor);
             drawDarkBevel(context, tabX, tabY, 20, 20, isSelected);
@@ -569,12 +771,18 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 context.fill(tabX + 18, tabY + 1, tabX + 22, tabY + 19, connectColor);
             }
 
-            Identifier icon = (i == 0) ? ModTextures.ICON_TAB_LINES : (i == 1) ? ModTextures.ICON_TAB_BG : ModTextures.BTN_EDIT_LINES;
+            Identifier icon = (i == 0)
+                    ? ModTextures.ICON_TAB_LINES
+                    : (i == 1) ? ModTextures.ICON_TAB_BG : ModTextures.BTN_EDIT_LINES;
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
             context.drawTexture(pipeline, icon, tabX + 2, tabY + 2, 0.0F, 0.0F, 16, 16, 16, 16, 16, 16, -1);
 
             if (hover) {
-                Text name = (i == 0) ? Text.translatable("tooltip.chestseparators.tab_lines") : (i == 1) ? Text.translatable("tooltip.chestseparators.tab_backgrounds") : Text.translatable("tooltip.chestseparators.tab_combo");
+                Text name = (i == 0)
+                        ? Text.translatable("tooltip.chestseparators.tab_lines")
+                        : (i == 1)
+                                ? Text.translatable("tooltip.chestseparators.tab_backgrounds")
+                                : Text.translatable("tooltip.chestseparators.tab_combo");
                 context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, mouseX, mouseY);
             }
         }
@@ -586,12 +794,22 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         Slot slot = editor.accessor.getFocusedSlot();
         if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
             int tabMode = session.currentTab;
-            int action = (tabMode == 2 || tabMode == 1) ? ChestConfigManager.ACTION_BG : geometry.calculateAction(slot, mouseX, mouseY);
+            int action = (tabMode == 2 || tabMode == 1)
+                    ? ChestConfigManager.ACTION_BG
+                    : geometry.calculateAction(slot, mouseX, mouseY);
 
-            int colorVal = 0; boolean explicitEraser = false;
-            if (tabMode == 0) { colorVal = getCurrentSelectedLineColorValue(); explicitEraser = (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); }
-            else if (tabMode == 1) { colorVal = getCurrentSelectedBgColorValue(); explicitEraser = (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); }
-            else if (tabMode == 2) { colorVal = getCurrentSelectedComboColorValue(); explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); }
+            int colorVal = 0;
+            boolean explicitEraser = false;
+            if (tabMode == 0) {
+                colorVal = getCurrentSelectedLineColorValue();
+                explicitEraser = (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            } else if (tabMode == 1) {
+                colorVal = getCurrentSelectedBgColorValue();
+                explicitEraser = (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            } else if (tabMode == 2) {
+                colorVal = getCurrentSelectedComboColorValue();
+                explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            }
 
             if (colorVal == 0 && !explicitEraser) return;
 
@@ -604,38 +822,80 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             int colorBg = willErase ? 0x66FFFFFF : ((colorVal & 0x00FFFFFF) | 0x66000000);
             int colorLine = willErase ? 0x88FFFFFF : ((colorVal & 0x00FFFFFF) | 0x88000000);
 
-            int x = layout.guiX + slot.x; int y = layout.guiY + slot.y;
+            int x = layout.guiX + slot.x;
+            int y = layout.guiY + slot.y;
 
             if (tabMode == 1) {
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG) != 0){
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                                != 0) {
                     context.fill(x, y, x + 16, y + 16, colorBg);
                 }
             } else if (tabMode == 0) {
                 if (action != 0 && action != ChestConfigManager.ACTION_BG) {
-                    if ((action & ChestConfigManager.ACTION_TOP) != 0 && (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP) != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                    if ((action & ChestConfigManager.ACTION_BOTTOM) != 0 && (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM) != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                    if ((action & ChestConfigManager.ACTION_LEFT) != 0 && (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT) != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                    if ((action & ChestConfigManager.ACTION_RIGHT) != 0 && (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT) != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                    if ((action & ChestConfigManager.ACTION_TOP) != 0
+                            && (!willErase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP)
+                                            != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                    if ((action & ChestConfigManager.ACTION_BOTTOM) != 0
+                            && (!willErase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM)
+                                            != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                    if ((action & ChestConfigManager.ACTION_LEFT) != 0
+                            && (!willErase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT)
+                                            != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                    if ((action & ChestConfigManager.ACTION_RIGHT) != 0
+                            && (!willErase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT)
+                                            != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                 }
             } else {
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG) != 0) context.fill(x, y, x + 16, y + 16, colorBg);
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM) != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                if (!willErase || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT) != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                                != 0) context.fill(x, y, x + 16, y + 16, colorBg);
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP)
+                                != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM)
+                                != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT)
+                                != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                if (!willErase
+                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT)
+                                != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             }
         }
     }
 
     private void renderDragPreview(DrawContext context, int mouseX, int mouseY) {
         if (!session.isDraggingLine) return;
-        int guiX = layout.guiX; int guiY = layout.guiY;
+        int guiX = layout.guiX;
+        int guiY = layout.guiY;
         int tabMode = session.currentTab;
 
-        int colorVal = 0; boolean explicitEraser = false; int tMode = 0;
-        if (tabMode == 0) { colorVal = getCurrentSelectedLineColorValue(); explicitEraser = (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); tMode = session.lineToolMode; }
-        else if (tabMode == 1) { colorVal = getCurrentSelectedBgColorValue(); explicitEraser = (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); tMode = session.bgToolMode; }
-        else if (tabMode == 2) { colorVal = getCurrentSelectedComboColorValue(); explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID); tMode = session.comboToolMode; }
+        int colorVal = 0;
+        boolean explicitEraser = false;
+        int tMode = 0;
+        if (tabMode == 0) {
+            colorVal = getCurrentSelectedLineColorValue();
+            explicitEraser = (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.lineToolMode;
+        } else if (tabMode == 1) {
+            colorVal = getCurrentSelectedBgColorValue();
+            explicitEraser = (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.bgToolMode;
+        } else if (tabMode == 2) {
+            colorVal = getCurrentSelectedComboColorValue();
+            explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.comboToolMode;
+        }
 
         if (colorVal == 0 && !explicitEraser) return;
 
@@ -645,42 +905,76 @@ public class ScreenDrawLines extends AbstractEditorScreen {
 
         if (tabMode == 1) {
             if (tMode == 0) {
-                int startRow = session.dragStartSlot.getIndex() / 9; int startCol = session.dragStartSlot.getIndex() % 9;
-                int currRow = session.dragCurrentSlot.getIndex() / 9; int currCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(startRow, currRow); int maxRow = Math.max(startRow, currRow);
-                int minCol = Math.min(startCol, currCol); int maxCol = Math.max(startCol, currCol);
+                int startRow = session.dragStartSlot.getIndex() / 9;
+                int startCol = session.dragStartSlot.getIndex() % 9;
+                int currRow = session.dragCurrentSlot.getIndex() / 9;
+                int currCol = session.dragCurrentSlot.getIndex() % 9;
+                int minRow = Math.min(startRow, currRow);
+                int maxRow = Math.max(startRow, currRow);
+                int minCol = Math.min(startCol, currCol);
+                int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (slot.inventory instanceof PlayerInventory) continue;
-                    int r = slot.getIndex() / 9; int c = slot.getIndex() % 9;
+                    int r = slot.getIndex() / 9;
+                    int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (erase && ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG) == 0) continue;
+                        if (erase
+                                && ChestConfigManager.getInstance()
+                                                .getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                                        == 0) continue;
                         context.fill(guiX + slot.x, guiY + slot.y, guiX + slot.x + 16, guiY + slot.y + 16, colorBg);
                     }
                 }
             } else {
                 for (String step : session.tracePath) {
                     int slotIdx = Integer.parseInt(step.split("_")[0]);
-                    if (erase && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) == 0) continue;
+                    if (erase && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) == 0)
+                        continue;
                     Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
                     context.fill(guiX + slot.x, guiY + slot.y, guiX + slot.x + 16, guiY + slot.y + 16, colorBg);
                 }
             }
         } else if (tabMode == 2) {
             if (tMode == 0) {
-                int startRow = session.dragStartSlot.getIndex() / 9; int startCol = session.dragStartSlot.getIndex() % 9;
-                int currRow = session.dragCurrentSlot.getIndex() / 9; int currCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(startRow, currRow); int maxRow = Math.max(startRow, currRow);
-                int minCol = Math.min(startCol, currCol); int maxCol = Math.max(startCol, currCol);
+                int startRow = session.dragStartSlot.getIndex() / 9;
+                int startCol = session.dragStartSlot.getIndex() % 9;
+                int currRow = session.dragCurrentSlot.getIndex() / 9;
+                int currCol = session.dragCurrentSlot.getIndex() % 9;
+                int minRow = Math.min(startRow, currRow);
+                int maxRow = Math.max(startRow, currRow);
+                int minCol = Math.min(startCol, currCol);
+                int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (slot.inventory instanceof PlayerInventory) continue;
-                    int slotIdx = slot.getIndex(); int r = slotIdx / 9; int c = slotIdx % 9;
+                    int slotIdx = slot.getIndex();
+                    int r = slotIdx / 9;
+                    int c = slotIdx % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        int x = guiX + slot.x; int y = guiY + slot.y;
-                        if (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) != 0) context.fill(x, y, x + 16, y + 16, colorBg);
-                        if (r == minRow && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP) != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                        if (r == maxRow && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM) != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                        if (c == minCol && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_LEFT) != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                        if (c == maxCol && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_RIGHT) != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                        int x = guiX + slot.x;
+                        int y = guiY + slot.y;
+                        if (!erase
+                                || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG)
+                                        != 0) context.fill(x, y, x + 16, y + 16, colorBg);
+                        if (r == minRow
+                                && (!erase
+                                        || ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_TOP)
+                                                != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                        if (r == maxRow
+                                && (!erase
+                                        || ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM)
+                                                != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                        if (c == minCol
+                                && (!erase
+                                        || ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_LEFT)
+                                                != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                        if (c == maxCol
+                                && (!erase
+                                        || ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_RIGHT)
+                                                != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                     }
                 }
             } else {
@@ -690,42 +984,69 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 }
                 for (int slotIdx : traceSlots) {
                     Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
-                    int x = guiX + slot.x; int y = guiY + slot.y;
+                    int x = guiX + slot.x;
+                    int y = guiY + slot.y;
                     boolean hasTop = traceSlots.contains(slotIdx - 9);
                     boolean hasBottom = traceSlots.contains(slotIdx + 9);
                     boolean hasLeft = (slotIdx % 9 != 0) && traceSlots.contains(slotIdx - 1);
                     boolean hasRight = (slotIdx % 9 != 8) && traceSlots.contains(slotIdx + 1);
 
-                    if (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) != 0) context.fill(x, y, x + 16, y + 16, colorBg);
-                    if (!hasTop && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP) != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                    if (!hasBottom && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM) != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                    if (!hasLeft && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_LEFT) != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                    if (!hasRight && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_RIGHT) != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                    if (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) != 0)
+                        context.fill(x, y, x + 16, y + 16, colorBg);
+                    if (!hasTop
+                            && (!erase
+                                    || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP)
+                                            != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                    if (!hasBottom
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM)
+                                            != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                    if (!hasLeft
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_LEFT)
+                                            != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                    if (!hasRight
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_RIGHT)
+                                            != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                 }
             }
         } else {
             if (tMode == 0) {
-                int sRow = session.dragStartSlot.getIndex() / 9; int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9; int cCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(sRow, cRow); int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol); int maxCol = Math.max(sCol, cCol);
+                int sRow = session.dragStartSlot.getIndex() / 9;
+                int sCol = session.dragStartSlot.getIndex() % 9;
+                int cRow = session.dragCurrentSlot.getIndex() / 9;
+                int cCol = session.dragCurrentSlot.getIndex() % 9;
+                int minRow = Math.min(sRow, cRow);
+                int maxRow = Math.max(sRow, cRow);
+                int minCol = Math.min(sCol, cCol);
+                int maxCol = Math.max(sCol, cCol);
 
-                int yTopRaw = minRow * 2; int yBotRaw = maxRow * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow) yTopRaw = sRow * 2 + 1;
+                int yTopRaw = minRow * 2;
+                int yBotRaw = maxRow * 2 + 1;
+                if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                    yTopRaw = sRow * 2 + 1;
                 else if (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) yBotRaw = sRow * 2;
 
-                int xLeftRaw = minCol * 2; int xRightRaw = maxCol * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol) xLeftRaw = sCol * 2 + 1;
-                else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol) xRightRaw = sCol * 2;
+                int xLeftRaw = minCol * 2;
+                int xRightRaw = maxCol * 2 + 1;
+                if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                    xLeftRaw = sCol * 2 + 1;
+                else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol)
+                    xRightRaw = sCol * 2;
 
-                boolean isOuterIntent =
-                        (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow) ||
-                                (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) ||
-                                (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol) ||
-                                (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
+                boolean isOuterIntent = (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
 
-                int yTopExp = yTopRaw; int yBotExp = yBotRaw;
-                int xLeftExp = xLeftRaw; int xRightExp = xRightRaw;
+                int yTopExp = yTopRaw;
+                int yBotExp = yBotRaw;
+                int xLeftExp = xLeftRaw;
+                int xRightExp = xRightRaw;
 
                 if (isOuterIntent) {
                     if (yTopRaw % 2 == 0) yTopExp--;
@@ -761,37 +1082,84 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                                 int slotIdx = r * 9 + c;
                                 if (slotIdx >= geometry.getContainerSlotCount()) continue;
                                 Slot s = editor.accessor.getHandler().getSlot(slotIdx);
-                                int x = guiX + s.x; int y = guiY + s.y;
-                                int tY = r * 2, bY = r * 2 + 1; int lX = c * 2, rX = c * 2 + 1;
+                                int x = guiX + s.x;
+                                int y = guiY + s.y;
+                                int tY = r * 2, bY = r * 2 + 1;
+                                int lX = c * 2, rX = c * 2 + 1;
                                 boolean hInside = (lX >= xLeftExp) && (rX <= xRightExp);
                                 boolean vInside = (tY >= yTopExp) && (bY <= yBotExp);
-                                if (hInside && tY >= yTopExp && tY <= yBotExp && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                                if (hInside && bY >= yTopExp && bY <= yBotExp && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM) != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                                if (vInside && lX >= xLeftExp && lX <= xRightExp && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                                if (vInside && rX >= xLeftExp && rX <= xRightExp && ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_RIGHT) != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                                if (hInside
+                                        && tY >= yTopExp
+                                        && tY <= yBotExp
+                                        && ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_TOP)
+                                                != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                                if (hInside
+                                        && bY >= yTopExp
+                                        && bY <= yBotExp
+                                        && ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM)
+                                                != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                                if (vInside
+                                        && lX >= xLeftExp
+                                        && lX <= xRightExp
+                                        && ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_LEFT)
+                                                != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                                if (vInside
+                                        && rX >= xLeftExp
+                                        && rX <= xRightExp
+                                        && ChestConfigManager.getInstance()
+                                                        .getColor(slotIdx, ChestConfigManager.ACTION_RIGHT)
+                                                != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                             }
                         }
                     }
                 } else {
                     for (int r = minRow; r <= maxRow; r++) {
                         for (int c = minCol; c <= maxCol; c++) {
-                            int slotIdx = r * 9 + c; Slot s = editor.accessor.getHandler().getSlot(slotIdx);
-                            int x = guiX + s.x; int y = guiY + s.y;
-                            if ((session.currentDragAction & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                            if ((session.currentDragAction & ChestConfigManager.ACTION_BOTTOM) != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                            if ((session.currentDragAction & ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                            if ((session.currentDragAction & ChestConfigManager.ACTION_RIGHT) != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                            int slotIdx = r * 9 + c;
+                            Slot s = editor.accessor.getHandler().getSlot(slotIdx);
+                            int x = guiX + s.x;
+                            int y = guiY + s.y;
+                            if ((session.currentDragAction & ChestConfigManager.ACTION_TOP) != 0)
+                                context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                            if ((session.currentDragAction & ChestConfigManager.ACTION_BOTTOM) != 0)
+                                context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                            if ((session.currentDragAction & ChestConfigManager.ACTION_LEFT) != 0)
+                                context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                            if ((session.currentDragAction & ChestConfigManager.ACTION_RIGHT) != 0)
+                                context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                         }
                     }
                 }
             } else {
                 for (String step : session.tracePath) {
-                    String[] parts = step.split("_"); int slotIdx = Integer.parseInt(parts[0]); int act = Integer.parseInt(parts[1]);
-                    Slot slot = editor.accessor.getHandler().getSlot(slotIdx); int x = guiX + slot.x; int y = guiY + slot.y;
-                    if ((act & ChestConfigManager.ACTION_TOP) != 0 && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP) != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                    if ((act & ChestConfigManager.ACTION_BOTTOM) != 0 && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM) != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                    if ((act & ChestConfigManager.ACTION_LEFT) != 0 && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_LEFT) != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                    if ((act & ChestConfigManager.ACTION_RIGHT) != 0 && (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_RIGHT) != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                    String[] parts = step.split("_");
+                    int slotIdx = Integer.parseInt(parts[0]);
+                    int act = Integer.parseInt(parts[1]);
+                    Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
+                    int x = guiX + slot.x;
+                    int y = guiY + slot.y;
+                    if ((act & ChestConfigManager.ACTION_TOP) != 0
+                            && (!erase
+                                    || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_TOP)
+                                            != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                    if ((act & ChestConfigManager.ACTION_BOTTOM) != 0
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_BOTTOM)
+                                            != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                    if ((act & ChestConfigManager.ACTION_LEFT) != 0
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_LEFT)
+                                            != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                    if ((act & ChestConfigManager.ACTION_RIGHT) != 0
+                            && (!erase
+                                    || ChestConfigManager.getInstance()
+                                                    .getColor(slotIdx, ChestConfigManager.ACTION_RIGHT)
+                                            != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                 }
             }
         }
@@ -800,21 +1168,24 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     public int getCurrentSelectedLineColorValue() {
         if (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
         if (session.lineColorIndex < 16) return STANDARD_PALETTE[session.lineColorIndex];
-        if (session.lineColorIndex < 24) return ChestConfigManager.getInstance().getCustomColors(0)[session.lineColorIndex - 16];
+        if (session.lineColorIndex < 24)
+            return ChestConfigManager.getInstance().getCustomColors(0)[session.lineColorIndex - 16];
         return 0;
     }
 
     public int getCurrentSelectedBgColorValue() {
         if (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
         if (session.bgColorIndex < 16) return STANDARD_PALETTE[session.bgColorIndex];
-        if (session.bgColorIndex < 24) return ChestConfigManager.getInstance().getCustomColors(1)[session.bgColorIndex - 16];
+        if (session.bgColorIndex < 24)
+            return ChestConfigManager.getInstance().getCustomColors(1)[session.bgColorIndex - 16];
         return 0;
     }
 
     public int getCurrentSelectedComboColorValue() {
         if (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
         if (session.comboColorIndex < 16) return STANDARD_PALETTE[session.comboColorIndex];
-        if (session.comboColorIndex < 24) return ChestConfigManager.getInstance().getCustomColors(2)[session.comboColorIndex - 16];
+        if (session.comboColorIndex < 24)
+            return ChestConfigManager.getInstance().getCustomColors(2)[session.comboColorIndex - 16];
         return 0;
     }
 
@@ -826,7 +1197,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
                 session.dragCurrentSlot = slot;
 
-                int toolMode = (session.currentTab == 0) ? session.lineToolMode : (session.currentTab == 1 ? session.bgToolMode : session.comboToolMode);
+                int toolMode = (session.currentTab == 0)
+                        ? session.lineToolMode
+                        : (session.currentTab == 1 ? session.bgToolMode : session.comboToolMode);
 
                 if (session.currentTab == 1 || session.currentTab == 2) {
                     if (toolMode == 1) {
@@ -854,25 +1227,44 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                             // Calculate vertices (P1 and P2) of the previous line
                             int c1 = prevSlotIdx % 9, r1 = prevSlotIdx / 9;
                             int v1x1 = c1, v1y1 = r1, v1x2 = c1, v1y2 = r1;
-                            if (prevAction == ChestConfigManager.ACTION_TOP) { v1x2 = c1 + 1; }
-                            else if (prevAction == ChestConfigManager.ACTION_BOTTOM) { v1y1 = r1 + 1; v1x2 = c1 + 1; v1y2 = r1 + 1; }
-                            else if (prevAction == ChestConfigManager.ACTION_LEFT) { v1y2 = r1 + 1; }
-                            else if (prevAction == ChestConfigManager.ACTION_RIGHT) { v1x1 = c1 + 1; v1x2 = c1 + 1; v1y2 = r1 + 1; }
+                            if (prevAction == ChestConfigManager.ACTION_TOP) {
+                                v1x2 = c1 + 1;
+                            } else if (prevAction == ChestConfigManager.ACTION_BOTTOM) {
+                                v1y1 = r1 + 1;
+                                v1x2 = c1 + 1;
+                                v1y2 = r1 + 1;
+                            } else if (prevAction == ChestConfigManager.ACTION_LEFT) {
+                                v1y2 = r1 + 1;
+                            } else if (prevAction == ChestConfigManager.ACTION_RIGHT) {
+                                v1x1 = c1 + 1;
+                                v1x2 = c1 + 1;
+                                v1y2 = r1 + 1;
+                            }
 
                             // Calculate vertices of the current line
                             int c2 = currSlotIdx % 9, r2 = currSlotIdx / 9;
                             int v2x1 = c2, v2y1 = r2, v2x2 = c2, v2y2 = r2;
-                            if (currAction == ChestConfigManager.ACTION_TOP) { v2x2 = c2 + 1; }
-                            else if (currAction == ChestConfigManager.ACTION_BOTTOM) { v2y1 = r2 + 1; v2x2 = c2 + 1; v2y2 = r2 + 1; }
-                            else if (currAction == ChestConfigManager.ACTION_LEFT) { v2y2 = r2 + 1; }
-                            else if (currAction == ChestConfigManager.ACTION_RIGHT) { v2x1 = c2 + 1; v2x2 = c2 + 1; v2y2 = r2 + 1; }
+                            if (currAction == ChestConfigManager.ACTION_TOP) {
+                                v2x2 = c2 + 1;
+                            } else if (currAction == ChestConfigManager.ACTION_BOTTOM) {
+                                v2y1 = r2 + 1;
+                                v2x2 = c2 + 1;
+                                v2y2 = r2 + 1;
+                            } else if (currAction == ChestConfigManager.ACTION_LEFT) {
+                                v2y2 = r2 + 1;
+                            } else if (currAction == ChestConfigManager.ACTION_RIGHT) {
+                                v2x1 = c2 + 1;
+                                v2x2 = c2 + 1;
+                                v2y2 = r2 + 1;
+                            }
 
                             // Which vertex of the current line connects to the previous line?
                             boolean sharedV1 = (v2x1 == v1x1 && v2y1 == v1y1) || (v2x1 == v1x2 && v2y1 == v1y2);
                             boolean sharedV2 = (v2x2 == v1x1 && v2y2 == v1y1) || (v2x2 == v1x2 && v2y2 == v1y2);
 
                             boolean undo = false;
-                            if (currAction == ChestConfigManager.ACTION_LEFT || currAction == ChestConfigManager.ACTION_RIGHT) {
+                            if (currAction == ChestConfigManager.ACTION_LEFT
+                                    || currAction == ChestConfigManager.ACTION_RIGHT) {
                                 if (sharedV1 && cRelY < 8) undo = true;
                                 if (sharedV2 && cRelY > 8) undo = true;
                             } else {
@@ -884,14 +1276,19 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                                 session.tracePath.remove(session.tracePath.size() - 1);
                                 session.lockedTraceAction = prevAction;
                                 Slot prevSlot = editor.accessor.getHandler().getSlot(prevSlotIdx);
-                                if (prevAction == ChestConfigManager.ACTION_TOP || prevAction == ChestConfigManager.ACTION_BOTTOM) {
+                                if (prevAction == ChestConfigManager.ACTION_TOP
+                                        || prevAction == ChestConfigManager.ACTION_BOTTOM) {
                                     session.lockedTraceAxis = 1;
                                     session.lockedTraceRowCol = prevSlotIdx / 9;
-                                    session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_TOP) ? (guiY + prevSlot.y) : (guiY + prevSlot.y + 16);
+                                    session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_TOP)
+                                            ? (guiY + prevSlot.y)
+                                            : (guiY + prevSlot.y + 16);
                                 } else {
                                     session.lockedTraceAxis = 2;
                                     session.lockedTraceRowCol = prevSlotIdx % 9;
-                                    session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_LEFT) ? (guiX + prevSlot.x) : (guiX + prevSlot.x + 16);
+                                    session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_LEFT)
+                                            ? (guiX + prevSlot.x)
+                                            : (guiX + prevSlot.x + 16);
                                 }
                             } else {
                                 break;
@@ -915,24 +1312,43 @@ public class ScreenDrawLines extends AbstractEditorScreen {
 
                                 int c1 = lastSlotIdx % 9, r1 = lastSlotIdx / 9;
                                 int v1x1 = c1, v1y1 = r1, v1x2 = c1, v1y2 = r1;
-                                if (lastAction == ChestConfigManager.ACTION_TOP) { v1x2 = c1 + 1; }
-                                else if (lastAction == ChestConfigManager.ACTION_BOTTOM) { v1y1 = r1 + 1; v1x2 = c1 + 1; v1y2 = r1 + 1; }
-                                else if (lastAction == ChestConfigManager.ACTION_LEFT) { v1y2 = r1 + 1; }
-                                else if (lastAction == ChestConfigManager.ACTION_RIGHT) { v1x1 = c1 + 1; v1x2 = c1 + 1; v1y2 = r1 + 1; }
+                                if (lastAction == ChestConfigManager.ACTION_TOP) {
+                                    v1x2 = c1 + 1;
+                                } else if (lastAction == ChestConfigManager.ACTION_BOTTOM) {
+                                    v1y1 = r1 + 1;
+                                    v1x2 = c1 + 1;
+                                    v1y2 = r1 + 1;
+                                } else if (lastAction == ChestConfigManager.ACTION_LEFT) {
+                                    v1y2 = r1 + 1;
+                                } else if (lastAction == ChestConfigManager.ACTION_RIGHT) {
+                                    v1x1 = c1 + 1;
+                                    v1x2 = c1 + 1;
+                                    v1y2 = r1 + 1;
+                                }
 
                                 int c2 = rawSlotIdx % 9, r2 = rawSlotIdx / 9;
                                 int v2x1 = c2, v2y1 = r2, v2x2 = c2, v2y2 = r2;
-                                if (rawAction == ChestConfigManager.ACTION_TOP) { v2x2 = c2 + 1; }
-                                else if (rawAction == ChestConfigManager.ACTION_BOTTOM) { v2y1 = r2 + 1; v2x2 = c2 + 1; v2y2 = r2 + 1; }
-                                else if (rawAction == ChestConfigManager.ACTION_LEFT) { v2y2 = r2 + 1; }
-                                else if (rawAction == ChestConfigManager.ACTION_RIGHT) { v2x1 = c2 + 1; v2x2 = c2 + 1; v2y2 = r2 + 1; }
+                                if (rawAction == ChestConfigManager.ACTION_TOP) {
+                                    v2x2 = c2 + 1;
+                                } else if (rawAction == ChestConfigManager.ACTION_BOTTOM) {
+                                    v2y1 = r2 + 1;
+                                    v2x2 = c2 + 1;
+                                    v2y2 = r2 + 1;
+                                } else if (rawAction == ChestConfigManager.ACTION_LEFT) {
+                                    v2y2 = r2 + 1;
+                                } else if (rawAction == ChestConfigManager.ACTION_RIGHT) {
+                                    v2x1 = c2 + 1;
+                                    v2x2 = c2 + 1;
+                                    v2y2 = r2 + 1;
+                                }
 
                                 boolean sharedV1 = (v2x1 == v1x1 && v2y1 == v1y1) || (v2x1 == v1x2 && v2y1 == v1y2);
                                 boolean sharedV2 = (v2x2 == v1x1 && v2y2 == v1y1) || (v2x2 == v1x2 && v2y2 == v1y2);
 
                                 if (sharedV1 || sharedV2) {
                                     boolean shouldAdd = false;
-                                    if (rawAction == ChestConfigManager.ACTION_LEFT || rawAction == ChestConfigManager.ACTION_RIGHT) {
+                                    if (rawAction == ChestConfigManager.ACTION_LEFT
+                                            || rawAction == ChestConfigManager.ACTION_RIGHT) {
                                         if (sharedV1 && rRelY >= 8) shouldAdd = true;
                                         if (sharedV2 && rRelY <= 8) shouldAdd = true;
                                     } else {
@@ -963,17 +1379,25 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             boolean explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
             if (colorToPaint == 0 && !explicitEraser) return;
 
-            int allLinesAction = ChestConfigManager.ACTION_TOP | ChestConfigManager.ACTION_BOTTOM | ChestConfigManager.ACTION_LEFT | ChestConfigManager.ACTION_RIGHT;
+            int allLinesAction = ChestConfigManager.ACTION_TOP
+                    | ChestConfigManager.ACTION_BOTTOM
+                    | ChestConfigManager.ACTION_LEFT
+                    | ChestConfigManager.ACTION_RIGHT;
 
             if (session.comboToolMode == 0) { // Combo Area
-                int startRow = session.dragStartSlot.getIndex() / 9; int startCol = session.dragStartSlot.getIndex() % 9;
-                int currRow = session.dragCurrentSlot.getIndex() / 9; int currCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(startRow, currRow); int maxRow = Math.max(startRow, currRow);
-                int minCol = Math.min(startCol, currCol); int maxCol = Math.max(startCol, currCol);
+                int startRow = session.dragStartSlot.getIndex() / 9;
+                int startCol = session.dragStartSlot.getIndex() % 9;
+                int currRow = session.dragCurrentSlot.getIndex() / 9;
+                int currCol = session.dragCurrentSlot.getIndex() % 9;
+                int minRow = Math.min(startRow, currRow);
+                int maxRow = Math.max(startRow, currRow);
+                int minCol = Math.min(startCol, currCol);
+                int maxCol = Math.max(startCol, currCol);
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (slot.inventory instanceof PlayerInventory) continue;
-                    int r = slot.getIndex() / 9; int c = slot.getIndex() % 9;
+                    int r = slot.getIndex() / 9;
+                    int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (explicitEraser || session.isDragModeErasing) {
                             manager.removeAction(slot.getIndex(), ChestConfigManager.ACTION_BG);
@@ -981,10 +1405,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                         } else {
                             manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BG, colorToPaint);
 
-                            if (r == minRow) manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_TOP, colorToPaint);
-                            if (r == maxRow) manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM, colorToPaint);
-                            if (c == minCol) manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_LEFT, colorToPaint);
-                            if (c == maxCol) manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_RIGHT, colorToPaint);
+                            if (r == minRow)
+                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_TOP, colorToPaint);
+                            if (r == maxRow)
+                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM, colorToPaint);
+                            if (c == minCol)
+                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_LEFT, colorToPaint);
+                            if (c == maxCol)
+                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_RIGHT, colorToPaint);
                         }
                         changeMade = true;
                     }
@@ -1015,7 +1443,10 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                     changeMade = true;
                 }
             }
-            if (changeMade) { editor.saveSmart(); editor.playClickSound(1.0f); }
+            if (changeMade) {
+                editor.saveSmart();
+                editor.playClickSound(1.0f);
+            }
             return;
         }
 
@@ -1025,17 +1456,23 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             if (colorToPaint == 0 && !explicitEraser) return;
 
             if (session.bgToolMode == 0) {
-                int sRow = session.dragStartSlot.getIndex() / 9; int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9; int cCol = session.dragCurrentSlot.getIndex() % 9;
+                int sRow = session.dragStartSlot.getIndex() / 9;
+                int sCol = session.dragStartSlot.getIndex() % 9;
+                int cRow = session.dragCurrentSlot.getIndex() / 9;
+                int cCol = session.dragCurrentSlot.getIndex() % 9;
 
-                int minRow = Math.min(sRow, cRow); int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol); int maxCol = Math.max(sCol, cCol);
+                int minRow = Math.min(sRow, cRow);
+                int maxRow = Math.max(sRow, cRow);
+                int minCol = Math.min(sCol, cCol);
+                int maxCol = Math.max(sCol, cCol);
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (slot.inventory instanceof PlayerInventory) continue;
-                    int r = slot.getIndex() / 9; int c = slot.getIndex() % 9;
+                    int r = slot.getIndex() / 9;
+                    int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (explicitEraser || session.isDragModeErasing) manager.removeAction(slot.getIndex(), ChestConfigManager.ACTION_BG);
+                        if (explicitEraser || session.isDragModeErasing)
+                            manager.removeAction(slot.getIndex(), ChestConfigManager.ACTION_BG);
                         else manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BG, colorToPaint);
                         changeMade = true;
                     }
@@ -1043,7 +1480,8 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             } else {
                 for (String step : session.tracePath) {
                     int slotIdx = Integer.parseInt(step.split("_")[0]);
-                    if (explicitEraser || session.isDragModeErasing) manager.removeAction(slotIdx, ChestConfigManager.ACTION_BG);
+                    if (explicitEraser || session.isDragModeErasing)
+                        manager.removeAction(slotIdx, ChestConfigManager.ACTION_BG);
                     else manager.paintAction(slotIdx, ChestConfigManager.ACTION_BG, colorToPaint);
                     changeMade = true;
                 }
@@ -1054,27 +1492,38 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             if (colorToPaint == 0 && !explicitEraser) return;
 
             if (session.lineToolMode == 0) { // Pencil Area
-                int sRow = session.dragStartSlot.getIndex() / 9; int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9; int cCol = session.dragCurrentSlot.getIndex() % 9;
+                int sRow = session.dragStartSlot.getIndex() / 9;
+                int sCol = session.dragStartSlot.getIndex() % 9;
+                int cRow = session.dragCurrentSlot.getIndex() / 9;
+                int cCol = session.dragCurrentSlot.getIndex() % 9;
 
-                int minRow = Math.min(sRow, cRow); int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol); int maxCol = Math.max(sCol, cCol);
+                int minRow = Math.min(sRow, cRow);
+                int maxRow = Math.max(sRow, cRow);
+                int minCol = Math.min(sCol, cCol);
+                int maxCol = Math.max(sCol, cCol);
 
-                int yTopRaw = minRow * 2; int yBotRaw = maxRow * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow) yTopRaw = sRow * 2 + 1;
+                int yTopRaw = minRow * 2;
+                int yBotRaw = maxRow * 2 + 1;
+                if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                    yTopRaw = sRow * 2 + 1;
                 else if (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) yBotRaw = sRow * 2;
 
-                int xLeftRaw = minCol * 2; int xRightRaw = maxCol * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol) xLeftRaw = sCol * 2 + 1;
-                else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol) xRightRaw = sCol * 2;
+                int xLeftRaw = minCol * 2;
+                int xRightRaw = maxCol * 2 + 1;
+                if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                    xLeftRaw = sCol * 2 + 1;
+                else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol)
+                    xRightRaw = sCol * 2;
 
-                boolean isOuterIntent = (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow) ||
-                        (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) ||
-                        (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol) ||
-                        (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
+                boolean isOuterIntent = (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                        || (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
 
-                int yTopExp = yTopRaw; int yBotExp = yBotRaw;
-                int xLeftExp = xLeftRaw; int xRightExp = xRightRaw;
+                int yTopExp = yTopRaw;
+                int yBotExp = yBotRaw;
+                int xLeftExp = xLeftRaw;
+                int xRightExp = xRightRaw;
 
                 if (isOuterIntent) {
                     if (yTopRaw % 2 == 0) yTopExp--;
@@ -1105,33 +1554,47 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                                 boolean hInside = (leftX >= xLeftExp) && (rightX <= xRightExp);
                                 boolean vInside = (topY >= yTopExp) && (botY <= yBotExp);
 
-                                if (hInside && topY >= yTopExp && topY <= yBotExp) manager.removeAction(slotIdx, ChestConfigManager.ACTION_TOP);
-                                if (hInside && botY >= yTopExp && botY <= yBotExp) manager.removeAction(slotIdx, ChestConfigManager.ACTION_BOTTOM);
-                                if (vInside && leftX >= xLeftExp && leftX <= xRightExp) manager.removeAction(slotIdx, ChestConfigManager.ACTION_LEFT);
-                                if (vInside && rightX >= xLeftExp && rightX <= xRightExp) manager.removeAction(slotIdx, ChestConfigManager.ACTION_RIGHT);
+                                if (hInside && topY >= yTopExp && topY <= yBotExp)
+                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_TOP);
+                                if (hInside && botY >= yTopExp && botY <= yBotExp)
+                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_BOTTOM);
+                                if (vInside && leftX >= xLeftExp && leftX <= xRightExp)
+                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_LEFT);
+                                if (vInside && rightX >= xLeftExp && rightX <= xRightExp)
+                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_RIGHT);
                             }
                         }
                     } else {
-                        int fillMinCol = (xLeftExp + 1) / 2; int fillMaxCol = (xRightExp - 1) / 2;
-                        int topAction = (yTopExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
+                        int fillMinCol = (xLeftExp + 1) / 2;
+                        int fillMaxCol = (xRightExp - 1) / 2;
+                        int topAction =
+                                (yTopExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
                         int topRow = yTopExp / 2;
-                        int botAction = (yBotExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
+                        int botAction =
+                                (yBotExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
                         int botRow = yBotExp / 2;
 
                         for (int c = fillMinCol; c <= fillMaxCol; c++) {
-                            if (topRow * 9 + c < editor.geometry.getContainerSlotCount()) manager.paintAction(topRow * 9 + c, topAction, colorToPaint);
-                            if (botRow * 9 + c < editor.geometry.getContainerSlotCount()) manager.paintAction(botRow * 9 + c, botAction, colorToPaint);
+                            if (topRow * 9 + c < editor.geometry.getContainerSlotCount())
+                                manager.paintAction(topRow * 9 + c, topAction, colorToPaint);
+                            if (botRow * 9 + c < editor.geometry.getContainerSlotCount())
+                                manager.paintAction(botRow * 9 + c, botAction, colorToPaint);
                         }
 
-                        int fillMinRow = (yTopExp + 1) / 2; int fillMaxRow = (yBotExp - 1) / 2;
-                        int leftAction = (xLeftExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
+                        int fillMinRow = (yTopExp + 1) / 2;
+                        int fillMaxRow = (yBotExp - 1) / 2;
+                        int leftAction =
+                                (xLeftExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
                         int leftCol = xLeftExp / 2;
-                        int rightAction = (xRightExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
+                        int rightAction =
+                                (xRightExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
                         int rightCol = xRightExp / 2;
 
                         for (int r = fillMinRow; r <= fillMaxRow; r++) {
-                            if (r * 9 + leftCol < editor.geometry.getContainerSlotCount()) manager.paintAction(r * 9 + leftCol, leftAction, colorToPaint);
-                            if (r * 9 + rightCol < editor.geometry.getContainerSlotCount()) manager.paintAction(r * 9 + rightCol, rightAction, colorToPaint);
+                            if (r * 9 + leftCol < editor.geometry.getContainerSlotCount())
+                                manager.paintAction(r * 9 + leftCol, leftAction, colorToPaint);
+                            if (r * 9 + rightCol < editor.geometry.getContainerSlotCount())
+                                manager.paintAction(r * 9 + rightCol, rightAction, colorToPaint);
                         }
                     }
                     changeMade = true;
@@ -1155,6 +1618,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 }
             }
         }
-        if (changeMade) { editor.saveSmart(); editor.playClickSound(1.0f); }
+        if (changeMade) {
+            editor.saveSmart();
+            editor.playClickSound(1.0f);
+        }
     }
 }

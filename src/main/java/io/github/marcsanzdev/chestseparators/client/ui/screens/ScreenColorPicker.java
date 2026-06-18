@@ -1,23 +1,20 @@
 package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
+import java.awt.Color;
+import java.nio.ByteBuffer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
-
-import java.awt.Color;
-import java.nio.ByteBuffer;
 
 public class ScreenColorPicker extends AbstractEditorScreen {
 
@@ -42,22 +39,41 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int btnY = y + layout.popupH - 30;
         int bH = 20;
 
-        WideButtonWidget btnEyedropper = new WideButtonWidget(x + 10, btnY, 85, bH, Text.translatable("button.chestseparators.eyedropper").getString(), ModTextures.ICON_EYEDROPPER2, () -> {
-            session.isEyedropperActive = true;
-            org.lwjgl.glfw.GLFW.glfwSetInputMode(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN);
-            editor.playClickSound(1.2f);
-        });
-        btnEyedropper.tooltipText = Text.translatable("tooltip.chestseparators.desc.eyedropper").getString();
+        WideButtonWidget btnEyedropper = new WideButtonWidget(
+                x + 10,
+                btnY,
+                85,
+                bH,
+                Text.translatable("button.chestseparators.eyedropper").getString(),
+                ModTextures.ICON_EYEDROPPER2,
+                () -> {
+                    session.isEyedropperActive = true;
+                    org.lwjgl.glfw.GLFW.glfwSetInputMode(
+                            MinecraftClient.getInstance().getWindow().getHandle(),
+                            org.lwjgl.glfw.GLFW.GLFW_CURSOR,
+                            org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN);
+                    editor.playClickSound(1.2f);
+                });
+        btnEyedropper.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.eyedropper").getString();
         widgets.add(btnEyedropper);
 
-        WideButtonWidget btnExit = new WideButtonWidget(x + 175, btnY, 55, bH, Text.translatable("button.chestseparators.exit").getString(), ModTextures.ICON_CANCEL, () -> {
-            saveCurrentCustomColor();
-            editor.playClickSound(0.8f);
-            clearSelection();
-            session.isColorPickerOpen = false;
-            closeAndRestore();
-        });
-        btnExit.tooltipText = Text.translatable("tooltip.chestseparators.desc.exit").getString();
+        WideButtonWidget btnExit = new WideButtonWidget(
+                x + 175,
+                btnY,
+                55,
+                bH,
+                Text.translatable("button.chestseparators.exit").getString(),
+                ModTextures.ICON_CANCEL,
+                () -> {
+                    saveCurrentCustomColor();
+                    editor.playClickSound(0.8f);
+                    clearSelection();
+                    session.isColorPickerOpen = false;
+                    closeAndRestore();
+                });
+        btnExit.tooltipText =
+                Text.translatable("tooltip.chestseparators.desc.exit").getString();
         widgets.add(btnExit);
 
         MinecraftClient client = MinecraftClient.getInstance();
@@ -67,7 +83,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int fieldX = textX + 12;
         int fieldY = layout.popupY + 85;
 
-        hexField = new TextFieldWidget(client.textRenderer, fieldX, fieldY, 60, 12, Text.translatable("gui.chestseparators.hex"));
+        hexField = new TextFieldWidget(
+                client.textRenderer, fieldX, fieldY, 60, 12, Text.translatable("gui.chestseparators.hex"));
         hexField.setMaxLength(6);
         hexField.setDrawsBackground(false);
         boolean isDark = GlobalChestConfig.instance.darkMode;
@@ -83,7 +100,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             }
         });
 
-        rField = new TextFieldWidget(client.textRenderer, fieldX, fieldY + 20, 30, 12, Text.translatable("gui.chestseparators.color_r"));
+        rField = new TextFieldWidget(
+                client.textRenderer, fieldX, fieldY + 20, 30, 12, Text.translatable("gui.chestseparators.color_r"));
         rField.setMaxLength(3);
         rField.setDrawsBackground(false);
         rField.setEditableColor(0xFFFF5555);
@@ -96,7 +114,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             }
         });
 
-        gField = new TextFieldWidget(client.textRenderer, fieldX, fieldY + 36, 30, 12, Text.translatable("gui.chestseparators.color_g"));
+        gField = new TextFieldWidget(
+                client.textRenderer, fieldX, fieldY + 36, 30, 12, Text.translatable("gui.chestseparators.color_g"));
         gField.setMaxLength(3);
         gField.setDrawsBackground(false);
         gField.setEditableColor(0xFF55FF55);
@@ -109,7 +128,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             }
         });
 
-        bField = new TextFieldWidget(client.textRenderer, fieldX, fieldY + 52, 30, 12, Text.translatable("gui.chestseparators.color_b"));
+        bField = new TextFieldWidget(
+                client.textRenderer, fieldX, fieldY + 52, 30, 12, Text.translatable("gui.chestseparators.color_b"));
         bField.setMaxLength(3);
         bField.setDrawsBackground(false);
         bField.setEditableColor(0xFF5555FF);
@@ -126,10 +146,13 @@ public class ScreenColorPicker extends AbstractEditorScreen {
     }
 
     private void saveCurrentCustomColor() {
-        int customIndex = (session.pickerTargetMode == 0) ? session.editingLineCustomIndex : ((session.pickerTargetMode == 1) ? session.editingBgCustomIndex : session.editingComboCustomIndex);
+        int customIndex = (session.pickerTargetMode == 0)
+                ? session.editingLineCustomIndex
+                : ((session.pickerTargetMode == 1) ? session.editingBgCustomIndex : session.editingComboCustomIndex);
 
         if (customIndex != -1) {
-            ChestConfigManager.getInstance().setCustomColor(customIndex, session.pickerCurrentRGB, session.pickerTargetMode);
+            ChestConfigManager.getInstance()
+                    .setCustomColor(customIndex, session.pickerCurrentRGB, session.pickerTargetMode);
             ChestConfigManager.getInstance().saveWorldPalette();
         }
     }
@@ -210,7 +233,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
             saveCurrentCustomColor();
 
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
     }
 
     @Override
@@ -220,14 +244,21 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         if (session.isEyedropperActive) {
             if (button == 1) {
                 session.isEyedropperActive = false;
-                org.lwjgl.glfw.GLFW.glfwSetInputMode(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
+                org.lwjgl.glfw.GLFW.glfwSetInputMode(
+                        MinecraftClient.getInstance().getWindow().getHandle(),
+                        org.lwjgl.glfw.GLFW.GLFW_CURSOR,
+                        org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
                 editor.playClickSound(0.8f);
                 return true;
             }
             if (button == 0) {
                 editor.colorPickerModified = true;
                 session.pickerCurrentRGB = hoveredPixelColor;
-                float[] hsb = Color.RGBtoHSB((hoveredPixelColor >> 16) & 0xFF, (hoveredPixelColor >> 8) & 0xFF, hoveredPixelColor & 0xFF, null);
+                float[] hsb = Color.RGBtoHSB(
+                        (hoveredPixelColor >> 16) & 0xFF,
+                        (hoveredPixelColor >> 8) & 0xFF,
+                        hoveredPixelColor & 0xFF,
+                        null);
                 session.pickerHue = hsb[0];
                 session.pickerSat = hsb[1];
                 session.pickerVal = hsb[2];
@@ -235,7 +266,10 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 saveCurrentCustomColor();
 
                 session.isEyedropperActive = false;
-                org.lwjgl.glfw.GLFW.glfwSetInputMode(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
+                org.lwjgl.glfw.GLFW.glfwSetInputMode(
+                        MinecraftClient.getInstance().getWindow().getHandle(),
+                        org.lwjgl.glfw.GLFW.GLFW_CURSOR,
+                        org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
                 editor.playClickSound(1.2f);
                 return true;
             }
@@ -255,9 +289,16 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                     editor.playClickSound(1.0f);
                     if (editor.colorPickerModified) saveCurrentCustomColor();
 
-                    if (tabMode == 0) { session.editingLineCustomIndex = i; session.lineColorIndex = 16 + i; }
-                    else if (tabMode == 1) { session.editingBgCustomIndex = i; session.bgColorIndex = 16 + i; }
-                    else { session.editingComboCustomIndex = i; session.comboColorIndex = 16 + i; }
+                    if (tabMode == 0) {
+                        session.editingLineCustomIndex = i;
+                        session.lineColorIndex = 16 + i;
+                    } else if (tabMode == 1) {
+                        session.editingBgCustomIndex = i;
+                        session.bgColorIndex = 16 + i;
+                    } else {
+                        session.editingComboCustomIndex = i;
+                        session.comboColorIndex = 16 + i;
+                    }
 
                     int newColor = ChestConfigManager.getInstance().getCustomColors(tabMode)[i];
                     editor.colorPickerModified = false;
@@ -267,7 +308,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                     } else {
                         newColor = newColor & 0xFFFFFF;
                         session.pickerCurrentRGB = newColor;
-                        float[] hsb = Color.RGBtoHSB((newColor >> 16) & 0xFF, (newColor >> 8) & 0xFF, newColor & 0xFF, null);
+                        float[] hsb =
+                                Color.RGBtoHSB((newColor >> 16) & 0xFF, (newColor >> 8) & 0xFF, newColor & 0xFF, null);
                         session.pickerHue = hsb[0];
                         session.pickerSat = hsb[1];
                         session.pickerVal = hsb[2];
@@ -278,7 +320,10 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             }
         }
 
-        boolean inPopup = mouseX >= layout.popupX && mouseX <= layout.popupX + layout.popupW && mouseY >= layout.popupY && mouseY <= layout.popupY + layout.popupH;
+        boolean inPopup = mouseX >= layout.popupX
+                && mouseX <= layout.popupX + layout.popupW
+                && mouseY >= layout.popupY
+                && mouseY <= layout.popupY + layout.popupH;
 
         if (inPopup) {
             if (button == 0) {
@@ -286,37 +331,62 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 MinecraftClient client = MinecraftClient.getInstance();
 
                 if (hexField != null) {
-                    if (editor.isHovering(hexField.getX(), hexField.getY(), hexField.getWidth(), hexField.getHeight(), mouseX, mouseY)) {
+                    if (editor.isHovering(
+                            hexField.getX(),
+                            hexField.getY(),
+                            hexField.getWidth(),
+                            hexField.getHeight(),
+                            mouseX,
+                            mouseY)) {
                         hexField.setFocused(true);
-                        int localX = (int)(mouseX - hexField.getX());
-                        hexField.setCursor(client.textRenderer.trimToWidth(hexField.getText(), Math.max(0, localX)).length(), false);
+                        int localX = (int) (mouseX - hexField.getX());
+                        hexField.setCursor(
+                                client.textRenderer
+                                        .trimToWidth(hexField.getText(), Math.max(0, localX))
+                                        .length(),
+                                false);
                         clickedText = true;
                     } else hexField.setFocused(false);
                 }
 
                 if (rField != null) {
-                    if (editor.isHovering(rField.getX(), rField.getY(), rField.getWidth(), rField.getHeight(), mouseX, mouseY)) {
+                    if (editor.isHovering(
+                            rField.getX(), rField.getY(), rField.getWidth(), rField.getHeight(), mouseX, mouseY)) {
                         rField.setFocused(true);
-                        int localX = (int)(mouseX - rField.getX());
-                        rField.setCursor(client.textRenderer.trimToWidth(rField.getText(), Math.max(0, localX)).length(), false);
+                        int localX = (int) (mouseX - rField.getX());
+                        rField.setCursor(
+                                client.textRenderer
+                                        .trimToWidth(rField.getText(), Math.max(0, localX))
+                                        .length(),
+                                false);
                         clickedText = true;
                     } else rField.setFocused(false);
                 }
 
                 if (gField != null) {
-                    if (editor.isHovering(gField.getX(), gField.getY(), gField.getWidth(), gField.getHeight(), mouseX, mouseY)) {
+                    if (editor.isHovering(
+                            gField.getX(), gField.getY(), gField.getWidth(), gField.getHeight(), mouseX, mouseY)) {
                         gField.setFocused(true);
-                        int localX = (int)(mouseX - gField.getX());
-                        gField.setCursor(client.textRenderer.trimToWidth(gField.getText(), Math.max(0, localX)).length(), false);
+                        int localX = (int) (mouseX - gField.getX());
+                        gField.setCursor(
+                                client.textRenderer
+                                        .trimToWidth(gField.getText(), Math.max(0, localX))
+                                        .length(),
+                                false);
                         clickedText = true;
                     } else gField.setFocused(false);
                 }
 
                 if (bField != null) {
-                    if (editor.isHovering(bField.getX(), bField.getY(), bField.getWidth(), bField.getHeight(), mouseX, mouseY)) {
+                    if (editor.isHovering(
+                            bField.getX(), bField.getY(), bField.getWidth(), bField.getHeight(), mouseX, mouseY)) {
                         bField.setFocused(true);
-                        int localX = (int)(mouseX - bField.getX());
-                        bField.setCursor(client.textRenderer.trimToWidth(bField.getText(), Math.max(0, localX)).length(), false);
+                        int localX = (int) (mouseX - bField.getX());
+                        bField.setCursor(
+                                client.textRenderer
+                                        .trimToWidth(bField.getText(), Math.max(0, localX))
+                                        .length(),
+                                false);
                         clickedText = true;
                     } else bField.setFocused(false);
                 }
@@ -334,8 +404,10 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                     session.lastClickedHue = false;
                     updateColorFromMouse(mouseX, mouseY, true);
                     return true;
-                }
-                else if (mouseX >= contentX + 115 && mouseX <= contentX + 135 && mouseY >= contentY && mouseY <= contentY + 100) {
+                } else if (mouseX >= contentX + 115
+                        && mouseX <= contentX + 135
+                        && mouseY >= contentY
+                        && mouseY <= contentY + 100) {
                     session.isDraggingHue = true;
                     session.lastClickedHue = true;
                     updateColorFromMouse(mouseX, mouseY, false);
@@ -407,13 +479,13 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int contentY = layout.popupY + 45;
 
         if (isSatValBox) {
-            float relX = MathHelper.clamp((float)(mx - contentX), 0.0f, 100.0f);
-            float relY = MathHelper.clamp((float)(my - contentY), 0.0f, 100.0f);
+            float relX = MathHelper.clamp((float) (mx - contentX), 0.0f, 100.0f);
+            float relY = MathHelper.clamp((float) (my - contentY), 0.0f, 100.0f);
 
             session.pickerSat = relX / 100.0f;
             session.pickerVal = 1.0f - (relY / 100.0f);
         } else {
-            float relY = MathHelper.clamp((float)(my - contentY), 0.0f, 100.0f);
+            float relY = MathHelper.clamp((float) (my - contentY), 0.0f, 100.0f);
             session.pickerHue = relY / 100.0f;
         }
 
@@ -428,15 +500,18 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         if (session.isEyedropperActive && input.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             session.isEyedropperActive = false;
-            org.lwjgl.glfw.GLFW.glfwSetInputMode(MinecraftClient.getInstance().getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
+            org.lwjgl.glfw.GLFW.glfwSetInputMode(
+                    MinecraftClient.getInstance().getWindow().getHandle(),
+                    org.lwjgl.glfw.GLFW.GLFW_CURSOR,
+                    org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
             return true;
         }
 
         int key = input.key();
-        boolean isAnyFieldFocused = (hexField != null && hexField.isFocused()) ||
-                (rField != null && rField.isFocused()) ||
-                (gField != null && gField.isFocused()) ||
-                (bField != null && bField.isFocused());
+        boolean isAnyFieldFocused = (hexField != null && hexField.isFocused())
+                || (rField != null && rField.isFocused())
+                || (gField != null && gField.isFocused())
+                || (bField != null && bField.isFocused());
 
         if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             if (isAnyFieldFocused) {
@@ -451,17 +526,31 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         }
 
         if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_TAB) {
-            if (hexField != null && hexField.isFocused()) { hexField.setFocused(false); rField.setFocused(true); }
-            else if (rField != null && rField.isFocused()) { rField.setFocused(false); gField.setFocused(true); }
-            else if (gField != null && gField.isFocused()) { gField.setFocused(false); bField.setFocused(true); }
-            else if (bField != null && bField.isFocused()) { bField.setFocused(false); hexField.setFocused(true); }
-            else if (hexField != null) { hexField.setFocused(true); }
+            if (hexField != null && hexField.isFocused()) {
+                hexField.setFocused(false);
+                rField.setFocused(true);
+            } else if (rField != null && rField.isFocused()) {
+                rField.setFocused(false);
+                gField.setFocused(true);
+            } else if (gField != null && gField.isFocused()) {
+                gField.setFocused(false);
+                bField.setFocused(true);
+            } else if (bField != null && bField.isFocused()) {
+                bField.setFocused(false);
+                hexField.setFocused(true);
+            } else if (hexField != null) {
+                hexField.setFocused(true);
+            }
             return true;
         }
 
         if (isAnyFieldFocused) {
-            boolean isUp = key == org.lwjgl.glfw.GLFW.GLFW_KEY_UP || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ADD || key == org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL;
-            boolean isDown = key == org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN || key == org.lwjgl.glfw.GLFW.GLFW_KEY_MINUS || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_SUBTRACT;
+            boolean isUp = key == org.lwjgl.glfw.GLFW.GLFW_KEY_UP
+                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ADD
+                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL;
+            boolean isDown = key == org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN
+                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_MINUS
+                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_SUBTRACT;
 
             if (isUp || isDown) {
                 editor.colorPickerModified = true;
@@ -471,7 +560,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                         String hex = hexField.getText().trim().replace("#", "");
                         int val = hex.isEmpty() ? 0 : Integer.parseInt(hex, 16);
                         val = MathHelper.clamp(val + delta, 0, 0xFFFFFF);
-                        hexField.setText(String.format("%02X%02X%02X", (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF));
+                        hexField.setText(
+                                String.format("%02X%02X%02X", (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF));
                         updateColorFromFields(true);
                     } else if (rField.isFocused()) {
                         int val = Integer.parseInt(rField.getText().isEmpty() ? "0" : rField.getText());
@@ -487,7 +577,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                         updateColorFromFields(false);
                     }
                     saveCurrentCustomColor();
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
                 return true;
             }
 
@@ -569,11 +660,14 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         for (int i = 0; i < 8; i++) {
             int slotY = pY + (i * (sS + gap));
-            editor.screenDrawLines.drawSwatch(context, pCol3X, slotY, worldColors[i], 16 + i, mouseX, mouseY, true, tabMode);
+            editor.screenDrawLines.drawSwatch(
+                    context, pCol3X, slotY, worldColors[i], 16 + i, mouseX, mouseY, true, tabMode);
         }
 
-        int w = layout.popupW; int h = layout.popupH;
-        int x = layout.popupX; int y = layout.popupY;
+        int w = layout.popupW;
+        int h = layout.popupH;
+        int x = layout.popupX;
+        int y = layout.popupY;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
         context.fill(x, y, x + w, y + h, isDark ? 0xFF212121 : 0xFFC6C6C6);
@@ -590,16 +684,18 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         if (titleWidth > maxTitleWidth) titleScale = (float) maxTitleWidth / titleWidth;
 
         context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float)(x + 12), (float)(y + 12 + (9 * (1.0f - titleScale)) / 2));
+        context.getMatrices().translate((float) (x + 12), (float) (y + 12 + (9 * (1.0f - titleScale)) / 2));
         context.getMatrices().scale(titleScale, titleScale);
         context.drawText(client.textRenderer, titleText, 0, 0, isDark ? 0xFFE0E0E0 : 0xFF333333, false);
         context.getMatrices().popMatrix();
 
-        Text instructionText = Text.translatable("gui.chestseparators.color_picker.instructions").formatted(Formatting.GRAY);
+        Text instructionText = Text.translatable("gui.chestseparators.color_picker.instructions")
+                .formatted(Formatting.GRAY);
         int maxTextWidth = 135;
         float scale = 1.0f;
 
-        java.util.List<net.minecraft.text.OrderedText> wrappedLines = client.textRenderer.wrapLines(instructionText, maxTextWidth);
+        java.util.List<net.minecraft.text.OrderedText> wrappedLines =
+                client.textRenderer.wrapLines(instructionText, maxTextWidth);
 
         // Auto-shrink: if the text wraps beyond 2 lines, reduce scale by 5% and recalculate
         // (a smaller scale means a larger logical wrap width, allowing more text per line).
@@ -612,7 +708,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         context.getMatrices().pushMatrix();
 
         float yOffset = (2 - wrappedLines.size()) * (client.textRenderer.fontHeight + 2) * scale / 2.0f;
-        context.getMatrices().translate((float)(x + 12), (float)(y + 26) + yOffset);
+        context.getMatrices().translate((float) (x + 12), (float) (y + 26) + yOffset);
         context.getMatrices().scale(scale, scale);
 
         int instructY = 0;
@@ -628,8 +724,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         drawSaturationValueBox(context, contentX, contentY, layout.pickerBoxSize, layout.pickerBoxSize);
         drawDarkBevel(context, contentX - 1, contentY - 1, 102, 102, true);
 
-        int cursorX = contentX + (int)(session.pickerSat * 100);
-        int cursorY = contentY + (int)((1.0f - session.pickerVal) * 100);
+        int cursorX = contentX + (int) (session.pickerSat * 100);
+        int cursorY = contentY + (int) ((1.0f - session.pickerVal) * 100);
         context.drawStrokedRectangle(cursorX - 2, cursorY - 2, 5, 5, 0xFF000000);
         context.drawStrokedRectangle(cursorX - 1, cursorY - 1, 3, 3, 0xFFFFFFFF);
 
@@ -637,7 +733,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
         drawDarkBevel(context, hueX - 1, contentY - 1, 22, 102, true);
 
-        int hueCursorY = contentY + (int)(session.pickerHue * 100);
+        int hueCursorY = contentY + (int) (session.pickerHue * 100);
         context.fill(hueX - 3, hueCursorY - 1, hueX + 23, hueCursorY + 2, 0xFF000000);
         context.fill(hueX - 1, hueCursorY, hueX + 21, hueCursorY + 1, 0xFFFFFFFF);
 
@@ -678,7 +774,11 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         for (int i = 0; i < 8; i++) {
             int slotY = pY + (i * (sS + gap));
             if (editor.isHovering(pCol3X, slotY, sS, sS, mouseX, mouseY)) {
-                context.drawTooltip(client.textRenderer, Text.translatable("color.chestseparators.custom", (i + 1)), mouseX, mouseY);
+                context.drawTooltip(
+                        client.textRenderer,
+                        Text.translatable("color.chestseparators.custom", (i + 1)),
+                        mouseX,
+                        mouseY);
             }
         }
     }
@@ -705,16 +805,31 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         int previewX = mx + 18;
         int previewY = my - 24;
-        int pw = 16; int ph = 16;
+        int pw = 16;
+        int ph = 16;
 
         context.fill(previewX, previewY, previewX + pw, previewY + ph, 0xFF000000 | hoveredPixelColor);
         drawColorBevel(context, previewX, previewY, pw, ph, hoveredPixelColor, false);
 
         com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-        context.drawTexture(pipeline, io.github.marcsanzdev.chestseparators.client.ModTextures.ICON_EYEDROPPER, iconX, iconY, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, -1);
+        context.drawTexture(
+                pipeline,
+                io.github.marcsanzdev.chestseparators.client.ModTextures.ICON_EYEDROPPER,
+                iconX,
+                iconY,
+                0.0F,
+                0.0F,
+                16,
+                16,
+                32,
+                32,
+                32,
+                32,
+                -1);
     }
 
-    private void drawColorBevel(DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
+    private void drawColorBevel(
+            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
         int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
         int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
         int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
@@ -738,8 +853,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int step = 2;
         for (int i = 0; i < w; i += step) {
             for (int j = 0; j < h; j += step) {
-                float sat = (float)i / w;
-                float val = 1.0f - ((float)j / h);
+                float sat = (float) i / w;
+                float val = 1.0f - ((float) j / h);
                 int color = Color.HSBtoRGB(session.pickerHue, sat, val);
                 context.fill(x + i, y + j, x + i + step, y + j + step, color);
             }
@@ -748,10 +863,9 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
     private void drawHueBar(DrawContext context, int x, int y, int w, int h) {
         for (int i = 0; i < h; i++) {
-            float hue = (float)i / h;
+            float hue = (float) i / h;
             int color = Color.HSBtoRGB(hue, 1.0f, 1.0f);
             context.fill(x, y + i, x + w, y + i + 1, color);
         }
     }
-
 }

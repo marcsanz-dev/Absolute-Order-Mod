@@ -2,6 +2,8 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -12,11 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Implements {@link IWhitelistProvider} on all standard lootable containers:
@@ -53,10 +51,21 @@ public abstract class LootableContainerBlockEntityMixin extends BlockEntity impl
      * so the client does not need to send a separate {@link io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload}.
      */
     @Inject(method = "createMenu", at = @At("RETURN"))
-    private void onOpenMenu(int syncId, net.minecraft.entity.player.PlayerInventory playerInventory, net.minecraft.entity.player.PlayerEntity player, CallbackInfoReturnable<ScreenHandler> cir) {
-        if (cir.getReturnValue() != null && this.world != null && !this.world.isClient() && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(serverPlayer, io.github.marcsanzdev.chestseparators.network.WhitelistPayload.ID)) {
-                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(serverPlayer, new io.github.marcsanzdev.chestseparators.network.WhitelistPayload(this.pos, this.chestSeparatorsWhitelists));
+    private void onOpenMenu(
+            int syncId,
+            net.minecraft.entity.player.PlayerInventory playerInventory,
+            net.minecraft.entity.player.PlayerEntity player,
+            CallbackInfoReturnable<ScreenHandler> cir) {
+        if (cir.getReturnValue() != null
+                && this.world != null
+                && !this.world.isClient()
+                && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(
+                    serverPlayer, io.github.marcsanzdev.chestseparators.network.WhitelistPayload.ID)) {
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+                        serverPlayer,
+                        new io.github.marcsanzdev.chestseparators.network.WhitelistPayload(
+                                this.pos, this.chestSeparatorsWhitelists));
             }
         }
     }
@@ -96,27 +105,35 @@ public abstract class LootableContainerBlockEntityMixin extends BlockEntity impl
         super.readData(view);
 
         this.chestSeparatorsWhitelists.clear();
-        view.read("ChestSeparatorsWhitelists", net.minecraft.nbt.NbtCompound.CODEC).ifPresent(whitelistsTag -> {
-            for (String key : whitelistsTag.getKeys()) {
-                try {
-                    int slot = Integer.parseInt(key);
-                    whitelistsTag.getCompound(key).ifPresent(wlTag -> {
-                        java.util.UUID groupId = java.util.UUID.fromString(wlTag.getString("GroupId").orElse(java.util.UUID.randomUUID().toString()));
-                        boolean ruleManual = wlTag.getBoolean("RuleManual").orElse(true);
-                        boolean ruleShift = wlTag.getBoolean("RuleShift").orElse(true);
-                        boolean ruleHopper = wlTag.getBoolean("RuleHopper").orElse(true);
+        view.read("ChestSeparatorsWhitelists", net.minecraft.nbt.NbtCompound.CODEC)
+                .ifPresent(whitelistsTag -> {
+                    for (String key : whitelistsTag.getKeys()) {
+                        try {
+                            int slot = Integer.parseInt(key);
+                            whitelistsTag.getCompound(key).ifPresent(wlTag -> {
+                                java.util.UUID groupId = java.util.UUID.fromString(wlTag.getString("GroupId")
+                                        .orElse(java.util.UUID.randomUUID().toString()));
+                                boolean ruleManual =
+                                        wlTag.getBoolean("RuleManual").orElse(true);
+                                boolean ruleShift =
+                                        wlTag.getBoolean("RuleShift").orElse(true);
+                                boolean ruleHopper =
+                                        wlTag.getBoolean("RuleHopper").orElse(true);
 
-                        java.util.List<String> allowedItems = new java.util.ArrayList<>();
-                        wlTag.getCompound("AllowedItems").ifPresent(itemsTag -> {
-                            for (String itemKey : itemsTag.getKeys()) {
-                                itemsTag.getString(itemKey).ifPresent(allowedItems::add);
-                            }
-                        });
+                                java.util.List<String> allowedItems = new java.util.ArrayList<>();
+                                wlTag.getCompound("AllowedItems").ifPresent(itemsTag -> {
+                                    for (String itemKey : itemsTag.getKeys()) {
+                                        itemsTag.getString(itemKey).ifPresent(allowedItems::add);
+                                    }
+                                });
 
-                        this.chestSeparatorsWhitelists.put(slot, new SlotWhitelist(groupId, allowedItems, ruleManual, ruleShift, ruleHopper));
-                    });
-                } catch (Exception ignored) {}
-            }
-        });
+                                this.chestSeparatorsWhitelists.put(
+                                        slot,
+                                        new SlotWhitelist(groupId, allowedItems, ruleManual, ruleShift, ruleHopper));
+                            });
+                        } catch (Exception ignored) {
+                        }
+                    }
+                });
     }
 }

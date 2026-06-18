@@ -37,7 +37,9 @@ public class ModClientNetworking {
         ClientPlayNetworking.registerGlobalReceiver(EditorLockResponsePayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 ChestSeparatorsEditor editor = ChestSeparatorsEditor.getInstance();
-                if (editor != null && editor.session.currentChestPos != null && editor.session.currentChestPos.equals(payload.pos())) {
+                if (editor != null
+                        && editor.session.currentChestPos != null
+                        && editor.session.currentChestPos.equals(payload.pos())) {
                     if (payload.granted()) {
                         editor.hasEditorLock = true;
                         editor.toggleState(EditorState.VIEW_GROUPS);

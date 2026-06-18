@@ -2,15 +2,15 @@ package io.github.marcsanzdev.chestseparators.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.fabricmc.loader.api.FabricLoader;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class GlobalChestConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "chestseparators_config.json");
+    private static final File CONFIG_FILE =
+            new File(FabricLoader.getInstance().getConfigDir().toFile(), "chestseparators_config.json");
 
     public static ConfigData instance = new ConfigData();
 

@@ -81,7 +81,8 @@ public class ToolButtonWidget extends CustomWidget {
 
         if (mask != null) {
             int colorARGB = color | 0xFF000000;
-            context.drawTexture(pipeline, mask, x + 2 + maskOffsetX, y + 2, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, colorARGB);
+            context.drawTexture(
+                    pipeline, mask, x + 2 + maskOffsetX, y + 2, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, colorARGB);
         }
     }
 }
