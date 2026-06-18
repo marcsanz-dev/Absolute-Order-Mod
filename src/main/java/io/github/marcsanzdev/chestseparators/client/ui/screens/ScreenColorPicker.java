@@ -16,16 +16,19 @@ import net.minecraft.util.math.MathHelper;
 
 public class ScreenColorPicker extends AbstractEditorScreen {
 
-    private TextFieldWidget hexField;
-    private TextFieldWidget rField;
-    private TextFieldWidget gField;
-    private TextFieldWidget bField;
+    TextFieldWidget hexField;
+    TextFieldWidget rField;
+    TextFieldWidget gField;
+    TextFieldWidget bField;
 
     private boolean isUpdatingFields = false;
-    private int hoveredPixelColor = 0xFFFFFF;
+    int hoveredPixelColor = 0xFFFFFF;
+
+    private final ColorPickerInputHandler inputHandler;
 
     public ScreenColorPicker(ChestSeparatorsEditor editor) {
         super(editor);
+        this.inputHandler = new ColorPickerInputHandler(this);
     }
 
     @Override
@@ -143,7 +146,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         updateFieldsFromColor();
     }
 
-    private void saveCurrentCustomColor() {
+    void saveCurrentCustomColor() {
         int customIndex = (session.pickerTargetMode == 0)
                 ? session.editingLineCustomIndex
                 : ((session.pickerTargetMode == 1) ? session.editingBgCustomIndex : session.editingComboCustomIndex);
@@ -155,7 +158,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         }
     }
 
-    private void clearSelection() {
+    void clearSelection() {
         if (session.pickerTargetMode == 0) session.editingLineCustomIndex = -1;
         else if (session.pickerTargetMode == 1) session.editingBgCustomIndex = -1;
         else session.editingComboCustomIndex = -1;
@@ -192,7 +195,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         isUpdatingFields = false;
     }
 
-    private void updateColorFromFields(boolean fromHex) {
+    void updateColorFromFields(boolean fromHex) {
         if (isUpdatingFields) return;
 
         editor.colorPickerModified = true;
@@ -235,195 +238,6 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         }
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!session.isColorPickerOpen) return false;
-
-        if (session.isEyedropperActive) {
-            if (button == 1) {
-                session.isEyedropperActive = false;
-                org.lwjgl.glfw.GLFW.glfwSetInputMode(
-                        MinecraftClient.getInstance().getWindow().getHandle(),
-                        org.lwjgl.glfw.GLFW.GLFW_CURSOR,
-                        org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
-                editor.playClickSound(0.8f);
-                return true;
-            }
-            if (button == 0) {
-                editor.colorPickerModified = true;
-                session.pickerCurrentRGB = hoveredPixelColor;
-                float[] hsb = Color.RGBtoHSB(
-                        (hoveredPixelColor >> 16) & 0xFF,
-                        (hoveredPixelColor >> 8) & 0xFF,
-                        hoveredPixelColor & 0xFF,
-                        null);
-                session.pickerHue = hsb[0];
-                session.pickerSat = hsb[1];
-                session.pickerVal = hsb[2];
-                updateFieldsFromColor();
-                saveCurrentCustomColor();
-
-                session.isEyedropperActive = false;
-                org.lwjgl.glfw.GLFW.glfwSetInputMode(
-                        MinecraftClient.getInstance().getWindow().getHandle(),
-                        org.lwjgl.glfw.GLFW.GLFW_CURSOR,
-                        org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
-                editor.playClickSound(1.2f);
-                return true;
-            }
-            return false;
-        }
-
-        if (button == 0) {
-            int pCol3X = layout.paletteCol3X;
-            int pY = layout.paletteY;
-            int sS = layout.swatchSize;
-            int gap = 4;
-            int tabMode = session.pickerTargetMode;
-
-            for (int i = 0; i < 8; i++) {
-                int slotY = pY + (i * (sS + gap));
-                if (editor.isHovering(pCol3X, slotY, sS, sS, mouseX, mouseY)) {
-                    editor.playClickSound(1.0f);
-                    if (editor.colorPickerModified) saveCurrentCustomColor();
-
-                    if (tabMode == 0) {
-                        session.editingLineCustomIndex = i;
-                        session.lineColorIndex = 16 + i;
-                    } else if (tabMode == 1) {
-                        session.editingBgCustomIndex = i;
-                        session.bgColorIndex = 16 + i;
-                    } else {
-                        session.editingComboCustomIndex = i;
-                        session.comboColorIndex = 16 + i;
-                    }
-
-                    int newColor = ChestConfigManager.getInstance().getCustomColors(tabMode)[i];
-                    editor.colorPickerModified = false;
-
-                    if (newColor == 0) {
-                        session.pickerCurrentRGB = 0;
-                    } else {
-                        newColor = newColor & 0xFFFFFF;
-                        session.pickerCurrentRGB = newColor;
-                        float[] hsb =
-                                Color.RGBtoHSB((newColor >> 16) & 0xFF, (newColor >> 8) & 0xFF, newColor & 0xFF, null);
-                        session.pickerHue = hsb[0];
-                        session.pickerSat = hsb[1];
-                        session.pickerVal = hsb[2];
-                    }
-                    updateFieldsFromColor();
-                    return true;
-                }
-            }
-        }
-
-        boolean inPopup = mouseX >= layout.popupX
-                && mouseX <= layout.popupX + layout.popupW
-                && mouseY >= layout.popupY
-                && mouseY <= layout.popupY + layout.popupH;
-
-        if (inPopup) {
-            if (button == 0) {
-                boolean clickedText = false;
-                MinecraftClient client = MinecraftClient.getInstance();
-
-                if (hexField != null) {
-                    if (editor.isHovering(
-                            hexField.getX(),
-                            hexField.getY(),
-                            hexField.getWidth(),
-                            hexField.getHeight(),
-                            mouseX,
-                            mouseY)) {
-                        hexField.setFocused(true);
-                        int localX = (int) (mouseX - hexField.getX());
-                        hexField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(hexField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else hexField.setFocused(false);
-                }
-
-                if (rField != null) {
-                    if (editor.isHovering(
-                            rField.getX(), rField.getY(), rField.getWidth(), rField.getHeight(), mouseX, mouseY)) {
-                        rField.setFocused(true);
-                        int localX = (int) (mouseX - rField.getX());
-                        rField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(rField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else rField.setFocused(false);
-                }
-
-                if (gField != null) {
-                    if (editor.isHovering(
-                            gField.getX(), gField.getY(), gField.getWidth(), gField.getHeight(), mouseX, mouseY)) {
-                        gField.setFocused(true);
-                        int localX = (int) (mouseX - gField.getX());
-                        gField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(gField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else gField.setFocused(false);
-                }
-
-                if (bField != null) {
-                    if (editor.isHovering(
-                            bField.getX(), bField.getY(), bField.getWidth(), bField.getHeight(), mouseX, mouseY)) {
-                        bField.setFocused(true);
-                        int localX = (int) (mouseX - bField.getX());
-                        bField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(bField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else bField.setFocused(false);
-                }
-
-                if (clickedText) {
-                    editor.playClickSound(1.0f);
-                    return true;
-                }
-
-                int contentX = layout.popupX + 12;
-                int contentY = layout.popupY + 45;
-
-                if (mouseX >= contentX && mouseX <= contentX + 100 && mouseY >= contentY && mouseY <= contentY + 100) {
-                    session.isDraggingSatVal = true;
-                    session.lastClickedHue = false;
-                    updateColorFromMouse(mouseX, mouseY, true);
-                    return true;
-                } else if (mouseX >= contentX + 115
-                        && mouseX <= contentX + 135
-                        && mouseY >= contentY
-                        && mouseY <= contentY + 100) {
-                    session.isDraggingHue = true;
-                    session.lastClickedHue = true;
-                    updateColorFromMouse(mouseX, mouseY, false);
-                    return true;
-                }
-            }
-            return super.mouseClicked(mouseX, mouseY, button);
-        } else {
-            if (button == 0 || button == 1) {
-                if (GlobalChestConfig.instance.closeOnClickOutside) {
-                    closeAndRestore();
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public void closeAndRestore() {
         boolean hasNoColor = (session.pickerCurrentRGB == 0 && !editor.colorPickerModified);
 
@@ -448,192 +262,25 @@ public class ScreenColorPicker extends AbstractEditorScreen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (!session.isColorPickerOpen || session.isEyedropperActive) return false;
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return inputHandler.onMouseClicked(mouseX, mouseY, button);
+    }
 
-        if (button == 0) {
-            if (session.isDraggingSatVal) {
-                updateColorFromMouse(mouseX, mouseY, true);
-                return true;
-            } else if (session.isDraggingHue) {
-                updateColorFromMouse(mouseX, mouseY, false);
-                return true;
-            }
-        }
-        return true;
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return inputHandler.onMouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            session.isDraggingSatVal = false;
-            session.isDraggingHue = false;
-        }
-        return false;
-    }
-
-    private void updateColorFromMouse(double mx, double my, boolean isSatValBox) {
-        editor.colorPickerModified = true;
-        int contentX = layout.popupX + 12;
-        int contentY = layout.popupY + 45;
-
-        if (isSatValBox) {
-            float relX = MathHelper.clamp((float) (mx - contentX), 0.0f, 100.0f);
-            float relY = MathHelper.clamp((float) (my - contentY), 0.0f, 100.0f);
-
-            session.pickerSat = relX / 100.0f;
-            session.pickerVal = 1.0f - (relY / 100.0f);
-        } else {
-            float relY = MathHelper.clamp((float) (my - contentY), 0.0f, 100.0f);
-            session.pickerHue = relY / 100.0f;
-        }
-
-        session.pickerCurrentRGB = Color.HSBtoRGB(session.pickerHue, session.pickerSat, session.pickerVal);
-        updateFieldsFromColor();
-
-        saveCurrentCustomColor();
+        return inputHandler.onMouseReleased(mouseX, mouseY, button);
     }
 
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
-        if (!session.isColorPickerOpen) return false;
-
-        if (session.isEyedropperActive && input.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
-            session.isEyedropperActive = false;
-            org.lwjgl.glfw.GLFW.glfwSetInputMode(
-                    MinecraftClient.getInstance().getWindow().getHandle(),
-                    org.lwjgl.glfw.GLFW.GLFW_CURSOR,
-                    org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
-            return true;
-        }
-
-        int key = input.key();
-        boolean isAnyFieldFocused = (hexField != null && hexField.isFocused())
-                || (rField != null && rField.isFocused())
-                || (gField != null && gField.isFocused())
-                || (bField != null && bField.isFocused());
-
-        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
-            if (isAnyFieldFocused) {
-                if (hexField != null) hexField.setFocused(false);
-                if (rField != null) rField.setFocused(false);
-                if (gField != null) gField.setFocused(false);
-                if (bField != null) bField.setFocused(false);
-            } else {
-                closeAndRestore();
-            }
-            return true;
-        }
-
-        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_TAB) {
-            if (hexField != null && hexField.isFocused()) {
-                hexField.setFocused(false);
-                rField.setFocused(true);
-            } else if (rField != null && rField.isFocused()) {
-                rField.setFocused(false);
-                gField.setFocused(true);
-            } else if (gField != null && gField.isFocused()) {
-                gField.setFocused(false);
-                bField.setFocused(true);
-            } else if (bField != null && bField.isFocused()) {
-                bField.setFocused(false);
-                hexField.setFocused(true);
-            } else if (hexField != null) {
-                hexField.setFocused(true);
-            }
-            return true;
-        }
-
-        if (isAnyFieldFocused) {
-            boolean isUp = key == org.lwjgl.glfw.GLFW.GLFW_KEY_UP
-                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ADD
-                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL;
-            boolean isDown = key == org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN
-                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_MINUS
-                    || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_SUBTRACT;
-
-            if (isUp || isDown) {
-                editor.colorPickerModified = true;
-                int delta = isUp ? 1 : -1;
-                try {
-                    if (hexField.isFocused()) {
-                        String hex = hexField.getText().trim().replace("#", "");
-                        int val = hex.isEmpty() ? 0 : Integer.parseInt(hex, 16);
-                        val = MathHelper.clamp(val + delta, 0, 0xFFFFFF);
-                        hexField.setText(
-                                String.format("%02X%02X%02X", (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF));
-                        updateColorFromFields(true);
-                    } else if (rField.isFocused()) {
-                        int val = Integer.parseInt(rField.getText().isEmpty() ? "0" : rField.getText());
-                        rField.setText(String.valueOf(MathHelper.clamp(val + delta, 0, 255)));
-                        updateColorFromFields(false);
-                    } else if (gField.isFocused()) {
-                        int val = Integer.parseInt(gField.getText().isEmpty() ? "0" : gField.getText());
-                        gField.setText(String.valueOf(MathHelper.clamp(val + delta, 0, 255)));
-                        updateColorFromFields(false);
-                    } else if (bField.isFocused()) {
-                        int val = Integer.parseInt(bField.getText().isEmpty() ? "0" : bField.getText());
-                        bField.setText(String.valueOf(MathHelper.clamp(val + delta, 0, 255)));
-                        updateColorFromFields(false);
-                    }
-                    saveCurrentCustomColor();
-                } catch (NumberFormatException ignored) {
-                }
-                return true;
-            }
-
-            // Forward delete/copy/paste keystrokes to the focused field.
-            if (hexField != null && hexField.isFocused()) hexField.keyPressed(input);
-            else if (rField != null && rField.isFocused()) rField.keyPressed(input);
-            else if (gField != null && gField.isFocused()) gField.keyPressed(input);
-            else if (bField != null && bField.isFocused()) bField.keyPressed(input);
-
-            // Always consume the keystroke so Minecraft's own bindings do not fire.
-            return true;
-        } else {
-            float step = 0.01f;
-            boolean changed = false;
-
-            if (session.lastClickedHue) {
-                if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_UP) {
-                    session.pickerHue = MathHelper.clamp(session.pickerHue - step, 0.0f, 1.0f);
-                    changed = true;
-                } else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN) {
-                    session.pickerHue = MathHelper.clamp(session.pickerHue + step, 0.0f, 1.0f);
-                    changed = true;
-                }
-            } else {
-                if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT) {
-                    session.pickerSat = MathHelper.clamp(session.pickerSat - step, 0.0f, 1.0f);
-                    changed = true;
-                } else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT) {
-                    session.pickerSat = MathHelper.clamp(session.pickerSat + step, 0.0f, 1.0f);
-                    changed = true;
-                } else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_UP) {
-                    session.pickerVal = MathHelper.clamp(session.pickerVal + step, 0.0f, 1.0f);
-                    changed = true;
-                } else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN) {
-                    session.pickerVal = MathHelper.clamp(session.pickerVal - step, 0.0f, 1.0f);
-                    changed = true;
-                }
-            }
-
-            if (changed) {
-                editor.colorPickerModified = true;
-                session.pickerCurrentRGB = Color.HSBtoRGB(session.pickerHue, session.pickerSat, session.pickerVal);
-                updateFieldsFromColor();
-                saveCurrentCustomColor();
-                return true;
-            }
-        }
-        return false;
+        return inputHandler.onKeyPressed(input);
     }
 
     public boolean charTyped(net.minecraft.client.input.CharInput input) {
-        if (!session.isColorPickerOpen) return false;
-        if (hexField != null && hexField.isFocused()) return hexField.charTyped(input);
-        if (rField != null && rField.isFocused()) return rField.charTyped(input);
-        if (gField != null && gField.isFocused()) return gField.charTyped(input);
-        if (bField != null && bField.isFocused()) return bField.charTyped(input);
-        return false;
+        return inputHandler.onCharTyped(input);
     }
 
     @Override
