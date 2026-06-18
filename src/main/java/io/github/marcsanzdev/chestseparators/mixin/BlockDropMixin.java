@@ -1,10 +1,20 @@
 package io.github.marcsanzdev.chestseparators.mixin;
 
+import io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider;
+import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
+import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -49,28 +59,21 @@ public abstract class BlockDropMixin {
 
         for (ItemStack drop : drops) {
             // Check that the drop is actually the block itself
-            if (drop.getItem() instanceof net.minecraft.item.BlockItem) {
-                if (blockEntity instanceof io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider provider) {
-                    java.util.UUID uuid = provider.getShulkerUUID();
-                    if (uuid != null)
-                        drop.set(
-                                io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents.SHULKER_UUID,
-                                uuid.toString());
+            if (drop.getItem() instanceof BlockItem) {
+                if (blockEntity instanceof IShulkerUUIDProvider provider) {
+                    UUID uuid = provider.getShulkerUUID();
+                    if (uuid != null) drop.set(ChestSeparatorsComponents.SHULKER_UUID, uuid.toString());
                 }
 
-                if (blockEntity instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
+                if (blockEntity instanceof IWhitelistProvider provider) {
                     // EXCLUSION: Do not save whitelists to the dropped item if it is a standard Chest or Barrel
-                    boolean isStandardChest = blockEntity instanceof net.minecraft.block.entity.ChestBlockEntity
-                            || blockEntity instanceof net.minecraft.block.entity.BarrelBlockEntity;
+                    boolean isStandardChest =
+                            blockEntity instanceof ChestBlockEntity || blockEntity instanceof BarrelBlockEntity;
 
                     if (!isStandardChest) {
-                        java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists =
-                                provider.getWhitelists();
+                        Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
                         if (whitelists != null && !whitelists.isEmpty()) {
-                            drop.set(
-                                    io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents
-                                            .SLOT_WHITELISTS,
-                                    new java.util.HashMap<>(whitelists));
+                            drop.set(ChestSeparatorsComponents.SLOT_WHITELISTS, new HashMap<>(whitelists));
                         }
                     }
                 }
