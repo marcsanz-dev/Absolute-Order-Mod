@@ -20,14 +20,25 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtSizeTracker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Environment(EnvType.CLIENT)
 public class ChestConfigManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("chestseparators");
 
     private static final String MOD_ID = "chestseparators";
     private static final String FOLDER_NAME = "separators";
     private static final String ENDER_FILE_NAME = "ender_chest.dat";
     private static final String PALETTE_FILE_NAME = "world_palette.dat";
+
+    /**
+     * Current on-disk format version. Increment when making breaking changes to the NBT schema.
+     * Version 1 = v1.3.x (4-element visual arrays, no version field).
+     * Version 2 = current (5-element visual arrays, explicit "Version" field).
+     */
+    private static final int DATA_VERSION = 2;
 
     public static final int ACTION_TOP = 1;
     public static final int ACTION_BOTTOM = 2;
@@ -183,7 +194,7 @@ public class ChestConfigManager {
                 Files.createDirectories(worldDir);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
         return worldDir;
     }
@@ -195,7 +206,7 @@ public class ChestConfigManager {
                 Files.createDirectories(sepDir);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
         return sepDir;
     }
@@ -367,7 +378,7 @@ public class ChestConfigManager {
             try {
                 Files.deleteIfExists(path);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("chestseparators: I/O error", e);
             }
         }
     }
@@ -550,7 +561,7 @@ public class ChestConfigManager {
                 });
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
         return data;
     }
@@ -566,6 +577,7 @@ public class ChestConfigManager {
         }
 
         NbtCompound root = new NbtCompound();
+        root.putInt("Version", DATA_VERSION);
 
         if (!visualConfig.isEmpty()) {
             NbtCompound separatorsTag = new NbtCompound();
@@ -601,7 +613,7 @@ public class ChestConfigManager {
         try {
             NbtIo.writeCompressed(root, path);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
     }
 
@@ -710,7 +722,7 @@ public class ChestConfigManager {
                                 System.arraycopy(loaded, 0, worldCustomComboColors, 0, Math.min(loaded.length, 8)));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
     }
 
@@ -723,7 +735,7 @@ public class ChestConfigManager {
         try {
             NbtIo.writeCompressed(root, path);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("chestseparators: I/O error", e);
         }
     }
 
