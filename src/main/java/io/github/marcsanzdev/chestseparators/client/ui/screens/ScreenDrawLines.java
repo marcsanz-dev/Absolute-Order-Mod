@@ -1,6 +1,5 @@
 package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
-import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
@@ -10,8 +9,6 @@ import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -39,8 +36,8 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         "white", "light_gray", "gray", "black"
     };
 
-    private long lastCustomColorClickTime = 0;
-    private int lastCustomColorClickIndex = -1;
+    long lastCustomColorClickTime = 0;
+    int lastCustomColorClickIndex = -1;
 
     private long btnCopyClickTime = 0;
     private long btnPasteClickTime = 0;
@@ -52,12 +49,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     private final SeparatorPreviewRenderer previewRenderer;
     private final SeparatorDragCommitter dragCommitter;
     private final SeparatorDragInput dragInput;
+    private final DrawLinesClickHandler clickHandler;
 
     public ScreenDrawLines(ChestSeparatorsEditor editor) {
         super(editor);
         this.previewRenderer = new SeparatorPreviewRenderer(this);
         this.dragCommitter = new SeparatorDragCommitter(this);
         this.dragInput = new SeparatorDragInput(this);
+        this.clickHandler = new DrawLinesClickHandler(this);
     }
 
     /** Applies the in-progress drag to the saved configuration. Delegates to {@link SeparatorDragCommitter}. */
@@ -423,246 +422,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (super.mouseClicked(mouseX, mouseY, button)) return true;
-
-        if (handleTabsClick(mouseX, mouseY, button)) return true;
-        if (handlePaletteClick(mouseX, mouseY, button)) return true;
-
-        if (session.isColorPickerOpen) return false;
-
-        if (button == 0) {
-            Slot slot = editor.accessor.getFocusedSlot();
-            if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
-                int action = geometry.calculateAction(slot, mouseX, mouseY);
-
-                if (session.currentTab == 1 || session.currentTab == 2) {
-                    action = ChestConfigManager.ACTION_BG;
-                }
-
-                if (session.currentTab == 1 || session.currentTab == 2) {
-                    ChestConfigManager.getInstance().saveSnapshot();
-                    session.isDraggingLine = true;
-                    session.currentDragAction = ChestConfigManager.ACTION_BG;
-                    session.dragStartSlot = slot;
-                    session.dragCurrentSlot = slot;
-                    session.tracePath.clear();
-                    session.lockedTraceAxis = 0;
-                    session.tracePath.add(slot.getIndex() + "_" + ChestConfigManager.ACTION_BG);
-
-                    int tIndex = (session.currentTab == 1) ? session.bgColorIndex : session.comboColorIndex;
-                    int colorVal = (session.currentTab == 1)
-                            ? getCurrentSelectedBgColorValue()
-                            : getCurrentSelectedComboColorValue();
-
-                    if (tIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) {
-                        session.isDragModeErasing = true;
-                    } else {
-                        if (colorVal == 0) return false;
-                        int existingColor = ChestConfigManager.getInstance()
-                                .getColor(slot.getIndex(), ChestConfigManager.ACTION_BG);
-                        session.isDragModeErasing = (existingColor == (colorVal | 0xFF000000));
-                    }
-                    return true;
-                }
-
-                if (session.currentTab == 0) {
-                    if (action != 0 && action != ChestConfigManager.ACTION_BG) {
-                        ChestConfigManager.getInstance().saveSnapshot();
-                        session.isDraggingLine = true;
-                        session.currentDragAction = action;
-                        session.dragStartSlot = slot;
-                        session.dragCurrentSlot = slot;
-                        session.tracePath.clear();
-                        session.tracePath.add(slot.getIndex() + "_" + action);
-                        session.lockedTraceAction = action;
-                        if (action == ChestConfigManager.ACTION_TOP || action == ChestConfigManager.ACTION_BOTTOM) {
-                            session.lockedTraceAxis = 1;
-                            session.lockedTraceRowCol = slot.getIndex() / 9;
-                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_TOP)
-                                    ? (layout.guiY + slot.y)
-                                    : (layout.guiY + slot.y + 16);
-                        } else {
-                            session.lockedTraceAxis = 2;
-                            session.lockedTraceRowCol = slot.getIndex() % 9;
-                            session.lockedLineCoord = (action == ChestConfigManager.ACTION_LEFT)
-                                    ? (layout.guiX + slot.x)
-                                    : (layout.guiX + slot.x + 16);
-                        }
-
-                        int tIndex = session.lineColorIndex;
-                        int colorVal = getCurrentSelectedLineColorValue();
-
-                        if (tIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) {
-                            session.isDragModeErasing = true;
-                        } else {
-                            if (colorVal == 0) return false;
-                            int existingColor = ChestConfigManager.getInstance().getColor(slot.getIndex(), action);
-                            session.isDragModeErasing = (existingColor == (colorVal | 0xFF000000));
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // --- CLICK OUTSIDE TO CLOSE ---
-        boolean isInsideMain = mouseX >= layout.guiX
-                && mouseX <= layout.guiX + layout.bgWidth
-                && mouseY >= layout.guiY
-                && mouseY <= layout.guiY + layout.bgHeight;
-        boolean isInsideLeft = mouseX >= layout.sidebarX
-                && mouseX <= layout.sidebarX + layout.sidebarWidth
-                && mouseY >= layout.guiY + editor.getSidebarYOffset() - 4
-                && mouseY <= layout.guiY + editor.getSidebarYOffset() + layout.sidebarHeight;
-        boolean isInsideRight = mouseX >= layout.rightX
-                && mouseX <= layout.rightX + layout.btnW
-                && mouseY >= layout.mainY
-                && mouseY <= layout.mainY + (layout.bH * 4) + (4 * 3);
-
-        if (!isInsideMain && !isInsideLeft && !isInsideRight && !session.isEyedropperActive) {
-            if (GlobalChestConfig.instance.closeOnClickOutside) {
-                editor.toggleState(EditorState.HIDDEN);
-                editor.playClickSound(1.0f);
-                return true;
-            }
-        }
-
-        return false; // Este es tu return final original
-    }
-
-    private boolean handleTabsClick(double mx, double my, int button) {
-        int tabX = layout.sidebarX - 16;
-        int startY = layout.guiY + editor.getSidebarYOffset() + 10;
-
-        if (mx >= tabX && mx < tabX + 20) {
-            if (button == 0) {
-                for (int i = 0; i < 3; i++) {
-                    int tabY = startY + (i * 24);
-                    if (my >= tabY && my < tabY + 20) {
-                        session.currentTab = i;
-                        editor.playClickSound(1.0f);
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean handlePaletteClick(double mx, double my, int button) {
-        int pY = layout.paletteY;
-        int col1X = layout.paletteCol1X;
-        int col2X = layout.paletteCol2X;
-        int col3X = layout.paletteCol3X;
-
-        int tabMode = session.currentTab;
-
-        for (int i = 0; i < 16; i++) {
-            int x = (i / 8 == 0) ? col1X : col2X;
-            int y = pY + ((i % 8) * (layout.swatchSize + 4));
-            if (editor.isHovering(x, y, layout.swatchSize, layout.swatchSize, mx, my)) {
-                if (button == 2) {
-                    session.copiedColorRGB = STANDARD_PALETTE[i];
-                    editor.showStatus(Text.translatable("message.chestseparators.color_copied"), Formatting.GOLD);
-                    editor.playClickSound(0.8f);
-                    return true;
-                } else if (button == 0) {
-                    if (tabMode == 0) {
-                        session.lineColorIndex = i;
-                        session.editingLineCustomIndex = -1;
-                    } else if (tabMode == 1) {
-                        session.bgColorIndex = i;
-                        session.editingBgCustomIndex = -1;
-                    } else {
-                        session.comboColorIndex = i;
-                        session.editingComboCustomIndex = -1;
-                    }
-                    editor.playClickSound(1.0f);
-                    return true;
-                }
-            }
-        }
-
-        for (int i = 0; i < 8; i++) {
-            int y = pY + (i * (layout.swatchSize + 4));
-            if (editor.isHovering(col3X, y, layout.swatchSize, layout.swatchSize, mx, my)) {
-                int currentColor = ChestConfigManager.getInstance().getCustomColors(tabMode)[i];
-
-                if (button == 2) {
-                    if (currentColor != 0) {
-                        session.copiedColorRGB = currentColor;
-                        editor.showStatus(Text.translatable("message.chestseparators.color_copied"), Formatting.GOLD);
-                        editor.playClickSound(0.8f);
-                    }
-                    return true;
-                } else if (button == 0) {
-                    if (session.copiedColorRGB != 0) {
-                        ChestConfigManager.getInstance().setCustomColor(i, session.copiedColorRGB, tabMode);
-                        ChestConfigManager.getInstance().saveWorldPalette();
-                        session.copiedColorRGB = 0;
-                        editor.showStatus(Text.translatable("message.chestseparators.color_pasted"), Formatting.GREEN);
-                        editor.playClickSound(1.2f);
-                    } else {
-                        // Save the current color index so it can be restored if the picker is dismissed without saving.
-                        editor.restoreColorIndex = (tabMode == 0)
-                                ? session.lineColorIndex
-                                : (tabMode == 1 ? session.bgColorIndex : session.comboColorIndex);
-
-                        if (currentColor == 0) {
-                            // Empty slot: one click opens the color picker immediately.
-                            if (tabMode == 0) {
-                                session.lineColorIndex = 16 + i;
-                                session.editingLineCustomIndex = i;
-                            } else if (tabMode == 1) {
-                                session.bgColorIndex = 16 + i;
-                                session.editingBgCustomIndex = i;
-                            } else {
-                                session.comboColorIndex = 16 + i;
-                                session.editingComboCustomIndex = i;
-                            }
-                            editor.openColorPicker(0, tabMode);
-                            editor.playClickSound(1.0f);
-                        } else {
-                            // Occupied slot: single click selects for painting, double click opens the picker.
-                            long now = System.currentTimeMillis();
-                            boolean isDoubleClick =
-                                    (i == lastCustomColorClickIndex) && (now - lastCustomColorClickTime < 300);
-                            lastCustomColorClickIndex = i;
-                            lastCustomColorClickTime = now;
-
-                            if (isDoubleClick) {
-                                if (tabMode == 0) {
-                                    session.lineColorIndex = 16 + i;
-                                    session.editingLineCustomIndex = i;
-                                } else if (tabMode == 1) {
-                                    session.bgColorIndex = 16 + i;
-                                    session.editingBgCustomIndex = i;
-                                } else {
-                                    session.comboColorIndex = 16 + i;
-                                    session.editingComboCustomIndex = i;
-                                }
-                                editor.openColorPicker(currentColor, tabMode);
-                                editor.playClickSound(1.0f);
-                            } else {
-                                if (tabMode == 0) {
-                                    session.lineColorIndex = 16 + i;
-                                    session.editingLineCustomIndex = i;
-                                } else if (tabMode == 1) {
-                                    session.bgColorIndex = 16 + i;
-                                    session.editingBgCustomIndex = i;
-                                } else {
-                                    session.comboColorIndex = 16 + i;
-                                    session.editingComboCustomIndex = i;
-                                }
-                                editor.playClickSound(1.0f);
-                            }
-                        }
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
+        return clickHandler.onMouseClicked(mouseX, mouseY, button);
     }
 
     public void drawSwatch(
