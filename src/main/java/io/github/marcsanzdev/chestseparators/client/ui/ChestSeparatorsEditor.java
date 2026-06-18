@@ -238,7 +238,7 @@ public class ChestSeparatorsEditor {
             if (searchGroup != null) {
                 for (ItemStack stack : searchGroup.getDisplayStacks()) {
                     Item item = stack.getItem();
-                    if (item != Items.AIR && !session.allGameItems.contains(item)) {
+                    if (item != Items.AIR && !isNonSurvivalItem(item) && !session.allGameItems.contains(item)) {
                         session.allGameItems.add(item);
                     }
                 }
@@ -357,6 +357,26 @@ public class ChestSeparatorsEditor {
 
     public int getSidebarYOffset() {
         return geometry.getContainerSlotCount() > 27 ? 0 : -18;
+    }
+
+    /**
+     * Items that appear in the creative menu but are not obtainable in survival, so they are kept out
+     * of the filter list and out of "Allow All": every spawn egg, the spawners, reinforced deepslate,
+     * and the infested-stone blocks.
+     */
+    private static boolean isNonSurvivalItem(Item item) {
+        if (item instanceof net.minecraft.item.SpawnEggItem) return true;
+        net.minecraft.block.Block block = net.minecraft.block.Block.getBlockFromItem(item);
+        return block == net.minecraft.block.Blocks.SPAWNER
+                || block == net.minecraft.block.Blocks.TRIAL_SPAWNER
+                || block == net.minecraft.block.Blocks.REINFORCED_DEEPSLATE
+                || block == net.minecraft.block.Blocks.INFESTED_STONE
+                || block == net.minecraft.block.Blocks.INFESTED_COBBLESTONE
+                || block == net.minecraft.block.Blocks.INFESTED_STONE_BRICKS
+                || block == net.minecraft.block.Blocks.INFESTED_MOSSY_STONE_BRICKS
+                || block == net.minecraft.block.Blocks.INFESTED_CRACKED_STONE_BRICKS
+                || block == net.minecraft.block.Blocks.INFESTED_CHISELED_STONE_BRICKS
+                || block == net.minecraft.block.Blocks.INFESTED_DEEPSLATE;
     }
 
     public boolean isEditMode() {
