@@ -3,12 +3,28 @@
   "package": "io.github.marcsanzdev.chestseparators.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ChestInteractionMixin"
+    "ShulkerBoxBlockEntityMixin",
+    "BlockEntityComponentMixin",
+    "LootableContainerBlockEntityMixin",
+    "HopperBlockEntityMixin",
+    "SlotWhitelistMixin",
+    "ScreenHandlerWhitelistMixin",
+    "DoubleInventoryMixin",
+    "SimpleInventoryMixin",
+    "ScreenHandlerClickMixin",
+    "BlockEntityMixin",
+    "BlockDropMixin",
+    "ShulkerBoxBlockMixin",
+    "ShulkerBoxSlotMixin",
+    "StorageMinecartEntityMixin",
+    "ChestBoatEntityMixin"
   ],
   "client": [
     "client.GenericContainerScreenMixin",
     "client.HandledScreenAccessor",
-    "client.ScreenAccessor"
+    "client.ScreenAccessor",
+    "ChestInteractionMixin",
+    "WorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1
