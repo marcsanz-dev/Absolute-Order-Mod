@@ -245,13 +245,16 @@ public class ChestSeparatorsEditor {
             }
         }
 
-        if (session.allGameItems.isEmpty()) {
-            net.minecraft.registry.Registries.ITEM.forEach(item -> {
-                if (item != Items.AIR && client.world != null && item.isEnabled(client.world.getEnabledFeatures())) {
-                    session.allGameItems.add(item);
-                }
-            });
-        }
+        // The creative search group is populated lazily (only items whose tabs have been built),
+        // so it can be incomplete on first open. Merge in every remaining enabled registry item to
+        // guarantee a complete list — keeping the vanilla ordering for those the search group provided.
+        net.minecraft.registry.Registries.ITEM.forEach(item -> {
+            if (item != Items.AIR
+                    && (client.world == null || item.isEnabled(client.world.getEnabledFeatures()))
+                    && !session.allGameItems.contains(item)) {
+                session.allGameItems.add(item);
+            }
+        });
 
         session.filteredItems.clear();
         session.filteredItems.addAll(session.allGameItems);
