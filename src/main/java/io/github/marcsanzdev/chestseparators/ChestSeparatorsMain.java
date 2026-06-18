@@ -41,6 +41,8 @@ public class ChestSeparatorsMain implements ModInitializer {
     /** Thread-safe map of chests currently locked for editing, keyed by block position. */
     public static final Map<BlockPos, UUID> LOCKED_CHESTS = new ConcurrentHashMap<>();
 
+    private static final Random EXPEL_RANDOM = new Random();
+
     @Override
     public void onInitialize() {
         GlobalChestConfig.loadConfig();
@@ -185,12 +187,11 @@ public class ChestSeparatorsMain implements ModInitializer {
                                             dirY /= distance;
                                             dirZ /= distance;
 
-                                            Random random = new Random();
                                             double force = 0.3D;
                                             itemEntity.setVelocity(
-                                                    dirX * force + random.nextGaussian() * 0.05D,
-                                                    dirY * force + random.nextGaussian() * 0.05D + 0.1D,
-                                                    dirZ * force + random.nextGaussian() * 0.05D);
+                                                    dirX * force + EXPEL_RANDOM.nextGaussian() * 0.05D,
+                                                    dirY * force + EXPEL_RANDOM.nextGaussian() * 0.05D + 0.1D,
+                                                    dirZ * force + EXPEL_RANDOM.nextGaussian() * 0.05D);
 
                                             itemEntity.setToDefaultPickupDelay();
                                             world.spawnEntity(itemEntity);

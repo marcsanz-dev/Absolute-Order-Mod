@@ -159,13 +159,13 @@ final class ViewGroupsClickHandler {
                 if (session.currentState == EditorState.SELECT_SLOTS) {
                     editor.toggleState(EditorState.VIEW_GROUPS);
                 } else {
-                    editor.toggleState(EditorState.HIDDEN); // Si estaba viendo, cierra el mod
+                    editor.toggleState(EditorState.HIDDEN);
                 }
                 editor.playClickSound(1.0f);
                 return true;
             }
         }
 
-        return false; // Este es tu return final original
+        return false;
     }
 }
