@@ -43,6 +43,11 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return clickWidgets(mouseX, mouseY, button);
+    }
+
+    /** Dispatches a click to this screen's widgets; returns true once one consumes it. */
+    boolean clickWidgets(double mouseX, double mouseY, int button) {
         for (CustomWidget widget : widgets) {
             if (widget.mouseClicked(mouseX, mouseY, button)) {
                 return true;
