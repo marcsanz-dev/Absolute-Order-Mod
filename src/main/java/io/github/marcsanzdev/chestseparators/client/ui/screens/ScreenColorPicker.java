@@ -229,6 +229,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 bField.setText(String.valueOf(b));
             } else {
                 hexField.setText(String.format("%02X%02X%02X", r, g, b));
+                hexField.setEditableColor(session.pickerCurrentRGB | 0xFF000000);
             }
             isUpdatingFields = false;
 
