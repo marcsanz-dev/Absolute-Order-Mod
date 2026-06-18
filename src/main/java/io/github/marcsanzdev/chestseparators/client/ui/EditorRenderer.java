@@ -205,7 +205,13 @@ public class EditorRenderer {
         }
 
         if (hover) {
-            // Do not show the deposit preview immediately after a click — wait for the cursor to leave first.
+            // Toggling Shift is an explicit request for the other preview (filtered vs. all),
+            // so lift the post-deposit suspension and let it recompute below.
+            if (editor.suspendDepositPreview && shift != editor.depositPreviewShift) {
+                editor.suspendDepositPreview = false;
+            }
+
+            // Otherwise, do not re-show the preview right after a deposit — wait for the cursor to leave first.
             if (editor.suspendDepositPreview) {
                 editor.isHoveringDeposit = false;
                 return;
