@@ -1135,26 +1135,25 @@ public class ScreenDrawLines extends AbstractEditorScreen {
     }
 
     public int getCurrentSelectedLineColorValue() {
-        if (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
-        if (session.lineColorIndex < 16) return STANDARD_PALETTE[session.lineColorIndex];
-        if (session.lineColorIndex < 24)
-            return ChestConfigManager.getInstance().getCustomColors(0)[session.lineColorIndex - 16];
-        return 0;
+        return resolveSelectedColor(session.lineColorIndex, 0);
     }
 
     public int getCurrentSelectedBgColorValue() {
-        if (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
-        if (session.bgColorIndex < 16) return STANDARD_PALETTE[session.bgColorIndex];
-        if (session.bgColorIndex < 24)
-            return ChestConfigManager.getInstance().getCustomColors(1)[session.bgColorIndex - 16];
-        return 0;
+        return resolveSelectedColor(session.bgColorIndex, 1);
     }
 
     public int getCurrentSelectedComboColorValue() {
-        if (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
-        if (session.comboColorIndex < 16) return STANDARD_PALETTE[session.comboColorIndex];
-        if (session.comboColorIndex < 24)
-            return ChestConfigManager.getInstance().getCustomColors(2)[session.comboColorIndex - 16];
+        return resolveSelectedColor(session.comboColorIndex, 2);
+    }
+
+    /**
+     * Resolves the ARGB value a color index points to: 0 for the eraser, a standard palette entry
+     * for indices 0-15, or a world custom color (for the given tab) for indices 16-23.
+     */
+    private int resolveSelectedColor(int colorIndex, int tabMode) {
+        if (colorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID) return 0;
+        if (colorIndex < 16) return STANDARD_PALETTE[colorIndex];
+        if (colorIndex < 24) return ChestConfigManager.getInstance().getCustomColors(tabMode)[colorIndex - 16];
         return 0;
     }
 
