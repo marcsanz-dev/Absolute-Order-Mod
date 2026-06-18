@@ -718,38 +718,6 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         }
     }
 
-    private void drawBaseBevel(
-            DrawContext context, int x, int y, int width, int height, int light, int dark, int shadow, boolean sunken) {
-        if (sunken) {
-            context.fill(x, y, x + width - 1, y + 1, dark);
-            context.fill(x, y, x + 1, y + height - 1, dark);
-            context.fill(x + width - 1, y, x + width, y + height, light);
-            context.fill(x, y + height - 1, x + width, y + height, light);
-        } else {
-            context.fill(x, y, x + width - 1, y + 1, light);
-            context.fill(x, y, x + 1, y + height - 1, light);
-            context.fill(x + width - 1, y, x + width, y + height, dark);
-            context.fill(x, y + height - 1, x + width, y + height, dark);
-            context.fill(x + width - 2, y + 1, x + width - 1, y + height - 1, shadow);
-            context.fill(x + 1, y + height - 2, x + width - 2, y + height - 1, shadow);
-        }
-    }
-
-    private void drawColorBevel(
-            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
-        int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
-        int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
-        int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
-        drawBaseBevel(context, x, y, width, height, light, dark, shadow, sunken);
-    }
-
-    private void drawStandardBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
-        int light = 0xFFFFFFFF;
-        int dark = 0xFF373737;
-        int shadow = 0xFF8B8B8B;
-        drawBaseBevel(context, x, y, width, height, light, dark, shadow, sunken);
-    }
-
     private void drawTabs(DrawContext context, int mouseX, int mouseY) {
         int tabX = layout.sidebarX - 20;
         int startY = layout.guiY + editor.getSidebarYOffset() + 10;

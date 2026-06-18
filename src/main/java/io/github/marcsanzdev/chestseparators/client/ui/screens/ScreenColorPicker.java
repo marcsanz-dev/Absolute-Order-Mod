@@ -828,27 +828,6 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 -1);
     }
 
-    private void drawColorBevel(
-            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
-        int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
-        int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
-        int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
-
-        if (sunken) {
-            context.fill(x, y, x + width - 1, y + 1, dark);
-            context.fill(x, y, x + 1, y + height - 1, dark);
-            context.fill(x + width - 1, y, x + width, y + height, light);
-            context.fill(x, y + height - 1, x + width, y + height, light);
-        } else {
-            context.fill(x, y, x + width - 1, y + 1, light);
-            context.fill(x, y, x + 1, y + height - 1, light);
-            context.fill(x + width - 1, y, x + width, y + height, dark);
-            context.fill(x, y + height - 1, x + width, y + height, dark);
-            context.fill(x + width - 2, y + 1, x + width - 1, y + height - 1, shadow);
-            context.fill(x + 1, y + height - 2, x + width - 2, y + height - 1, shadow);
-        }
-    }
-
     private void drawSaturationValueBox(DrawContext context, int x, int y, int w, int h) {
         int step = 2;
         for (int i = 0; i < w; i += step) {

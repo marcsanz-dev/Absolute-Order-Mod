@@ -101,4 +101,35 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
             }
         }
     }
+
+    /** Draws a raised or sunken bevel border using explicit light/dark/shadow colors. */
+    protected void drawBaseBevel(
+            DrawContext context, int x, int y, int width, int height, int light, int dark, int shadow, boolean sunken) {
+        if (sunken) {
+            context.fill(x, y, x + width - 1, y + 1, dark);
+            context.fill(x, y, x + 1, y + height - 1, dark);
+            context.fill(x + width - 1, y, x + width, y + height, light);
+            context.fill(x, y + height - 1, x + width, y + height, light);
+        } else {
+            context.fill(x, y, x + width - 1, y + 1, light);
+            context.fill(x, y, x + 1, y + height - 1, light);
+            context.fill(x + width - 1, y, x + width, y + height, dark);
+            context.fill(x, y + height - 1, x + width, y + height, dark);
+            context.fill(x + width - 2, y + 1, x + width - 1, y + height - 1, shadow);
+            context.fill(x + 1, y + height - 2, x + width - 2, y + height - 1, shadow);
+        }
+    }
+
+    /** Draws a bevel whose light/dark/shadow tones are derived from a base color. */
+    protected void drawColorBevel(DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
+        int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
+        int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
+        int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
+        drawBaseBevel(context, x, y, width, height, light, dark, shadow, sunken);
+    }
+
+    /** Draws a bevel with the fixed vanilla-inventory tones used for standard palette swatches. */
+    protected void drawStandardBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
+        drawBaseBevel(context, x, y, width, height, 0xFFFFFFFF, 0xFF373737, 0xFF8B8B8B, sunken);
+    }
 }
