@@ -1,11 +1,17 @@
 package io.github.marcsanzdev.chestseparators;
 
+import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
+import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.event.KeyInputHandler;
 import io.github.marcsanzdev.chestseparators.network.ModClientNetworking;
 import io.github.marcsanzdev.chestseparators.network.WhitelistPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.inventory.EnderChestInventory;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.slot.Slot;
 
 // Implements the client-side bootstrap logic for the Fabric mod lifecycle.
 // This entry point is isolated from the dedicated server path to ensure strict separation of concerns
@@ -30,8 +36,8 @@ public class ChestSeparatorsClient implements ClientModInitializer {
                 // which may differ from the Ender Chest position in edge cases.
                 boolean isEnderChest = false;
                 if (context.player().currentScreenHandler != null) {
-                    for (net.minecraft.screen.slot.Slot slot : context.player().currentScreenHandler.slots) {
-                        if (slot.inventory instanceof net.minecraft.inventory.EnderChestInventory) {
+                    for (Slot slot : context.player().currentScreenHandler.slots) {
+                        if (slot.inventory instanceof EnderChestInventory) {
                             isEnderChest = true;
                             break;
                         }
@@ -43,21 +49,17 @@ public class ChestSeparatorsClient implements ClientModInitializer {
                 }
 
                 // 1. Store data for UI rendering
-                io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
-                        .setCurrentWhitelists(payload.whitelists());
+                ChestConfigManager.getInstance().setCurrentWhitelists(payload.whitelists());
 
                 // 2. Inject into the client-side physical block
-                net.minecraft.block.entity.BlockEntity be =
-                        context.player().getEntityWorld().getBlockEntity(payload.pos());
-                if (be instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
+                BlockEntity be = context.player().getEntityWorld().getBlockEntity(payload.pos());
+                if (be instanceof IWhitelistProvider provider) {
                     provider.setWhitelists(payload.whitelists());
                 }
 
                 // 3. THE FLICKER KILLER: Inject into the client's dummy GUI inventory
-                if (context.player().currentScreenHandler
-                        instanceof net.minecraft.screen.GenericContainerScreenHandler genericHandler) {
-                    if (genericHandler.getInventory()
-                            instanceof io.github.marcsanzdev.chestseparators.access.IWhitelistProvider provider) {
+                if (context.player().currentScreenHandler instanceof GenericContainerScreenHandler genericHandler) {
+                    if (genericHandler.getInventory() instanceof IWhitelistProvider provider) {
                         provider.setWhitelists(payload.whitelists());
                     }
                 }
