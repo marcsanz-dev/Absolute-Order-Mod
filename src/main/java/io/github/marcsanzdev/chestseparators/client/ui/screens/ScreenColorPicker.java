@@ -7,15 +7,12 @@ import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import java.awt.Color;
-import java.nio.ByteBuffer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
 
 public class ScreenColorPicker extends AbstractEditorScreen {
 
@@ -644,7 +641,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         if (!session.isColorPickerOpen) return;
 
         if (session.isEyedropperActive) {
-            readHoveredPixelColor(mouseX, mouseY);
+            hoveredPixelColor = ColorPickerGradients.readHoveredPixelColor(mouseX, mouseY);
             renderEyedropperCursor(context, mouseX, mouseY);
             return;
         }
@@ -722,7 +719,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int contentY = layout.popupY + 45;
         int contentX = layout.popupX + 12;
 
-        drawSaturationValueBox(context, contentX, contentY, layout.pickerBoxSize, layout.pickerBoxSize);
+        ColorPickerGradients.drawSaturationValueBox(
+                context, contentX, contentY, layout.pickerBoxSize, layout.pickerBoxSize, session.pickerHue);
         drawDarkBevel(context, contentX - 1, contentY - 1, 102, 102, true);
 
         int cursorX = contentX + (int) (session.pickerSat * 100);
@@ -731,7 +729,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         context.drawStrokedRectangle(cursorX - 1, cursorY - 1, 3, 3, 0xFFFFFFFF);
 
         int hueX = contentX + 115;
-        drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
+        ColorPickerGradients.drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
         drawDarkBevel(context, hueX - 1, contentY - 1, 22, 102, true);
 
         int hueCursorY = contentY + (int) (session.pickerHue * 100);
@@ -784,22 +782,6 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         }
     }
 
-    private void readHoveredPixelColor(int mouseX, int mouseY) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        double scale = client.getWindow().getScaleFactor();
-        int fbX = (int) (mouseX * scale);
-        int fbY = client.getWindow().getFramebufferHeight() - (int) (mouseY * scale) - 1;
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            ByteBuffer buffer = stack.malloc(4);
-            GL11.glReadPixels(fbX, fbY, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
-            int r = buffer.get(0) & 0xFF;
-            int g = buffer.get(1) & 0xFF;
-            int b = buffer.get(2) & 0xFF;
-            hoveredPixelColor = (r << 16) | (g << 8) | b;
-        }
-    }
-
     private void renderEyedropperCursor(DrawContext context, int mx, int my) {
         int iconX = mx - 3;
         int iconY = my - 12;
@@ -827,25 +809,5 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 32,
                 32,
                 -1);
-    }
-
-    private void drawSaturationValueBox(DrawContext context, int x, int y, int w, int h) {
-        int step = 2;
-        for (int i = 0; i < w; i += step) {
-            for (int j = 0; j < h; j += step) {
-                float sat = (float) i / w;
-                float val = 1.0f - ((float) j / h);
-                int color = Color.HSBtoRGB(session.pickerHue, sat, val);
-                context.fill(x + i, y + j, x + i + step, y + j + step, color);
-            }
-        }
-    }
-
-    private void drawHueBar(DrawContext context, int x, int y, int w, int h) {
-        for (int i = 0; i < h; i++) {
-            float hue = (float) i / h;
-            int color = Color.HSBtoRGB(hue, 1.0f, 1.0f);
-            context.fill(x, y + i, x + w, y + i + 1, color);
-        }
     }
 }
