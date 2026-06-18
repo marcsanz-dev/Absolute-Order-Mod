@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.15-SNAPSHOT'
     id 'maven-publish'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 version = project.mod_version
@@ -77,6 +78,26 @@ dependencies {
     // EMI API
     modCompileOnly("dev.emi:emi-fabric:${project.emi_version}:api") {
         exclude(group: "net.fabricmc.fabric-api")
+    }
+
+    // Unit testing (JUnit 5)
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+spotless {
+    java {
+        // Palantir Java Format keeps the project's existing 4-space indentation.
+        palantirJavaFormat("2.50.0")
+        removeUnusedImports()
+        importOrder()
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
 
