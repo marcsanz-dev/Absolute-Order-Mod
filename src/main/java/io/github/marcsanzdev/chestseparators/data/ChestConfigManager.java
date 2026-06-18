@@ -64,107 +64,26 @@ public class ChestConfigManager {
 
     // --- UNDO / REDO SYSTEM (SNAPSHOTS) ---
 
-    private static class Snapshot {
-        final Map<Integer, int[]> configState;
-
-        Snapshot(Map<Integer, int[]> config) {
-            this.configState = new HashMap<>();
-            for (Map.Entry<Integer, int[]> entry : config.entrySet()) {
-                this.configState.put(entry.getKey(), entry.getValue().clone());
-            }
-        }
-    }
-
-    private final java.util.LinkedList<Snapshot> undoStack = new java.util.LinkedList<>();
-    private final java.util.LinkedList<Snapshot> redoStack = new java.util.LinkedList<>();
     private static final int MAX_UNDO_STEPS = 50;
 
-    public void saveSnapshot() {
-        undoStack.addLast(new Snapshot(currentChestConfig));
-        if (undoStack.size() > MAX_UNDO_STEPS) undoStack.removeFirst();
-        redoStack.clear();
-    }
+    private final UndoRedoHistory<Map<Integer, int[]>> visualHistory =
+            new UndoRedoHistory<>(ChestConfigManager::copyVisualConfig, MAX_UNDO_STEPS);
+    private final UndoRedoHistory<Map<Integer, SlotWhitelist>> whitelistHistory =
+            new UndoRedoHistory<>(ChestConfigManager::copyWhitelists, MAX_UNDO_STEPS);
 
-    public boolean canUndo() {
-        return !undoStack.isEmpty();
-    }
-
-    public boolean canRedo() {
-        return !redoStack.isEmpty();
-    }
-
-    public void undo() {
-        if (!canUndo()) return;
-        redoStack.addLast(new Snapshot(currentChestConfig));
-        restoreSnapshot(undoStack.removeLast());
-    }
-
-    public void redo() {
-        if (!canRedo()) return;
-        undoStack.addLast(new Snapshot(currentChestConfig));
-        restoreSnapshot(redoStack.removeLast());
-    }
-
-    private void restoreSnapshot(Snapshot snapshot) {
-        this.currentChestConfig.clear();
-        for (Map.Entry<Integer, int[]> entry : snapshot.configState.entrySet()) {
-            this.currentChestConfig.put(entry.getKey(), entry.getValue().clone());
+    private static Map<Integer, int[]> copyVisualConfig(Map<Integer, int[]> source) {
+        Map<Integer, int[]> copy = new HashMap<>();
+        for (Map.Entry<Integer, int[]> entry : source.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue().clone());
         }
+        return copy;
     }
 
-    private static class WhitelistSnapshot {
-        final Map<Integer, SlotWhitelist> whitelistState;
-
-        WhitelistSnapshot(Map<Integer, SlotWhitelist> whitelists) {
-            this.whitelistState = new HashMap<>();
-            for (Map.Entry<Integer, SlotWhitelist> entry : whitelists.entrySet()) {
-                SlotWhitelist orig = entry.getValue();
-                this.whitelistState.put(
-                        entry.getKey(),
-                        new SlotWhitelist(
-                                orig.groupId(),
-                                new ArrayList<>(orig.allowedItems()),
-                                orig.allowManual(),
-                                orig.allowShift(),
-                                orig.allowHopper()));
-            }
-        }
-    }
-
-    private final java.util.LinkedList<WhitelistSnapshot> wlUndoStack = new java.util.LinkedList<>();
-    private final java.util.LinkedList<WhitelistSnapshot> wlRedoStack = new java.util.LinkedList<>();
-
-    public void saveWhitelistSnapshot() {
-        wlUndoStack.addLast(new WhitelistSnapshot(currentWhitelists));
-        if (wlUndoStack.size() > MAX_UNDO_STEPS) wlUndoStack.removeFirst();
-        wlRedoStack.clear();
-    }
-
-    public boolean canUndoWhitelist() {
-        return !wlUndoStack.isEmpty();
-    }
-
-    public boolean canRedoWhitelist() {
-        return !wlRedoStack.isEmpty();
-    }
-
-    public void undoWhitelist() {
-        if (!canUndoWhitelist()) return;
-        wlRedoStack.addLast(new WhitelistSnapshot(currentWhitelists));
-        restoreWhitelistSnapshot(wlUndoStack.removeLast());
-    }
-
-    public void redoWhitelist() {
-        if (!canRedoWhitelist()) return;
-        wlUndoStack.addLast(new WhitelistSnapshot(currentWhitelists));
-        restoreWhitelistSnapshot(wlRedoStack.removeLast());
-    }
-
-    private void restoreWhitelistSnapshot(WhitelistSnapshot snapshot) {
-        this.currentWhitelists.clear();
-        for (Map.Entry<Integer, SlotWhitelist> entry : snapshot.whitelistState.entrySet()) {
+    private static Map<Integer, SlotWhitelist> copyWhitelists(Map<Integer, SlotWhitelist> source) {
+        Map<Integer, SlotWhitelist> copy = new HashMap<>();
+        for (Map.Entry<Integer, SlotWhitelist> entry : source.entrySet()) {
             SlotWhitelist orig = entry.getValue();
-            this.currentWhitelists.put(
+            copy.put(
                     entry.getKey(),
                     new SlotWhitelist(
                             orig.groupId(),
@@ -173,13 +92,66 @@ public class ChestConfigManager {
                             orig.allowShift(),
                             orig.allowHopper()));
         }
+        return copy;
+    }
+
+    public void saveSnapshot() {
+        visualHistory.push(currentChestConfig);
+    }
+
+    public boolean canUndo() {
+        return visualHistory.canUndo();
+    }
+
+    public boolean canRedo() {
+        return visualHistory.canRedo();
+    }
+
+    public void undo() {
+        Map<Integer, int[]> restored = visualHistory.undo(currentChestConfig);
+        if (restored != null) applyVisualConfig(restored);
+    }
+
+    public void redo() {
+        Map<Integer, int[]> restored = visualHistory.redo(currentChestConfig);
+        if (restored != null) applyVisualConfig(restored);
+    }
+
+    private void applyVisualConfig(Map<Integer, int[]> snapshot) {
+        currentChestConfig.clear();
+        currentChestConfig.putAll(copyVisualConfig(snapshot));
+    }
+
+    public void saveWhitelistSnapshot() {
+        whitelistHistory.push(currentWhitelists);
+    }
+
+    public boolean canUndoWhitelist() {
+        return whitelistHistory.canUndo();
+    }
+
+    public boolean canRedoWhitelist() {
+        return whitelistHistory.canRedo();
+    }
+
+    public void undoWhitelist() {
+        Map<Integer, SlotWhitelist> restored = whitelistHistory.undo(currentWhitelists);
+        if (restored != null) applyWhitelists(restored);
+    }
+
+    public void redoWhitelist() {
+        Map<Integer, SlotWhitelist> restored = whitelistHistory.redo(currentWhitelists);
+        if (restored != null) applyWhitelists(restored);
+    }
+
+    private void applyWhitelists(Map<Integer, SlotWhitelist> snapshot) {
+        currentWhitelists.clear();
+        currentWhitelists.putAll(copyWhitelists(snapshot));
     }
 
     public void clearHistory() {
-        undoStack.clear();
-        redoStack.clear();
-        wlUndoStack.clear();
-        wlRedoStack.clear();
+        visualHistory.clear();
+        whitelistHistory.clear();
     }
 
     // --- PATH MANAGEMENT (NIO) ---
