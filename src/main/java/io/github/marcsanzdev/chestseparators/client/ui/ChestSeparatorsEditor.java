@@ -226,35 +226,24 @@ public class ChestSeparatorsEditor {
         MinecraftClient client = MinecraftClient.getInstance();
 
         if (client.world != null) {
-            ItemGroup searchGroup = ItemGroups.getSearchGroup();
             net.minecraft.resource.featuretoggle.FeatureSet features = client.world.getEnabledFeatures();
-            ItemGroup.DisplayContext context =
-                    new ItemGroup.DisplayContext(features, false, client.world.getRegistryManager());
 
+            // Force a full rebuild of every creative tab for a NON-operator context. This fixes two things:
+            //  - completeness: the search group is otherwise built lazily and can be partial on first open;
+            //  - correctness: operator-only items (bedrock, spawners, command blocks, ...) stay excluded,
+            //    so "Allow All" only adds the same items the list actually shows.
+            ItemGroups.updateDisplayContext(features, false, client.world.getRegistryManager());
+
+            ItemGroup searchGroup = ItemGroups.getSearchGroup();
             if (searchGroup != null) {
-                searchGroup.updateEntries(context);
-                java.util.Collection<ItemStack> vanillaOrderedStacks = searchGroup.getDisplayStacks();
-                if (vanillaOrderedStacks != null) {
-                    vanillaOrderedStacks.forEach(stack -> {
-                        Item item = stack.getItem();
-                        if (item != Items.AIR && !session.allGameItems.contains(item)) {
-                            session.allGameItems.add(item);
-                        }
-                    });
+                for (ItemStack stack : searchGroup.getDisplayStacks()) {
+                    Item item = stack.getItem();
+                    if (item != Items.AIR && !session.allGameItems.contains(item)) {
+                        session.allGameItems.add(item);
+                    }
                 }
             }
         }
-
-        // The creative search group is populated lazily (only items whose tabs have been built),
-        // so it can be incomplete on first open. Merge in every remaining enabled registry item to
-        // guarantee a complete list — keeping the vanilla ordering for those the search group provided.
-        net.minecraft.registry.Registries.ITEM.forEach(item -> {
-            if (item != Items.AIR
-                    && (client.world == null || item.isEnabled(client.world.getEnabledFeatures()))
-                    && !session.allGameItems.contains(item)) {
-                session.allGameItems.add(item);
-            }
-        });
 
         session.filteredItems.clear();
         session.filteredItems.addAll(session.allGameItems);
