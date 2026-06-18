@@ -9,7 +9,7 @@ import java.util.UUID;
 public class ChestPosStorage {
 
     // Buffer for the coordinate vectors of static block-entities (Chests, Barrels, Shulker Boxes).
-    // This value is captured at the `interactBlock` injection point.
+    // Note: Shulker Boxes will ignore this value and use the UUID system instead.
     public static BlockPos lastClickedPos;
 
     // Stores the registry key of the dimension where the interaction occurred.
@@ -25,4 +25,10 @@ public class ChestPosStorage {
     // Mode discriminator flag indicating whether the current UI context belongs to a dynamic entity
     // or a static block. Used by the ConfigManager to select the appropriate loading strategy.
     public static boolean isEntityOpened = false;
+
+    // --- NETWORK EXTENSIONS ---
+
+    // Transient storage for the incoming Shulker Box UUID received via the S2C network packet.
+    // Populated precisely when the server confirms the container has been opened.
+    public static UUID lastOpenedShulkerUUID = null;
 }
