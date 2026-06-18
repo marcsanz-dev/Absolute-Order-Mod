@@ -3,12 +3,17 @@ package io.github.marcsanzdev.chestseparators.client.ui;
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
+import io.github.marcsanzdev.chestseparators.event.KeyInputHandler;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
+import java.util.Map;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 public class EditorRenderer {
 
@@ -181,28 +186,20 @@ public class EditorRenderer {
 
     public void renderNormalModeOverlay(DrawContext context, int mouseX, int mouseY) {
         if (!editor.isEditMode()) {
-            if (io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showLeftPanel
-                    || io.github.marcsanzdev.chestseparators.event.KeyInputHandler.isModifierPressed()) {
+            if (GlobalChestConfig.instance.showLeftPanel || KeyInputHandler.isModifierPressed()) {
                 editor.screenViewGroups.renderWhitelistPreviewPanel(context, mouseX, mouseY);
             }
         }
 
-        long window =
-                net.minecraft.client.MinecraftClient.getInstance().getWindow().getHandle();
-        boolean shift = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT)
-                        == org.lwjgl.glfw.GLFW.GLFW_PRESS
-                || org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT)
-                        == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        long window = MinecraftClient.getInstance().getWindow().getHandle();
+        boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
 
         boolean hover = false;
-        if (!editor.isEditMode()
-                && io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showDepositButton
-                && editor.depositButton != null) {
+        if (!editor.isEditMode() && GlobalChestConfig.instance.showDepositButton && editor.depositButton != null) {
             editor.depositButton.tooltipText = shift
-                    ? net.minecraft.text.Text.translatable("key.chestseparators.deposit_all")
-                            .getString()
-                    : net.minecraft.text.Text.translatable("key.chestseparators.deposit_filter")
-                            .getString();
+                    ? Text.translatable("key.chestseparators.deposit_all").getString()
+                    : Text.translatable("key.chestseparators.deposit_filter").getString();
 
             hover = editor.isHovering(editor.depositButton.x, editor.depositButton.y, 20, 20, mouseX, mouseY);
         }
@@ -236,8 +233,8 @@ public class EditorRenderer {
         int guiY = accessor.getY();
 
         // Player inventory — outgoing items (dimmed with remaining count).
-        for (java.util.Map.Entry<Integer, Integer> entry : editor.previewSourceRemaining.entrySet()) {
-            net.minecraft.screen.slot.Slot slot = accessor.getHandler().getSlot(entry.getKey());
+        for (Map.Entry<Integer, Integer> entry : editor.previewSourceRemaining.entrySet()) {
+            Slot slot = accessor.getHandler().getSlot(entry.getKey());
             int remaining = entry.getValue();
             int x = guiX + slot.x;
             int y = guiY + slot.y;
@@ -245,7 +242,7 @@ public class EditorRenderer {
             drawVanillaSlotBevel(context, x, y);
 
             if (remaining > 0) {
-                net.minecraft.item.ItemStack visualStack = slot.getStack().copy();
+                ItemStack visualStack = slot.getStack().copy();
                 visualStack.setCount(remaining);
                 context.drawItem(visualStack, x, y);
                 drawDurabilityBar(context, visualStack, x, y);
@@ -264,10 +261,9 @@ public class EditorRenderer {
         }
 
         // Container — incoming items (ghost overlay with projected total).
-        for (java.util.Map.Entry<Integer, net.minecraft.item.ItemStack> entry :
-                editor.previewTargetIncoming.entrySet()) {
-            net.minecraft.screen.slot.Slot slot = accessor.getHandler().getSlot(entry.getKey());
-            net.minecraft.item.ItemStack incoming = entry.getValue();
+        for (Map.Entry<Integer, ItemStack> entry : editor.previewTargetIncoming.entrySet()) {
+            Slot slot = accessor.getHandler().getSlot(entry.getKey());
+            ItemStack incoming = entry.getValue();
             int x = guiX + slot.x;
             int y = guiY + slot.y;
 
@@ -286,7 +282,7 @@ public class EditorRenderer {
     }
 
     /** Draws the item durability bar, mirroring vanilla's exact rendering logic. */
-    private void drawDurabilityBar(DrawContext context, net.minecraft.item.ItemStack stack, int x, int y) {
+    private void drawDurabilityBar(DrawContext context, ItemStack stack, int x, int y) {
         if (stack.isItemBarVisible()) {
             int step = stack.getItemBarStep();
             int color = stack.getItemBarColor();
@@ -299,15 +295,8 @@ public class EditorRenderer {
 
     private void drawProjectedCount(DrawContext context, int x, int y, int count, int color) {
         String text = String.valueOf(count);
-        int textW =
-                net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(text);
-        context.drawText(
-                net.minecraft.client.MinecraftClient.getInstance().textRenderer,
-                text,
-                x + 17 - textW,
-                y + 9,
-                color,
-                true);
+        int textW = MinecraftClient.getInstance().textRenderer.getWidth(text);
+        context.drawText(MinecraftClient.getInstance().textRenderer, text, x + 17 - textW, y + 9, color, true);
     }
 
     private void drawVanillaSlotBevel(DrawContext context, int x, int y) {

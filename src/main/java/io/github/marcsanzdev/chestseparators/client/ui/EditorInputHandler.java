@@ -1,16 +1,25 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
+import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
+import java.util.ArrayList;
+import java.util.List;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
@@ -107,13 +116,12 @@ public class EditorInputHandler {
                     return false;
                 }
                 if (session.isDraggingListScroll) {
-                    java.util.List<String> displayedAllowedItems = new java.util.ArrayList<>();
+                    List<String> displayedAllowedItems = new ArrayList<>();
                     String wlSearch = editor.whitelistSearchBox != null
                             ? editor.whitelistSearchBox.getText().toLowerCase()
                             : "";
                     for (String id : session.currentAllowedItems) {
-                        net.minecraft.item.Item item =
-                                net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(id));
+                        Item item = Registries.ITEM.get(Identifier.tryParse(id));
                         if (item != null
                                 && (wlSearch.isEmpty()
                                         || item.getName()
@@ -151,7 +159,7 @@ public class EditorInputHandler {
     }
 
     private void registerScrollEvent() {
-        net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents.allowMouseScroll(screen)
+        ScreenMouseEvents.allowMouseScroll(screen)
                 .register((_screen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
                     if (session.currentState == EditorState.VIEW_GROUPS
                             || session.currentState == EditorState.SELECT_SLOTS) {
@@ -167,15 +175,12 @@ public class EditorInputHandler {
                 });
     }
 
-    public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
-        boolean isControlDown = org.lwjgl.glfw.GLFW.glfwGetKey(
-                                MinecraftClient.getInstance().getWindow().getHandle(),
-                                org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL)
-                        == org.lwjgl.glfw.GLFW.GLFW_PRESS
-                || org.lwjgl.glfw.GLFW.glfwGetKey(
-                                MinecraftClient.getInstance().getWindow().getHandle(),
-                                org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL)
-                        == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+    public boolean keyPressed(KeyInput input) {
+        boolean isControlDown = GLFW.glfwGetKey(
+                                MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL)
+                        == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_CONTROL)
+                        == GLFW.GLFW_PRESS;
 
         if (session.currentState == EditorState.EDIT_FILTER) {
             if (editor.screenEditFilter.keyPressed(input)) {
@@ -238,13 +243,8 @@ public class EditorInputHandler {
 
                             if (MinecraftClient.getInstance().player != null
                                     && MinecraftClient.getInstance().player.currentScreenHandler
-                                            instanceof
-                                            net.minecraft.screen.GenericContainerScreenHandler
-                                            genericHandler) {
-                                if (genericHandler.getInventory()
-                                        instanceof
-                                        io.github.marcsanzdev.chestseparators.access.IWhitelistProvider
-                                        provider) {
+                                            instanceof GenericContainerScreenHandler genericHandler) {
+                                if (genericHandler.getInventory() instanceof IWhitelistProvider provider) {
                                     provider.setWhitelists(
                                             ChestConfigManager.getInstance().getCurrentWhitelists());
                                 }
@@ -298,7 +298,7 @@ public class EditorInputHandler {
         return false;
     }
 
-    public boolean charTyped(net.minecraft.client.input.CharInput input) {
+    public boolean charTyped(CharInput input) {
         if (session.currentState == EditorState.EDIT_FILTER) {
             return editor.screenEditFilter.charTyped(input);
         }
