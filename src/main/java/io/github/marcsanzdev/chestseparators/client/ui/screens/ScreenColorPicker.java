@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
@@ -670,7 +671,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int y = layout.popupY;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(x, y, x + w, y + h, isDark ? 0xFF212121 : 0xFFC6C6C6);
+        context.fill(x, y, x + w, y + h, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(context, x, y, w, h, false);
 
         MinecraftClient client = MinecraftClient.getInstance();

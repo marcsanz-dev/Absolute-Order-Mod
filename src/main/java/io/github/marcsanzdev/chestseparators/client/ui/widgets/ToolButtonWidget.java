@@ -1,6 +1,7 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -55,7 +56,8 @@ public class ToolButtonWidget extends CustomWidget {
         boolean hover = isHovering(mouseX, mouseY);
         boolean sunken = this.isActive || this.isTempClicked;
 
-        int bgColor = isDark ? (sunken ? 0xFF101010 : 0xFF212121) : (sunken ? 0xFFA0A0A0 : 0xFFC6C6C6);
+        int bgColor =
+                isDark ? (sunken ? 0xFF101010 : UiColors.SURFACE_DARK) : (sunken ? 0xFFA0A0A0 : UiColors.SURFACE_LIGHT);
         context.fill(x, y, x + width, y + height, bgColor);
         drawDarkBevel(context, x, y, width, height, sunken);
 

@@ -4,6 +4,7 @@ import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.ActionIconButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.CustomWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
@@ -301,7 +302,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 bH,
                 Text.translatable("button.chestseparators.delete").getString(),
                 ModTextures.ICON_TRASH,
-                0xFF212121,
+                UiColors.SURFACE_DARK,
                 () -> {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
                     editor.deleteCurrentGroup();
@@ -320,7 +321,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 bH,
                 Text.translatable("button.chestseparators.save").getString(),
                 ModTextures.ICON_SAVE,
-                0xFF212121,
+                UiColors.SURFACE_DARK,
                 () -> {
                     // Check whether saving will cause existing items to be expelled.
                     boolean willExpel = false;
@@ -374,7 +375,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 bH,
                 Text.translatable("button.chestseparators.cancel").getString(),
                 ModTextures.ICON_CANCEL,
-                0xFF212121,
+                UiColors.SURFACE_DARK,
                 () -> {
                     session.selectedSlots.clear();
                     editor.toggleState(EditorState.VIEW_GROUPS);
@@ -418,7 +419,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     layout.conflictPopupY,
                     layout.conflictPopupX + layout.conflictPopupW,
                     layout.conflictPopupY + currentPopupH,
-                    0xFF212121);
+                    UiColors.SURFACE_DARK);
             drawDarkBevel(
                     context, layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupW, currentPopupH, false);
 
@@ -607,7 +608,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         int listY = layout.listY;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(listX, listY, listX + listW, listY + listH, isDark ? 0xFF212121 : 0xFFC6C6C6);
+        context.fill(
+                listX, listY, listX + listW, listY + listH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(context, listX, listY, listW, listH, false);
 
         List<String> activeListToRender;
@@ -846,8 +848,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             boolean hover = editor.isHovering(tabX, tabY, tabW, tabH, mouseX, mouseY);
 
             int bgColor = isDark
-                    ? (isSelected ? 0xFF212121 : (hover ? 0xFF303030 : 0xFF151515))
-                    : (isSelected ? 0xFFC6C6C6 : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
+                    ? (isSelected ? UiColors.SURFACE_DARK : (hover ? 0xFF303030 : 0xFF151515))
+                    : (isSelected ? UiColors.SURFACE_LIGHT : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
             context.fill(tabX, tabY, tabX + tabW, tabY + tabH, bgColor);
             drawDarkBevel(context, tabX, tabY, tabW, tabH, isSelected);
             context.drawItem(info.icon, tabX + 3, tabY + (isTop ? 2 : 4));
@@ -856,7 +858,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         }
 
         // --- 3. DRAW MAIN PANEL WINDOW ---
-        context.fill(mainX, mainY, mainX + mainW, mainY + mainH, isDark ? 0xFF212121 : 0xFFC6C6C6);
+        context.fill(
+                mainX, mainY, mainX + mainW, mainY + mainH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(context, mainX, mainY, mainW, mainH, false);
 
         // --- 4. ACTIVE TAB SEAMLESS PATCH ---
@@ -883,7 +886,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             boolean isTopActive = activeSlot < 8;
             int activeCol = activeSlot % 8;
             int tX = mainX + 3 + (activeCol * 23);
-            int patchColor = isDark ? 0xFF212121 : 0xFFC6C6C6;
+            int patchColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
 
             if (isTopActive) context.fill(tX + 1, mainY, tX + 21, mainY + 2, patchColor);
             else context.fill(tX + 1, mainY + mainH - 2, tX + 21, mainY + mainH, patchColor);

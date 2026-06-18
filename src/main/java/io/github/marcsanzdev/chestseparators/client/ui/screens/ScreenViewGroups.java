@@ -3,6 +3,7 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.ActionIconButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.CustomWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
@@ -627,7 +628,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 layout.conflictPopupY,
                 layout.conflictPopupX + layout.conflictPopupW,
                 layout.conflictPopupY + layout.conflictPopupH,
-                isDark ? 0xFF212121 : 0xFFC6C6C6);
+                isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(
                 context,
                 layout.conflictPopupX,
@@ -698,7 +699,8 @@ public class ScreenViewGroups extends AbstractEditorScreen {
 
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(listX, listY, listX + listW, listY + listH, isDark ? 0xFF212121 : 0xFFC6C6C6);
+        context.fill(
+                listX, listY, listX + listW, listY + listH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(context, listX, listY, listW, listH, false);
 
         Slot hoveredSlot = null;
@@ -1142,14 +1144,16 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         int h = 20;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        int bgColor = isDark ? (isActive ? 0xFF212121 : 0xFF151515) : (isActive ? 0xFFC6C6C6 : 0xFF8B8B8B);
+        int bgColor = isDark
+                ? (isActive ? UiColors.SURFACE_DARK : 0xFF151515)
+                : (isActive ? UiColors.SURFACE_LIGHT : 0xFF8B8B8B);
         context.fill(x, y, x + w, y + h, bgColor);
 
         drawDarkBevel(context, x, y, w, h, isActive);
 
         // Paint over the bevel border on the right edge so the tab appears flush with the panel.
         if (isActive) {
-            int patchColor = isDark ? 0xFF212121 : 0xFFC6C6C6;
+            int patchColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
             context.fill(x + 18, y + 1, x + 22, y + 19, patchColor);
         }
 

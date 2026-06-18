@@ -121,7 +121,8 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
     }
 
     /** Draws a bevel whose light/dark/shadow tones are derived from a base color. */
-    protected void drawColorBevel(DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
+    protected void drawColorBevel(
+            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
         int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
         int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
         int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;

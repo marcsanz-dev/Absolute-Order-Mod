@@ -1,5 +1,6 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -41,8 +42,8 @@ public class ActionIconButtonWidget extends CustomWidget {
 
         // Auto-adapt base color from Dark to Light Vanilla Gray
         int renderBaseColor = this.baseColor;
-        if (!isDark && this.baseColor == 0xFF212121) {
-            renderBaseColor = 0xFFC6C6C6;
+        if (!isDark && this.baseColor == UiColors.SURFACE_DARK) {
+            renderBaseColor = UiColors.SURFACE_LIGHT;
         }
 
         // Shift darker on hover for light mode, brighter for dark mode
@@ -83,8 +84,8 @@ public class ActionIconButtonWidget extends CustomWidget {
         }
 
         // Adaptive text color and shadow based on the button background
-        int textColor = (isDark || renderBaseColor != 0xFFC6C6C6) ? 0xFFFFFFFF : 0xFF202020;
-        boolean drawShadow = (isDark || renderBaseColor != 0xFFC6C6C6);
+        int textColor = (isDark || renderBaseColor != UiColors.SURFACE_LIGHT) ? 0xFFFFFFFF : 0xFF202020;
+        boolean drawShadow = (isDark || renderBaseColor != UiColors.SURFACE_LIGHT);
 
         context.getMatrices().pushMatrix();
         context.getMatrices().translate((float) startX, (float) (y + (height - 9 * scale) / 2));

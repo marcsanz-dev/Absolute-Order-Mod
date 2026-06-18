@@ -4,6 +4,7 @@ import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
+import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.ToolButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
@@ -317,7 +318,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 panelStartY,
                 sx + layout.sidebarWidth,
                 panelStartY + fixedSidebarHeight,
-                isDark ? 0xFF212121 : 0xFFC6C6C6);
+                isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawDarkBevel(context, sx, panelStartY, layout.sidebarWidth, fixedSidebarHeight, false);
 
         // While the color picker is open, pass (-1, -1) as mouse coordinates so background
@@ -728,14 +729,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             boolean hover = !session.isColorPickerOpen && editor.isHovering(tabX, tabY, 20, 20, mouseX, mouseY);
             boolean isDark = GlobalChestConfig.instance.darkMode;
             int bgColor = isDark
-                    ? (isSelected ? 0xFF212121 : (hover ? 0xFF303030 : 0xFF151515))
-                    : (isSelected ? 0xFFC6C6C6 : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
+                    ? (isSelected ? UiColors.SURFACE_DARK : (hover ? 0xFF303030 : 0xFF151515))
+                    : (isSelected ? UiColors.SURFACE_LIGHT : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
 
             context.fill(tabX, tabY, tabX + 20, tabY + 20, bgColor);
             drawDarkBevel(context, tabX, tabY, 20, 20, isSelected);
 
             if (isSelected) {
-                int connectColor = isDark ? 0xFF212121 : 0xFFC6C6C6;
+                int connectColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
                 context.fill(tabX + 18, tabY + 1, tabX + 22, tabY + 19, connectColor);
             }
 
