@@ -361,11 +361,12 @@ public class ChestSeparatorsEditor {
 
     /**
      * Items that appear in the creative menu but are not obtainable in survival, so they are kept out
-     * of the filter list and out of "Allow All": every spawn egg, the spawners, reinforced deepslate,
-     * and the infested-stone blocks.
+     * of the filter list and out of "Allow All": every spawn egg, the player head, the spawners,
+     * reinforced deepslate, and the infested-stone blocks.
      */
     private static boolean isNonSurvivalItem(Item item) {
         if (item instanceof net.minecraft.item.SpawnEggItem) return true;
+        if (item == Items.PLAYER_HEAD) return true;
         net.minecraft.block.Block block = net.minecraft.block.Block.getBlockFromItem(item);
         return block == net.minecraft.block.Blocks.SPAWNER
                 || block == net.minecraft.block.Blocks.TRIAL_SPAWNER
@@ -560,6 +561,14 @@ public class ChestSeparatorsEditor {
 
     public void showStatus(Text message, Formatting color) {
         session.statusMessage = message.copy().formatted(color);
+        session.statusMessageTime = System.currentTimeMillis();
+    }
+
+    /** Shows a status message tinted with an exact ARGB/RGB color (used for color copy/paste feedback). */
+    public void showStatus(Text message, int rgbColor) {
+        net.minecraft.text.Style style =
+                net.minecraft.text.Style.EMPTY.withColor(net.minecraft.text.TextColor.fromRgb(rgbColor & 0xFFFFFF));
+        session.statusMessage = message.copy().setStyle(style);
         session.statusMessageTime = System.currentTimeMillis();
     }
 

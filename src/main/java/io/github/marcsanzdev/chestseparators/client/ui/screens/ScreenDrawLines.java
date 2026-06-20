@@ -68,6 +68,68 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         return dragInput.onDrag(mouseX, mouseY);
     }
 
+    /**
+     * Switches the active tab to a paint tool (0 = area, 1 = trace). If the eraser was active (color
+     * index -1), the previously picked color is restored instead of resetting to red.
+     */
+    private void selectPaintTool(int toolMode) {
+        int tabMode = session.currentTab;
+        if (tabMode == 0) {
+            session.lineToolMode = toolMode;
+            if (session.lineColorIndex == -1) {
+                session.lineColorIndex = session.lineColorBeforeErase;
+                session.editingLineCustomIndex = session.lineCustomBeforeErase;
+            }
+        } else if (tabMode == 1) {
+            session.bgToolMode = toolMode;
+            if (session.bgColorIndex == -1) {
+                session.bgColorIndex = session.bgColorBeforeErase;
+                session.editingBgCustomIndex = session.bgCustomBeforeErase;
+            }
+        } else {
+            session.comboToolMode = toolMode;
+            if (session.comboColorIndex == -1) {
+                session.comboColorIndex = session.comboColorBeforeErase;
+                session.editingComboCustomIndex = session.comboCustomBeforeErase;
+            }
+        }
+        editor.playClickSound(1.0f);
+    }
+
+    /**
+     * Switches the active tab to an eraser tool (0 = area, 1 = trace), remembering the current color
+     * so {@link #selectPaintTool} can restore it when the user switches back to a paint tool.
+     */
+    private void selectEraseTool(int toolMode) {
+        int tabMode = session.currentTab;
+        if (tabMode == 0) {
+            session.lineToolMode = toolMode;
+            if (session.lineColorIndex != -1) {
+                session.lineColorBeforeErase = session.lineColorIndex;
+                session.lineCustomBeforeErase = session.editingLineCustomIndex;
+            }
+            session.lineColorIndex = -1;
+            session.editingLineCustomIndex = -1;
+        } else if (tabMode == 1) {
+            session.bgToolMode = toolMode;
+            if (session.bgColorIndex != -1) {
+                session.bgColorBeforeErase = session.bgColorIndex;
+                session.bgCustomBeforeErase = session.editingBgCustomIndex;
+            }
+            session.bgColorIndex = -1;
+            session.editingBgCustomIndex = -1;
+        } else {
+            session.comboToolMode = toolMode;
+            if (session.comboColorIndex != -1) {
+                session.comboColorBeforeErase = session.comboColorIndex;
+                session.comboCustomBeforeErase = session.editingComboCustomIndex;
+            }
+            session.comboColorIndex = -1;
+            session.editingComboCustomIndex = -1;
+        }
+        editor.playClickSound(1.0f);
+    }
+
     @Override
     protected void buildWidgets() {
         // --- 1. RIGHT ACTION PANEL (Copy, Paste, Undo, Redo) ---
@@ -167,43 +229,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 currentY,
                 ModTextures.PENCIL_BASE,
                 Text.translatable("tooltip.chestseparators.draw_area").getString(),
-                () -> {
-                    int tabMode = session.currentTab;
-                    if (tabMode == 0) {
-                        session.lineToolMode = 0;
-                        if (session.lineColorIndex == -1) session.lineColorIndex = 0;
-                    } else if (tabMode == 1) {
-                        session.bgToolMode = 0;
-                        if (session.bgColorIndex == -1) session.bgColorIndex = 0;
-                    } else {
-                        session.comboToolMode = 0;
-                        if (session.comboColorIndex == -1) session.comboColorIndex = 0;
-                    }
-                    editor.playClickSound(1.0f);
-                });
+                () -> selectPaintTool(0));
 
         btnEraserArea = new ToolButtonWidget(
                 contentX + 22,
                 currentY,
                 ModTextures.ERASER_AREA,
                 Text.translatable("tooltip.chestseparators.erase_area").getString(),
-                () -> {
-                    int tabMode = session.currentTab;
-                    if (tabMode == 0) {
-                        session.lineToolMode = 0;
-                        session.lineColorIndex = -1;
-                        session.editingLineCustomIndex = -1;
-                    } else if (tabMode == 1) {
-                        session.bgToolMode = 0;
-                        session.bgColorIndex = -1;
-                        session.editingBgCustomIndex = -1;
-                    } else {
-                        session.comboToolMode = 0;
-                        session.comboColorIndex = -1;
-                        session.editingComboCustomIndex = -1;
-                    }
-                    editor.playClickSound(1.0f);
-                });
+                () -> selectEraseTool(0));
 
         btnClear = new ToolButtonWidget(
                 contentX + 44,
@@ -228,43 +261,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 row2Y,
                 ModTextures.PENCIL_BASE,
                 Text.translatable("tooltip.chestseparators.draw_trace").getString(),
-                () -> {
-                    int tabMode = session.currentTab;
-                    if (tabMode == 0) {
-                        session.lineToolMode = 1;
-                        if (session.lineColorIndex == -1) session.lineColorIndex = 0;
-                    } else if (tabMode == 1) {
-                        session.bgToolMode = 1;
-                        if (session.bgColorIndex == -1) session.bgColorIndex = 0;
-                    } else {
-                        session.comboToolMode = 1;
-                        if (session.comboColorIndex == -1) session.comboColorIndex = 0;
-                    }
-                    editor.playClickSound(1.0f);
-                });
+                () -> selectPaintTool(1));
 
         btnEraserTrace = new ToolButtonWidget(
                 contentX + 22,
                 row2Y,
                 ModTextures.ERASER_TRACE,
                 Text.translatable("tooltip.chestseparators.erase_trace").getString(),
-                () -> {
-                    int tabMode = session.currentTab;
-                    if (tabMode == 0) {
-                        session.lineToolMode = 1;
-                        session.lineColorIndex = -1;
-                        session.editingLineCustomIndex = -1;
-                    } else if (tabMode == 1) {
-                        session.bgToolMode = 1;
-                        session.bgColorIndex = -1;
-                        session.editingBgCustomIndex = -1;
-                    } else {
-                        session.comboToolMode = 1;
-                        session.comboColorIndex = -1;
-                        session.editingComboCustomIndex = -1;
-                    }
-                    editor.playClickSound(1.0f);
-                });
+                () -> selectEraseTool(1));
 
         btnColorPicker = new ToolButtonWidget(
                 contentX + 44,

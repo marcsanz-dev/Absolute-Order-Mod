@@ -52,6 +52,15 @@ public class EditorSessionData {
     public int editingBgCustomIndex = -1;
     public int editingComboCustomIndex = -1;
 
+    // Last non-eraser color (and custom-slot index) per tab, restored when switching from the
+    // eraser back to a paint tool so the previous color is not lost.
+    public int lineColorBeforeErase = 0;
+    public int bgColorBeforeErase = 0;
+    public int comboColorBeforeErase = 0;
+    public int lineCustomBeforeErase = -1;
+    public int bgCustomBeforeErase = -1;
+    public int comboCustomBeforeErase = -1;
+
     public int lineToolMode = 0;
     public int bgToolMode = 0;
     public int comboToolMode = 0;

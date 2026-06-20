@@ -10,7 +10,6 @@ import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 /**
  * Handles mouse-click routing for the line-drawing screen: the tab strip, the color palette
@@ -174,7 +173,8 @@ final class DrawLinesClickHandler {
             if (editor.isHovering(x, y, layout.swatchSize, layout.swatchSize, mx, my)) {
                 if (button == 2) {
                     session.copiedColorRGB = ScreenDrawLines.STANDARD_PALETTE[i];
-                    editor.showStatus(Text.translatable("message.chestseparators.color_copied"), Formatting.GOLD);
+                    editor.showStatus(
+                            Text.translatable("message.chestseparators.color_copied"), session.copiedColorRGB);
                     editor.playClickSound(0.8f);
                     return true;
                 } else if (button == 0) {
@@ -202,16 +202,18 @@ final class DrawLinesClickHandler {
                 if (button == 2) {
                     if (currentColor != 0) {
                         session.copiedColorRGB = currentColor;
-                        editor.showStatus(Text.translatable("message.chestseparators.color_copied"), Formatting.GOLD);
+                        editor.showStatus(
+                                Text.translatable("message.chestseparators.color_copied"), session.copiedColorRGB);
                         editor.playClickSound(0.8f);
                     }
                     return true;
                 } else if (button == 0) {
                     if (session.copiedColorRGB != 0) {
+                        int pastedColor = session.copiedColorRGB;
                         ChestConfigManager.getInstance().setCustomColor(i, session.copiedColorRGB, tabMode);
                         ChestConfigManager.getInstance().saveWorldPalette();
                         session.copiedColorRGB = 0;
-                        editor.showStatus(Text.translatable("message.chestseparators.color_pasted"), Formatting.GREEN);
+                        editor.showStatus(Text.translatable("message.chestseparators.color_pasted"), pastedColor);
                         editor.playClickSound(1.2f);
                     } else {
                         // Save the current color index so it can be restored if the picker is dismissed without saving.
