@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Не найдено подходящих слотов для складирования.",
   "config.chestseparators.close_on_click_outside": "Закрывать по клику вне окна",
   "config.chestseparators.close_on_click_outside.tooltip": "Закрывает меню при клике за пределами интерфейса.",
+  "config.chestseparators.shared_custom_colors": "Общие пользовательские цвета",
+  "config.chestseparators.shared_custom_colors.tooltip": "Если включено, столбец пользовательских цветов общий для вкладок «Линии», «Фоны» и «Комбо». Если выключено, у каждой вкладки свои.",
   "title.chestseparators.config": "Настройки Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

@@ -166,6 +166,8 @@
   "message.chestseparators.deposit_failed": "No valid slots found to deposit items.",
   "config.chestseparators.close_on_click_outside": "Close on Click Outside",
   "config.chestseparators.close_on_click_outside.tooltip": "Closes the menu when clicking outside the interface.",
+  "config.chestseparators.shared_custom_colors": "Shared Custom Colors",
+  "config.chestseparators.shared_custom_colors.tooltip": "When enabled, the custom color column is shared across the Lines, Backgrounds and Combo tabs. When disabled, each tab keeps its own.",
   "title.chestseparators.config": "Absolute Order Configuration",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order",

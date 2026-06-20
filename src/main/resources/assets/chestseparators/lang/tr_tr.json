@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Eşya yatırmak için geçerli yuva bulunamadı.",
   "config.chestseparators.close_on_click_outside": "Dışarı tıklandığında kapat",
   "config.chestseparators.close_on_click_outside.tooltip": "Arayüzün dışına tıklandığında menüyü kapatır.",
+  "config.chestseparators.shared_custom_colors": "Paylaşılan Özel Renkler",
+  "config.chestseparators.shared_custom_colors.tooltip": "Etkinleştirildiğinde, özel renk sütunu Çizgiler, Arka Planlar ve Combo sekmeleri arasında paylaşılır. Devre dışıyken her sekmenin kendi renkleri olur.",
   "title.chestseparators.config": "Absolute Order Yapılandırması",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

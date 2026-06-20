@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "No s'han trobat forats vàlids per dipositar.",
   "config.chestseparators.close_on_click_outside": "Tancar en fer clic a fora",
   "config.chestseparators.close_on_click_outside.tooltip": "Tanca el menú en fer clic fora de la interfície.",
+  "config.chestseparators.shared_custom_colors": "Colors Personalitzats Compartits",
+  "config.chestseparators.shared_custom_colors.tooltip": "Si s'activa, la columna de colors personalitzats és comuna a les pestanyes Línies, Fons i Combo. Si es desactiva, cada pestanya té els seus.",
   "title.chestseparators.config": "إعدادات Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

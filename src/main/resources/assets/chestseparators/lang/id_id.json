@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Tidak ada slot yang valid ditemukan untuk menyimpan item.",
   "config.chestseparators.close_on_click_outside": "Tutup saat Klik di Luar",
   "config.chestseparators.close_on_click_outside.tooltip": "Menutup menu saat mengklik di luar antarmuka.",
+  "config.chestseparators.shared_custom_colors": "Warna Kustom Bersama",
+  "config.chestseparators.shared_custom_colors.tooltip": "Jika aktif, kolom warna kustom digunakan bersama di tab Garis, Latar, dan Combo. Jika nonaktif, tiap tab punya sendiri.",
   "title.chestseparators.config": "Konfigurasi Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

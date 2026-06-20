@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Ez da baliozko zirrikitorik aurkitu itemak gordailatzeko.",
   "config.chestseparators.close_on_click_outside": "Itxi kanpoan klik egitean",
   "config.chestseparators.close_on_click_outside.tooltip": "Menua ixten du interfazearen kanpoan klik egitean.",
+  "config.chestseparators.shared_custom_colors": "Kolore Pertsonalizatu Partekatuak",
+  "config.chestseparators.shared_custom_colors.tooltip": "Gaituta dagoenean, kolore pertsonalizatuen zutabea Lerroak, Atzealdeak eta Konbinazioa fitxen artean partekatzen da. Desgaituta, fitxa bakoitzak bereak ditu.",
   "title.chestseparators.config": "Absolute Order-en Konfigurazioa",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

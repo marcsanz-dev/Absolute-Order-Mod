@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Non se atoparon ocos válidos para depositar.",
   "config.chestseparators.close_on_click_outside": "Pechar ao facer clic fóra",
   "config.chestseparators.close_on_click_outside.tooltip": "Pecha o menú ao facer clic fóra da interface.",
+  "config.chestseparators.shared_custom_colors": "Cores Personalizadas Compartidas",
+  "config.chestseparators.shared_custom_colors.tooltip": "Se está activado, a columna de cores personalizadas é común ás pestanas Liñas, Fondos e Combo. Se está desactivado, cada pestana ten as súas.",
   "title.chestseparators.config": "Configuración de Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

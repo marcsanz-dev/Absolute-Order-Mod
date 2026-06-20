@@ -165,5 +165,7 @@
   "message.chestseparators.deposit_failed": "لم يتم العثور على فتحات صالحة لإيداع العناصر.",
   "config.chestseparators.close_on_click_outside": "إغلاق عند النقر في الخارج",
   "config.chestseparators.close_on_click_outside.tooltip": "يغلق القائمة عند النقر خارج الواجهة.",
+  "config.chestseparators.shared_custom_colors": "ألوان مخصصة مشتركة",
+  "config.chestseparators.shared_custom_colors.tooltip": "عند التفعيل، تتم مشاركة عمود الألوان المخصصة بين علامات تبويب الخطوط والخلفيات والمدمج. عند التعطيل، لكل علامة تبويب ألوانها الخاصة.",
   "modmenu.descriptionTranslation.chestseparators": "حقق تفريغًا سريعًا للمخزون مع الإيداع التلقائي المخصص. اللعبة أخيرًا تعرف بالضبط ما تريده وأين تريده."
 }

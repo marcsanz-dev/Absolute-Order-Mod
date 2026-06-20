@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Nie znaleziono odpowiednich miejsc do depozytu.",
   "config.chestseparators.close_on_click_outside": "Zamknij po kliknięciu na zewnątrz",
   "config.chestseparators.close_on_click_outside.tooltip": "Zamyka menu po kliknięciu poza interfejsem.",
+  "config.chestseparators.shared_custom_colors": "Wspólne Kolory Niestandardowe",
+  "config.chestseparators.shared_custom_colors.tooltip": "Po włączeniu kolumna kolorów niestandardowych jest wspólna dla kart Linie, Tła i Combo. Po wyłączeniu każda karta ma własne.",
   "title.chestseparators.config": "Konfiguracja Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

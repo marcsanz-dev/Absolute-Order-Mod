@@ -682,6 +682,9 @@ public class ChestConfigManager {
     }
 
     public int[] getCustomColors(int tabMode) {
+        // In shared mode all tabs read from the single Lines palette.
+        if (io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.sharedCustomColors)
+            return worldCustomLineColors;
         if (tabMode == 1) return worldCustomBgColors;
         if (tabMode == 2) return worldCustomComboColors;
         return worldCustomLineColors;
@@ -689,7 +692,10 @@ public class ChestConfigManager {
 
     public void setCustomColor(int index, int color, int tabMode) {
         if (index >= 0 && index < 8) {
-            if (tabMode == 1) worldCustomBgColors[index] = color;
+            // In shared mode all tabs write to the single Lines palette.
+            if (io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.sharedCustomColors)
+                worldCustomLineColors[index] = color;
+            else if (tabMode == 1) worldCustomBgColors[index] = color;
             else if (tabMode == 2) worldCustomComboColors[index] = color;
             else worldCustomLineColors[index] = color;
         }

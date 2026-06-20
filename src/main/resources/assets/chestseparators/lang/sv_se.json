@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Inga giltiga fack hittades för insättning.",
   "config.chestseparators.close_on_click_outside": "Stäng vid klick utanför",
   "config.chestseparators.close_on_click_outside.tooltip": "Stänger menyn när du klickar utanför gränssnittet.",
+  "config.chestseparators.shared_custom_colors": "Delade Anpassade Färger",
+  "config.chestseparators.shared_custom_colors.tooltip": "När aktiverat delas kolumnen med anpassade färger mellan flikarna Linjer, Bakgrunder och Kombo. När inaktiverat har varje flik egna.",
   "title.chestseparators.config": "Absolute Order-konfiguration",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

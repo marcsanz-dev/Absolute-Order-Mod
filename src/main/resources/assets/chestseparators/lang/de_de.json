@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Keine gültigen Slots zum Einlagern gefunden.",
   "config.chestseparators.close_on_click_outside": "Beim Klicken außerhalb schließen",
   "config.chestseparators.close_on_click_outside.tooltip": "Schließt das Menü, wenn außerhalb der Benutzeroberfläche geklickt wird.",
+  "config.chestseparators.shared_custom_colors": "Gemeinsame Benutzerfarben",
+  "config.chestseparators.shared_custom_colors.tooltip": "Wenn aktiviert, wird die Benutzerfarben-Spalte von den Tabs Linien, Hintergründe und Kombi gemeinsam genutzt. Wenn deaktiviert, hat jeder Tab eigene.",
   "title.chestseparators.config": "Absolute Order Konfiguration",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

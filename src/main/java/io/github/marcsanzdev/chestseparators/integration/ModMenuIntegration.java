@@ -86,6 +86,15 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.shared_custom_colors"),
+                            GlobalChestConfig.instance.sharedCustomColors)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.shared_custom_colors.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.sharedCustomColors = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
                     .startIntSlider(
                             Text.translatable("config.chestseparators.bg_transparency"),
                             GlobalChestConfig.instance.bgTransparency,

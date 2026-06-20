@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "No se han encontrado huecos válidos para depositar.",
   "config.chestseparators.close_on_click_outside": "Cerrar al hacer clic fuera",
   "config.chestseparators.close_on_click_outside.tooltip": "Cierra el menú al hacer clic fuera de la interfaz.",
+  "config.chestseparators.shared_custom_colors": "Colores Personalizados Compartidos",
+  "config.chestseparators.shared_custom_colors.tooltip": "Si está activado, la columna de colores personalizados es común a las pestañas Líneas, Fondos y Combo. Si está desactivado, cada pestaña tiene los suyos.",
   "title.chestseparators.config": "Configuración de Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

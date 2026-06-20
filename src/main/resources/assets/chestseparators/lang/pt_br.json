@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Nenhum slot válido encontrado para depositar itens.",
   "config.chestseparators.close_on_click_outside": "Fechar ao clicar fora",
   "config.chestseparators.close_on_click_outside.tooltip": "Fecha o menu ao clicar fora da interface.",
+  "config.chestseparators.shared_custom_colors": "Cores Personalizadas Compartilhadas",
+  "config.chestseparators.shared_custom_colors.tooltip": "Quando ativado, a coluna de cores personalizadas é compartilhada entre as abas Linhas, Fundos e Combo. Quando desativado, cada aba tem as suas.",
   "title.chestseparators.config": "Configuração do Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

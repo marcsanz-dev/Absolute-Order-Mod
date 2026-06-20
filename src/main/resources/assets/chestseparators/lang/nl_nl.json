@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Geen geldige slots gevonden om te storten.",
   "config.chestseparators.close_on_click_outside": "Sluiten bij klikken buiten menu",
   "config.chestseparators.close_on_click_outside.tooltip": "Sluit het menu wanneer buiten de interface wordt geklikt.",
+  "config.chestseparators.shared_custom_colors": "Gedeelde Aangepaste Kleuren",
+  "config.chestseparators.shared_custom_colors.tooltip": "Indien ingeschakeld wordt de aangepaste kleurenkolom gedeeld tussen de tabbladen Lijnen, Achtergronden en Combo. Indien uitgeschakeld heeft elk tabblad eigen kleuren.",
   "title.chestseparators.config": "Absolute Order Configuratie",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

@@ -22,6 +22,9 @@ public class GlobalChestConfig {
         public boolean showEditButtons = true;
         public boolean showDepositButton = true;
         public boolean closeOnClickOutside = false;
+        // When true, the custom-color column (third palette column) is shared across the Lines,
+        // Backgrounds and Combo tabs. When false, each tab keeps its own custom colors.
+        public boolean sharedCustomColors = true;
         public int bgTransparency = 40;
         public int lineTransparency = 100;
 

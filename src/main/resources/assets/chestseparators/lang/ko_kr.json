@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "아이템을 보관할 유효한 슬롯을 찾을 수 없습니다.",
   "config.chestseparators.close_on_click_outside": "외부 클릭 시 닫기",
   "config.chestseparators.close_on_click_outside.tooltip": "인터페이스 외부를 클릭하면 메뉴가 닫힙니다.",
+  "config.chestseparators.shared_custom_colors": "사용자 지정 색상 공유",
+  "config.chestseparators.shared_custom_colors.tooltip": "활성화하면 사용자 지정 색상 열이 선, 배경, 콤보 탭에서 공유됩니다. 비활성화하면 각 탭이 자체 색상을 가집니다.",
   "title.chestseparators.config": "Absolute Order 설정",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

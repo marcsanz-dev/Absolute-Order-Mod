@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "未找到有效的槽位来存入物品。",
   "config.chestseparators.close_on_click_outside": "点击外部关闭",
   "config.chestseparators.close_on_click_outside.tooltip": "点击界面外部时关闭菜单。",
+  "config.chestseparators.shared_custom_colors": "共享自定义颜色",
+  "config.chestseparators.shared_custom_colors.tooltip": "启用后，自定义颜色列在线条、背景和组合标签页之间共享。禁用后，每个标签页各自独立。",
   "title.chestseparators.config": "Absolute Order 配置",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

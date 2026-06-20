@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Aucun emplacement valide trouvé pour déposer.",
   "config.chestseparators.close_on_click_outside": "Fermer en cliquant à l'extérieur",
   "config.chestseparators.close_on_click_outside.tooltip": "Ferme le menu lorsque vous cliquez en dehors de l'interface.",
+  "config.chestseparators.shared_custom_colors": "Couleurs personnalisées partagées",
+  "config.chestseparators.shared_custom_colors.tooltip": "Si activé, la colonne de couleurs personnalisées est partagée entre les onglets Lignes, Fonds et Combo. Si désactivé, chaque onglet a les siennes.",
   "title.chestseparators.config": "Configuration d'Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

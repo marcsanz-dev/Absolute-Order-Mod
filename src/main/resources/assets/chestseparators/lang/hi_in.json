@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "आइटम जमा करने के लिए कोई मान्य स्लॉट नहीं मिला।",
   "config.chestseparators.close_on_click_outside": "बाहर क्लिक करने पर बंद करें",
   "config.chestseparators.close_on_click_outside.tooltip": "इंटरफ़ेस के बाहर क्लिक करने पर मेनू बंद हो जाता है।",
+  "config.chestseparators.shared_custom_colors": "साझा कस्टम रंग",
+  "config.chestseparators.shared_custom_colors.tooltip": "सक्षम होने पर, कस्टम रंग कॉलम लाइन, बैकग्राउंड और कॉम्बो टैब में साझा होता है। अक्षम होने पर, प्रत्येक टैब के अपने रंग होते हैं।",
   "title.chestseparators.config": "Absolute Order कॉन्फ़िगरेशन",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"

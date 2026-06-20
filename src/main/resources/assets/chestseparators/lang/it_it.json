@@ -163,6 +163,8 @@
   "message.chestseparators.deposit_failed": "Nessuno slot valido trovato per depositare oggetti.",
   "config.chestseparators.close_on_click_outside": "Chiudi al clic esterno",
   "config.chestseparators.close_on_click_outside.tooltip": "Chiude il menu quando si fa clic all'esterno dell'interfaccia.",
+  "config.chestseparators.shared_custom_colors": "Colori Personalizzati Condivisi",
+  "config.chestseparators.shared_custom_colors.tooltip": "Se attivo, la colonna dei colori personalizzati è condivisa tra le schede Linee, Sfondi e Combo. Se disattivo, ogni scheda ha i propri.",
   "title.chestseparators.config": "Configurazione di Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order"
