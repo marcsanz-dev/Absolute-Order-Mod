@@ -449,6 +449,7 @@ public class ChestSeparatorsEditor {
         session.ruleHopper = GlobalChestConfig.instance.defaultRuleHopper;
         session.gridScrollY = 0f;
         session.listScrollY = 0f;
+        resetToDefaultCreativeTab();
 
         if (session.selectedGroupId != null) {
             var whitelists = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
@@ -730,6 +731,21 @@ public class ChestSeparatorsEditor {
             }
         }
         session.customChestItems.addAll(uniqueItems);
+    }
+
+    /**
+     * Resets the creative-item browser to its default tab and first page whenever a filter menu is
+     * opened, so the last-used tab (e.g. "Chest & Inventory") and any pending search text never carry
+     * over between filters. The default is the first available tab, matching the initial open.
+     */
+    private void resetToDefaultCreativeTab() {
+        session.currentTabPage = 0;
+        for (int i = 0; i < session.availableTabs.size(); i++) {
+            if (session.availableTabs.get(i) != null) {
+                switchCreativeTab(i);
+                return;
+            }
+        }
     }
 
     public void switchCreativeTab(int tabIndex) {

@@ -136,7 +136,9 @@ final class FilterPanelRenderer {
         screen.drawDarkBevel(context, listX + 6, listViewY, listW - 12, listViewH, true);
 
         int totalListItems = activeListToRender.size();
-        int totalListHeight = totalListItems * 18;
+        // +4 trailing padding so scrolling to the bottom fully reveals the last row instead of
+        // clipping its last few pixels against the scissor's bottom edge.
+        int totalListHeight = totalListItems * 18 + 4;
         float maxListScroll = Math.max(0, totalListHeight - listViewH);
 
         if (!session.isPreviewing) session.listScrollY = MathHelper.clamp(session.listScrollY, 0, maxListScroll);
