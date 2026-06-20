@@ -36,9 +36,11 @@ public class ChestConfigManager {
     /**
      * Current on-disk format version. Increment when making breaking changes to the NBT schema.
      * Version 1 = v1.3.x (4-element visual arrays, no version field).
-     * Version 2 = current (5-element visual arrays, explicit "Version" field).
+     * Version 2 = 5-element visual arrays with an explicit "Version" field.
+     * Version 3 = 9-element visual arrays adding per-edge paint-order sequence (indices 5-8).
+     * Older saves are migrated transparently on read in {@link #readRawData}.
      */
-    private static final int DATA_VERSION = 2;
+    private static final int DATA_VERSION = 3;
 
     public static final int ACTION_TOP = 1;
     public static final int ACTION_BOTTOM = 2;
@@ -51,6 +53,17 @@ public class ChestConfigManager {
     private static final int IDX_LEFT = 2;
     private static final int IDX_RIGHT = 3;
     private static final int IDX_BG = 4;
+
+    // Paint-order sequence for each of the four edges, so corners are drawn newest-on-top: the edge
+    // painted later wins where two lines overlap. Indices 5-8 parallel IDX_TOP..IDX_RIGHT.
+    private static final int IDX_SEQ_TOP = 5;
+    private static final int IDX_SEQ_BOTTOM = 6;
+    private static final int IDX_SEQ_LEFT = 7;
+    private static final int IDX_SEQ_RIGHT = 8;
+    private static final int SLOT_ARRAY_LEN = 9;
+
+    /** Monotonic counter assigning a paint order to each edge as it is painted. */
+    private int paintSequence = 0;
 
     private final Map<Integer, int[]> currentChestConfig = new HashMap<>();
     private Map<Integer, int[]> clipboardConfig = null;
@@ -70,6 +83,7 @@ public class ChestConfigManager {
 
     public void clearCurrentConfig() {
         currentChestConfig.clear();
+        paintSequence = 0;
         clearHistory();
     }
 
@@ -276,7 +290,16 @@ public class ChestConfigManager {
     // --- CHEST LOGIC ---
 
     private int[] getSlotColors(int slotIndex) {
-        return currentChestConfig.computeIfAbsent(slotIndex, k -> new int[5]);
+        int[] colors = currentChestConfig.get(slotIndex);
+        if (colors == null) {
+            colors = new int[SLOT_ARRAY_LEN];
+            currentChestConfig.put(slotIndex, colors);
+        } else if (colors.length < SLOT_ARRAY_LEN) {
+            // Grow legacy arrays (4 or 5 elements) so paint-order indices are available.
+            colors = java.util.Arrays.copyOf(colors, SLOT_ARRAY_LEN);
+            currentChestConfig.put(slotIndex, colors);
+        }
+        return colors;
     }
 
     public int getColor(int slotIndex, int actionFlag) {
@@ -290,13 +313,51 @@ public class ChestConfigManager {
         return 0;
     }
 
+    /**
+     * Returns the paint-order sequence of an edge (higher = painted later, drawn on top). Returns 0
+     * for backgrounds, unpainted edges, or legacy arrays without sequence data.
+     */
+    public int getPaintSeq(int slotIndex, int actionFlag) {
+        int[] colors = currentChestConfig.get(slotIndex);
+        if (colors == null) return 0;
+        int idx;
+        if (actionFlag == ACTION_TOP) idx = IDX_SEQ_TOP;
+        else if (actionFlag == ACTION_BOTTOM) idx = IDX_SEQ_BOTTOM;
+        else if (actionFlag == ACTION_LEFT) idx = IDX_SEQ_LEFT;
+        else if (actionFlag == ACTION_RIGHT) idx = IDX_SEQ_RIGHT;
+        else return 0;
+        return idx < colors.length ? colors[idx] : 0;
+    }
+
     public void paintAction(int slotIndex, int actionFlags, int argbColor) {
         int[] colors = getSlotColors(slotIndex);
-        if ((actionFlags & ACTION_TOP) != 0) colors[IDX_TOP] = argbColor;
-        if ((actionFlags & ACTION_BOTTOM) != 0) colors[IDX_BOTTOM] = argbColor;
-        if ((actionFlags & ACTION_LEFT) != 0) colors[IDX_LEFT] = argbColor;
-        if ((actionFlags & ACTION_RIGHT) != 0) colors[IDX_RIGHT] = argbColor;
+        if ((actionFlags & ACTION_TOP) != 0) {
+            colors[IDX_TOP] = argbColor;
+            colors[IDX_SEQ_TOP] = ++paintSequence;
+        }
+        if ((actionFlags & ACTION_BOTTOM) != 0) {
+            colors[IDX_BOTTOM] = argbColor;
+            colors[IDX_SEQ_BOTTOM] = ++paintSequence;
+        }
+        if ((actionFlags & ACTION_LEFT) != 0) {
+            colors[IDX_LEFT] = argbColor;
+            colors[IDX_SEQ_LEFT] = ++paintSequence;
+        }
+        if ((actionFlags & ACTION_RIGHT) != 0) {
+            colors[IDX_RIGHT] = argbColor;
+            colors[IDX_SEQ_RIGHT] = ++paintSequence;
+        }
         if ((actionFlags & ACTION_BG) != 0) colors[IDX_BG] = argbColor;
+    }
+
+    /** Raises the paint counter above any sequence currently stored, e.g. after pasting another
+     * chest's layout, so subsequently painted edges still win in corners. */
+    private void bumpPaintSequenceToMax() {
+        for (int[] colors : currentChestConfig.values()) {
+            for (int si = IDX_SEQ_TOP; si < SLOT_ARRAY_LEN && si <= IDX_SEQ_RIGHT; si++) {
+                if (si < colors.length && colors[si] > paintSequence) paintSequence = colors[si];
+            }
+        }
     }
 
     public void removeAction(int slotIndex, int actionFlags) {
@@ -347,6 +408,7 @@ public class ChestConfigManager {
             for (Map.Entry<Integer, int[]> entry : this.clipboardConfig.entrySet()) {
                 this.currentChestConfig.put(entry.getKey(), entry.getValue().clone());
             }
+            bumpPaintSequenceToMax();
         }
     }
 
@@ -545,9 +607,22 @@ public class ChestConfigManager {
                         try {
                             int slot = Integer.parseInt(key);
                             separatorsTag.getIntArray(key).ifPresent(arr -> {
-                                if (arr.length == 4)
-                                    data.visual.put(slot, new int[] {arr[0], arr[1], arr[2], arr[3], 0});
-                                else if (arr.length >= 5) data.visual.put(slot, arr);
+                                // Normalize every legacy length to the current 9-element layout:
+                                // [TOP,BOTTOM,LEFT,RIGHT,BG, seqTOP,seqBOTTOM,seqLEFT,seqRIGHT].
+                                int[] full;
+                                if (arr.length == 4) {
+                                    full = new int[] {arr[0], arr[1], arr[2], arr[3], 0, 0, 0, 0, 0};
+                                } else if (arr.length >= 5) {
+                                    full = java.util.Arrays.copyOf(arr, SLOT_ARRAY_LEN);
+                                } else {
+                                    return; // malformed
+                                }
+                                data.visual.put(slot, full);
+                                // Keep the paint counter ahead of any loaded sequence so new paints
+                                // stay on top in corners.
+                                for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT; si++) {
+                                    if (full[si] > paintSequence) paintSequence = full[si];
+                                }
                             });
                         } catch (NumberFormatException ignored) {
                         }

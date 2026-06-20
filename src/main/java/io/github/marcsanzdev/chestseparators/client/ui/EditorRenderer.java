@@ -138,34 +138,30 @@ public class EditorRenderer {
             int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
             if (bgColor != 0) context.fill(s.x, s.y, s.x + 16, s.y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
 
-            renderLineRaw(
-                    context,
-                    s.x,
-                    s.y,
-                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_TOP),
-                    ChestConfigManager.ACTION_TOP,
-                    lineAlpha);
-            renderLineRaw(
-                    context,
-                    s.x,
-                    s.y,
-                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BOTTOM),
-                    ChestConfigManager.ACTION_BOTTOM,
-                    lineAlpha);
-            renderLineRaw(
-                    context,
-                    s.x,
-                    s.y,
-                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_LEFT),
-                    ChestConfigManager.ACTION_LEFT,
-                    lineAlpha);
-            renderLineRaw(
-                    context,
-                    s.x,
-                    s.y,
-                    manager.getColor(s.getIndex(), ChestConfigManager.ACTION_RIGHT),
-                    ChestConfigManager.ACTION_RIGHT,
-                    lineAlpha);
+            renderEdgesInPaintOrder(context, s.x, s.y, s.getIndex(), lineAlpha);
+        }
+    }
+
+    private static final int[] EDGE_ACTIONS = {
+        ChestConfigManager.ACTION_TOP,
+        ChestConfigManager.ACTION_BOTTOM,
+        ChestConfigManager.ACTION_LEFT,
+        ChestConfigManager.ACTION_RIGHT
+    };
+
+    /**
+     * Draws a slot's four edge lines ordered by paint sequence (oldest first), so where two edges
+     * overlap in a corner the one painted later is drawn on top. The sort is stable, so legacy edges
+     * without sequence data keep the default TOP, BOTTOM, LEFT, RIGHT order.
+     */
+    private void renderEdgesInPaintOrder(DrawContext context, int x, int y, int slotIndex, int lineAlpha) {
+        ChestConfigManager manager = ChestConfigManager.getInstance();
+        Integer[] order = {0, 1, 2, 3};
+        java.util.Arrays.sort(
+                order, java.util.Comparator.comparingInt(i -> manager.getPaintSeq(slotIndex, EDGE_ACTIONS[i])));
+        for (int oi : order) {
+            int action = EDGE_ACTIONS[oi];
+            renderLineRaw(context, x, y, manager.getColor(slotIndex, action), action, lineAlpha);
         }
     }
 
@@ -344,33 +340,6 @@ public class EditorRenderer {
 
         // Draw separator lines at the user-configured opacity so they read over the vanilla bevel.
         int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-        renderLineRaw(
-                context,
-                x,
-                y,
-                manager.getColor(slotIndex, ChestConfigManager.ACTION_TOP),
-                ChestConfigManager.ACTION_TOP,
-                lineAlpha);
-        renderLineRaw(
-                context,
-                x,
-                y,
-                manager.getColor(slotIndex, ChestConfigManager.ACTION_BOTTOM),
-                ChestConfigManager.ACTION_BOTTOM,
-                lineAlpha);
-        renderLineRaw(
-                context,
-                x,
-                y,
-                manager.getColor(slotIndex, ChestConfigManager.ACTION_LEFT),
-                ChestConfigManager.ACTION_LEFT,
-                lineAlpha);
-        renderLineRaw(
-                context,
-                x,
-                y,
-                manager.getColor(slotIndex, ChestConfigManager.ACTION_RIGHT),
-                ChestConfigManager.ACTION_RIGHT,
-                lineAlpha);
+        renderEdgesInPaintOrder(context, x, y, slotIndex, lineAlpha);
     }
 }
