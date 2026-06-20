@@ -187,11 +187,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 ModTextures.ICON_UNDO,
                 () -> {
                     btnUndoClickTime = System.currentTimeMillis();
-                    if (ChestConfigManager.getInstance().canUndo()) {
-                        ChestConfigManager.getInstance().undo();
-                        editor.saveSmart();
-                        editor.playClickSound(0.8f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().undo(), false);
                 });
         btnUndo.keepNormalTextColor = true;
         btnUndo.tooltipText =
@@ -207,11 +203,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 ModTextures.ICON_REDO,
                 () -> {
                     btnRedoClickTime = System.currentTimeMillis();
-                    if (ChestConfigManager.getInstance().canRedo()) {
-                        ChestConfigManager.getInstance().redo();
-                        editor.saveSmart();
-                        editor.playClickSound(0.8f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().redo(), true);
                 });
         btnRedo.keepNormalTextColor = true;
         btnRedo.tooltipText =

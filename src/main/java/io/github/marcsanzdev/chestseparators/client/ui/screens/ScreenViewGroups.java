@@ -238,17 +238,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 ModTextures.ICON_UNDO,
                 () -> {
                     btnUndoClickTime = System.currentTimeMillis();
-                    if (ChestConfigManager.getInstance().canUndoWhitelist()) {
-                        ChestConfigManager.getInstance().undoWhitelist();
-
-                        // Sync inventory to reflect the reverted whitelist state.
-                        var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-                        editor.saveSmart();
-                        editor.sendWhitelistToServer();
-                        editor.syncClientInventoryWhitelists(currentWhitelists);
-
-                        editor.playClickSound(0.8f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().undo(), false);
                 });
         btnUndo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.undo").getString();
@@ -264,17 +254,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 ModTextures.ICON_REDO,
                 () -> {
                     btnRedoClickTime = System.currentTimeMillis();
-                    if (ChestConfigManager.getInstance().canRedoWhitelist()) {
-                        ChestConfigManager.getInstance().redoWhitelist();
-
-                        // Sync inventory to reflect the re-applied whitelist state.
-                        var currentWhitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-                        editor.saveSmart();
-                        editor.sendWhitelistToServer();
-                        editor.syncClientInventoryWhitelists(currentWhitelists);
-
-                        editor.playClickSound(0.8f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().redo(), true);
                 });
         btnRedo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.redo").getString();

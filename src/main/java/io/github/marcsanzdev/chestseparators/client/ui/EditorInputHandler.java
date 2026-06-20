@@ -194,40 +194,25 @@ public class EditorInputHandler {
                             || (editor.whitelistSearchBox != null && editor.whitelistSearchBox.isFocused()));
 
             if (!isTyping) {
-                // Undo
+                // Undo (unified: separators or filters, whichever happened last).
                 if (input.key() == GLFW.GLFW_KEY_Z) {
-                    if (ChestConfigManager.getInstance().canUndo()) {
-                        ChestConfigManager.getInstance().undo();
-                        editor.saveSmart();
-                        editor.playClickSound(0.8f);
-                    } else {
-                        editor.playClickSound(0.5f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().undo(), false);
                     return true;
                 }
                 // Redo
                 else if (input.key() == GLFW.GLFW_KEY_Y) {
-                    if (ChestConfigManager.getInstance().canRedo()) {
-                        ChestConfigManager.getInstance().redo();
-                        editor.saveSmart();
-                        editor.playClickSound(0.8f);
-                    } else {
-                        editor.playClickSound(0.5f);
-                    }
+                    editor.applyUndoRedo(ChestConfigManager.getInstance().redo(), true);
                     return true;
                 }
-                // Copy
+                // Copy — whole-chest layout (lines + backgrounds) in DRAW_LINES, all filters in VIEW_GROUPS.
                 else if (input.key() == GLFW.GLFW_KEY_C) {
                     if (session.currentState == EditorState.VIEW_GROUPS) {
                         ChestConfigManager.getInstance().copyWhitelistsToClipboard();
-                        editor.showStatus(Text.literal("Filters Copied!"), Formatting.GRAY);
+                        editor.showStatus(Text.translatable("message.chestseparators.filters_copied"), Formatting.GRAY);
                         editor.playClickSound(1.0f);
                     } else if (session.currentState == EditorState.DRAW_LINES) {
-                        int tabMode = session.currentTab;
-                        if (tabMode == 0) ChestConfigManager.getInstance().copyLinesToClipboard();
-                        else if (tabMode == 1) ChestConfigManager.getInstance().copyBackgroundsToClipboard();
-                        else ChestConfigManager.getInstance().copyAllToClipboard();
-                        editor.showStatus(Text.literal("Copied!"), Formatting.GRAY);
+                        ChestConfigManager.getInstance().copyToClipboard();
+                        editor.showStatus(Text.translatable("message.chestseparators.layout_copied"), Formatting.GRAY);
                         editor.playClickSound(1.0f);
                     }
                     return true;
@@ -236,7 +221,7 @@ public class EditorInputHandler {
                 else if (input.key() == GLFW.GLFW_KEY_V) {
                     if (session.currentState == EditorState.VIEW_GROUPS) {
                         if (ChestConfigManager.getInstance().hasWhitelistClipboardData()) {
-                            ChestConfigManager.getInstance().saveSnapshot();
+                            ChestConfigManager.getInstance().saveWhitelistSnapshot();
                             ChestConfigManager.getInstance().pasteWhitelistsFromClipboard();
                             editor.saveSmart();
                             editor.sendWhitelistToServer();
@@ -249,34 +234,20 @@ public class EditorInputHandler {
                                             ChestConfigManager.getInstance().getCurrentWhitelists());
                                 }
                             }
-                            editor.showStatus(Text.literal("Filters Pasted!"), Formatting.GREEN);
+                            editor.showStatus(
+                                    Text.translatable("message.chestseparators.filters_pasted"), Formatting.GREEN);
                             editor.playClickSound(1.0f);
                         } else {
                             editor.playClickSound(0.5f);
                         }
                     } else if (session.currentState == EditorState.DRAW_LINES) {
-                        int tabMode = session.currentTab;
-                        boolean pasted = false;
-
-                        if (tabMode == 0 && ChestConfigManager.getInstance().hasLinesClipboardData()) {
-                            ChestConfigManager.getInstance().saveSnapshot();
-                            ChestConfigManager.getInstance().pasteLinesFromClipboard();
-                            pasted = true;
-                        } else if (tabMode == 1
-                                && ChestConfigManager.getInstance().hasBackgroundsClipboardData()) {
-                            ChestConfigManager.getInstance().saveSnapshot();
-                            ChestConfigManager.getInstance().pasteBackgroundsFromClipboard();
-                            pasted = true;
-                        } else if (tabMode == 2
-                                && ChestConfigManager.getInstance().hasClipboardData()) {
+                        // Paste the whole-chest layout (lines + backgrounds) regardless of the active tab.
+                        if (ChestConfigManager.getInstance().hasClipboardData()) {
                             ChestConfigManager.getInstance().saveSnapshot();
                             ChestConfigManager.getInstance().pasteFromClipboard();
-                            pasted = true;
-                        }
-
-                        if (pasted) {
                             editor.saveSmart();
-                            editor.showStatus(Text.literal("Pasted!"), Formatting.GREEN);
+                            editor.showStatus(
+                                    Text.translatable("message.chestseparators.layout_pasted"), Formatting.GREEN);
                             editor.playClickSound(1.0f);
                         } else {
                             editor.playClickSound(0.5f);

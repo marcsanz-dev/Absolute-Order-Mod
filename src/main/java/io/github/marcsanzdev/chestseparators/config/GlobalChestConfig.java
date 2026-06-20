@@ -9,8 +9,12 @@ import net.fabricmc.loader.api.FabricLoader;
 public class GlobalChestConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE =
-            new File(FabricLoader.getInstance().getConfigDir().toFile(), "chestseparators_config.json");
+
+    // Resolved lazily rather than in a static initializer so that merely reading config values does
+    // not touch the Fabric config directory (which is unavailable in unit tests).
+    private static File configFile() {
+        return new File(FabricLoader.getInstance().getConfigDir().toFile(), "chestseparators_config.json");
+    }
 
     public static ConfigData instance = new ConfigData();
 
@@ -40,8 +44,9 @@ public class GlobalChestConfig {
     }
 
     public static void loadConfig() {
-        if (CONFIG_FILE.exists()) {
-            try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+        File configFile = configFile();
+        if (configFile.exists()) {
+            try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
                 instance = GSON.fromJson(reader, ConfigData.class);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -53,7 +58,7 @@ public class GlobalChestConfig {
     }
 
     public static void saveConfig() {
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(configFile()), StandardCharsets.UTF_8)) {
             GSON.toJson(instance, writer);
         } catch (Exception e) {
             e.printStackTrace();

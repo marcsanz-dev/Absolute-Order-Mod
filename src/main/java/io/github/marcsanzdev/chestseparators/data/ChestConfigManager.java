@@ -73,14 +73,25 @@ public class ChestConfigManager {
         clearHistory();
     }
 
-    // --- UNDO / REDO SYSTEM (SNAPSHOTS) ---
+    // --- UNIFIED UNDO / REDO SYSTEM ---
+    //
+    // A single stack records every change to a chest — painted separators AND item filters — so
+    // Ctrl+Z always undoes the most recent action regardless of which sub-screen is open. Each entry
+    // snapshots both the visual layout and the whitelists, plus a label key identifying what changed
+    // (used to give the user feedback such as "Undone: filter").
 
     private static final int MAX_UNDO_STEPS = 50;
 
-    private final UndoRedoHistory<Map<Integer, int[]>> visualHistory =
-            new UndoRedoHistory<>(ChestConfigManager::copyVisualConfig, MAX_UNDO_STEPS);
-    private final UndoRedoHistory<Map<Integer, SlotWhitelist>> whitelistHistory =
-            new UndoRedoHistory<>(ChestConfigManager::copyWhitelists, MAX_UNDO_STEPS);
+    /** Translation key describing a separator/painting change. */
+    public static final String ACTION_LAYOUT = "message.chestseparators.action.layout";
+    /** Translation key describing a filter/whitelist change. */
+    public static final String ACTION_FILTER = "message.chestseparators.action.filter";
+
+    /** An immutable snapshot of the whole chest state, tagged with what changed to reach it. */
+    private record ChestState(Map<Integer, int[]> visual, Map<Integer, SlotWhitelist> whitelists, String labelKey) {}
+
+    private final java.util.Deque<ChestState> undoStack = new java.util.ArrayDeque<>();
+    private final java.util.Deque<ChestState> redoStack = new java.util.ArrayDeque<>();
 
     private static Map<Integer, int[]> copyVisualConfig(Map<Integer, int[]> source) {
         Map<Integer, int[]> copy = new HashMap<>();
@@ -106,53 +117,80 @@ public class ChestConfigManager {
         return copy;
     }
 
+    private ChestState snapshotCurrent(String labelKey) {
+        return new ChestState(copyVisualConfig(currentChestConfig), copyWhitelists(currentWhitelists), labelKey);
+    }
+
+    /** Records the current state on the undo stack before a change of the given kind is applied. */
+    private void pushHistory(String labelKey) {
+        undoStack.push(snapshotCurrent(labelKey));
+        while (undoStack.size() > MAX_UNDO_STEPS) undoStack.removeLast();
+        redoStack.clear();
+    }
+
     public void saveSnapshot() {
-        visualHistory.push(currentChestConfig);
+        pushHistory(ACTION_LAYOUT);
+    }
+
+    public void saveWhitelistSnapshot() {
+        pushHistory(ACTION_FILTER);
     }
 
     public boolean canUndo() {
-        return visualHistory.canUndo();
+        return !undoStack.isEmpty();
     }
 
     public boolean canRedo() {
-        return visualHistory.canRedo();
+        return !redoStack.isEmpty();
     }
 
-    public void undo() {
-        Map<Integer, int[]> restored = visualHistory.undo(currentChestConfig);
-        if (restored != null) applyVisualConfig(restored);
+    /**
+     * Undoes the most recent change. Returns the label key of the undone action (for user feedback),
+     * or {@code null} if there was nothing to undo.
+     */
+    public String undo() {
+        if (undoStack.isEmpty()) return null;
+        ChestState previous = undoStack.pop();
+        redoStack.push(snapshotCurrent(previous.labelKey()));
+        applyVisualConfig(previous.visual());
+        applyWhitelists(previous.whitelists());
+        return previous.labelKey();
     }
 
-    public void redo() {
-        Map<Integer, int[]> restored = visualHistory.redo(currentChestConfig);
-        if (restored != null) applyVisualConfig(restored);
+    /**
+     * Redoes the most recently undone change. Returns the label key of the redone action, or
+     * {@code null} if there was nothing to redo.
+     */
+    public String redo() {
+        if (redoStack.isEmpty()) return null;
+        ChestState next = redoStack.pop();
+        undoStack.push(snapshotCurrent(next.labelKey()));
+        applyVisualConfig(next.visual());
+        applyWhitelists(next.whitelists());
+        return next.labelKey();
+    }
+
+    // Filter-screen aliases kept for the View Groups buttons; the history is unified, so these simply
+    // delegate to the shared undo/redo.
+    public boolean canUndoWhitelist() {
+        return canUndo();
+    }
+
+    public boolean canRedoWhitelist() {
+        return canRedo();
+    }
+
+    public String undoWhitelist() {
+        return undo();
+    }
+
+    public String redoWhitelist() {
+        return redo();
     }
 
     private void applyVisualConfig(Map<Integer, int[]> snapshot) {
         currentChestConfig.clear();
         currentChestConfig.putAll(copyVisualConfig(snapshot));
-    }
-
-    public void saveWhitelistSnapshot() {
-        whitelistHistory.push(currentWhitelists);
-    }
-
-    public boolean canUndoWhitelist() {
-        return whitelistHistory.canUndo();
-    }
-
-    public boolean canRedoWhitelist() {
-        return whitelistHistory.canRedo();
-    }
-
-    public void undoWhitelist() {
-        Map<Integer, SlotWhitelist> restored = whitelistHistory.undo(currentWhitelists);
-        if (restored != null) applyWhitelists(restored);
-    }
-
-    public void redoWhitelist() {
-        Map<Integer, SlotWhitelist> restored = whitelistHistory.redo(currentWhitelists);
-        if (restored != null) applyWhitelists(restored);
     }
 
     private void applyWhitelists(Map<Integer, SlotWhitelist> snapshot) {
@@ -161,8 +199,8 @@ public class ChestConfigManager {
     }
 
     public void clearHistory() {
-        visualHistory.clear();
-        whitelistHistory.clear();
+        undoStack.clear();
+        redoStack.clear();
     }
 
     // --- PATH MANAGEMENT (NIO) ---

@@ -560,6 +560,28 @@ public class ChestSeparatorsEditor {
         session.clickedActionTime = System.currentTimeMillis();
     }
 
+    /**
+     * Finalizes a unified undo/redo: persists the restored state, re-syncs filters to the server and
+     * the local inventory (the shared history can change filters too), and shows feedback naming what
+     * was undone/redone. {@code labelKey} comes from {@link ChestConfigManager#undo()}/redo(); a null
+     * label means there was nothing to do.
+     */
+    public void applyUndoRedo(String labelKey, boolean isRedo) {
+        if (labelKey == null) {
+            playClickSound(0.5f);
+            return;
+        }
+        saveSmart();
+        if (!session.isEnderChest && !session.isEntityChest) {
+            sendWhitelistToServer();
+        }
+        syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
+
+        String feedbackKey = isRedo ? "message.chestseparators.redone" : "message.chestseparators.undone";
+        showStatus(Text.translatable(feedbackKey, Text.translatable(labelKey)), Formatting.GRAY);
+        playClickSound(0.8f);
+    }
+
     public void showStatus(Text message, Formatting color) {
         session.statusMessage = message.copy().formatted(color);
         session.statusMessageTime = System.currentTimeMillis();
