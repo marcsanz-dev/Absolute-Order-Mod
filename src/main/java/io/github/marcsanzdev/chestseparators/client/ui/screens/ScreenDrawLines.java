@@ -314,6 +314,9 @@ public class ScreenDrawLines extends AbstractEditorScreen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Drive the fade-to-empty preview while the Clear button is hovered.
+        session.clearPreviewTab = (btnClear != null && btnClear.isHovering(mouseX, mouseY)) ? session.currentTab : -1;
+
         if (session.isEyedropperActive) {
             return;
         }

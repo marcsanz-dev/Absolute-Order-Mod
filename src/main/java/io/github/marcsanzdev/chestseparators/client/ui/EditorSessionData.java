@@ -65,6 +65,10 @@ public class EditorSessionData {
     public int bgToolMode = 0;
     public int comboToolMode = 0;
 
+    // Which tab's Clear button is currently hovered (-1 = none); drives the fade-to-empty preview of
+    // the layers that would be erased. Only honored while in the DRAW_LINES state.
+    public int clearPreviewTab = -1;
+
     // Picker
     public boolean isColorPickerOpen = false;
     public int pickerTargetMode = 0;

@@ -115,8 +115,22 @@ public class EditorRenderer {
     public void renderSavedLinesLayer(DrawContext context) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
 
-        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
-        int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
+        int bgAlphaBase = GlobalChestConfig.instance.bgTransparency * 255 / 100;
+        int lineAlphaBase = GlobalChestConfig.instance.lineTransparency * 255 / 100;
+
+        // Clear-button hover preview: fade out the layers that would be erased so the user sees the
+        // result before clicking. Only the active tab's affected layers fade (lines/bg/both).
+        boolean previewActive = session.currentState == EditorState.DRAW_LINES && session.clearPreviewTab != -1;
+        boolean fadeLines = previewActive && (session.clearPreviewTab == 0 || session.clearPreviewTab == 2);
+        boolean fadeBg = previewActive && (session.clearPreviewTab == 1 || session.clearPreviewTab == 2);
+        if (previewActive) {
+            float pulse = 0.10f + 0.12f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 320.0));
+            if (fadeLines) lineAlphaBase = (int) (lineAlphaBase * pulse);
+            if (fadeBg) bgAlphaBase = (int) (bgAlphaBase * pulse);
+        }
+
+        int bgAlpha = bgAlphaBase << 24;
+        int lineAlpha = lineAlphaBase << 24;
 
         for (Slot s : accessor.getHandler().slots) {
             if (s.inventory instanceof PlayerInventory) continue;
