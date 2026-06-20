@@ -10,6 +10,7 @@ public class ModKeyBindings {
     public static KeyBinding openEditorKey;
     public static KeyBinding showPanelModifierKey;
     public static KeyBinding toggleButtonKey;
+    public static KeyBinding toggleDepositButtonKey;
     public static KeyBinding depositFilterKey;
     public static KeyBinding depositAllKey;
 
@@ -17,26 +18,19 @@ public class ModKeyBindings {
             KeyBinding.Category.create(Identifier.of("chestseparators", "keys"));
 
     public static void register() {
-        // Al usar GLFW.GLFW_KEY_... directamente en el constructor,
-        // Minecraft establece ese valor como el "Reset" por defecto.
+        // Passing GLFW.GLFW_KEY_... directly to the constructor sets that value as the "Reset" default.
 
         openEditorKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.toggle_preview_panel",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_O, // Valor hardcoded para el Reset
-                CATEGORY));
+                "key.chestseparators.toggle_preview_panel", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, CATEGORY));
 
         showPanelModifierKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.show_panel_modifier",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_LEFT_ALT, // Valor hardcoded para el Reset
-                CATEGORY));
+                "key.chestseparators.show_panel_modifier", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, CATEGORY));
 
         toggleButtonKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.toggle_edit_buttons",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_H, // Valor hardcoded para el Reset
-                CATEGORY));
+                "key.chestseparators.toggle_edit_buttons", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY));
+
+        toggleDepositButtonKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.chestseparators.toggle_deposit_button", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
 
         depositFilterKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.chestseparators.deposit_filter", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_S, CATEGORY));

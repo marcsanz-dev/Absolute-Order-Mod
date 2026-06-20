@@ -169,6 +169,7 @@ public class ModMenuIntegration implements ModMenuApi {
             };
 
             addKeyEntry.accept(ModKeyBindings.toggleButtonKey, "config.chestseparators.toggle_edit_buttons");
+            addKeyEntry.accept(ModKeyBindings.toggleDepositButtonKey, "config.chestseparators.toggle_deposit_button");
             addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");
             addKeyEntry.accept(ModKeyBindings.showPanelModifierKey, "config.chestseparators.show_panel_modifier");
             addKeyEntry.accept(ModKeyBindings.depositFilterKey, "config.chestseparators.deposit_filter");

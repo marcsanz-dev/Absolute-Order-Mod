@@ -114,6 +114,26 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 return;
             }
 
+            // Toggle the deposit button's visibility; works whether it is currently shown or hidden,
+            // so the change is seen instantly with the chest open.
+            if (!this.editor.isEditMode()) {
+                int toggleDepositKey = KeyBindingHelper.getBoundKeyOf(ModKeyBindings.toggleDepositButtonKey)
+                        .getCode();
+                if (toggleDepositKey != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN && input.key() == toggleDepositKey) {
+                    GlobalChestConfig.instance.showDepositButton = !GlobalChestConfig.instance.showDepositButton;
+                    GlobalChestConfig.saveConfig();
+                    this.editor.playClickSound(1.0f);
+                    if (this.client != null && this.client.player != null) {
+                        Text msg = GlobalChestConfig.instance.showDepositButton
+                                ? Text.translatable("message.chestseparators.deposit_button_visible")
+                                : Text.translatable("message.chestseparators.deposit_button_hidden");
+                        this.client.player.sendMessage(msg.copy().formatted(net.minecraft.util.Formatting.GRAY), true);
+                    }
+                    cir.setReturnValue(true);
+                    return;
+                }
+            }
+
             // Deposit hotkeys only fire when no editor sub-menu is active.
             if (!this.editor.isEditMode() && GlobalChestConfig.instance.showDepositButton) {
 
