@@ -69,8 +69,6 @@ public class ChestSeparatorsEditor {
     public ToolButtonWidget entryButton;
     public ToolButtonWidget whitelistButton;
     public ToolButtonWidget depositButton;
-    // In a chest screen, switches the editor between editing the chest and editing the player inventory.
-    public ToolButtonWidget inventoryToggleButton;
     public TextFieldWidget searchBox;
     public TextFieldWidget whitelistSearchBox;
 
@@ -185,16 +183,6 @@ public class ChestSeparatorsEditor {
                         }
                     }
                 });
-
-        // Chest screens get a backpack toggle (top-left) to switch the editor between the chest and
-        // the player inventory, so both layouts and filters are editable without leaving the chest.
-        this.inventoryToggleButton = new ToolButtonWidget(
-                x - 22,
-                y - 22,
-                ModTextures.ICON_BACKPACK_FULL,
-                Text.translatable("tooltip.chestseparators.edit_inventory_toggle")
-                        .getString(),
-                this::toggleEditTarget);
 
         this.depositButton = new ToolButtonWidget(0, 0, ModTextures.BTN_DEPOSIT, "", () -> {
             if (this.isEditMode()) return;
@@ -392,35 +380,6 @@ public class ChestSeparatorsEditor {
                                 session.currentChestPos));
             }
         }
-    }
-
-    /**
-     * In a chest screen, switches the editor between editing the chest and editing the player
-     * inventory, reloading the matching config. Both layouts and filters stay fully editable; edits to
-     * each are saved to their own store.
-     */
-    public void toggleEditTarget() {
-        if (session.isInventoryScreenContext) return; // the inventory screen has nothing to toggle to
-
-        releaseLock();
-        session.currentState = EditorState.HIDDEN;
-        session.selectedSlots.clear();
-        session.selectedGroupId = null;
-        session.isColorPickerOpen = false;
-
-        session.isPlayerInventory = !session.isPlayerInventory;
-        if (!session.isPlayerInventory) session.isEnderChest = false; // recomputed by the loader
-        ChestConfigManager.getInstance().clearHistory();
-        loadConfigForCurrentTarget();
-        requestChestWhitelistsIfNeeded();
-
-        showStatus(
-                Text.translatable(
-                        session.isPlayerInventory
-                                ? "message.chestseparators.editing_inventory"
-                                : "message.chestseparators.editing_chest"),
-                Formatting.GRAY);
-        playClickSound(1.0f);
     }
 
     public int getSidebarYOffset() {

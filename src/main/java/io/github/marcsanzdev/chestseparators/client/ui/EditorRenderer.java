@@ -80,12 +80,6 @@ public class EditorRenderer {
             if (editor.depositButton != null) editor.depositButton.render(context, bgMouseX, bgMouseY, delta);
         }
 
-        // Chest<->inventory edit-target toggle (chest screens only), always available.
-        if (!session.isInventoryScreenContext && editor.inventoryToggleButton != null) {
-            editor.inventoryToggleButton.isActive = session.isPlayerInventory;
-            editor.inventoryToggleButton.render(context, bgMouseX, bgMouseY, delta);
-        }
-
         if (session.currentState != EditorState.HIDDEN) {
             if (!session.isEyedropperActive) {
                 context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0x66000000);
@@ -96,9 +90,6 @@ public class EditorRenderer {
             if (showButton && !hideVanilla) {
                 if (editor.entryButton != null) editor.entryButton.render(context, bgMouseX, bgMouseY, delta);
                 if (editor.whitelistButton != null) editor.whitelistButton.render(context, bgMouseX, bgMouseY, delta);
-            }
-            if (!session.isInventoryScreenContext && !hideVanilla && editor.inventoryToggleButton != null) {
-                editor.inventoryToggleButton.render(context, bgMouseX, bgMouseY, delta);
             }
 
             context.getMatrices().pushMatrix();
