@@ -259,6 +259,34 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 Text.translatable("tooltip.chestseparators.desc.redo").getString();
         btnRedo.keepNormalTextColor = true;
         widgets.add(btnRedo);
+
+        // Only when a real container is open (not your own inventory): pull items your inventory
+        // filters want from THIS chest into your inventory, up to each filter's target count.
+        if (!session.isInventoryScreenContext) {
+            WideButtonWidget btnFill = new WideButtonWidget(
+                    sx,
+                    sy + 202,
+                    btnW,
+                    bH,
+                    Text.translatable("button.chestseparators.fill_inventory").getString(),
+                    ModTextures.ICON_BACKPACK_FULL,
+                    () -> {
+                        editor.playClickSound(1.0f);
+                        net.minecraft.util.math.BlockPos pos = session.currentChestPos != null
+                                ? session.currentChestPos
+                                : (MinecraftClient.getInstance().player != null
+                                        ? MinecraftClient.getInstance().player.getBlockPos()
+                                        : net.minecraft.util.math.BlockPos.ORIGIN);
+                        if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
+                                io.github.marcsanzdev.chestseparators.network.FillFromChestPayload.ID)) {
+                            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                                    new io.github.marcsanzdev.chestseparators.network.FillFromChestPayload(pos));
+                        }
+                    });
+            btnFill.tooltipText = Text.translatable("tooltip.chestseparators.desc.fill_inventory")
+                    .getString();
+            widgets.add(btnFill);
+        }
     }
 
     private void buildPopupWidgets() {

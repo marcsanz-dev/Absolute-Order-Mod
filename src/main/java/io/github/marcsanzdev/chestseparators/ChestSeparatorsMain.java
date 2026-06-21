@@ -66,11 +66,21 @@ public class ChestSeparatorsMain implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(AutoDepositRequestPayload.ID, AutoDepositRequestPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(AutoDepositResultPayload.ID, AutoDepositResultPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(InventoryFiltersPayload.ID, InventoryFiltersPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(FillFromChestPayload.ID, FillFromChestPayload.CODEC);
 
         // Release all locks held by a player who disconnects abruptly, and drop their cached filters.
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             LOCKED_CHESTS.values().removeIf(uuid -> uuid.equals(handler.player.getUuid()));
             INVENTORY_FILTERS.remove(handler.player.getUuid());
+        });
+
+        // Fills the player's inventory from the container they currently have open.
+        ServerPlayNetworking.registerGlobalReceiver(FillFromChestPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                if (context.player() != null) {
+                    performFillFromOpenContainer(context.player(), payload.animPos());
+                }
+            });
         });
 
         // Caches the player's inventory filters (synced from the client) for the Pick Up rule.
@@ -518,6 +528,68 @@ public class ChestSeparatorsMain implements ModInitializer {
         inventory.markDirty();
         player.playerScreenHandler.sendContentUpdates();
 
+        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
+            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved), true));
+        }
+    }
+
+    /**
+     * Fills the player's inventory from the container they currently have open (the editor's "fill
+     * inventory" button): pulls items the player's inventory filters want, up to each target count.
+     * Pulls from every container slot, not only the chest's own filtered slots, since it is a
+     * deliberate per-chest action. {@code animPos} is only the origin of the fly-back animation.
+     */
+    private static void performFillFromOpenContainer(ServerPlayerEntity player, BlockPos animPos) {
+        if (!(player.getEntityWorld() instanceof ServerWorld)) return;
+
+        // The open container's inventory: the first screen-handler slot not backed by the player.
+        Inventory container = null;
+        for (net.minecraft.screen.slot.Slot s : player.currentScreenHandler.slots) {
+            if (!(s.inventory instanceof net.minecraft.entity.player.PlayerInventory)) {
+                container = s.inventory;
+                break;
+            }
+        }
+        if (container == null) return;
+
+        Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
+        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
+        Map<String, Integer> startHave = mainInventoryCounts(player);
+        Map<String, Integer> grabbed = new HashMap<>();
+        Map<String, Integer> keepCache = new HashMap<>();
+        Map<net.minecraft.item.Item, Integer> movedItems = new java.util.LinkedHashMap<>();
+
+        int size = container.size();
+        for (int slot = 0; slot < size; slot++) {
+            ItemStack stack = container.getStack(slot);
+            if (stack.isEmpty()) continue;
+            net.minecraft.item.Item item = stack.getItem();
+            String itemId = Registries.ITEM.getId(item).toString();
+
+            int keep = keepCache.computeIfAbsent(itemId, k -> inventoryKeepLimit(invFilters, k));
+            if (keep <= 0) continue;
+            long need = (long) keep - startHave.getOrDefault(itemId, 0) - grabbed.getOrDefault(itemId, 0);
+            if (need <= 0) continue;
+
+            int take = (int) Math.min(need, stack.getCount());
+            if (take <= 0) continue;
+
+            ItemStack portion = stack.copyWithCount(take);
+            inventory.insertStack(portion);
+            int delta = take - portion.getCount();
+            if (delta > 0) {
+                stack.decrement(delta);
+                container.setStack(slot, stack);
+                grabbed.merge(itemId, delta, Integer::sum);
+                movedItems.merge(item, delta, Integer::sum);
+            }
+        }
+        container.markDirty();
+        inventory.markDirty();
+        player.currentScreenHandler.sendContentUpdates();
+
+        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
+        if (!movedItems.isEmpty() && animPos != null) moved.put(animPos, movedItems);
         if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
             ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved), true));
         }
