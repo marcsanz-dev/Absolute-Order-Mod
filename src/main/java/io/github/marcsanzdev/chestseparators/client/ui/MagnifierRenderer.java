@@ -18,12 +18,10 @@ public final class MagnifierRenderer {
 
     private MagnifierRenderer() {}
 
-    // Base sizes at 100%. BASE_SRC_HALF * sqrt(2) < BASE_CURSOR_R must hold so the captured square
-    // never overlaps the cursor ring (otherwise the ring/lines would be sampled into the loupe). All
-    // sizes scale together with the configured size percentage, keeping the zoom factor constant.
+    // Base sizes at 100%. The captured area (SRC_HALF) is fixed so reads/draws stay cheap at any size;
+    // the loupe radius and frame scale with the configured size percentage (more zoom, same area).
     private static final int BASE_SRC_HALF = 9;
     private static final int BASE_LOUPE_R = 54;
-    private static final int BASE_CURSOR_R = 14;
     private static final int BASE_GAP = 14;
     private static final int BASE_RING = 4;
     private static final int FRAME_COLOR = 0xFF202020;
@@ -37,9 +35,12 @@ public final class MagnifierRenderer {
         // a bigger size means more zoom rather than a larger — and quadratically more expensive — read.
         int srcHalf = BASE_SRC_HALF;
         int loupeR = BASE_LOUPE_R * pct / 100;
-        int cursorR = BASE_CURSOR_R * pct / 100;
         int gap = BASE_GAP * pct / 100;
         int ring = Math.max(2, BASE_RING * pct / 100);
+        // Cursor marker: its hole equals the captured square exactly, so what is inside the marker is
+        // precisely what the big loupe magnifies (no mismatch). It does not scale with size.
+        int markerInner = srcHalf;
+        int markerOuter = srcHalf + 3;
 
         double scale = client.getWindow().getScaleFactor();
         int fbW = client.getWindow().getFramebufferWidth();
@@ -67,10 +68,10 @@ public final class MagnifierRenderer {
         // Place the loupe up-right of the cursor, flipping to stay on screen.
         int sw = client.getWindow().getScaledWidth();
         int sh = client.getWindow().getScaledHeight();
-        int loupeCx = cursorX + gap + cursorR + loupeR;
-        int loupeCy = cursorY - gap - cursorR - loupeR;
-        if (loupeCx + loupeR + 2 > sw) loupeCx = cursorX - gap - cursorR - loupeR;
-        if (loupeCy - loupeR - 2 < 0) loupeCy = cursorY + gap + cursorR + loupeR;
+        int loupeCx = cursorX + gap + markerOuter + loupeR;
+        int loupeCy = cursorY - gap - markerOuter - loupeR;
+        if (loupeCx + loupeR + 2 > sw) loupeCx = cursorX - gap - markerOuter - loupeR;
+        if (loupeCy - loupeR - 2 < 0) loupeCy = cursorY + gap + markerOuter + loupeR;
         loupeCy = clamp(loupeCy, loupeR + 2, sh - loupeR - 2);
 
         float cell = (loupeR * 2f) / blockFb;
@@ -104,14 +105,13 @@ public final class MagnifierRenderer {
         int half = Math.max(1, Math.round(cell / 2f));
         context.drawStrokedRectangle(loupeCx - half, loupeCy - half, half * 2, half * 2, 0xFFFFFFFF);
 
-        // Cursor marker + connector lines that hug the outer edges (never cross the shapes).
-        int cursorRing = Math.max(2, ring - 1);
+        // Cursor marker (hole = captured area) + connector lines hugging the outer edges.
         if (circle) {
-            drawRingFrame(context, cursorX, cursorY, cursorR - cursorRing, cursorR, 0xDDFFFFFF);
-            drawCircleConnectors(context, cursorX, cursorY, cursorR, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
+            drawRingFrame(context, cursorX, cursorY, markerInner, markerOuter, 0xDDFFFFFF);
+            drawCircleConnectors(context, cursorX, cursorY, markerOuter, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
         } else {
-            drawSquareFrame(context, cursorX, cursorY, cursorR - cursorRing, cursorR, 0xDDFFFFFF);
-            drawSquareConnectors(context, cursorX, cursorY, cursorR, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
+            drawSquareFrame(context, cursorX, cursorY, markerInner, markerOuter, 0xDDFFFFFF);
+            drawSquareConnectors(context, cursorX, cursorY, markerOuter, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
         }
     }
 
