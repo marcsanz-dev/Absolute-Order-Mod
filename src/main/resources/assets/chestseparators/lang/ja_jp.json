@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "拾う",
   "tooltip.chestseparators.rule.pickup_active": "有効：拾ったアイテムをフィルタリング",
   "tooltip.chestseparators.rule.pickup_inactive": "無効：拾ったアイテムはフィルターを無視",
+  "tooltip.chestseparators.rule.pickup_target_hint": "スクロール: 保持する目標数",
   "tooltip.chestseparators.edit_inventory_toggle": "インベントリ／チェストを編集",
   "message.chestseparators.editing_inventory": "編集中：インベントリ",
   "message.chestseparators.editing_chest": "編集中：チェスト"

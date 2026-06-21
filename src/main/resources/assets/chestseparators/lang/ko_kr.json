@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "줍기",
   "tooltip.chestseparators.rule.pickup_active": "활성: 주운 아이템을 필터링",
   "tooltip.chestseparators.rule.pickup_inactive": "비활성: 주운 아이템이 필터를 무시",
+  "tooltip.chestseparators.rule.pickup_target_hint": "스크롤: 보관할 목표 수량",
   "tooltip.chestseparators.edit_inventory_toggle": "인벤토리 / 상자 편집",
   "message.chestseparators.editing_inventory": "편집 중: 인벤토리",
   "message.chestseparators.editing_chest": "편집 중: 상자"

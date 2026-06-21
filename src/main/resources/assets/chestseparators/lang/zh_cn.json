@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "拾取",
   "tooltip.chestseparators.rule.pickup_active": "启用：过滤拾取的物品",
   "tooltip.chestseparators.rule.pickup_inactive": "禁用：拾取的物品忽略过滤",
+  "tooltip.chestseparators.rule.pickup_target_hint": "滚动：要保留的目标数量",
   "tooltip.chestseparators.edit_inventory_toggle": "编辑物品栏 / 箱子",
   "message.chestseparators.editing_inventory": "正在编辑：物品栏",
   "message.chestseparators.editing_chest": "正在编辑：箱子"

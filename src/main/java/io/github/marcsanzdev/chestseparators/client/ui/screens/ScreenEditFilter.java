@@ -140,6 +140,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         if (session.originalRuleManual != session.ruleManual) return true;
         if (session.originalRuleShift != session.ruleShift) return true;
         if (session.originalRuleHopper != session.ruleHopper) return true;
+        if (session.originalTargetCount != session.filterTargetCount) return true;
 
         // Compare sets so item order differences do not trigger a false positive.
         Set<String> originalSet = new HashSet<>(session.originalItemsSnapshot);
@@ -307,10 +308,14 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     editor.playClickSound(1.0f);
                 });
         if (session.isPlayerInventory) {
-            btnHopper.tooltipText = session.ruleHopper
+            String base = session.ruleHopper
                     ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
                             .getString()
                     : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
+                            .getString();
+            btnHopper.tooltipText = base
+                    + " | "
+                    + Text.translatable("tooltip.chestseparators.rule.pickup_target_hint")
                             .getString();
         } else if (!session.isEnderChest && !session.isEntityChest) {
             btnHopper.tooltipText = session.ruleHopper
@@ -431,6 +436,16 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         panelRenderer.drawMainPanel(context, bgMouseX, bgMouseY);
 
         super.render(context, bgMouseX, bgMouseY, delta);
+
+        // Target-count badge on the Pick Up rule button (player inventory only). 0 means no target.
+        if (session.isPlayerInventory && session.filterTargetCount > 0) {
+            MinecraftClient client = MinecraftClient.getInstance();
+            String txt = "x" + session.filterTargetCount;
+            int tw = client.textRenderer.getWidth(txt);
+            int bx = layout.rightX + layout.btnW - tw - 4;
+            int by = layout.mainY + 125 + (layout.bH - client.textRenderer.fontHeight) / 2 + 1;
+            context.drawText(client.textRenderer, txt, bx, by, 0xFFFFE066, true);
+        }
 
         panelRenderer.drawTagDropdown(context, bgMouseX, bgMouseY);
 
@@ -634,6 +649,21 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         float scrollSpeed = 18f;
+
+        // Player-inventory filters carry a target amount (how much to keep). Scrolling over the
+        // "Pick Up" rule button adjusts it (0 = no target). Drives the grab/deposit-junk hotkeys.
+        if (session.isPlayerInventory) {
+            int hx = layout.rightX;
+            int hy = layout.mainY + 125;
+            int hw = layout.btnW;
+            int hh = layout.bH;
+            if (mouseX >= hx && mouseX <= hx + hw && mouseY >= hy && mouseY <= hy + hh) {
+                int step = (verticalAmount > 0) ? 1 : -1;
+                session.filterTargetCount = Math.max(0, Math.min(9999, session.filterTargetCount + step));
+                editor.playClickSound(1.0f);
+                return true;
+            }
+        }
 
         // While previewing, the scroll wheel always controls the preview panel.
         if (session.isPreviewing) {

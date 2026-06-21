@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "Oprapen",
   "tooltip.chestseparators.rule.pickup_active": "Actief: filtert opgeraapte voorwerpen",
   "tooltip.chestseparators.rule.pickup_inactive": "Inactief: opgeraapte voorwerpen negeren het filter",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Scrollen: doelaantal om te behouden",
   "tooltip.chestseparators.edit_inventory_toggle": "Inventaris / kist bewerken",
   "message.chestseparators.editing_inventory": "Bewerken: inventaris",
   "message.chestseparators.editing_chest": "Bewerken: kist"

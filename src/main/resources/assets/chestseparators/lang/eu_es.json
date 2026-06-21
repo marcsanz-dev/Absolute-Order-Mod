@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "Jaso",
   "tooltip.chestseparators.rule.pickup_active": "Aktibo: Lurretik jasotako objektuak iragazten ditu",
   "tooltip.chestseparators.rule.pickup_inactive": "Inaktibo: Jasotako objektuek iragazkia alde batera uzten dute",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Gurpila: gorde beharreko kopuru helburua",
   "tooltip.chestseparators.edit_inventory_toggle": "Editatu inbentarioa / kutxa",
   "message.chestseparators.editing_inventory": "Editatzen: inbentarioa",
   "message.chestseparators.editing_chest": "Editatzen: kutxa"

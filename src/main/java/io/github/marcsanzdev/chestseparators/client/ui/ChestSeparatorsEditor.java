@@ -552,6 +552,7 @@ public class ChestSeparatorsEditor {
         session.ruleManual = GlobalChestConfig.instance.defaultRuleManual;
         session.ruleShift = GlobalChestConfig.instance.defaultRuleShift;
         session.ruleHopper = GlobalChestConfig.instance.defaultRuleHopper;
+        session.filterTargetCount = 0;
         session.gridScrollY = 0f;
         session.listScrollY = 0f;
 
@@ -578,6 +579,7 @@ public class ChestSeparatorsEditor {
                             session.ruleManual = entry.getValue().allowManual();
                             session.ruleShift = entry.getValue().allowShift();
                             session.ruleHopper = entry.getValue().allowHopper();
+                            session.filterTargetCount = entry.getValue().targetCount();
                             loadedRules = true;
                         }
                     }
@@ -600,7 +602,8 @@ public class ChestSeparatorsEditor {
                             new ArrayList<>(session.currentAllowedItems),
                             session.ruleManual,
                             session.ruleShift,
-                            session.ruleHopper);
+                            session.ruleHopper,
+                            session.filterTargetCount);
             whitelists.put(slotIndex, wl);
         }
         ChestConfigManager.getInstance().setCurrentWhitelists(whitelists);

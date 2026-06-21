@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "Recollir",
   "tooltip.chestseparators.rule.pickup_active": "Actiu: Filtra els ítems recollits de terra",
   "tooltip.chestseparators.rule.pickup_inactive": "Inactiu: Els ítems recollits ignoren el filtre",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Roda: quantitat objectiu a conservar",
   "tooltip.chestseparators.edit_inventory_toggle": "Edita inventari / cofre",
   "message.chestseparators.editing_inventory": "Editant: inventari",
   "message.chestseparators.editing_chest": "Editant: cofre"

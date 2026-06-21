@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "Plocka upp",
   "tooltip.chestseparators.rule.pickup_active": "Aktiv: filtrerar upplockade föremål",
   "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: upplockade föremål ignorerar filtret",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Skrolla: målantal att behålla",
   "tooltip.chestseparators.edit_inventory_toggle": "Redigera inventarium / kista",
   "message.chestseparators.editing_inventory": "Redigerar: inventarium",
   "message.chestseparators.editing_chest": "Redigerar: kista"

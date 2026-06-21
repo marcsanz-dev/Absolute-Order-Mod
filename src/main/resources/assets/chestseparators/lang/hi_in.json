@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "उठाना",
   "tooltip.chestseparators.rule.pickup_active": "सक्रिय: ज़मीन से उठाए गए आइटम फ़िल्टर करता है",
   "tooltip.chestseparators.rule.pickup_inactive": "निष्क्रिय: उठाए गए आइटम फ़िल्टर को अनदेखा करते हैं",
+  "tooltip.chestseparators.rule.pickup_target_hint": "स्क्रॉल: रखने के लिए लक्ष्य मात्रा",
   "tooltip.chestseparators.edit_inventory_toggle": "इन्वेंटरी / संदूक संपादित करें",
   "message.chestseparators.editing_inventory": "संपादन: इन्वेंटरी",
   "message.chestseparators.editing_chest": "संपादन: संदूक"

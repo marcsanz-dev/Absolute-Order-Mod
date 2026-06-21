@@ -209,6 +209,7 @@
   "button.chestseparators.pickup_insert": "Pick Up",
   "tooltip.chestseparators.rule.pickup_active": "Active: Filters picked-up items",
   "tooltip.chestseparators.rule.pickup_inactive": "Inactive: Picked-up items ignore filter",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Scroll: target amount to keep",
   "tooltip.chestseparators.edit_inventory_toggle": "Edit Inventory / Chest",
   "message.chestseparators.editing_inventory": "Editing: Inventory",
   "message.chestseparators.editing_chest": "Editing: Chest"

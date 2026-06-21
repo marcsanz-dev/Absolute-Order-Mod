@@ -205,6 +205,7 @@
   "button.chestseparators.pickup_insert": "Pegar",
   "tooltip.chestseparators.rule.pickup_active": "Ativo: filtra itens pegos do chão",
   "tooltip.chestseparators.rule.pickup_inactive": "Inativo: itens pegos ignoram o filtro",
+  "tooltip.chestseparators.rule.pickup_target_hint": "Rolar: quantidade alvo a manter",
   "tooltip.chestseparators.edit_inventory_toggle": "Editar inventário / baú",
   "message.chestseparators.editing_inventory": "Editando: inventário",
   "message.chestseparators.editing_chest": "Editando: baú"
