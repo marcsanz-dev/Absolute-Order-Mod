@@ -421,10 +421,14 @@ public class EditorRenderer {
         if (session.currentState != EditorState.DRAW_LINES || session.isColorPickerOpen) return;
         if (!isCursorOverChestSlots(mouseX, mouseY)) return;
         boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
-        MagnifierRenderer.render(context, mouseX, mouseY, circle);
+        MagnifierRenderer.render(context, mouseX, mouseY, circle, GlobalChestConfig.instance.magnifierSize);
     }
 
-    /** True when the cursor is within the bounding box of the chest (non-player) slots. */
+    // Extra margin around the slot area so the loupe also shows on the outer chest borders, where the
+    // edge separator lines can still be painted.
+    private static final int SLOT_AREA_MARGIN = 2;
+
+    /** True when the cursor is within the chest (non-player) slot area, expanded by a small margin. */
     private boolean isCursorOverChestSlots(int mouseX, int mouseY) {
         int guiX = accessor.getX();
         int guiY = accessor.getY();
@@ -437,6 +441,9 @@ public class EditorRenderer {
             maxY = Math.max(maxY, guiY + s.y + 16);
         }
         if (minX == Integer.MAX_VALUE) return false;
-        return mouseX >= minX && mouseX < maxX && mouseY >= minY && mouseY < maxY;
+        return mouseX >= minX - SLOT_AREA_MARGIN
+                && mouseX < maxX + SLOT_AREA_MARGIN
+                && mouseY >= minY - SLOT_AREA_MARGIN
+                && mouseY < maxY + SLOT_AREA_MARGIN;
     }
 }

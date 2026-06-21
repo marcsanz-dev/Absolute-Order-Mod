@@ -165,6 +165,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Whether the magnifier loupe is round or square.",
   "config.chestseparators.magnifier_shape.circle": "Circle",
   "config.chestseparators.magnifier_shape.square": "Square",
+  "config.chestseparators.magnifier_size": "Magnifier Size",
+  "config.chestseparators.magnifier_size.tooltip": "Size of the zoom loupe (100% = minimum).",
   "message.chestseparators.magnifier_on": "Magnifier: On",
   "message.chestseparators.magnifier_off": "Magnifier: Off",
   "message.chestseparators.magnifier_hint": "Tip: press %s for a zoom loupe",

@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Se a lupa é redonda ou cadrada.",
   "config.chestseparators.magnifier_shape.circle": "Círculo",
   "config.chestseparators.magnifier_shape.square": "Cadrado",
+  "config.chestseparators.magnifier_size": "Tamaño da lupa",
+  "config.chestseparators.magnifier_size.tooltip": "Tamaño da lupa de zoom (100% = mínimo).",
   "message.chestseparators.magnifier_on": "Lupa: Activada",
   "message.chestseparators.magnifier_off": "Lupa: Desactivada",
   "message.chestseparators.magnifier_hint": "Consello: preme %s para unha lupa de zoom",

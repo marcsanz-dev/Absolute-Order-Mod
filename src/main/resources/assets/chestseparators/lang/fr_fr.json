@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Si la loupe est ronde ou carrée.",
   "config.chestseparators.magnifier_shape.circle": "Cercle",
   "config.chestseparators.magnifier_shape.square": "Carré",
+  "config.chestseparators.magnifier_size": "Taille de la loupe",
+  "config.chestseparators.magnifier_size.tooltip": "Taille de la loupe de zoom (100% = minimum).",
   "message.chestseparators.magnifier_on": "Loupe : Activée",
   "message.chestseparators.magnifier_off": "Loupe : Désactivée",
   "message.chestseparators.magnifier_hint": "Astuce : appuyez sur %s pour une loupe",

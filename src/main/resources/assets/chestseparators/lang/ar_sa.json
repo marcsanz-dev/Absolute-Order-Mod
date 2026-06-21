@@ -165,6 +165,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "ما إذا كانت العدسة المكبرة دائرية أو مربعة.",
   "config.chestseparators.magnifier_shape.circle": "دائرة",
   "config.chestseparators.magnifier_shape.square": "مربع",
+  "config.chestseparators.magnifier_size": "حجم العدسة المكبرة",
+  "config.chestseparators.magnifier_size.tooltip": "حجم عدسة التكبير (100% = الحد الأدنى).",
   "message.chestseparators.magnifier_on": "العدسة المكبرة: تشغيل",
   "message.chestseparators.magnifier_off": "العدسة المكبرة: إيقاف",
   "message.chestseparators.magnifier_hint": "نصيحة: اضغط %s لعدسة تكبير",

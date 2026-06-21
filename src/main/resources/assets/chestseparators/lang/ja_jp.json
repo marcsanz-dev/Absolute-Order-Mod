@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "拡大鏡を円形にするか四角形にするか。",
   "config.chestseparators.magnifier_shape.circle": "円",
   "config.chestseparators.magnifier_shape.square": "四角",
+  "config.chestseparators.magnifier_size": "拡大鏡のサイズ",
+  "config.chestseparators.magnifier_size.tooltip": "拡大鏡のサイズ (100% = 最小)。",
   "message.chestseparators.magnifier_on": "拡大鏡: オン",
   "message.chestseparators.magnifier_off": "拡大鏡: オフ",
   "message.chestseparators.magnifier_hint": "ヒント: %s で拡大鏡を表示",

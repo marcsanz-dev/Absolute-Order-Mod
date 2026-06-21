@@ -39,6 +39,8 @@ public class GlobalChestConfig {
         // are hinted that they can enable it (key L or config) if precise editing is tricky.
         public boolean magnifierEnabled = false;
         public MagnifierShape magnifierShape = MagnifierShape.CIRCLE;
+        // Loupe size as a percentage of the base size (100 = the minimum/default size).
+        public int magnifierSize = 100;
         public int bgTransparency = 40;
         public int lineTransparency = 100;
 

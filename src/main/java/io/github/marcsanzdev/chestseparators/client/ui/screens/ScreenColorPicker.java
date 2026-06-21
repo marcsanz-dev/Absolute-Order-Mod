@@ -295,7 +295,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             if (GlobalChestConfig.instance.magnifierEnabled) {
                 boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
                 io.github.marcsanzdev.chestseparators.client.ui.MagnifierRenderer.render(
-                        context, mouseX, mouseY, circle);
+                        context, mouseX, mouseY, circle, GlobalChestConfig.instance.magnifierSize);
             }
             renderEyedropperCursor(context, mouseX, mouseY);
             return;

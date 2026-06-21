@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Of het vergrootglas rond of vierkant is.",
   "config.chestseparators.magnifier_shape.circle": "Cirkel",
   "config.chestseparators.magnifier_shape.square": "Vierkant",
+  "config.chestseparators.magnifier_size": "Vergrootglasgrootte",
+  "config.chestseparators.magnifier_size.tooltip": "Grootte van het vergrootglas (100% = minimum).",
   "message.chestseparators.magnifier_on": "Vergrootglas: Aan",
   "message.chestseparators.magnifier_off": "Vergrootglas: Uit",
   "message.chestseparators.magnifier_hint": "Tip: druk op %s voor een vergrootglas",

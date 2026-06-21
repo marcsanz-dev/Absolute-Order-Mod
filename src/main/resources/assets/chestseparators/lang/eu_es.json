@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Lupa biribila edo karratua den.",
   "config.chestseparators.magnifier_shape.circle": "Zirkulua",
   "config.chestseparators.magnifier_shape.square": "Karratua",
+  "config.chestseparators.magnifier_size": "Luparen tamaina",
+  "config.chestseparators.magnifier_size.tooltip": "Zoom-luparen tamaina (100% = gutxienekoa).",
   "message.chestseparators.magnifier_on": "Lupa: Aktibatuta",
   "message.chestseparators.magnifier_off": "Lupa: Desaktibatuta",
   "message.chestseparators.magnifier_hint": "Aholkua: sakatu %s zoom-lupa baterako",

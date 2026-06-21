@@ -18,25 +18,34 @@ public final class MagnifierRenderer {
 
     private MagnifierRenderer() {}
 
-    // SRC_HALF must satisfy SRC_HALF * sqrt(2) < CURSOR_R, so the captured square never overlaps the
-    // cursor ring; otherwise the ring/lines would be sampled into the loupe.
-    private static final int SRC_HALF = 9; // half of the sampled square (logical px); zoom = LOUPE_R / SRC_HALF
-    private static final int LOUPE_R = 54; // loupe radius on screen (logical px)
-    private static final int CURSOR_R = 14; // radius of the small ring drawn on the cursor
-    private static final int GAP = 14; // gap between cursor ring and loupe
-    private static final int RING_THICKNESS = 4; // opaque frame ring thickness (hides the content edge)
+    // Base sizes at 100%. BASE_SRC_HALF * sqrt(2) < BASE_CURSOR_R must hold so the captured square
+    // never overlaps the cursor ring (otherwise the ring/lines would be sampled into the loupe). All
+    // sizes scale together with the configured size percentage, keeping the zoom factor constant.
+    private static final int BASE_SRC_HALF = 9;
+    private static final int BASE_LOUPE_R = 54;
+    private static final int BASE_CURSOR_R = 14;
+    private static final int BASE_GAP = 14;
+    private static final int BASE_RING = 4;
     private static final int FRAME_COLOR = 0xFF202020;
 
-    public static void render(DrawContext context, int cursorX, int cursorY, boolean circle) {
+    public static void render(DrawContext context, int cursorX, int cursorY, boolean circle, int sizePercent) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getWindow() == null) return;
+
+        int pct = Math.max(100, sizePercent);
+        int srcHalf = BASE_SRC_HALF * pct / 100;
+        int loupeR = BASE_LOUPE_R * pct / 100;
+        int cursorR = BASE_CURSOR_R * pct / 100;
+        int gap = BASE_GAP * pct / 100;
+        int ring = Math.max(2, BASE_RING * pct / 100);
+
         double scale = client.getWindow().getScaleFactor();
         int fbW = client.getWindow().getFramebufferWidth();
         int fbH = client.getWindow().getFramebufferHeight();
 
-        int blockFb = Math.max(1, (int) Math.round(SRC_HALF * 2 * scale));
-        int fbX = clamp((int) Math.round((cursorX - SRC_HALF) * scale), 0, fbW - blockFb);
-        int fbYBottom = clamp(fbH - (int) Math.round((cursorY + SRC_HALF) * scale), 0, fbH - blockFb);
+        int blockFb = Math.max(1, (int) Math.round(srcHalf * 2 * scale));
+        int fbX = clamp((int) Math.round((cursorX - srcHalf) * scale), 0, fbW - blockFb);
+        int fbYBottom = clamp(fbH - (int) Math.round((cursorY + srcHalf) * scale), 0, fbH - blockFb);
 
         int[] pixels = new int[blockFb * blockFb];
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -53,49 +62,51 @@ public final class MagnifierRenderer {
         // Place the loupe up-right of the cursor, flipping to stay on screen.
         int sw = client.getWindow().getScaledWidth();
         int sh = client.getWindow().getScaledHeight();
-        int loupeCx = cursorX + GAP + CURSOR_R + LOUPE_R;
-        int loupeCy = cursorY - GAP - CURSOR_R - LOUPE_R;
-        if (loupeCx + LOUPE_R + 2 > sw) loupeCx = cursorX - GAP - CURSOR_R - LOUPE_R;
-        if (loupeCy - LOUPE_R - 2 < 0) loupeCy = cursorY + GAP + CURSOR_R + LOUPE_R;
-        loupeCy = clamp(loupeCy, LOUPE_R + 2, sh - LOUPE_R - 2);
+        int loupeCx = cursorX + gap + cursorR + loupeR;
+        int loupeCy = cursorY - gap - cursorR - loupeR;
+        if (loupeCx + loupeR + 2 > sw) loupeCx = cursorX - gap - cursorR - loupeR;
+        if (loupeCy - loupeR - 2 < 0) loupeCy = cursorY + gap + cursorR + loupeR;
+        loupeCy = clamp(loupeCy, loupeR + 2, sh - loupeR - 2);
 
-        float cell = (LOUPE_R * 2f) / blockFb;
-        // Content radius: a hard-clipped disc, with the jagged edge hidden under the thick ring frame.
-        int contentR = LOUPE_R - RING_THICKNESS;
+        float cell = (loupeR * 2f) / blockFb;
+        // Content extent: a hard-clipped disc/square, with the jagged edge hidden under the thick frame.
+        int contentR = loupeR - ring;
         long contentR2 = (long) contentR * contentR;
 
         for (int py = 0; py < blockFb; py++) {
             for (int px = 0; px < blockFb; px++) {
-                int x0 = Math.round(loupeCx - LOUPE_R + px * cell);
-                int x1 = Math.round(loupeCx - LOUPE_R + (px + 1) * cell);
+                int x0 = Math.round(loupeCx - loupeR + px * cell);
+                int x1 = Math.round(loupeCx - loupeR + (px + 1) * cell);
                 // py = 0 is the bottom row in GL space → bottom of the region on screen.
-                int y0 = Math.round(loupeCy + LOUPE_R - (py + 1) * cell);
-                int y1 = Math.round(loupeCy + LOUPE_R - py * cell);
+                int y0 = Math.round(loupeCy + loupeR - (py + 1) * cell);
+                int y1 = Math.round(loupeCy + loupeR - py * cell);
+                double dx = (x0 + x1) / 2.0 - loupeCx;
+                double dy = (y0 + y1) / 2.0 - loupeCy;
                 if (circle) {
-                    double dx = (x0 + x1) / 2.0 - loupeCx;
-                    double dy = (y0 + y1) / 2.0 - loupeCy;
                     if (dx * dx + dy * dy > contentR2) continue; // hard clip → no bleed outside the disc
+                } else if (Math.abs(dx) > contentR || Math.abs(dy) > contentR) {
+                    continue;
                 }
                 context.fill(x0, y0, x1, y1, pixels[py * blockFb + px]);
             }
         }
 
-        // Frame: an opaque ring (square border) hiding the content edge, antialiased on the outside.
-        if (circle) drawRingFrame(context, loupeCx, loupeCy, contentR, LOUPE_R, FRAME_COLOR);
-        else context.drawStrokedRectangle(loupeCx - LOUPE_R, loupeCy - LOUPE_R, LOUPE_R * 2, LOUPE_R * 2, FRAME_COLOR);
+        // Opaque frame of thickness `ring`, hiding the content edge (consistent for circle and square).
+        if (circle) drawRingFrame(context, loupeCx, loupeCy, contentR, loupeR, FRAME_COLOR);
+        else drawSquareFrame(context, loupeCx, loupeCy, contentR, loupeR, FRAME_COLOR);
 
         // Reticle on the captured (center) pixel.
         int half = Math.max(1, Math.round(cell / 2f));
         context.drawStrokedRectangle(loupeCx - half, loupeCy - half, half * 2, half * 2, 0xFFFFFFFF);
 
         // Cursor marker + connector lines that hug the outer edges (never cross the shapes).
+        int cursorRing = Math.max(2, ring - 1);
         if (circle) {
-            drawRingFrame(context, cursorX, cursorY, CURSOR_R - 2, CURSOR_R, 0xDDFFFFFF);
-            drawCircleConnectors(context, cursorX, cursorY, CURSOR_R, loupeCx, loupeCy, LOUPE_R, 0xCCFFFFFF);
+            drawRingFrame(context, cursorX, cursorY, cursorR - cursorRing, cursorR, 0xDDFFFFFF);
+            drawCircleConnectors(context, cursorX, cursorY, cursorR, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
         } else {
-            context.drawStrokedRectangle(
-                    cursorX - CURSOR_R, cursorY - CURSOR_R, CURSOR_R * 2, CURSOR_R * 2, 0xDDFFFFFF);
-            drawSquareConnectors(context, cursorX, cursorY, CURSOR_R, loupeCx, loupeCy, LOUPE_R, 0xCCFFFFFF);
+            drawSquareFrame(context, cursorX, cursorY, cursorR - cursorRing, cursorR, 0xDDFFFFFF);
+            drawSquareConnectors(context, cursorX, cursorY, cursorR, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
         }
     }
 
@@ -142,6 +153,15 @@ public final class MagnifierRenderer {
         // Antialias the inner and outer edges so the frame reads as a clean circle.
         drawCircleOutlineAA(context, cx, cy, rOuter, (0xCC << 24) | rgb);
         drawCircleOutlineAA(context, cx, cy, rInner, (0xCC << 24) | rgb);
+    }
+
+    /** Opaque square frame: a thick border between the inner and outer half-sizes. */
+    private static void drawSquareFrame(DrawContext context, int cx, int cy, int rInner, int rOuter, int color) {
+        // top, bottom, left, right bars of thickness (rOuter - rInner)
+        context.fill(cx - rOuter, cy - rOuter, cx + rOuter, cy - rInner, color);
+        context.fill(cx - rOuter, cy + rInner, cx + rOuter, cy + rOuter, color);
+        context.fill(cx - rOuter, cy - rInner, cx - rInner, cy + rInner, color);
+        context.fill(cx + rInner, cy - rInner, cx + rOuter, cy + rInner, color);
     }
 
     /** Two external tangent lines between the cursor circle and the loupe circle (never cross either). */

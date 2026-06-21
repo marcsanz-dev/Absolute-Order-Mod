@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Czy lupa jest okrągła czy kwadratowa.",
   "config.chestseparators.magnifier_shape.circle": "Koło",
   "config.chestseparators.magnifier_shape.square": "Kwadrat",
+  "config.chestseparators.magnifier_size": "Rozmiar lupy",
+  "config.chestseparators.magnifier_size.tooltip": "Rozmiar lupy (100% = minimum).",
   "message.chestseparators.magnifier_on": "Lupa: Wł.",
   "message.chestseparators.magnifier_off": "Lupa: Wył.",
   "message.chestseparators.magnifier_hint": "Wskazówka: naciśnij %s, aby użyć lupy",

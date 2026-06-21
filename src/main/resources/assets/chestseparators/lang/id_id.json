@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Apakah kaca pembesar bulat atau kotak.",
   "config.chestseparators.magnifier_shape.circle": "Lingkaran",
   "config.chestseparators.magnifier_shape.square": "Kotak",
+  "config.chestseparators.magnifier_size": "Ukuran Kaca Pembesar",
+  "config.chestseparators.magnifier_size.tooltip": "Ukuran kaca pembesar (100% = minimum).",
   "message.chestseparators.magnifier_on": "Kaca Pembesar: Aktif",
   "message.chestseparators.magnifier_off": "Kaca Pembesar: Mati",
   "message.chestseparators.magnifier_hint": "Tips: tekan %s untuk kaca pembesar",

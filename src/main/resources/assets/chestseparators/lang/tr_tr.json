@@ -163,6 +163,8 @@
   "config.chestseparators.magnifier_shape.tooltip": "Büyütecin yuvarlak mı yoksa kare mi olduğu.",
   "config.chestseparators.magnifier_shape.circle": "Daire",
   "config.chestseparators.magnifier_shape.square": "Kare",
+  "config.chestseparators.magnifier_size": "Büyüteç Boyutu",
+  "config.chestseparators.magnifier_size.tooltip": "Yakınlaştırma büyütecinin boyutu (100% = minimum).",
   "message.chestseparators.magnifier_on": "Büyüteç: Açık",
   "message.chestseparators.magnifier_off": "Büyüteç: Kapalı",
   "message.chestseparators.magnifier_hint": "İpucu: yakınlaştırma büyüteci için %s tuşuna basın",
