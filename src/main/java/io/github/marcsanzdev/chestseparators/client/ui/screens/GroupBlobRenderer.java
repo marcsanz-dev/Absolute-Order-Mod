@@ -59,6 +59,7 @@ final class GroupBlobRenderer {
                 && session.dragStartSlot != null
                 && session.dragCurrentSlot != null;
 
+        boolean previewPlayerNs = isPreviewArea && ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot);
         if (isPreviewArea) {
             int sRow = session.dragStartSlot.getIndex() / 9;
             int sCol = session.dragStartSlot.getIndex() % 9;
@@ -71,14 +72,16 @@ final class GroupBlobRenderer {
 
             for (Slot slot : editor.accessor.getHandler().slots) {
                 if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                if (ChestSeparatorsEditor.isPlayerSlot(slot) != previewPlayerNs) continue;
                 int r = slot.getIndex() / 9;
                 int c = slot.getIndex() % 9;
+                int key = ChestSeparatorsEditor.slotKey(slot);
                 if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                     if (session.isSelecting) {
-                        activeGreenSlots.add(slot.getIndex());
+                        activeGreenSlots.add(key);
                     } else {
-                        activeGreenSlots.remove(slot.getIndex());
-                        activeRedSlots.add(slot.getIndex());
+                        activeGreenSlots.remove(key);
+                        activeRedSlots.add(key);
                     }
                 }
             }
@@ -86,7 +89,7 @@ final class GroupBlobRenderer {
 
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
-            int idx = slot.getIndex();
+            int idx = ChestSeparatorsEditor.slotKey(slot);
 
             boolean hasWhitelist = whitelists != null && whitelists.containsKey(idx);
             boolean isActive = activeGreenSlots.contains(idx) || activeRedSlots.contains(idx);
@@ -162,9 +165,29 @@ final class GroupBlobRenderer {
         if (!activeGreenSlots.isEmpty()) drawBlobGroup(context, activeGreenSlots, 0xAA33FF33, guiX, guiY);
         if (!activeRedSlots.isEmpty()) drawBlobGroup(context, activeRedSlots, 0xAAFF3333, guiX, guiY);
 
+        // Mutual exclusion: once a side has a slot selected (or a drag is in progress), darken the
+        // other side's slots to show a single filter can't span the chest and the inventory.
+        Integer activeKey = null;
+        if (session.isDraggingLine && session.dragStartSlot != null) {
+            activeKey = ChestSeparatorsEditor.slotKey(session.dragStartSlot);
+        } else if (!session.selectedSlots.isEmpty()) {
+            activeKey = session.selectedSlots.iterator().next();
+        }
+        if (activeKey != null) {
+            boolean activePlayer = ChestConfigManager.isInventoryKey(activeKey);
+            for (Slot slot : editor.accessor.getHandler().slots) {
+                if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                if (ChestSeparatorsEditor.isPlayerSlot(slot) != activePlayer) {
+                    context.fill(
+                            guiX + slot.x - 1, guiY + slot.y - 1, guiX + slot.x + 17, guiY + slot.y + 17, 0xB0101010);
+                }
+            }
+        }
+
         for (int slotIdx : activeGreenSlots) {
             if (whitelists != null && whitelists.containsKey(slotIdx)) {
-                Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
+                Slot slot = editor.slotForKey(slotIdx);
+                if (slot == null) continue;
 
                 context.getMatrices().pushMatrix();
                 context.getMatrices().translate(guiX + slot.x + 4, guiY + slot.y + 4);
@@ -181,9 +204,8 @@ final class GroupBlobRenderer {
 
     private void drawBlobGroup(DrawContext context, Set<Integer> groupSlots, int colorARGB, int guiX, int guiY) {
         for (int slotIdx : groupSlots) {
-            if (slotIdx >= editor.accessor.getHandler().slots.size()) continue;
-            Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
-            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+            Slot slot = editor.slotForKey(slotIdx);
+            if (slot == null || !ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
             int x = guiX + slot.x;
             int y = guiY + slot.y;

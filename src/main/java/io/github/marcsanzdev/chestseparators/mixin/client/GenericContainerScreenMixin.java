@@ -81,7 +81,6 @@ public abstract class GenericContainerScreenMixin extends Screen {
     public void renderSavedLinesLayer(DrawContext context, int mouseX, int mouseY, CallbackInfo ci) {
         if (this.editor != null) {
             this.editor.renderSavedLinesLayer(context);
-            this.editor.renderInventoryDecorations(context);
         }
     }
 

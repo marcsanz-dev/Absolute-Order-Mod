@@ -33,7 +33,7 @@ public class ChestSeparatorsClient implements ClientModInitializer {
         // filters to the server so the Pick Up rule works immediately (before the editor is opened).
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register(
                 (handler, sender, client) -> client.execute(() -> {
-                    ChestConfigManager.getInstance().loadInventoryRenderCache();
+                    ChestConfigManager.getInstance().loadInventoryProfile();
                     ModClientNetworking.sendInventoryFilters();
                 }));
 

@@ -345,14 +345,21 @@ public class ChestSeparatorsEditor {
         if (renderer != null) renderer.render(context, mouseX, mouseY, delta);
     }
 
-    /** Loads the working config for whatever the editor currently targets (chest variant or inventory). */
+    /**
+     * Loads the working maps for the current screen: the container's config (chest variants) plus the
+     * player inventory profile mirrored at offset keys, so both are edited simultaneously.
+     */
     private void loadConfigForCurrentTarget() {
-        if (session.isPlayerInventory) {
-            ChestConfigManager.getInstance().loadInventoryConfig();
+        ChestConfigManager manager = ChestConfigManager.getInstance();
+
+        // 1. Container portion (clears the working maps). The inventory screen has no container.
+        if (session.isInventoryScreenContext) {
+            manager.clearCurrentConfig();
+            manager.getCurrentWhitelists().clear();
         } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
-            ChestConfigManager.getInstance().loadShulkerConfig(session.currentShulkerUUID);
+            manager.loadShulkerConfig(session.currentShulkerUUID);
         } else if (session.isEntityChest && session.currentEntityUUID != null) {
-            ChestConfigManager.getInstance().loadEntityConfig(session.currentEntityUUID);
+            manager.loadEntityConfig(session.currentEntityUUID);
         } else if (session.currentChestPos != null && MinecraftClient.getInstance().world != null) {
             if (MinecraftClient.getInstance()
                             .world
@@ -360,16 +367,20 @@ public class ChestSeparatorsEditor {
                             .getBlock()
                     == Blocks.ENDER_CHEST) {
                 session.isEnderChest = true;
-                ChestConfigManager.getInstance().loadEnderConfig();
+                manager.loadEnderConfig();
             } else {
-                ChestConfigManager.getInstance().loadConfig(session.currentChestPos, session.currentDimension);
+                manager.loadConfig(session.currentChestPos, session.currentDimension);
             }
         }
+
+        // 2. Player inventory portion, mirrored into the working maps at offset keys.
+        manager.loadInventoryProfile();
+        manager.mirrorInventoryIntoCurrent();
     }
 
-    /** Fetches the chest's server-authoritative whitelists, when the current target is a real chest. */
+    /** Fetches the chest's server-authoritative whitelists, when a real chest is open. */
     private void requestChestWhitelistsIfNeeded() {
-        if (!session.isPlayerInventory
+        if (!session.isInventoryScreenContext
                 && session.currentChestPos != null
                 && !session.isEntityChest
                 && !session.isEnderChest) {
@@ -412,15 +423,37 @@ public class ChestSeparatorsEditor {
     }
 
     /**
-     * Whether a slot is a target of the current editor: in chest mode the container slots (everything
-     * that is not the player inventory), in inventory mode the player's own inventory slots. This is
-     * the single inversion point that lets the same editor decorate either a container or the player
-     * inventory; in chest mode it is exactly equivalent to the previous {@code !(… PlayerInventory)}
-     * checks, so the chest editor behaviour is unchanged.
+     * Whether a slot can be decorated/filtered by the editor. The player's own inventory slots are
+     * always editable (chest screens edit them simultaneously with the chest); container slots are
+     * editable only in a container screen (this also excludes the crafting slots of the inventory
+     * screen). Chest and inventory edits coexist via {@link #slotKey} namespacing.
      */
     public static boolean isEditableSlot(Slot slot) {
-        boolean isPlayer = slot.inventory instanceof net.minecraft.entity.player.PlayerInventory;
-        return activeSession.isPlayerInventory ? isPlayer : !isPlayer;
+        if (slot.inventory instanceof net.minecraft.entity.player.PlayerInventory) return true;
+        return !activeSession.isInventoryScreenContext;
+    }
+
+    /**
+     * The working-map key for a slot. Player-inventory slots are offset into their own namespace so
+     * chest and inventory data (which share raw slot indices) coexist while both are edited at once.
+     */
+    public static int slotKey(Slot slot) {
+        return slot.inventory instanceof net.minecraft.entity.player.PlayerInventory
+                ? slot.getIndex() + ChestConfigManager.PLAYER_KEY_OFFSET
+                : slot.getIndex();
+    }
+
+    /** True if a slot belongs to the player inventory namespace (used for the mutual-exclusion dimming). */
+    public static boolean isPlayerSlot(Slot slot) {
+        return slot.inventory instanceof net.minecraft.entity.player.PlayerInventory;
+    }
+
+    /** Finds the slot for a working-map key (the inverse of {@link #slotKey}); null if none matches. */
+    public Slot slotForKey(int key) {
+        for (Slot s : accessor.getHandler().slots) {
+            if (slotKey(s) == key) return s;
+        }
+        return null;
     }
 
     public void releaseLock() {
@@ -473,8 +506,9 @@ public class ChestSeparatorsEditor {
         session.selectedSlots.clear();
 
         if (initialSlot != null) {
-            session.selectedSlots.add(initialSlot.getIndex());
-            session.lastClickedSlotIndex = initialSlot.getIndex();
+            int key = slotKey(initialSlot);
+            session.selectedSlots.add(key);
+            session.lastClickedSlotIndex = key;
             session.lastSlotClickTime = System.currentTimeMillis();
             session.isSelecting = true;
         }
@@ -571,8 +605,9 @@ public class ChestSeparatorsEditor {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new io.github.marcsanzdev.chestseparators.network.WhitelistPayload(
                             posToSend,
+                            // Only the chest's own filters; inventory filters (offset keys) are local.
                             io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
-                                    .getCurrentWhitelists()));
+                                    .chestOnlyWhitelists()));
         }
     }
 
@@ -583,18 +618,24 @@ public class ChestSeparatorsEditor {
     }
 
     public void saveSmart() {
-        if (session.isPlayerInventory) {
-            ChestConfigManager.getInstance().saveInventoryConfig();
-            io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
-        } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
-            ChestConfigManager.getInstance().saveShulkerConfig(session.currentShulkerUUID);
-        } else if (session.isEntityChest && session.currentEntityUUID != null) {
-            ChestConfigManager.getInstance().saveEntityConfig(session.currentEntityUUID);
-        } else if (session.isEnderChest) {
-            ChestConfigManager.getInstance().saveEnderConfig();
-        } else {
-            ChestConfigManager.getInstance().saveConfig(session.currentChestPos, session.currentDimension);
+        ChestConfigManager manager = ChestConfigManager.getInstance();
+
+        // Container portion (chest screens only) — chest-only keys are saved to the container's store.
+        if (!session.isInventoryScreenContext) {
+            if (session.isShulkerBox && session.currentShulkerUUID != null) {
+                manager.saveShulkerConfig(session.currentShulkerUUID);
+            } else if (session.isEntityChest && session.currentEntityUUID != null) {
+                manager.saveEntityConfig(session.currentEntityUUID);
+            } else if (session.isEnderChest) {
+                manager.saveEnderConfig();
+            } else if (session.currentChestPos != null) {
+                manager.saveConfig(session.currentChestPos, session.currentDimension);
+            }
         }
+
+        // Player inventory portion (always) — extracted from the offset keys and synced for Pick Up.
+        manager.saveInventoryFromCurrent();
+        io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
     }
 
     public void triggerActionAnimation(int actionId) {
@@ -740,10 +781,6 @@ public class ChestSeparatorsEditor {
 
     public void renderSavedLinesLayer(DrawContext context) {
         if (this.renderer != null) this.renderer.renderSavedLinesLayer(context);
-    }
-
-    public void renderInventoryDecorations(DrawContext context) {
-        if (this.renderer != null) this.renderer.renderInventoryDecorations(context);
     }
 
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {

@@ -152,7 +152,7 @@ public class EditorRenderer {
 
         for (Slot s : accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
-            ChestConfigManager.SlotChange ch = editor.undoHighlights.get(s.getIndex());
+            ChestConfigManager.SlotChange ch = editor.undoHighlights.get(ChestSeparatorsEditor.slotKey(s));
             if (ch == null) continue;
             int color = (undoHighlightColor(ch) & 0x00FFFFFF) | alpha;
             // 2px frame just outside the 16x16 slot.
@@ -187,13 +187,14 @@ public class EditorRenderer {
         for (Slot s : accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
 
-            int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
+            int key = ChestSeparatorsEditor.slotKey(s);
+            int bgColor = manager.getColor(key, ChestConfigManager.ACTION_BG);
             if (bgColor != 0) {
                 int fill = clearBg ? ERASE_BG_WASH : ((bgColor & 0xFFFFFF) | bgAlpha);
                 context.fill(s.x, s.y, s.x + 16, s.y + 16, fill);
             }
 
-            renderEdgesInPaintOrder(context, s.x, s.y, s.getIndex(), lineAlpha, clearLines);
+            renderEdgesInPaintOrder(context, s.x, s.y, key, lineAlpha, clearLines);
         }
     }
 
@@ -247,38 +248,6 @@ public class EditorRenderer {
         drawCorner(context, x + 16, y - 1, rTop, sTop, rRight, sRight);
         drawCorner(context, x - 1, y + 16, rBot, sBot, rLeft, sLeft);
         drawCorner(context, x + 16, y + 16, rBot, sBot, rRight, sRight);
-    }
-
-    /**
-     * Draws the player's saved inventory decorations (separators + backgrounds, from the render cache)
-     * on the player-inventory slots of any screen, so they are visible inside chests too. Skipped while
-     * the inventory editor itself is open, where {@link #renderSavedLinesLayer} already draws them.
-     */
-    public void renderInventoryDecorations(DrawContext context) {
-        if (session.isPlayerInventory) return;
-        ChestConfigManager m = ChestConfigManager.getInstance();
-        if (m.getPlayerInventoryVisual().isEmpty()) return;
-
-        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
-        int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-
-        for (Slot s : accessor.getHandler().slots) {
-            if (!(s.inventory instanceof net.minecraft.entity.player.PlayerInventory)) continue;
-            int idx = s.getIndex();
-
-            int bgColor = m.getInventoryColor(idx, ChestConfigManager.ACTION_BG);
-            if (bgColor != 0) context.fill(s.x, s.y, s.x + 16, s.y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
-
-            int rTop = resolveEdge(m.getInventoryColor(idx, ChestConfigManager.ACTION_TOP), lineAlpha, false);
-            int rBot = resolveEdge(m.getInventoryColor(idx, ChestConfigManager.ACTION_BOTTOM), lineAlpha, false);
-            int rLeft = resolveEdge(m.getInventoryColor(idx, ChestConfigManager.ACTION_LEFT), lineAlpha, false);
-            int rRight = resolveEdge(m.getInventoryColor(idx, ChestConfigManager.ACTION_RIGHT), lineAlpha, false);
-            int sTop = m.getInventoryPaintSeq(idx, ChestConfigManager.ACTION_TOP);
-            int sBot = m.getInventoryPaintSeq(idx, ChestConfigManager.ACTION_BOTTOM);
-            int sLeft = m.getInventoryPaintSeq(idx, ChestConfigManager.ACTION_LEFT);
-            int sRight = m.getInventoryPaintSeq(idx, ChestConfigManager.ACTION_RIGHT);
-            drawEdges(context, s.x, s.y, rTop, rBot, rLeft, rRight, sTop, sBot, sLeft, sRight);
-        }
     }
 
     private void drawCorner(DrawContext context, int cx, int cy, int colorA, int seqA, int colorB, int seqB) {

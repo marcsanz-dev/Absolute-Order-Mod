@@ -66,10 +66,19 @@ final class ViewGroupsClickHandler {
                         || session.currentState == EditorState.SELECT_SLOTS)) {
             Slot slot = editor.accessor.getFocusedSlot();
             if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
-                java.util.UUID groupId = editor.geometry.getGroupIdForSlot(slot.getIndex());
+                int key = ChestSeparatorsEditor.slotKey(slot);
+                // Mutual exclusion: ignore clicks on the dimmed (other-namespace) side once a selection
+                // exists — a single filter cannot span the chest and the player inventory.
+                if (!session.selectedSlots.isEmpty()
+                        && ChestConfigManager.isInventoryKey(
+                                        session.selectedSlots.iterator().next())
+                                != ChestSeparatorsEditor.isPlayerSlot(slot)) {
+                    return true;
+                }
+                java.util.UUID groupId = editor.geometry.getGroupIdForSlot(key);
                 long now = System.currentTimeMillis();
                 boolean isDoubleClick =
-                        (slot.getIndex() == session.lastClickedSlotIndex && (now - session.lastSlotClickTime) < 300);
+                        (key == session.lastClickedSlotIndex && (now - session.lastSlotClickTime) < 300);
 
                 boolean isShiftDown = org.lwjgl.glfw.GLFW.glfwGetKey(
                                         MinecraftClient.getInstance()
@@ -103,23 +112,25 @@ final class ViewGroupsClickHandler {
                     editor.playClickSound(1.0f);
                     return true;
                 } else if (isDoubleClick) {
-                    int maxSlots = editor.geometry.getContainerSlotCount();
+                    boolean player = ChestSeparatorsEditor.isPlayerSlot(slot);
+                    int lo = player ? ChestConfigManager.PLAYER_KEY_OFFSET : 0;
+                    int hi = lo + editor.geometry.getNamespaceSlotCount(player);
                     java.util.Set<Integer> contiguous =
-                            ChestConfigManager.getInstance().getContiguousSlots(slot.getIndex(), maxSlots);
+                            ChestConfigManager.getInstance().getContiguousSlots(key, lo, hi);
 
                     if (session.isSelecting) session.selectedSlots.addAll(contiguous);
                     else session.selectedSlots.removeAll(contiguous);
 
-                    session.lastClickedSlotIndex = slot.getIndex();
+                    session.lastClickedSlotIndex = key;
                     session.lastSlotClickTime = now;
                     editor.playClickSound(1.2f);
                     return true;
                 } else {
-                    if (session.selectedSlots.contains(slot.getIndex())) {
-                        session.selectedSlots.remove(slot.getIndex());
+                    if (session.selectedSlots.contains(key)) {
+                        session.selectedSlots.remove(key);
                         session.isSelecting = false;
                     } else {
-                        session.selectedSlots.add(slot.getIndex());
+                        session.selectedSlots.add(key);
                         session.isSelecting = true;
                     }
 
@@ -127,7 +138,7 @@ final class ViewGroupsClickHandler {
                     session.dragStartSlot = slot;
                     session.dragCurrentSlot = slot;
 
-                    session.lastClickedSlotIndex = slot.getIndex();
+                    session.lastClickedSlotIndex = key;
                     session.lastSlotClickTime = now;
                     editor.playClickSound(1.2f);
                     return true;

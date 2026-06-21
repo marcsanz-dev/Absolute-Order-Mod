@@ -60,8 +60,9 @@ final class WhitelistPreviewPanelRenderer {
 
         if (hoveredSlot != null) {
             var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
-            if (whitelists != null && whitelists.containsKey(hoveredSlot.getIndex())) {
-                SlotWhitelist wl = whitelists.get(hoveredSlot.getIndex());
+            int hoveredKey = ChestSeparatorsEditor.slotKey(hoveredSlot);
+            if (whitelists != null && whitelists.containsKey(hoveredKey)) {
+                SlotWhitelist wl = whitelists.get(hoveredKey);
                 UUID currentGroupId = wl.groupId();
 
                 if (!session.isPreviewing || !currentGroupId.equals(session.lastHoveredGroupId)) {

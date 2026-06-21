@@ -27,7 +27,12 @@ final class SeparatorDragInput {
 
         if (session.isDraggingLine) {
             Slot slot = editor.accessor.getFocusedSlot();
-            if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
+            // Confine the drag to the namespace it started in (no chest<->inventory crossover).
+            if (slot != null
+                    && ChestSeparatorsEditor.isEditableSlot(slot)
+                    && (session.dragStartSlot == null
+                            || ChestSeparatorsEditor.isPlayerSlot(slot)
+                                    == ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot))) {
                 session.dragCurrentSlot = slot;
 
                 int toolMode = (session.currentTab == 0)
@@ -36,7 +41,8 @@ final class SeparatorDragInput {
 
                 if (session.currentTab == 1 || session.currentTab == 2) {
                     if (toolMode == 1) {
-                        editor.updateTracePath(slot.getIndex() + "_" + ChestConfigManager.ACTION_BG);
+                        editor.updateTracePath(
+                                ChestSeparatorsEditor.slotKey(slot) + "_" + ChestConfigManager.ACTION_BG);
                     }
                 } else {
                     if (toolMode == 1) {
@@ -53,7 +59,8 @@ final class SeparatorDragInput {
                             int currAction = Integer.parseInt(currStep.split("_")[1]);
                             int prevAction = Integer.parseInt(prevStep.split("_")[1]);
 
-                            Slot currSlot = editor.accessor.getHandler().getSlot(currSlotIdx);
+                            Slot currSlot = editor.slotForKey(currSlotIdx);
+                            if (currSlot == null) break;
                             double cRelX = mouseX - (guiX + currSlot.x);
                             double cRelY = mouseY - (guiY + currSlot.y);
 
@@ -108,7 +115,8 @@ final class SeparatorDragInput {
                             if (undo) {
                                 session.tracePath.remove(session.tracePath.size() - 1);
                                 session.lockedTraceAction = prevAction;
-                                Slot prevSlot = editor.accessor.getHandler().getSlot(prevSlotIdx);
+                                Slot prevSlot = editor.slotForKey(prevSlotIdx);
+                                if (prevSlot == null) break;
                                 if (prevAction == ChestConfigManager.ACTION_TOP
                                         || prevAction == ChestConfigManager.ACTION_BOTTOM) {
                                     session.lockedTraceAxis = 1;
@@ -139,7 +147,8 @@ final class SeparatorDragInput {
                                 int rawAction = Integer.parseInt(rawStep.split("_")[1]);
                                 int lastAction = Integer.parseInt(lastStep.split("_")[1]);
 
-                                Slot rawSlot = editor.accessor.getHandler().getSlot(rawSlotIdx);
+                                Slot rawSlot = editor.slotForKey(rawSlotIdx);
+                                if (rawSlot == null) return true;
                                 double rRelX = mouseX - (guiX + rawSlot.x);
                                 double rRelY = mouseY - (guiY + rawSlot.y);
 

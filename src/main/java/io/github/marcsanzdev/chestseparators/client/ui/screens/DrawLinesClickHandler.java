@@ -56,7 +56,7 @@ final class DrawLinesClickHandler {
                     session.dragCurrentSlot = slot;
                     session.tracePath.clear();
                     session.lockedTraceAxis = 0;
-                    session.tracePath.add(slot.getIndex() + "_" + ChestConfigManager.ACTION_BG);
+                    session.tracePath.add(ChestSeparatorsEditor.slotKey(slot) + "_" + ChestConfigManager.ACTION_BG);
 
                     int tIndex = (session.currentTab == 1) ? session.bgColorIndex : session.comboColorIndex;
                     int colorVal = (session.currentTab == 1)
@@ -68,7 +68,7 @@ final class DrawLinesClickHandler {
                     } else {
                         if (colorVal == 0) return false;
                         int existingColor = ChestConfigManager.getInstance()
-                                .getColor(slot.getIndex(), ChestConfigManager.ACTION_BG);
+                                .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_BG);
                         session.isDragModeErasing = (existingColor == (colorVal | 0xFF000000));
                     }
                     return true;
@@ -82,7 +82,7 @@ final class DrawLinesClickHandler {
                         session.dragStartSlot = slot;
                         session.dragCurrentSlot = slot;
                         session.tracePath.clear();
-                        session.tracePath.add(slot.getIndex() + "_" + action);
+                        session.tracePath.add(ChestSeparatorsEditor.slotKey(slot) + "_" + action);
                         session.lockedTraceAction = action;
                         if (action == ChestConfigManager.ACTION_TOP || action == ChestConfigManager.ACTION_BOTTOM) {
                             session.lockedTraceAxis = 1;
@@ -105,7 +105,8 @@ final class DrawLinesClickHandler {
                             session.isDragModeErasing = true;
                         } else {
                             if (colorVal == 0) return false;
-                            int existingColor = ChestConfigManager.getInstance().getColor(slot.getIndex(), action);
+                            int existingColor = ChestConfigManager.getInstance()
+                                    .getColor(ChestSeparatorsEditor.slotKey(slot), action);
                             session.isDragModeErasing = (existingColor == (colorVal | 0xFF000000));
                         }
                         return true;

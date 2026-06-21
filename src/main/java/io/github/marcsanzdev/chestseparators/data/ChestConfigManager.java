@@ -648,6 +648,10 @@ public class ChestConfigManager {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
 
+        // Only the chest's own slots; mirrored inventory entries (offset keys) are saved separately.
+        Map<Integer, int[]> chestVis = chestOnlyVisual();
+        Map<Integer, SlotWhitelist> chestFil = chestOnlyWhitelists();
+
         BlockState state = client.world.getBlockState(pos);
         if (state.getBlock() instanceof ChestBlock) {
             ChestType type = state.get(ChestBlock.CHEST_TYPE);
@@ -665,11 +669,11 @@ public class ChestConfigManager {
                 Map<Integer, SlotWhitelist> firstFil = new HashMap<>();
                 Map<Integer, SlotWhitelist> secondFil = new HashMap<>();
 
-                for (Map.Entry<Integer, int[]> entry : currentChestConfig.entrySet()) {
+                for (Map.Entry<Integer, int[]> entry : chestVis.entrySet()) {
                     if (entry.getKey() < 27) firstVis.put(entry.getKey(), entry.getValue());
                     else secondVis.put(entry.getKey() - 27, entry.getValue());
                 }
-                for (Map.Entry<Integer, SlotWhitelist> entry : currentWhitelists.entrySet()) {
+                for (Map.Entry<Integer, SlotWhitelist> entry : chestFil.entrySet()) {
                     if (entry.getKey() < 27) firstFil.put(entry.getKey(), entry.getValue());
                     else secondFil.put(entry.getKey() - 27, entry.getValue());
                 }
@@ -679,19 +683,19 @@ public class ChestConfigManager {
                 return;
             }
         }
-        writeRawData(currentChestConfig, currentWhitelists, getFileForPos(pos, dimensionId));
+        writeRawData(chestVis, chestFil, getFileForPos(pos, dimensionId));
     }
 
     public void saveEnderConfig() {
-        writeRawData(currentChestConfig, currentWhitelists, getEnderChestFile());
+        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), getEnderChestFile());
     }
 
     public void saveEntityConfig(UUID uuid) {
-        writeRawData(currentChestConfig, currentWhitelists, getFileForEntity(uuid));
+        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), getFileForEntity(uuid));
     }
 
     public void saveShulkerConfig(UUID uuid) {
-        writeRawData(currentChestConfig, currentWhitelists, getFileForShulker(uuid));
+        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), getFileForShulker(uuid));
     }
 
     private static class RawData {
@@ -848,50 +852,55 @@ public class ChestConfigManager {
 
     // --- FLOOD FILL ALGORITHM (VISUAL SELECTION) ---
 
-    public Set<Integer> getContiguousSlots(int startSlot, int maxContainerSlots) {
+    /**
+     * Flood-fills the contiguous region of slots reachable from {@code startSlot} without crossing a
+     * separator, confined to the key window {@code [lo, hi)} (one namespace: the container starts at 0,
+     * the player inventory at {@link #PLAYER_KEY_OFFSET}). {@code lo} must be a multiple of 9.
+     */
+    public Set<Integer> getContiguousSlots(int startSlot, int lo, int hi) {
         Set<Integer> result = new HashSet<>();
+        if (startSlot < lo || startSlot >= hi) return result;
 
-        if (startSlot < 0 || startSlot >= maxContainerSlots) return result;
-
+        int rowCount = (hi - lo + 8) / 9;
         java.util.Queue<Integer> queue = new java.util.LinkedList<>();
         queue.add(startSlot);
         result.add(startSlot);
 
         while (!queue.isEmpty()) {
             int current = queue.poll();
+            int rel = current - lo;
+            int row = rel / 9;
+            int col = rel % 9;
 
-            int row = current / 9;
-            int col = current % 9;
-
-            int upIndex = current - 9;
-            if (row > 0 && !result.contains(upIndex)) {
-                if (getColor(current, ACTION_TOP) == 0 && getColor(upIndex, ACTION_BOTTOM) == 0) {
-                    result.add(upIndex);
-                    queue.add(upIndex);
+            int up = current - 9;
+            if (row > 0 && up >= lo && !result.contains(up)) {
+                if (getColor(current, ACTION_TOP) == 0 && getColor(up, ACTION_BOTTOM) == 0) {
+                    result.add(up);
+                    queue.add(up);
                 }
             }
 
-            int downIndex = current + 9;
-            if (row < (maxContainerSlots / 9) - 1 && !result.contains(downIndex)) {
-                if (getColor(current, ACTION_BOTTOM) == 0 && getColor(downIndex, ACTION_TOP) == 0) {
-                    result.add(downIndex);
-                    queue.add(downIndex);
+            int down = current + 9;
+            if (row < rowCount - 1 && down < hi && !result.contains(down)) {
+                if (getColor(current, ACTION_BOTTOM) == 0 && getColor(down, ACTION_TOP) == 0) {
+                    result.add(down);
+                    queue.add(down);
                 }
             }
 
-            int leftIndex = current - 1;
-            if (col > 0 && !result.contains(leftIndex)) {
-                if (getColor(current, ACTION_LEFT) == 0 && getColor(leftIndex, ACTION_RIGHT) == 0) {
-                    result.add(leftIndex);
-                    queue.add(leftIndex);
+            int left = current - 1;
+            if (col > 0 && left >= lo && !result.contains(left)) {
+                if (getColor(current, ACTION_LEFT) == 0 && getColor(left, ACTION_RIGHT) == 0) {
+                    result.add(left);
+                    queue.add(left);
                 }
             }
 
-            int rightIndex = current + 1;
-            if (col < 8 && !result.contains(rightIndex)) {
-                if (getColor(current, ACTION_RIGHT) == 0 && getColor(rightIndex, ACTION_LEFT) == 0) {
-                    result.add(rightIndex);
-                    queue.add(rightIndex);
+            int right = current + 1;
+            if (col < 8 && right < hi && !result.contains(right)) {
+                if (getColor(current, ACTION_RIGHT) == 0 && getColor(right, ACTION_LEFT) == 0) {
+                    result.add(right);
+                    queue.add(right);
                 }
             }
         }
@@ -992,33 +1001,75 @@ public class ChestConfigManager {
         return playerInventoryFilters;
     }
 
-    /** Loads the inventory profile into the editor's working config (like {@link #loadEnderConfig}). */
-    public void loadInventoryConfig() {
-        clearCurrentConfig();
-        currentWhitelists.clear();
-        RawData data = readRawData(getInventoryFile());
-        currentChestConfig.putAll(data.visual);
-        currentWhitelists.putAll(data.filters);
-        refreshInventoryRenderCache();
+    /**
+     * Offset added to a player-inventory slot index to namespace it inside the editor's working maps,
+     * so chest slots (raw indices) and inventory slots (offset indices) — which would otherwise share
+     * the same index — coexist while editing both at once. Must exceed any container's slot count and
+     * be a multiple of 9 so the 9-wide grid math stays aligned within the inventory namespace.
+     */
+    public static final int PLAYER_KEY_OFFSET = 117;
+
+    public static boolean isInventoryKey(int key) {
+        return key >= PLAYER_KEY_OFFSET;
     }
 
-    /** Persists the editor's working config to the inventory profile and refreshes the render cache. */
-    public void saveInventoryConfig() {
-        writeRawData(currentChestConfig, currentWhitelists, getInventoryFile());
-        refreshInventoryRenderCache();
-    }
-
-    /** Reads the inventory profile straight into the render cache (for the all-screens overlay), without
-     * touching the editor's working config. Call on world join. */
-    public void loadInventoryRenderCache() {
+    /** Loads the persistent inventory profile (separators/backgrounds + filters) from disk. */
+    public void loadInventoryProfile() {
         RawData data = readRawData(getInventoryFile());
         playerInventoryVisual = data.visual;
         playerInventoryFilters = data.filters;
+        for (int[] colors : playerInventoryVisual.values()) {
+            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
+                if (colors[si] > paintSequence) paintSequence = colors[si];
+            }
+        }
     }
 
-    private void refreshInventoryRenderCache() {
-        playerInventoryVisual = copyVisualConfig(currentChestConfig);
-        playerInventoryFilters = copyWhitelists(currentWhitelists);
+    /**
+     * Mirrors the inventory profile into the editor's working maps at offset keys, so the editor edits
+     * the chest (raw keys) and the inventory (offset keys) simultaneously through the same operations.
+     */
+    public void mirrorInventoryIntoCurrent() {
+        for (Map.Entry<Integer, int[]> e : playerInventoryVisual.entrySet()) {
+            currentChestConfig.put(e.getKey() + PLAYER_KEY_OFFSET, e.getValue().clone());
+        }
+        for (Map.Entry<Integer, SlotWhitelist> e : playerInventoryFilters.entrySet()) {
+            currentWhitelists.put(e.getKey() + PLAYER_KEY_OFFSET, e.getValue());
+        }
+    }
+
+    /** Extracts the inventory portion (offset keys) from the working maps back into the profile and saves it. */
+    public void saveInventoryFromCurrent() {
+        Map<Integer, int[]> vis = new HashMap<>();
+        for (Map.Entry<Integer, int[]> e : currentChestConfig.entrySet()) {
+            if (isInventoryKey(e.getKey()))
+                vis.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue().clone());
+        }
+        Map<Integer, SlotWhitelist> fil = new HashMap<>();
+        for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
+            if (isInventoryKey(e.getKey())) fil.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue());
+        }
+        playerInventoryVisual = vis;
+        playerInventoryFilters = fil;
+        writeRawData(vis, fil, getInventoryFile());
+    }
+
+    /** Chest-only view of the working visual config (excludes mirrored inventory entries at offset keys). */
+    private Map<Integer, int[]> chestOnlyVisual() {
+        Map<Integer, int[]> out = new HashMap<>();
+        for (Map.Entry<Integer, int[]> e : currentChestConfig.entrySet()) {
+            if (!isInventoryKey(e.getKey())) out.put(e.getKey(), e.getValue());
+        }
+        return out;
+    }
+
+    /** Chest-only view of the working whitelists (excludes mirrored inventory entries at offset keys). */
+    public Map<Integer, SlotWhitelist> chestOnlyWhitelists() {
+        Map<Integer, SlotWhitelist> out = new HashMap<>();
+        for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
+            if (!isInventoryKey(e.getKey())) out.put(e.getKey(), e.getValue());
+        }
+        return out;
     }
 
     public void copyWhitelistsToClipboard() {

@@ -26,6 +26,12 @@ final class SeparatorDragCommitter {
         ChestConfigManager manager = ChestConfigManager.getInstance();
         boolean changeMade = false;
 
+        // The drag is confined to the namespace of its start slot (chest vs inventory); grid-computed
+        // slot indices are offset into that namespace, and slot-iteration loops skip the other side.
+        boolean playerNs = ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot);
+        int off = playerNs ? ChestConfigManager.PLAYER_KEY_OFFSET : 0;
+        int nsCount = editor.geometry.getNamespaceSlotCount(playerNs);
+
         if (session.currentTab == EditorSessionData.TAB_COMBO) {
             int colorToPaint = screen.getCurrentSelectedComboColorValue();
             boolean explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
@@ -48,23 +54,21 @@ final class SeparatorDragCommitter {
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                    if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
+                    int key = ChestSeparatorsEditor.slotKey(slot);
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (explicitEraser || session.isDragModeErasing) {
-                            manager.removeAction(slot.getIndex(), ChestConfigManager.ACTION_BG);
-                            manager.removeAction(slot.getIndex(), allLinesAction);
+                            manager.removeAction(key, ChestConfigManager.ACTION_BG);
+                            manager.removeAction(key, allLinesAction);
                         } else {
-                            manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BG, colorToPaint);
+                            manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
 
-                            if (r == minRow)
-                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_TOP, colorToPaint);
-                            if (r == maxRow)
-                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM, colorToPaint);
-                            if (c == minCol)
-                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_LEFT, colorToPaint);
-                            if (c == maxCol)
-                                manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_RIGHT, colorToPaint);
+                            if (r == minRow) manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
+                            if (r == maxRow) manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
+                            if (c == minCol) manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
+                            if (c == maxCol) manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
                         }
                         changeMade = true;
                     }
@@ -120,12 +124,14 @@ final class SeparatorDragCommitter {
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                    if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
+                    int key = ChestSeparatorsEditor.slotKey(slot);
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (explicitEraser || session.isDragModeErasing)
-                            manager.removeAction(slot.getIndex(), ChestConfigManager.ACTION_BG);
-                        else manager.paintAction(slot.getIndex(), ChestConfigManager.ACTION_BG, colorToPaint);
+                            manager.removeAction(key, ChestConfigManager.ACTION_BG);
+                        else manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
                         changeMade = true;
                     }
                 }
@@ -184,7 +190,7 @@ final class SeparatorDragCommitter {
                     if (xRightRaw % 2 != 0) xRightExp++;
                 }
 
-                int maxRows = editor.geometry.getContainerSlotCount() / 9;
+                int maxRows = nsCount / 9;
                 yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
                 yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
                 xLeftExp = Math.max(0, Math.min(17, xLeftExp));
@@ -198,7 +204,8 @@ final class SeparatorDragCommitter {
                         for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
                             for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
                                 int slotIdx = r * 9 + c;
-                                if (slotIdx >= editor.geometry.getContainerSlotCount()) continue;
+                                if (slotIdx >= nsCount) continue;
+                                int key = slotIdx + off;
 
                                 int topY = r * 2, botY = r * 2 + 1;
                                 int leftX = c * 2, rightX = c * 2 + 1;
@@ -207,13 +214,13 @@ final class SeparatorDragCommitter {
                                 boolean vInside = (topY >= yTopExp) && (botY <= yBotExp);
 
                                 if (hInside && topY >= yTopExp && topY <= yBotExp)
-                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_TOP);
+                                    manager.removeAction(key, ChestConfigManager.ACTION_TOP);
                                 if (hInside && botY >= yTopExp && botY <= yBotExp)
-                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_BOTTOM);
+                                    manager.removeAction(key, ChestConfigManager.ACTION_BOTTOM);
                                 if (vInside && leftX >= xLeftExp && leftX <= xRightExp)
-                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_LEFT);
+                                    manager.removeAction(key, ChestConfigManager.ACTION_LEFT);
                                 if (vInside && rightX >= xLeftExp && rightX <= xRightExp)
-                                    manager.removeAction(slotIdx, ChestConfigManager.ACTION_RIGHT);
+                                    manager.removeAction(key, ChestConfigManager.ACTION_RIGHT);
                             }
                         }
                     } else {
@@ -227,10 +234,10 @@ final class SeparatorDragCommitter {
                         int botRow = yBotExp / 2;
 
                         for (int c = fillMinCol; c <= fillMaxCol; c++) {
-                            if (topRow * 9 + c < editor.geometry.getContainerSlotCount())
-                                manager.paintAction(topRow * 9 + c, topAction, colorToPaint);
-                            if (botRow * 9 + c < editor.geometry.getContainerSlotCount())
-                                manager.paintAction(botRow * 9 + c, botAction, colorToPaint);
+                            if (topRow * 9 + c < nsCount)
+                                manager.paintAction(topRow * 9 + c + off, topAction, colorToPaint);
+                            if (botRow * 9 + c < nsCount)
+                                manager.paintAction(botRow * 9 + c + off, botAction, colorToPaint);
                         }
 
                         int fillMinRow = (yTopExp + 1) / 2;
@@ -243,18 +250,18 @@ final class SeparatorDragCommitter {
                         int rightCol = xRightExp / 2;
 
                         for (int r = fillMinRow; r <= fillMaxRow; r++) {
-                            if (r * 9 + leftCol < editor.geometry.getContainerSlotCount())
-                                manager.paintAction(r * 9 + leftCol, leftAction, colorToPaint);
-                            if (r * 9 + rightCol < editor.geometry.getContainerSlotCount())
-                                manager.paintAction(r * 9 + rightCol, rightAction, colorToPaint);
+                            if (r * 9 + leftCol < nsCount)
+                                manager.paintAction(r * 9 + leftCol + off, leftAction, colorToPaint);
+                            if (r * 9 + rightCol < nsCount)
+                                manager.paintAction(r * 9 + rightCol + off, rightAction, colorToPaint);
                         }
                     }
                     changeMade = true;
                 } else { // 1D Line
                     for (int r = minRow; r <= maxRow; r++) {
                         for (int c = minCol; c <= maxCol; c++) {
-                            if (erase) manager.removeAction(r * 9 + c, session.currentDragAction);
-                            else manager.paintAction(r * 9 + c, session.currentDragAction, colorToPaint);
+                            if (erase) manager.removeAction(r * 9 + c + off, session.currentDragAction);
+                            else manager.paintAction(r * 9 + c + off, session.currentDragAction, colorToPaint);
                         }
                     }
                     changeMade = true;

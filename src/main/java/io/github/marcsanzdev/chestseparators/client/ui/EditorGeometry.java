@@ -25,6 +25,17 @@ public class EditorGeometry {
         return count;
     }
 
+    /** Number of editable slots in one namespace (player inventory vs container), for grid bounds. */
+    public int getNamespaceSlotCount(boolean player) {
+        int count = 0;
+        for (Slot slot : accessor.getHandler().slots) {
+            if (ChestSeparatorsEditor.isEditableSlot(slot) && ChestSeparatorsEditor.isPlayerSlot(slot) == player) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public UUID getGroupIdForSlot(int slotIndex) {
         var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
         if (whitelists != null && whitelists.containsKey(slotIndex)) {
@@ -73,11 +84,15 @@ public class EditorGeometry {
                         (distLeft <= distRight) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
                 session.lockedLineCoord = (distLeft <= distRight) ? (guiX + hoverSlot.x) : (guiX + hoverSlot.x + 16);
                 session.lockedTraceRowCol = hoverSlot.getIndex() % 9;
-                return hoverSlot.getIndex() + "_" + session.lockedTraceAction;
+                return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
                 int col = hoverSlot.getIndex() % 9;
                 int correctSlotIndex = (session.lockedTraceRowCol * 9) + col;
-                return correctSlotIndex + "_" + session.lockedTraceAction;
+                return (correctSlotIndex
+                                + (ChestSeparatorsEditor.isPlayerSlot(hoverSlot)
+                                        ? ChestConfigManager.PLAYER_KEY_OFFSET
+                                        : 0))
+                        + "_" + session.lockedTraceAction;
             }
         } else if (session.lockedTraceAxis == 2) {
             // A pull of more than 7.5 px away from the locked vertical axis transitions to horizontal rail.
@@ -90,16 +105,20 @@ public class EditorGeometry {
                         (distTop <= distBottom) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
                 session.lockedLineCoord = (distTop <= distBottom) ? (guiY + hoverSlot.y) : (guiY + hoverSlot.y + 16);
                 session.lockedTraceRowCol = hoverSlot.getIndex() / 9;
-                return hoverSlot.getIndex() + "_" + session.lockedTraceAction;
+                return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
                 int row = hoverSlot.getIndex() / 9;
                 int correctSlotIndex = (row * 9) + session.lockedTraceRowCol;
-                return correctSlotIndex + "_" + session.lockedTraceAction;
+                return (correctSlotIndex
+                                + (ChestSeparatorsEditor.isPlayerSlot(hoverSlot)
+                                        ? ChestConfigManager.PLAYER_KEY_OFFSET
+                                        : 0))
+                        + "_" + session.lockedTraceAction;
             }
         }
 
         int action = calculateAction(hoverSlot, mouseX, mouseY);
-        return action == 0 ? "" : (hoverSlot.getIndex() + "_" + action);
+        return action == 0 ? "" : (ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + action);
     }
 
     public boolean isDraggingRectangle(double mouseX, double mouseY) {

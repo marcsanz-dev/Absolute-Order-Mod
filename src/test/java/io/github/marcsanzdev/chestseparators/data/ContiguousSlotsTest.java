@@ -32,7 +32,7 @@ class ContiguousSlotsTest {
 
     @Test
     void withNoSeparators_allSlotsAreContiguous() {
-        Set<Integer> result = manager.getContiguousSlots(0, MAX_SLOTS);
+        Set<Integer> result = manager.getContiguousSlots(0, 0, MAX_SLOTS);
         assertEquals(MAX_SLOTS, result.size());
     }
 
@@ -44,8 +44,8 @@ class ContiguousSlotsTest {
             manager.paintAction(9 + col, ACTION_TOP, RED);
         }
 
-        Set<Integer> topRegion = manager.getContiguousSlots(0, MAX_SLOTS);
-        Set<Integer> bottomRegion = manager.getContiguousSlots(9, MAX_SLOTS);
+        Set<Integer> topRegion = manager.getContiguousSlots(0, 0, MAX_SLOTS);
+        Set<Integer> bottomRegion = manager.getContiguousSlots(9, 0, MAX_SLOTS);
 
         // Top region (row 0, slots 0–8) must not reach row 1+
         assertEquals(9, topRegion.size());
@@ -64,7 +64,7 @@ class ContiguousSlotsTest {
         manager.paintAction(4, ACTION_RIGHT, RED);
         manager.paintAction(5, ACTION_LEFT, RED);
 
-        Set<Integer> leftRegion = manager.getContiguousSlots(0, MAX_SLOTS);
+        Set<Integer> leftRegion = manager.getContiguousSlots(0, 0, MAX_SLOTS);
         // The wall only covers row 0; rows 1–2 reconnect the two sides via the cells below.
         // So starting from slot 0 we expect to reach ALL slots (the region wraps around rows 1–2).
         // This verifies the BFS does NOT stop at the wall when there is a path around it.
@@ -79,17 +79,17 @@ class ContiguousSlotsTest {
         manager.paintAction(13, ACTION_LEFT, RED);
         manager.paintAction(13, ACTION_RIGHT, RED);
 
-        Set<Integer> isolated = manager.getContiguousSlots(13, MAX_SLOTS);
+        Set<Integer> isolated = manager.getContiguousSlots(13, 0, MAX_SLOTS);
         assertEquals(1, isolated.size());
         assertTrue(isolated.contains(13));
     }
 
     @Test
     void outOfBoundsStart_returnsEmptySet() {
-        Set<Integer> result = manager.getContiguousSlots(-1, MAX_SLOTS);
+        Set<Integer> result = manager.getContiguousSlots(-1, 0, MAX_SLOTS);
         assertTrue(result.isEmpty());
 
-        result = manager.getContiguousSlots(MAX_SLOTS, MAX_SLOTS);
+        result = manager.getContiguousSlots(MAX_SLOTS, 0, MAX_SLOTS);
         assertTrue(result.isEmpty());
     }
 }

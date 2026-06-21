@@ -65,7 +65,8 @@ final class SeparatorPreviewRenderer {
 
             if (tabMode == 1) {
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_BG)
                                 != 0) {
                     context.fill(x, y, x + 16, y + 16, colorBg);
                 }
@@ -74,39 +75,52 @@ final class SeparatorPreviewRenderer {
                     if ((action & ChestConfigManager.ACTION_TOP) != 0
                             && (!willErase
                                     || ChestConfigManager.getInstance()
-                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP)
+                                                    .getColor(
+                                                            ChestSeparatorsEditor.slotKey(slot),
+                                                            ChestConfigManager.ACTION_TOP)
                                             != 0)) context.fill(x - 1, y - 1, x + 17, y, colorLine);
                     if ((action & ChestConfigManager.ACTION_BOTTOM) != 0
                             && (!willErase
                                     || ChestConfigManager.getInstance()
-                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM)
+                                                    .getColor(
+                                                            ChestSeparatorsEditor.slotKey(slot),
+                                                            ChestConfigManager.ACTION_BOTTOM)
                                             != 0)) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
                     if ((action & ChestConfigManager.ACTION_LEFT) != 0
                             && (!willErase
                                     || ChestConfigManager.getInstance()
-                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT)
+                                                    .getColor(
+                                                            ChestSeparatorsEditor.slotKey(slot),
+                                                            ChestConfigManager.ACTION_LEFT)
                                             != 0)) context.fill(x - 1, y - 1, x, y + 17, colorLine);
                     if ((action & ChestConfigManager.ACTION_RIGHT) != 0
                             && (!willErase
                                     || ChestConfigManager.getInstance()
-                                                    .getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT)
+                                                    .getColor(
+                                                            ChestSeparatorsEditor.slotKey(slot),
+                                                            ChestConfigManager.ACTION_RIGHT)
                                             != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                 }
             } else {
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_BG)
                                 != 0) context.fill(x, y, x + 16, y + 16, colorBg);
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_TOP)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_TOP)
                                 != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_BOTTOM)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_BOTTOM)
                                 != 0) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_LEFT)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_LEFT)
                                 != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
                 if (!willErase
-                        || ChestConfigManager.getInstance().getColor(slot.getIndex(), ChestConfigManager.ACTION_RIGHT)
+                        || ChestConfigManager.getInstance()
+                                        .getColor(ChestSeparatorsEditor.slotKey(slot), ChestConfigManager.ACTION_RIGHT)
                                 != 0) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             }
         }
@@ -114,6 +128,9 @@ final class SeparatorPreviewRenderer {
 
     void renderDragPreview(DrawContext context, int mouseX, int mouseY) {
         if (!session.isDraggingLine) return;
+        // The live drag preview uses raw grid indices; skip it for inventory drags (offset keys) to
+        // avoid mismatched/out-of-range lookups. The actual paint still applies correctly on commit.
+        if (session.dragStartSlot != null && ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot)) return;
         int guiX = layout.guiX;
         int guiY = layout.guiY;
         int tabMode = session.currentTab;
@@ -158,7 +175,9 @@ final class SeparatorPreviewRenderer {
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (erase
                                 && ChestConfigManager.getInstance()
-                                                .getColor(slot.getIndex(), ChestConfigManager.ACTION_BG)
+                                                .getColor(
+                                                        ChestSeparatorsEditor.slotKey(slot),
+                                                        ChestConfigManager.ACTION_BG)
                                         == 0) continue;
                         context.fill(guiX + slot.x, guiY + slot.y, guiX + slot.x + 16, guiY + slot.y + 16, colorBg);
                     }
