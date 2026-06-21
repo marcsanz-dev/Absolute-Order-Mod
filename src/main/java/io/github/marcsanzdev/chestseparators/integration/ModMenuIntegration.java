@@ -95,6 +95,27 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.magnifier_enabled"),
+                            GlobalChestConfig.instance.magnifierEnabled)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.magnifier_enabled.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierEnabled = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startEnumSelector(
+                            Text.translatable("config.chestseparators.magnifier_shape"),
+                            GlobalChestConfig.MagnifierShape.class,
+                            GlobalChestConfig.instance.magnifierShape)
+                    .setDefaultValue(GlobalChestConfig.MagnifierShape.CIRCLE)
+                    .setEnumNameProvider(shape -> Text.translatable("config.chestseparators.magnifier_shape."
+                            + ((Enum<?>) shape).name().toLowerCase()))
+                    .setTooltip(Text.translatable("config.chestseparators.magnifier_shape.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierShape = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
                     .startIntSlider(
                             Text.translatable("config.chestseparators.bg_transparency"),
                             GlobalChestConfig.instance.bgTransparency,
@@ -179,6 +200,7 @@ public class ModMenuIntegration implements ModMenuApi {
 
             addKeyEntry.accept(ModKeyBindings.toggleButtonKey, "config.chestseparators.toggle_edit_buttons");
             addKeyEntry.accept(ModKeyBindings.toggleDepositButtonKey, "config.chestseparators.toggle_deposit_button");
+            addKeyEntry.accept(ModKeyBindings.toggleMagnifierKey, "config.chestseparators.toggle_magnifier");
             addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");
             addKeyEntry.accept(ModKeyBindings.showPanelModifierKey, "config.chestseparators.show_panel_modifier");
             addKeyEntry.accept(ModKeyBindings.depositFilterKey, "config.chestseparators.deposit_filter");

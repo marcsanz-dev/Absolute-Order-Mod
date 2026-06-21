@@ -24,7 +24,18 @@ public class KeyInputHandler {
             while (ModKeyBindings.toggleButtonKey.wasPressed()) toggleEditButtons(client);
             while (ModKeyBindings.openEditorKey.wasPressed()) togglePreviewPanel(client);
             while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) toggleDepositButton(client);
+            while (ModKeyBindings.toggleMagnifierKey.wasPressed()) toggleMagnifier(client);
         });
+    }
+
+    public static void toggleMagnifier(MinecraftClient client) {
+        GlobalChestConfig.instance.magnifierEnabled = !GlobalChestConfig.instance.magnifierEnabled;
+        GlobalChestConfig.saveConfig();
+        sendToggleMessage(
+                client,
+                GlobalChestConfig.instance.magnifierEnabled,
+                "message.chestseparators.magnifier_on",
+                "message.chestseparators.magnifier_off");
     }
 
     public static void toggleEditButtons(MinecraftClient client) {

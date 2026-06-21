@@ -119,6 +119,16 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 return;
             }
 
+            // The magnifier toggle works in any editor state, since it is used while painting.
+            if (this.client != null
+                    && input.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN
+                    && input.key() == boundKeyCode(ModKeyBindings.toggleMagnifierKey)) {
+                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleMagnifier(this.client);
+                this.editor.playClickSound(1.0f);
+                cir.setReturnValue(true);
+                return;
+            }
+
             // The same UI toggles available with the chest closed (deposit button, edit buttons,
             // preview panel) also work with the chest open, applied instantly. Only when no editor
             // sub-menu is active, so they don't clash with typing in search boxes.
@@ -139,6 +149,12 @@ public abstract class GenericContainerScreenMixin extends Screen {
                     }
                     if (key == boundKeyCode(ModKeyBindings.openEditorKey)) {
                         io.github.marcsanzdev.chestseparators.event.KeyInputHandler.togglePreviewPanel(this.client);
+                        this.editor.playClickSound(1.0f);
+                        cir.setReturnValue(true);
+                        return;
+                    }
+                    if (key == boundKeyCode(ModKeyBindings.toggleMagnifierKey)) {
+                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleMagnifier(this.client);
                         this.editor.playClickSound(1.0f);
                         cir.setReturnValue(true);
                         return;

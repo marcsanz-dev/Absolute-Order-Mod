@@ -18,6 +18,12 @@ public class GlobalChestConfig {
 
     public static ConfigData instance = new ConfigData();
 
+    /** Shape of the painting/eyedropper magnifier loupe. */
+    public enum MagnifierShape {
+        CIRCLE,
+        SQUARE
+    }
+
     public static class ConfigData {
         // --- CLIENT / VISUALS ---
         public boolean darkMode = true;
@@ -29,6 +35,9 @@ public class GlobalChestConfig {
         // When true, the custom-color column (third palette column) is shared across the Lines,
         // Backgrounds and Combo tabs. When false, each tab keeps its own custom colors.
         public boolean sharedCustomColors = true;
+        // Zoom loupe shown while painting separators or using the eyedropper.
+        public boolean magnifierEnabled = true;
+        public MagnifierShape magnifierShape = MagnifierShape.CIRCLE;
         public int bgTransparency = 40;
         public int lineTransparency = 100;
 

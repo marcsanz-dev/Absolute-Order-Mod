@@ -11,6 +11,7 @@ public class ModKeyBindings {
     public static KeyBinding showPanelModifierKey;
     public static KeyBinding toggleButtonKey;
     public static KeyBinding toggleDepositButtonKey;
+    public static KeyBinding toggleMagnifierKey;
     public static KeyBinding depositFilterKey;
     public static KeyBinding depositAllKey;
 
@@ -31,6 +32,9 @@ public class ModKeyBindings {
 
         toggleDepositButtonKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.chestseparators.toggle_deposit_button", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
+
+        toggleMagnifierKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.chestseparators.toggle_magnifier", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_L, CATEGORY));
 
         depositFilterKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.chestseparators.deposit_filter", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_S, CATEGORY));
