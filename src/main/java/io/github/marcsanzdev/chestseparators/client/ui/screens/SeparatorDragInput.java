@@ -4,7 +4,6 @@ import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 /**
@@ -28,7 +27,7 @@ final class SeparatorDragInput {
 
         if (session.isDraggingLine) {
             Slot slot = editor.accessor.getFocusedSlot();
-            if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
+            if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
                 session.dragCurrentSlot = slot;
 
                 int toolMode = (session.currentTab == 0)

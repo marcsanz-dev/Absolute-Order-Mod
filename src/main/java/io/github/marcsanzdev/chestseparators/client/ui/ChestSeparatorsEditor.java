@@ -20,6 +20,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.item.*;
@@ -97,6 +98,10 @@ public class ChestSeparatorsEditor {
 
     public void init() {
 
+        // Determine the editor target up-front so geometry/layout (which count the editable slots) are
+        // computed for the right slot set.
+        session.isPlayerInventory = this.screen instanceof InventoryScreen;
+
         this.layout = new EditorLayout();
         this.geometry = new EditorGeometry(session, accessor);
         this.layout.update(screen, accessor, getSidebarYOffset());
@@ -116,18 +121,24 @@ public class ChestSeparatorsEditor {
         this.screenEditFilter = new ScreenEditFilter(this);
         this.screenEditFilter.init();
 
-        session.currentChestPos = ChestPosStorage.lastClickedPos;
+        session.isPlayerInventory = this.screen instanceof InventoryScreen;
+
+        // For the player-inventory editor there is no container context: clear any stale chest data
+        // left in ChestPosStorage from the last container opened.
+        session.currentChestPos = session.isPlayerInventory ? null : ChestPosStorage.lastClickedPos;
         session.currentDimension = ChestPosStorage.lastClickedDimension;
-        session.isEntityChest = ChestPosStorage.isEntityOpened;
-        session.currentEntityUUID = ChestPosStorage.lastClickedEntityUUID;
+        session.isEntityChest = !session.isPlayerInventory && ChestPosStorage.isEntityOpened;
+        session.currentEntityUUID = session.isPlayerInventory ? null : ChestPosStorage.lastClickedEntityUUID;
         session.isEnderChest = false;
 
-        session.isShulkerBox = this.screen instanceof ShulkerBoxScreen;
-        session.currentShulkerUUID = ChestPosStorage.lastOpenedShulkerUUID;
+        session.isShulkerBox = !session.isPlayerInventory && this.screen instanceof ShulkerBoxScreen;
+        session.currentShulkerUUID = session.isPlayerInventory ? null : ChestPosStorage.lastOpenedShulkerUUID;
 
         ChestConfigManager.getInstance().loadWorldPalette();
 
-        if (session.isShulkerBox && session.currentShulkerUUID != null) {
+        if (session.isPlayerInventory) {
+            ChestConfigManager.getInstance().loadInventoryConfig();
+        } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
             ChestConfigManager.getInstance().loadShulkerConfig(session.currentShulkerUUID);
         } else if (session.isEntityChest && session.currentEntityUUID != null) {
             ChestConfigManager.getInstance().loadEntityConfig(session.currentEntityUUID);
@@ -388,6 +399,18 @@ public class ChestSeparatorsEditor {
         return session.currentState != EditorState.HIDDEN;
     }
 
+    /**
+     * Whether a slot is a target of the current editor: in chest mode the container slots (everything
+     * that is not the player inventory), in inventory mode the player's own inventory slots. This is
+     * the single inversion point that lets the same editor decorate either a container or the player
+     * inventory; in chest mode it is exactly equivalent to the previous {@code !(… PlayerInventory)}
+     * checks, so the chest editor behaviour is unchanged.
+     */
+    public static boolean isEditableSlot(Slot slot) {
+        boolean isPlayer = slot.inventory instanceof net.minecraft.entity.player.PlayerInventory;
+        return activeSession.isPlayerInventory ? isPlayer : !isPlayer;
+    }
+
     public void releaseLock() {
         if (hasEditorLock && session.currentChestPos != null) {
             if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
@@ -506,7 +529,7 @@ public class ChestSeparatorsEditor {
         saveSmart();
         syncClientInventoryWhitelists(whitelists);
         // Ender Chest and entity chests store filters locally only; only real block chests/shulkers sync to server.
-        if (!session.isEnderChest && !session.isEntityChest) {
+        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
             sendWhitelistToServer();
         }
     }
@@ -548,7 +571,9 @@ public class ChestSeparatorsEditor {
     }
 
     public void saveSmart() {
-        if (session.isShulkerBox && session.currentShulkerUUID != null) {
+        if (session.isPlayerInventory) {
+            ChestConfigManager.getInstance().saveInventoryConfig();
+        } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
             ChestConfigManager.getInstance().saveShulkerConfig(session.currentShulkerUUID);
         } else if (session.isEntityChest && session.currentEntityUUID != null) {
             ChestConfigManager.getInstance().saveEntityConfig(session.currentEntityUUID);
@@ -576,7 +601,7 @@ public class ChestSeparatorsEditor {
             return;
         }
         saveSmart();
-        if (!session.isEnderChest && !session.isEntityChest) {
+        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
             sendWhitelistToServer();
         }
         syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());

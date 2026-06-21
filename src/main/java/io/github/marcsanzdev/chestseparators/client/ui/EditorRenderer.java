@@ -9,7 +9,6 @@ import java.util.Map;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
@@ -42,7 +41,8 @@ public class EditorRenderer {
         editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
         boolean showButton = GlobalChestConfig.instance.showEditButtons;
-        boolean showDeposit = GlobalChestConfig.instance.showDepositButton;
+        // No deposit button when editing the player inventory (you don't deposit into your own inventory).
+        boolean showDeposit = GlobalChestConfig.instance.showDepositButton && !session.isPlayerInventory;
 
         boolean hideInFilter = (session.currentState == EditorState.EDIT_FILTER);
         boolean hideVanilla = session.isColorPickerOpen || hideInFilter || session.hasSelectionConflict;
@@ -151,7 +151,7 @@ public class EditorRenderer {
         int alpha = a << 24;
 
         for (Slot s : accessor.getHandler().slots) {
-            if (s.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
             ChestConfigManager.SlotChange ch = editor.undoHighlights.get(s.getIndex());
             if (ch == null) continue;
             int color = (undoHighlightColor(ch) & 0x00FFFFFF) | alpha;
@@ -185,7 +185,7 @@ public class EditorRenderer {
         boolean clearBg = previewActive && (session.clearPreviewTab == 1 || session.clearPreviewTab == 2);
 
         for (Slot s : accessor.getHandler().slots) {
-            if (s.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
 
             int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
             if (bgColor != 0) {
@@ -273,7 +273,10 @@ public class EditorRenderer {
                 || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
 
         boolean hover = false;
-        if (!editor.isEditMode() && GlobalChestConfig.instance.showDepositButton && editor.depositButton != null) {
+        if (!editor.isEditMode()
+                && GlobalChestConfig.instance.showDepositButton
+                && !session.isPlayerInventory
+                && editor.depositButton != null) {
             editor.depositButton.tooltipText = shift
                     ? Text.translatable("key.chestseparators.deposit_all").getString()
                     : Text.translatable("key.chestseparators.deposit_filter").getString();
@@ -443,7 +446,7 @@ public class EditorRenderer {
         int guiY = accessor.getY();
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
         for (Slot s : accessor.getHandler().slots) {
-            if (s.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
             minX = Math.min(minX, guiX + s.x);
             minY = Math.min(minY, guiY + s.y);
             maxX = Math.max(maxX, guiX + s.x + 16);

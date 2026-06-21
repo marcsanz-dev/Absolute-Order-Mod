@@ -6,7 +6,6 @@ import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 /**
@@ -31,7 +30,7 @@ final class SeparatorPreviewRenderer {
 
     void renderHoverPreview(DrawContext context, int mouseX, int mouseY) {
         Slot slot = editor.accessor.getFocusedSlot();
-        if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
+        if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
             int tabMode = session.currentTab;
             int action = (tabMode == 2 || tabMode == 1)
                     ? ChestConfigManager.ACTION_BG
@@ -153,7 +152,7 @@ final class SeparatorPreviewRenderer {
                 int minCol = Math.min(startCol, currCol);
                 int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (slot.inventory instanceof PlayerInventory) continue;
+                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
@@ -184,7 +183,7 @@ final class SeparatorPreviewRenderer {
                 int minCol = Math.min(startCol, currCol);
                 int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (slot.inventory instanceof PlayerInventory) continue;
+                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                     int slotIdx = slot.getIndex();
                     int r = slotIdx / 9;
                     int c = slotIdx % 9;

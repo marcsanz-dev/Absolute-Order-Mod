@@ -7,7 +7,6 @@ import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
@@ -42,7 +41,7 @@ final class DrawLinesClickHandler {
 
         if (button == 0) {
             Slot slot = editor.accessor.getFocusedSlot();
-            if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
+            if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
                 int action = geometry.calculateAction(slot, mouseX, mouseY);
 
                 if (session.currentTab == 1 || session.currentTab == 2) {

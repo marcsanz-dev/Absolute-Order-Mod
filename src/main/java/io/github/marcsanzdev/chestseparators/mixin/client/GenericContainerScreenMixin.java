@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HorseScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
@@ -43,6 +44,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
         // HorseScreen is allowed for donkeys, mules, llamas, and alpacas (entities with cargo slots).
         boolean isValidScreen = (Object) this instanceof GenericContainerScreen
                 || (Object) this instanceof ShulkerBoxScreen
+                || (Object) this instanceof InventoryScreen
                 || isHorseScreenWithCargo();
 
         if (!isValidScreen) return;

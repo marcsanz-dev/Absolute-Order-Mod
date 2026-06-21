@@ -3,7 +3,6 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 /**
@@ -48,7 +47,7 @@ final class SeparatorDragCommitter {
                 int maxCol = Math.max(startCol, currCol);
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (slot.inventory instanceof PlayerInventory) continue;
+                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
@@ -120,7 +119,7 @@ final class SeparatorDragCommitter {
                 int maxCol = Math.max(sCol, cCol);
 
                 for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (slot.inventory instanceof PlayerInventory) continue;
+                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {

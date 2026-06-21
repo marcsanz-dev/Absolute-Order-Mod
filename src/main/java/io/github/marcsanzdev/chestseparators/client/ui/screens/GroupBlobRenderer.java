@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 /**
@@ -71,7 +70,7 @@ final class GroupBlobRenderer {
             int maxCol = Math.max(sCol, cCol);
 
             for (Slot slot : editor.accessor.getHandler().slots) {
-                if (slot.inventory instanceof PlayerInventory) continue;
+                if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                 int r = slot.getIndex() / 9;
                 int c = slot.getIndex() % 9;
                 if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
@@ -86,7 +85,7 @@ final class GroupBlobRenderer {
         }
 
         for (Slot slot : editor.accessor.getHandler().slots) {
-            if (slot.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
             int idx = slot.getIndex();
 
             boolean hasWhitelist = whitelists != null && whitelists.containsKey(idx);
@@ -184,7 +183,7 @@ final class GroupBlobRenderer {
         for (int slotIdx : groupSlots) {
             if (slotIdx >= editor.accessor.getHandler().slots.size()) continue;
             Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
-            if (slot.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
             int x = guiX + slot.x;
             int y = guiY + slot.y;

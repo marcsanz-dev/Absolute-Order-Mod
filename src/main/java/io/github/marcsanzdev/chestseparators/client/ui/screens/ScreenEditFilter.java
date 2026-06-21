@@ -294,7 +294,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     session.ruleHopper = !session.ruleHopper;
                     editor.playClickSound(1.0f);
                 });
-        if (!session.isEnderChest && !session.isEntityChest)
+        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory)
             btnHopper.tooltipText = session.ruleHopper
                     ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
                             .getString()
@@ -524,9 +524,9 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                         .getString();
 
         widgets.get(5).isActive = session.ruleHopper;
-        widgets.get(5).isDisabled = session.isEnderChest || session.isEntityChest;
+        widgets.get(5).isDisabled = session.isEnderChest || session.isEntityChest || session.isPlayerInventory;
 
-        if (!session.isEnderChest && !session.isEntityChest) {
+        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
             widgets.get(5).tooltipText = session.ruleHopper
                     ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
                             .getString()

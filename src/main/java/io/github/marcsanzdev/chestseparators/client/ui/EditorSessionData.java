@@ -98,6 +98,9 @@ public class EditorSessionData {
     // Context
     public BlockPos currentChestPos;
     public String currentDimension;
+    // True when the editor targets the player's own inventory slots (decorations + filters) instead of
+    // a container's slots. Stored as a global/per-world profile rather than per-position.
+    public boolean isPlayerInventory = false;
     public boolean isEnderChest = false;
     public boolean isEntityChest = false;
     public UUID currentEntityUUID;

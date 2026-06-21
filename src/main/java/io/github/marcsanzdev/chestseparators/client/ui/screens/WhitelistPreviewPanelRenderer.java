@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
@@ -52,7 +51,7 @@ final class WhitelistPreviewPanelRenderer {
 
         Slot hoveredSlot = null;
         for (Slot slot : editor.accessor.getHandler().slots) {
-            if (!(slot.inventory instanceof PlayerInventory)
+            if (ChestSeparatorsEditor.isEditableSlot(slot)
                     && editor.isHovering(guiX + slot.x - 1, guiY + slot.y - 1, 18, 18, mouseX, mouseY)) {
                 hoveredSlot = slot;
                 break;

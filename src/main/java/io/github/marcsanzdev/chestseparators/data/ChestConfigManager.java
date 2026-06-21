@@ -967,14 +967,33 @@ public class ChestConfigManager {
         return playerInventoryFilters;
     }
 
+    /** Loads the inventory profile into the editor's working config (like {@link #loadEnderConfig}). */
     public void loadInventoryConfig() {
+        clearCurrentConfig();
+        currentWhitelists.clear();
+        RawData data = readRawData(getInventoryFile());
+        currentChestConfig.putAll(data.visual);
+        currentWhitelists.putAll(data.filters);
+        refreshInventoryRenderCache();
+    }
+
+    /** Persists the editor's working config to the inventory profile and refreshes the render cache. */
+    public void saveInventoryConfig() {
+        writeRawData(currentChestConfig, currentWhitelists, getInventoryFile());
+        refreshInventoryRenderCache();
+    }
+
+    /** Reads the inventory profile straight into the render cache (for the all-screens overlay), without
+     * touching the editor's working config. Call on world join. */
+    public void loadInventoryRenderCache() {
         RawData data = readRawData(getInventoryFile());
         playerInventoryVisual = data.visual;
         playerInventoryFilters = data.filters;
     }
 
-    public void saveInventoryConfig() {
-        writeRawData(playerInventoryVisual, playerInventoryFilters, getInventoryFile());
+    private void refreshInventoryRenderCache() {
+        playerInventoryVisual = copyVisualConfig(currentChestConfig);
+        playerInventoryFilters = copyWhitelists(currentWhitelists);
     }
 
     public void copyWhitelistsToClipboard() {

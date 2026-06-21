@@ -10,7 +10,6 @@ import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 /**
@@ -66,7 +65,7 @@ final class ViewGroupsClickHandler {
                 && (session.currentState == EditorState.VIEW_GROUPS
                         || session.currentState == EditorState.SELECT_SLOTS)) {
             Slot slot = editor.accessor.getFocusedSlot();
-            if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
+            if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
                 java.util.UUID groupId = editor.geometry.getGroupIdForSlot(slot.getIndex());
                 long now = System.currentTimeMillis();
                 boolean isDoubleClick =

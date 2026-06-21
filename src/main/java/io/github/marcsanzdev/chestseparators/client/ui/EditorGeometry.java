@@ -3,7 +3,6 @@ package io.github.marcsanzdev.chestseparators.client.ui;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
 import java.util.UUID;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 
 public class EditorGeometry {
@@ -19,7 +18,7 @@ public class EditorGeometry {
     public int getContainerSlotCount() {
         int count = 0;
         for (Slot slot : accessor.getHandler().slots) {
-            if (!(slot.inventory instanceof PlayerInventory)) {
+            if (ChestSeparatorsEditor.isEditableSlot(slot)) {
                 count++;
             }
         }

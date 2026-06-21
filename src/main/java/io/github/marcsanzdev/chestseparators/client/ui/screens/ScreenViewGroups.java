@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -366,7 +365,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS) {
             if (session.isDraggingLine) {
                 Slot slot = editor.accessor.getFocusedSlot();
-                if (slot != null && !(slot.inventory instanceof PlayerInventory)) {
+                if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
                     session.dragCurrentSlot = slot;
 
                     // Trace mode: immediately commit each slot as the cursor moves.
@@ -398,7 +397,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 int maxCol = Math.max(sCol, cCol);
 
                 for (Slot s : editor.accessor.getHandler().slots) {
-                    if (s.inventory instanceof PlayerInventory) continue;
+                    if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
                     int r = s.getIndex() / 9;
                     int c = s.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
@@ -521,7 +520,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         int guiY = layout.guiY;
 
         for (Slot slot : editor.accessor.getHandler().slots) {
-            if (slot.inventory instanceof PlayerInventory) continue;
+            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
             if (session.selectedSlots.contains(slot.getIndex())) {
                 context.fill(guiX + slot.x, guiY + slot.y, guiX + slot.x + 16, guiY + slot.y + 16, 0x7733FF33);
