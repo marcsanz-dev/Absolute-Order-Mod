@@ -34,10 +34,6 @@ public final class MagnifierRenderer {
         int loupeR = BASE_LOUPE_R;
         int gap = BASE_GAP;
         int ring = BASE_RING;
-        // Cursor marker: its hole equals the captured square exactly, so what is inside the marker is
-        // precisely what the big loupe magnifies (no mismatch).
-        int markerInner = srcHalf;
-        int markerOuter = srcHalf + 3;
 
         double scale = client.getWindow().getScaleFactor();
         int fbW = client.getWindow().getFramebufferWidth();
@@ -65,10 +61,10 @@ public final class MagnifierRenderer {
         // Place the loupe up-right of the cursor, flipping to stay on screen.
         int sw = client.getWindow().getScaledWidth();
         int sh = client.getWindow().getScaledHeight();
-        int loupeCx = cursorX + gap + markerOuter + loupeR;
-        int loupeCy = cursorY - gap - markerOuter - loupeR;
-        if (loupeCx + loupeR + 2 > sw) loupeCx = cursorX - gap - markerOuter - loupeR;
-        if (loupeCy - loupeR - 2 < 0) loupeCy = cursorY + gap + markerOuter + loupeR;
+        int loupeCx = cursorX + gap + loupeR;
+        int loupeCy = cursorY - gap - loupeR;
+        if (loupeCx + loupeR + 2 > sw) loupeCx = cursorX - gap - loupeR;
+        if (loupeCy - loupeR - 2 < 0) loupeCy = cursorY + gap + loupeR;
         loupeCy = clamp(loupeCy, loupeR + 2, sh - loupeR - 2);
 
         float cell = (loupeR * 2f) / blockFb;
@@ -102,14 +98,8 @@ public final class MagnifierRenderer {
         int half = Math.max(1, Math.round(cell / 2f));
         context.drawStrokedRectangle(loupeCx - half, loupeCy - half, half * 2, half * 2, 0xFFFFFFFF);
 
-        // Cursor marker (hole = captured area) + connector lines hugging the outer edges.
-        if (circle) {
-            drawRingFrame(context, cursorX, cursorY, markerInner, markerOuter, 0xDDFFFFFF);
-            drawCircleConnectors(context, cursorX, cursorY, markerOuter, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
-        } else {
-            drawSquareFrame(context, cursorX, cursorY, markerInner, markerOuter, 0xDDFFFFFF);
-            drawSquareConnectors(context, cursorX, cursorY, markerOuter, loupeCx, loupeCy, loupeR, 0xCCFFFFFF);
-        }
+        // No cursor marker or connector lines: under the deferred GUI rendering they would be sampled
+        // back into the loupe (ghosted/smeared), so the loupe shows only real chest content.
     }
 
     private static int clamp(int v, int lo, int hi) {
@@ -164,77 +154,5 @@ public final class MagnifierRenderer {
         context.fill(cx - rOuter, cy + rInner, cx + rOuter, cy + rOuter, color);
         context.fill(cx - rOuter, cy - rInner, cx - rInner, cy + rInner, color);
         context.fill(cx + rInner, cy - rInner, cx + rOuter, cy + rInner, color);
-    }
-
-    /** Two external tangent lines between the cursor circle and the loupe circle (never cross either). */
-    private static void drawCircleConnectors(
-            DrawContext context, int cursorX, int cursorY, int r1, int loupeCx, int loupeCy, int r2, int color) {
-        double d = Math.hypot(loupeCx - cursorX, loupeCy - cursorY);
-        if (d < 1) return;
-        double vx = (loupeCx - cursorX) / d;
-        double vy = (loupeCy - cursorY) / d;
-        double c = (double) (r1 - r2) / d;
-        double h = Math.sqrt(Math.max(0, 1 - c * c));
-        for (int s = -1; s <= 1; s += 2) {
-            double nx = vx * c - s * h * vy;
-            double ny = vy * c + s * h * vx;
-            drawLineAA(context, cursorX + r1 * nx, cursorY + r1 * ny, loupeCx + r2 * nx, loupeCy + r2 * ny, color);
-        }
-    }
-
-    /** Two lines joining the outer corners of the cursor square and the loupe square (never cross them). */
-    private static void drawSquareConnectors(
-            DrawContext context, int cursorX, int cursorY, int r1, int loupeCx, int loupeCy, int r2, int color) {
-        double dx = loupeCx - cursorX;
-        double dy = loupeCy - cursorY;
-        double len = Math.hypot(dx, dy);
-        if (len < 1) return;
-        // Perpendicular to the cursor→loupe axis; corners along it are the outermost ones.
-        int sgnx = (-dy) >= 0 ? 1 : -1;
-        int sgny = dx >= 0 ? 1 : -1;
-        drawLineAA(context, cursorX + r1 * sgnx, cursorY + r1 * sgny, loupeCx + r2 * sgnx, loupeCy + r2 * sgny, color);
-        drawLineAA(context, cursorX - r1 * sgnx, cursorY - r1 * sgny, loupeCx - r2 * sgnx, loupeCy - r2 * sgny, color);
-    }
-
-    /** Xiaolin Wu antialiased line. */
-    private static void drawLineAA(DrawContext context, double x0, double y0, double x1, double y1, int color) {
-        int rgb = color & 0x00FFFFFF;
-        int baseA = (color >>> 24) & 0xFF;
-        boolean steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
-        if (steep) {
-            double t = x0;
-            x0 = y0;
-            y0 = t;
-            t = x1;
-            x1 = y1;
-            y1 = t;
-        }
-        if (x0 > x1) {
-            double t = x0;
-            x0 = x1;
-            x1 = t;
-            t = y0;
-            y0 = y1;
-            y1 = t;
-        }
-        double dx = x1 - x0;
-        double dy = y1 - y0;
-        double gradient = dx == 0 ? 1.0 : dy / dx;
-        double intery = y0 + gradient * (Math.round(x0) - x0) + gradient;
-        for (int x = (int) Math.round(x0); x <= (int) Math.round(x1); x++) {
-            int yy = (int) Math.floor(intery);
-            double f = intery - yy;
-            plot(context, steep, x, yy, (1 - f) * baseA, rgb);
-            plot(context, steep, x, yy + 1, f * baseA, rgb);
-            intery += gradient;
-        }
-    }
-
-    private static void plot(DrawContext context, boolean steep, int a, int b, double alpha, int rgb) {
-        int ai = (int) Math.round(alpha);
-        if (ai <= 0) return;
-        int x = steep ? b : a;
-        int y = steep ? a : b;
-        context.fill(x, y, x + 1, y + 1, (ai << 24) | rgb);
     }
 }
