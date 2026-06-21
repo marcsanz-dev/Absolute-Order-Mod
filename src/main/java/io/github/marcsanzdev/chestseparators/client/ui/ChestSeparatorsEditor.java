@@ -456,6 +456,38 @@ public class ChestSeparatorsEditor {
         return null;
     }
 
+    /**
+     * Slots in the filter under edit that restrict which items they accept (armor slots). Normal,
+     * hotbar and offhand slots accept anything, so they never appear here. Recomputed each time the
+     * filter editor opens; used to limit the item picker to equippable items for armor filters.
+     */
+    private final java.util.List<Slot> filterConstraintSlots = new java.util.ArrayList<>();
+
+    /** Detects which of the filter's selected slots are restrictive (reject a non-equippable sentinel). */
+    public void recomputeFilterConstraints() {
+        filterConstraintSlots.clear();
+        ItemStack sentinel = new ItemStack(Items.STONE);
+        for (int key : session.selectedSlots) {
+            Slot s = slotForKey(key);
+            if (s != null && !s.canInsert(sentinel)) {
+                filterConstraintSlots.add(s);
+            }
+        }
+    }
+
+    /**
+     * Whether an item may be added to the filter currently being edited. Always true unless the
+     * filter targets armor slots, in which case only items equippable in every such slot pass.
+     */
+    public boolean isItemAllowedForFilter(Item item) {
+        if (filterConstraintSlots.isEmpty()) return true;
+        ItemStack stack = new ItemStack(item);
+        for (Slot s : filterConstraintSlots) {
+            if (!s.canInsert(stack)) return false;
+        }
+        return true;
+    }
+
     public void releaseLock() {
         if (hasEditorLock && session.currentChestPos != null) {
             if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
@@ -522,7 +554,6 @@ public class ChestSeparatorsEditor {
         session.ruleHopper = GlobalChestConfig.instance.defaultRuleHopper;
         session.gridScrollY = 0f;
         session.listScrollY = 0f;
-        resetToDefaultCreativeTab();
 
         if (session.selectedGroupId != null) {
             var whitelists = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
@@ -553,6 +584,8 @@ public class ChestSeparatorsEditor {
                 }
             }
         }
+        recomputeFilterConstraints();
+        resetToDefaultCreativeTab();
         updateWhitelistSearchCache();
     }
 
@@ -878,7 +911,9 @@ public class ChestSeparatorsEditor {
 
         if (activeTab.isCustomChestTab) {
             buildCustomChestTab();
-            session.filteredItems.addAll(session.customChestItems);
+            for (Item item : session.customChestItems) {
+                if (isItemAllowedForFilter(item)) session.filteredItems.add(item);
+            }
         } else if (activeTab.isSearchTab) {
             boolean isSearching =
                     this.searchBox != null && !this.searchBox.getText().isEmpty();
@@ -896,7 +931,9 @@ public class ChestSeparatorsEditor {
                 if (displayStacks != null) {
                     for (ItemStack stack : displayStacks) {
                         Item item = stack.getItem();
-                        if (!session.filteredItems.contains(item) && isItemAllowedInMenu(item)) {
+                        if (!session.filteredItems.contains(item)
+                                && isItemAllowedInMenu(item)
+                                && isItemAllowedForFilter(item)) {
                             if (isSearching) {
                                 boolean matches = false;
                                 if (lowerQuery.startsWith("#")) {
@@ -928,7 +965,9 @@ public class ChestSeparatorsEditor {
             if (displayStacks != null && !displayStacks.isEmpty()) {
                 for (ItemStack stack : displayStacks) {
                     Item item = stack.getItem();
-                    if (!session.filteredItems.contains(item) && isItemAllowedInMenu(item)) {
+                    if (!session.filteredItems.contains(item)
+                            && isItemAllowedInMenu(item)
+                            && isItemAllowedForFilter(item)) {
                         session.filteredItems.add(item);
                     }
                 }

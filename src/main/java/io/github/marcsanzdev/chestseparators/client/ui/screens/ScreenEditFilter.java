@@ -186,6 +186,10 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                         }
                     } else {
                         List<String> extracted = editor.extractItemsFromSelection();
+                        extracted.removeIf(id -> {
+                            Item it = Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(id));
+                            return it != null && !editor.isItemAllowedForFilter(it);
+                        });
                         if (!extracted.isEmpty()) {
                             session.currentAllowedItems.addAll(extracted);
                             editor.playClickSound(1.2f);
@@ -215,8 +219,9 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
                     session.currentAllowedItems.clear();
                     for (Item item : session.allGameItems)
-                        session.currentAllowedItems.add(
-                                Registries.ITEM.getId(item).toString());
+                        if (editor.isItemAllowedForFilter(item))
+                            session.currentAllowedItems.add(
+                                    Registries.ITEM.getId(item).toString());
                     editor.playClickSound(1.0f);
                     session.forceStopPreview = true;
                     session.isPreviewing = false;
