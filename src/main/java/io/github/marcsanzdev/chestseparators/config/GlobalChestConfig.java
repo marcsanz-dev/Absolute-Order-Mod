@@ -70,6 +70,9 @@ public class GlobalChestConfig {
         // separate, independent inventory profile (e.g. a modded world without disturbing survival).
         public boolean inventoryDecorPerWorld = false;
 
+        // How many inventory preset slots are available (bound to number keys 1-9 in the editor).
+        public int inventoryPresetCount = 9;
+
         // --- SERVER / MECHANICS ---
         public boolean defaultRuleManual = true;
         public boolean defaultRuleShift = true;

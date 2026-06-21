@@ -674,6 +674,27 @@ public class ChestSeparatorsEditor {
         io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
     }
 
+    /** Loads inventory preset {@code index} (1-based) into the live editor, or reports it is empty. */
+    public void loadInventoryPresetSlot(int index) {
+        ChestConfigManager manager = ChestConfigManager.getInstance();
+        if (!manager.loadInventoryPreset(index)) {
+            showStatus(Text.translatable("message.chestseparators.preset_empty", index), Formatting.RED);
+            playClickSound(0.6f);
+            return;
+        }
+        saveSmart();
+        syncClientInventoryWhitelists(manager.getCurrentWhitelists());
+        showStatus(Text.translatable("message.chestseparators.preset_loaded", index), Formatting.GREEN);
+        playClickSound(1.1f);
+    }
+
+    /** Saves the current inventory layout + filters into preset {@code index} (1-based). */
+    public void saveInventoryPresetSlot(int index) {
+        ChestConfigManager.getInstance().saveInventoryPreset(index);
+        showStatus(Text.translatable("message.chestseparators.preset_saved", index), Formatting.GREEN);
+        playClickSound(1.2f);
+    }
+
     public void triggerActionAnimation(int actionId) {
         session.clickedActionId = actionId;
         session.clickedActionTime = System.currentTimeMillis();

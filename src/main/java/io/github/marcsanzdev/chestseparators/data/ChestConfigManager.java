@@ -1054,6 +1054,57 @@ public class ChestConfigManager {
         writeRawData(vis, fil, getInventoryFile());
     }
 
+    private static final String INVENTORY_PRESET_PREFIX = "inventory_preset_";
+
+    /** File backing inventory preset slot {@code index}, following the same global/per-world choice. */
+    private Path getInventoryPresetFile(int index) {
+        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
+                ? getWorldConfigDir()
+                : getGlobalConfigDir();
+        return dir.resolve(INVENTORY_PRESET_PREFIX + index + ".json");
+    }
+
+    /** Whether inventory preset slot {@code index} has been saved. */
+    public boolean inventoryPresetExists(int index) {
+        return Files.exists(getInventoryPresetFile(index));
+    }
+
+    /** Saves the inventory portion currently in the working maps into preset slot {@code index}. */
+    public void saveInventoryPreset(int index) {
+        Map<Integer, int[]> vis = new HashMap<>();
+        for (Map.Entry<Integer, int[]> e : currentChestConfig.entrySet()) {
+            if (isInventoryKey(e.getKey()))
+                vis.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue().clone());
+        }
+        Map<Integer, SlotWhitelist> fil = new HashMap<>();
+        for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
+            if (isInventoryKey(e.getKey())) fil.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue());
+        }
+        writeRawData(vis, fil, getInventoryPresetFile(index));
+    }
+
+    /**
+     * Loads inventory preset slot {@code index} as the active inventory profile and mirrors it into the
+     * working maps (so an open editor reflects it immediately). Returns false if the slot is empty.
+     */
+    public boolean loadInventoryPreset(int index) {
+        Path f = getInventoryPresetFile(index);
+        if (!Files.exists(f)) return false;
+        RawData data = readRawData(f);
+        playerInventoryVisual = data.visual;
+        playerInventoryFilters = data.filters;
+        for (int[] colors : playerInventoryVisual.values()) {
+            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
+                if (colors[si] > paintSequence) paintSequence = colors[si];
+            }
+        }
+        currentChestConfig.keySet().removeIf(ChestConfigManager::isInventoryKey);
+        currentWhitelists.keySet().removeIf(ChestConfigManager::isInventoryKey);
+        mirrorInventoryIntoCurrent();
+        writeRawData(playerInventoryVisual, playerInventoryFilters, getInventoryFile());
+        return true;
+    }
+
     /** Chest-only view of the working visual config (excludes mirrored inventory entries at offset keys). */
     private Map<Integer, int[]> chestOnlyVisual() {
         Map<Integer, int[]> out = new HashMap<>();
