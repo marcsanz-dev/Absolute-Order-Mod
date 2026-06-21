@@ -1,12 +1,22 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.mixin.client.ChestLidAccessor;
 import io.github.marcsanzdev.chestseparators.network.AutoDepositResultPayload;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.ChestLidAnimator;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.client.render.Camera;
@@ -18,10 +28,14 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.HeldItemContext;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -63,8 +77,21 @@ public final class AutoDepositAnimator {
     private static final long TRAIL_INTERVAL_MS = 110L;
     private static final int FULL_BRIGHT = 0xF000F0;
 
+    // How long a destination chest stays open after its last item lands, before the lid closes.
+    private static final long CHEST_DWELL_MS = 250L;
+
+    /** A chest whose lid we forced open: when to close it, and whether it should play open/close sounds. */
+    private static final class ChestOpen {
+        long closeAt;
+        boolean sound;
+    }
+
+    /** Chests (and double-chest neighbours) currently held open by the animation, client-side only. */
+    private static final Map<BlockPos, ChestOpen> OPEN_CHESTS = new HashMap<>();
+
     public static void register() {
         WorldRenderEvents.AFTER_ENTITIES.register(AutoDepositAnimator::onWorldRender);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> tickChests());
     }
 
     /** Queues animations for a completed auto-deposit. Called on the client thread from networking. */
@@ -97,12 +124,99 @@ public final class AutoDepositAnimator {
         Vec3d source = new Vec3d(client.player.getX(), client.player.getY() + 1.0, client.player.getZ());
         long now = System.currentTimeMillis();
 
+        // Track, per destination chest, when its last item arrives so we know when to close the lid.
+        Map<BlockPos, Long> lastArrival = new HashMap<>();
         int index = 0;
         for (AutoDepositResultPayload.Flight flight : flights) {
+            long startTime = now + (long) index * STAGGER_MS;
             Vec3d target = Vec3d.ofCenter(flight.target());
-            FLIGHTS.add(new FlyingItem(flight.stack(), source, target, now + (long) index * STAGGER_MS));
+            FLIGHTS.add(new FlyingItem(flight.stack(), source, target, startTime));
+            lastArrival.merge(flight.target(), startTime + DURATION_MS, Math::max);
             index++;
         }
+
+        // Pop the lid of every destination chest so the player sees where items are headed.
+        ClientWorld world = client.world;
+        if (world != null) {
+            for (Map.Entry<BlockPos, Long> entry : lastArrival.entrySet()) {
+                openChest(world, entry.getKey(), entry.getValue() + CHEST_DWELL_MS);
+            }
+        }
+    }
+
+    private static void openChest(ClientWorld world, BlockPos pos, long closeAt) {
+        ChestLidAnimator animator = lidAnimatorAt(world, pos);
+        if (animator == null) return; // barrels/shulkers have no lid animator — skip silently
+
+        boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
+        animator.setOpen(true);
+        markOpen(pos, closeAt, true);
+        if (firstOpen) playChestSound(world, pos, SoundEvents.BLOCK_CHEST_OPEN);
+
+        // Open the other half of a double chest in sync (silently, so the sound plays once).
+        BlockPos neighbor = doubleNeighbor(world, pos);
+        if (neighbor != null) {
+            ChestLidAnimator neighborAnimator = lidAnimatorAt(world, neighbor);
+            if (neighborAnimator != null) {
+                neighborAnimator.setOpen(true);
+                markOpen(neighbor, closeAt, false);
+            }
+        }
+    }
+
+    private static void markOpen(BlockPos pos, long closeAt, boolean sound) {
+        ChestOpen state = OPEN_CHESTS.computeIfAbsent(pos, k -> new ChestOpen());
+        state.closeAt = Math.max(state.closeAt, closeAt);
+        state.sound = state.sound || sound;
+    }
+
+    private static void tickChests() {
+        if (OPEN_CHESTS.isEmpty()) return;
+        ClientWorld world = MinecraftClient.getInstance().world;
+        if (world == null) {
+            OPEN_CHESTS.clear();
+            return;
+        }
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<BlockPos, ChestOpen>> it = OPEN_CHESTS.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<BlockPos, ChestOpen> entry = it.next();
+            if (now < entry.getValue().closeAt) continue;
+            ChestLidAnimator animator = lidAnimatorAt(world, entry.getKey());
+            if (animator != null) animator.setOpen(false);
+            if (entry.getValue().sound) playChestSound(world, entry.getKey(), SoundEvents.BLOCK_CHEST_CLOSE);
+            it.remove();
+        }
+    }
+
+    private static ChestLidAnimator lidAnimatorAt(ClientWorld world, BlockPos pos) {
+        BlockEntity be = world.getBlockEntity(pos);
+        if (be instanceof ChestBlockEntity && be instanceof ChestLidAccessor accessor) {
+            return accessor.getLidAnimator();
+        }
+        return null;
+    }
+
+    private static BlockPos doubleNeighbor(ClientWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock)) return null;
+        ChestType type = state.get(ChestBlock.CHEST_TYPE);
+        if (type == ChestType.SINGLE) return null;
+        Direction facing = state.get(ChestBlock.FACING);
+        Direction neighborDir = type == ChestType.LEFT ? facing.rotateYClockwise() : facing.rotateYCounterclockwise();
+        return pos.offset(neighborDir);
+    }
+
+    private static void playChestSound(ClientWorld world, BlockPos pos, SoundEvent sound) {
+        world.playSoundClient(
+                pos.getX() + 0.5,
+                pos.getY() + 0.5,
+                pos.getZ() + 0.5,
+                sound,
+                SoundCategory.BLOCKS,
+                0.5f,
+                world.getRandom().nextFloat() * 0.1f + 0.9f,
+                false);
     }
 
     private static void onWorldRender(WorldRenderContext context) {
