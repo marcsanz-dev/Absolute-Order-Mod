@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.mixin.client.ChestLidAccessor;
+import io.github.marcsanzdev.chestseparators.mixin.client.ShulkerAnimationAccessor;
 import io.github.marcsanzdev.chestseparators.network.AutoDepositResultPayload;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,8 +15,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.entity.ChestLidAnimator;
+import net.minecraft.block.entity.EnderChestBlockEntity;
+import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ItemModelManager;
@@ -135,32 +136,38 @@ public final class AutoDepositAnimator {
             index++;
         }
 
-        // Pop the lid of every destination chest so the player sees where items are headed.
+        // Open every destination container so the player sees where items are headed.
         ClientWorld world = client.world;
         if (world != null) {
             for (Map.Entry<BlockPos, Long> entry : lastArrival.entrySet()) {
-                openChest(world, entry.getKey(), entry.getValue() + CHEST_DWELL_MS);
+                openContainer(world, entry.getKey(), entry.getValue() + CHEST_DWELL_MS);
             }
         }
     }
 
-    private static void openChest(ClientWorld world, BlockPos pos, long closeAt) {
-        ChestLidAnimator animator = lidAnimatorAt(world, pos);
-        if (animator == null) return; // barrels/shulkers have no lid animator — skip silently
+    // Plays the opening animation of whatever container sits at the position: chests and ender chests
+    // raise their lid, shulker boxes run their open animation. Containers without an animation (e.g.
+    // barrels, or a minecart whose target maps to an empty block) are skipped silently.
+    private static void openContainer(ClientWorld world, BlockPos pos, long closeAt) {
+        BlockEntity be = world.getBlockEntity(pos);
 
-        boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
-        animator.setOpen(true);
-        markOpen(pos, closeAt, true);
-        if (firstOpen) playChestSound(world, pos, SoundEvents.BLOCK_CHEST_OPEN);
+        if (be instanceof ChestLidAccessor lid) {
+            boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
+            lid.getLidAnimator().setOpen(true);
+            markOpen(pos, closeAt, true);
+            if (firstOpen) playContainerSound(world, pos, openSoundFor(be));
 
-        // Open the other half of a double chest in sync (silently, so the sound plays once).
-        BlockPos neighbor = doubleNeighbor(world, pos);
-        if (neighbor != null) {
-            ChestLidAnimator neighborAnimator = lidAnimatorAt(world, neighbor);
-            if (neighborAnimator != null) {
-                neighborAnimator.setOpen(true);
+            // Open the other half of a double chest in sync (silently, so the sound plays once).
+            BlockPos neighbor = doubleNeighbor(world, pos);
+            if (neighbor != null && world.getBlockEntity(neighbor) instanceof ChestLidAccessor neighborLid) {
+                neighborLid.getLidAnimator().setOpen(true);
                 markOpen(neighbor, closeAt, false);
             }
+        } else if (be instanceof ShulkerAnimationAccessor shulker) {
+            boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
+            shulker.setAnimationStage(ShulkerBoxBlockEntity.AnimationStage.OPENING);
+            markOpen(pos, closeAt, true);
+            if (firstOpen) playContainerSound(world, pos, SoundEvents.BLOCK_SHULKER_BOX_OPEN);
         }
     }
 
@@ -182,19 +189,30 @@ public final class AutoDepositAnimator {
         while (it.hasNext()) {
             Map.Entry<BlockPos, ChestOpen> entry = it.next();
             if (now < entry.getValue().closeAt) continue;
-            ChestLidAnimator animator = lidAnimatorAt(world, entry.getKey());
-            if (animator != null) animator.setOpen(false);
-            if (entry.getValue().sound) playChestSound(world, entry.getKey(), SoundEvents.BLOCK_CHEST_CLOSE);
+            closeContainer(world, entry.getKey(), entry.getValue().sound);
             it.remove();
         }
     }
 
-    private static ChestLidAnimator lidAnimatorAt(ClientWorld world, BlockPos pos) {
+    private static void closeContainer(ClientWorld world, BlockPos pos, boolean playSound) {
         BlockEntity be = world.getBlockEntity(pos);
-        if (be instanceof ChestBlockEntity && be instanceof ChestLidAccessor accessor) {
-            return accessor.getLidAnimator();
+        if (be instanceof ChestLidAccessor lid) {
+            lid.getLidAnimator().setOpen(false);
+            if (playSound) playContainerSound(world, pos, closeSoundFor(be));
+        } else if (be instanceof ShulkerAnimationAccessor shulker) {
+            shulker.setAnimationStage(ShulkerBoxBlockEntity.AnimationStage.CLOSING);
+            if (playSound) playContainerSound(world, pos, SoundEvents.BLOCK_SHULKER_BOX_CLOSE);
         }
-        return null;
+    }
+
+    private static SoundEvent openSoundFor(BlockEntity be) {
+        return be instanceof EnderChestBlockEntity ? SoundEvents.BLOCK_ENDER_CHEST_OPEN : SoundEvents.BLOCK_CHEST_OPEN;
+    }
+
+    private static SoundEvent closeSoundFor(BlockEntity be) {
+        return be instanceof EnderChestBlockEntity
+                ? SoundEvents.BLOCK_ENDER_CHEST_CLOSE
+                : SoundEvents.BLOCK_CHEST_CLOSE;
     }
 
     private static BlockPos doubleNeighbor(ClientWorld world, BlockPos pos) {
@@ -207,7 +225,7 @@ public final class AutoDepositAnimator {
         return pos.offset(neighborDir);
     }
 
-    private static void playChestSound(ClientWorld world, BlockPos pos, SoundEvent sound) {
+    private static void playContainerSound(ClientWorld world, BlockPos pos, SoundEvent sound) {
         world.playSoundClient(
                 pos.getX() + 0.5,
                 pos.getY() + 0.5,

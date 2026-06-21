@@ -570,6 +570,24 @@ public class ChestConfigManager {
         currentChestConfig.putAll(rawData.visual);
     }
 
+    /**
+     * Reads the locally-stored Ender Chest whitelist without disturbing the currently-open container's
+     * state. Used to forward the filter to the server for radius auto-deposit (Ender filters are
+     * client-side only). Returns an empty map if none is configured.
+     */
+    public Map<Integer, SlotWhitelist> readEnderWhitelists() {
+        return new HashMap<>(readRawData(getEnderChestFile()).filters);
+    }
+
+    /**
+     * Reads the locally-stored whitelist of a mobile container entity (chest minecart / boat) by its
+     * UUID, without disturbing the open container's state. Entity filters are client-side only and are
+     * forwarded to the server for radius auto-deposit. Returns an empty map if none is configured.
+     */
+    public Map<Integer, SlotWhitelist> readEntityWhitelists(UUID uuid) {
+        return new HashMap<>(readRawData(getFileForEntity(uuid)).filters);
+    }
+
     public void loadEnderConfig() {
         clearCurrentConfig();
         // Ender Chest whitelists are local-only; always load them from the local .dat file.

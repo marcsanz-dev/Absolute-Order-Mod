@@ -213,7 +213,12 @@ public class ChestSeparatorsMain implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(AutoDepositRequestPayload.ID, (payload, context) -> {
             context.server().execute(() -> {
                 if (context.player() != null) {
-                    performAutoDeposit(context.player(), payload.radius(), payload.throughWalls());
+                    performAutoDeposit(
+                            context.player(),
+                            payload.radius(),
+                            payload.throughWalls(),
+                            payload.enderWhitelists(),
+                            payload.entityWhitelists());
                 }
             });
         });
@@ -227,7 +232,12 @@ public class ChestSeparatorsMain implements ModInitializer {
      * item, nearest containers first. Containers blocked by a solid block are skipped unless
      * {@code throughWalls} is set. Sends an {@link AutoDepositResultPayload} describing every transfer.
      */
-    private static void performAutoDeposit(ServerPlayerEntity player, int radius, boolean throughWalls) {
+    private static void performAutoDeposit(
+            ServerPlayerEntity player,
+            int radius,
+            boolean throughWalls,
+            Map<Integer, SlotWhitelist> enderWhitelists,
+            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
         World world = player.getEntityWorld();
         if (!(world instanceof ServerWorld)) return;
 
@@ -242,6 +252,11 @@ public class ChestSeparatorsMain implements ModInitializer {
         int centerChunkX = origin.getX() >> 4;
         int centerChunkZ = origin.getZ() >> 4;
 
+        // Nearest reachable ender chest block, used as the deposit target for the player's ender
+        // inventory (ender filters are client-side, so they arrive in the request payload).
+        BlockPos nearestEnder = null;
+        double nearestEnderDistSq = Double.MAX_VALUE;
+
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                 net.minecraft.world.chunk.WorldChunk chunk = world.getChunk(centerChunkX + dx, centerChunkZ + dz);
@@ -250,21 +265,55 @@ public class ChestSeparatorsMain implements ModInitializer {
                     BlockPos pos = entry.getKey();
                     BlockEntity be = entry.getValue();
 
+                    double cdx = pos.getX() + 0.5D - eye.x;
+                    double cdy = pos.getY() + 0.5D - eye.y;
+                    double cdz = pos.getZ() + 0.5D - eye.z;
+                    double distSq = cdx * cdx + cdy * cdy + cdz * cdz;
+                    if (distSq > radiusSq) continue;
+
+                    if (be instanceof net.minecraft.block.entity.EnderChestBlockEntity) {
+                        if (distSq < nearestEnderDistSq
+                                && (throughWalls || !isBlockObstructed(world, eye, pos, player))) {
+                            nearestEnder = pos;
+                            nearestEnderDistSq = distSq;
+                        }
+                        continue;
+                    }
+
                     if (!(be instanceof Inventory inv) || !(be instanceof IWhitelistProvider provider)) continue;
                     Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
                     if (whitelists == null || whitelists.isEmpty()) continue;
 
-                    double cdx = pos.getX() + 0.5D - eye.x;
-                    double cdy = pos.getY() + 0.5D - eye.y;
-                    double cdz = pos.getZ() + 0.5D - eye.z;
-                    if (cdx * cdx + cdy * cdy + cdz * cdz > radiusSq) continue;
+                    if (!throughWalls && isBlockObstructed(world, eye, pos, player)) continue;
 
-                    if (!throughWalls && isObstructed(world, eye, pos, player)) continue;
-
-                    candidates.add(new Candidate(pos, inv, whitelists, cdx * cdx + cdy * cdy + cdz * cdz));
+                    candidates.add(new Candidate(pos, inv, whitelists, distSq));
                 }
             }
         }
+
+        // 1b. Mobile filtered containers: chest minecarts and chest boats are entities, not block
+        // entities, and their filters live client-side only, so they arrive in entityWhitelists keyed
+        // by UUID.
+        net.minecraft.util.math.Box box = player.getBoundingBox().expand(radius);
+        for (net.minecraft.entity.Entity entity : world.getOtherEntities(player, box, e -> e instanceof Inventory)) {
+            Map<Integer, SlotWhitelist> whitelists = entityWhitelists.get(entity.getUuid());
+            if (whitelists == null || whitelists.isEmpty()) continue;
+
+            Vec3d center = entity.getBoundingBox().getCenter();
+            double distSq = center.squaredDistanceTo(eye);
+            if (distSq > radiusSq) continue;
+            if (!throughWalls && blockedToPoint(world, eye, center, player, null)) continue;
+
+            candidates.add(new Candidate(entity.getBlockPos(), (Inventory) entity, whitelists, distSq));
+        }
+
+        // 1c. Ender chest: deposit into the player's ender inventory, animated at the nearest reachable
+        // ender chest block, using the client-supplied ender filter.
+        if (nearestEnder != null && enderWhitelists != null && !enderWhitelists.isEmpty()) {
+            candidates.add(
+                    new Candidate(nearestEnder, player.getEnderChestInventory(), enderWhitelists, nearestEnderDistSq));
+        }
+
         candidates.sort(java.util.Comparator.comparingDouble(c -> c.distSq));
 
         // 2. Deposit each stack into matching candidate slots, recording moved amounts per container.
@@ -358,12 +407,26 @@ public class ChestSeparatorsMain implements ModInitializer {
     }
 
     /**
-     * True if a solid block obstructs the straight line from the player's eye to the container's
+     * True if a solid block obstructs the straight line from the player's eye to a container block's
      * center. The container's own block(s) — including the second half of a double chest — do not
      * count as obstructions.
      */
-    private static boolean isObstructed(World world, Vec3d eye, BlockPos chestPos, net.minecraft.entity.Entity player) {
-        Vec3d target = Vec3d.ofCenter(chestPos);
+    private static boolean isBlockObstructed(
+            World world, Vec3d eye, BlockPos chestPos, net.minecraft.entity.Entity player) {
+        return blockedToPoint(world, eye, Vec3d.ofCenter(chestPos), player, getAssociatedPositions(world, chestPos));
+    }
+
+    /**
+     * True if a solid block lies between {@code eye} and {@code target}. Block positions in
+     * {@code allowed} (e.g. the target container's own blocks) are not treated as obstructions; pass
+     * {@code null} when the target is an empty point such as an entity's center.
+     */
+    private static boolean blockedToPoint(
+            World world,
+            Vec3d eye,
+            Vec3d target,
+            net.minecraft.entity.Entity player,
+            java.util.Collection<BlockPos> allowed) {
         net.minecraft.util.hit.BlockHitResult hit = world.raycast(new net.minecraft.world.RaycastContext(
                 eye,
                 target,
@@ -371,7 +434,7 @@ public class ChestSeparatorsMain implements ModInitializer {
                 net.minecraft.world.RaycastContext.FluidHandling.NONE,
                 player));
         if (hit.getType() == net.minecraft.util.hit.HitResult.Type.MISS) return false;
-        return !getAssociatedPositions(world, chestPos).contains(hit.getBlockPos());
+        return allowed == null || !allowed.contains(hit.getBlockPos());
     }
 
     /**

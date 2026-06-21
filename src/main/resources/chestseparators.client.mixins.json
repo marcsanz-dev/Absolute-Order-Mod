@@ -8,7 +8,8 @@
   "client": [
     "client.GenericContainerScreenMixin",
     "client.HandledScreenAccessor",
-    "client.ChestLidAccessor"
+    "client.ChestLidAccessor",
+    "client.ShulkerAnimationAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,14 +1,22 @@
 package io.github.marcsanzdev.chestseparators.event;
 
+import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
+import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.network.AutoDepositRequestPayload;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.Box;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {
@@ -64,8 +72,27 @@ public class KeyInputHandler {
 
     private static void triggerAutoDeposit(MinecraftClient client) {
         if (client.player == null || !ClientPlayNetworking.canSend(AutoDepositRequestPayload.ID)) return;
+
+        int radius = GlobalChestConfig.instance.autoDepositRadius;
+
+        // Entity (chest minecart / boat) filters are client-side only, so gather the ones near the
+        // player and forward them keyed by UUID; the server can't read these on its own.
+        Map<UUID, Map<Integer, SlotWhitelist>> entityWhitelists = new HashMap<>();
+        if (client.world != null) {
+            Box box = client.player.getBoundingBox().expand(radius);
+            for (Entity entity :
+                    client.world.getOtherEntities(client.player, box, e -> e instanceof IWhitelistProvider)) {
+                Map<Integer, SlotWhitelist> wl =
+                        ChestConfigManager.getInstance().readEntityWhitelists(entity.getUuid());
+                if (!wl.isEmpty()) entityWhitelists.put(entity.getUuid(), wl);
+            }
+        }
+
         ClientPlayNetworking.send(new AutoDepositRequestPayload(
-                GlobalChestConfig.instance.autoDepositRadius, GlobalChestConfig.instance.autoDepositThroughWalls));
+                radius,
+                GlobalChestConfig.instance.autoDepositThroughWalls,
+                ChestConfigManager.getInstance().readEnderWhitelists(),
+                entityWhitelists));
     }
 
     // Each toggle flips its config flag and returns the feedback text, leaving the caller to display
