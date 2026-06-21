@@ -231,7 +231,12 @@ final class WhitelistPreviewPanelRenderer {
 
                 drawRuleTab(context, tabX, startY, ModTextures.ICON_CURSOR, activeWl.allowManual());
                 drawRuleTab(context, tabX, startY + 24, ModTextures.ICON_SHIFT, activeWl.allowShift());
-                drawRuleTab(context, tabX, startY + 48, ModTextures.ICON_HOPPER, activeWl.allowHopper());
+                drawRuleTab(
+                        context,
+                        tabX,
+                        startY + 48,
+                        session.isPlayerInventory ? ModTextures.ICON_PICKUP : ModTextures.ICON_HOPPER,
+                        activeWl.allowHopper());
             }
         }
 

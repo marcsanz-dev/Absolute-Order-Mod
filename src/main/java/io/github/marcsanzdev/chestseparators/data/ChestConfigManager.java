@@ -374,6 +374,31 @@ public class ChestConfigManager {
         return 0;
     }
 
+    /** Like {@link #getColor}, but reads the player inventory render cache (for the all-screens overlay). */
+    public int getInventoryColor(int slotIndex, int actionFlag) {
+        int[] colors = playerInventoryVisual.get(slotIndex);
+        if (colors == null) return 0;
+        if (actionFlag == ACTION_TOP) return colors[IDX_TOP];
+        if (actionFlag == ACTION_BOTTOM) return colors[IDX_BOTTOM];
+        if (actionFlag == ACTION_LEFT) return colors[IDX_LEFT];
+        if (actionFlag == ACTION_RIGHT) return colors[IDX_RIGHT];
+        if (actionFlag == ACTION_BG) return colors[IDX_BG];
+        return 0;
+    }
+
+    /** Like {@link #getPaintSeq}, but reads the player inventory render cache. */
+    public int getInventoryPaintSeq(int slotIndex, int actionFlag) {
+        int[] colors = playerInventoryVisual.get(slotIndex);
+        if (colors == null) return 0;
+        int idx;
+        if (actionFlag == ACTION_TOP) idx = IDX_SEQ_TOP;
+        else if (actionFlag == ACTION_BOTTOM) idx = IDX_SEQ_BOTTOM;
+        else if (actionFlag == ACTION_LEFT) idx = IDX_SEQ_LEFT;
+        else if (actionFlag == ACTION_RIGHT) idx = IDX_SEQ_RIGHT;
+        else return 0;
+        return idx < colors.length ? colors[idx] : 0;
+    }
+
     /**
      * Returns the paint-order sequence of an edge (higher = painted later, drawn on top). Returns 0
      * for backgrounds, unpainted edges, or legacy arrays without sequence data.

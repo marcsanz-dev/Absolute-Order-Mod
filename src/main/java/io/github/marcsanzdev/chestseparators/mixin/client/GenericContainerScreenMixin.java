@@ -75,11 +75,13 @@ public abstract class GenericContainerScreenMixin extends Screen {
         }
     }
 
-    // Renders the previously saved separator lines underneath the item slots.
+    // Renders the previously saved separator lines underneath the item slots, plus the player's own
+    // inventory decorations on the player slots (visible in every screen, including chests).
     @Inject(method = "drawSlots", at = @At("HEAD"))
     public void renderSavedLinesLayer(DrawContext context, int mouseX, int mouseY, CallbackInfo ci) {
         if (this.editor != null) {
             this.editor.renderSavedLinesLayer(context);
+            this.editor.renderInventoryDecorations(context);
         }
     }
 

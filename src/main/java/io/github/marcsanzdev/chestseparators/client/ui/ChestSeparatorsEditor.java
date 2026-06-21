@@ -730,6 +730,10 @@ public class ChestSeparatorsEditor {
         if (this.renderer != null) this.renderer.renderSavedLinesLayer(context);
     }
 
+    public void renderInventoryDecorations(DrawContext context) {
+        if (this.renderer != null) this.renderer.renderInventoryDecorations(context);
+    }
+
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
         boolean isSearchFocused = (searchBox != null && searchBox.isFocused());
         boolean isWhitelistSearchFocused = (whitelistSearchBox != null && whitelistSearchBox.isFocused());
