@@ -18,10 +18,11 @@ public final class MagnifierRenderer {
 
     private MagnifierRenderer() {}
 
-    // Base sizes at 100%. The captured area (SRC_HALF) is fixed so reads/draws stay cheap at any size;
-    // the loupe radius and frame scale with the configured size percentage (more zoom, same area).
-    private static final int BASE_SRC_HALF = 9;
-    private static final int BASE_LOUPE_R = 54;
+    // Captured half-size: 14 logical px → a 28px window, enough to show a whole 16px slot with margin
+    // even inside the circle (where only the inscribed disc is visible). Loupe radius sets on-screen
+    // size; both are kept small enough that reads/draws stay cheap.
+    private static final int BASE_SRC_HALF = 14;
+    private static final int BASE_LOUPE_R = 66;
     private static final int BASE_GAP = 14;
     private static final int BASE_RING = 4;
     private static final int FRAME_COLOR = 0xFF202020;
