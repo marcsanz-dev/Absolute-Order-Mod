@@ -407,13 +407,26 @@ public class ChestSeparatorsMain implements ModInitializer {
     }
 
     /**
-     * True if a solid block obstructs the straight line from the player's eye to a container block's
-     * center. The container's own block(s) — including the second half of a double chest — do not
-     * count as obstructions.
+     * True if no unobstructed path exists from the player's eye to the container. Rather than testing
+     * only the exact center (which a neighbouring block or a stacked chest can block even when the
+     * chest is clearly accessible), this checks the chest body and the centers of every adjacent cell:
+     * the chest is reachable if the eye has a clear line to any one of them. The container's own
+     * block(s) — including the second half of a double chest — never count as obstructions.
      */
     private static boolean isBlockObstructed(
             World world, Vec3d eye, BlockPos chestPos, net.minecraft.entity.Entity player) {
-        return blockedToPoint(world, eye, Vec3d.ofCenter(chestPos), player, getAssociatedPositions(world, chestPos));
+        List<BlockPos> parts = getAssociatedPositions(world, chestPos);
+        for (BlockPos part : parts) {
+            // A clear line to the chest body itself counts as reachable.
+            if (!blockedToPoint(world, eye, Vec3d.ofCenter(part), player, parts)) return false;
+            // ...as does a clear line to any open cell touching the chest (an exposed side).
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = part.offset(dir);
+                if (parts.contains(neighbor)) continue;
+                if (!blockedToPoint(world, eye, Vec3d.ofCenter(neighbor), player, parts)) return false;
+            }
+        }
+        return true;
     }
 
     /**
