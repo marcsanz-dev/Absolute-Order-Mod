@@ -296,7 +296,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                                         ? "button.chestseparators.pickup_insert"
                                         : "button.chestseparators.hopper_insert")
                         .getString(),
-                ModTextures.ICON_HOPPER,
+                session.isPlayerInventory ? ModTextures.ICON_PICKUP : ModTextures.ICON_HOPPER,
                 () -> {
                     session.ruleHopper = !session.ruleHopper;
                     editor.playClickSound(1.0f);

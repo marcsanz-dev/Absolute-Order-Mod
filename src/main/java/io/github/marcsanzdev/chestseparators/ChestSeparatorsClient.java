@@ -29,6 +29,14 @@ public class ChestSeparatorsClient implements ClientModInitializer {
         ModClientNetworking.register();
         AutoDepositAnimator.register();
 
+        // On joining a world, load the inventory profile into the render cache and push the inventory
+        // filters to the server so the Pick Up rule works immediately (before the editor is opened).
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register(
+                (handler, sender, client) -> client.execute(() -> {
+                    ChestConfigManager.getInstance().loadInventoryRenderCache();
+                    ModClientNetworking.sendInventoryFilters();
+                }));
+
         ClientPlayNetworking.registerGlobalReceiver(WhitelistPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 if (context.player() == null || context.player().getEntityWorld() == null) return;

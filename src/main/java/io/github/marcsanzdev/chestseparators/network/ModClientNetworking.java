@@ -15,6 +15,14 @@ import net.minecraft.util.Formatting;
  */
 public class ModClientNetworking {
 
+    /** Sends the player's current inventory filters to the server (for the Pick Up rule enforcement). */
+    public static void sendInventoryFilters() {
+        if (ClientPlayNetworking.canSend(InventoryFiltersPayload.ID)) {
+            ClientPlayNetworking.send(new InventoryFiltersPayload(
+                    new java.util.HashMap<>(ChestConfigManager.getInstance().getPlayerInventoryFilters())));
+        }
+    }
+
     public static void register() {
 
         // Receives the Shulker Box UUID from the server when a Shulker is opened.

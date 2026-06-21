@@ -42,6 +42,13 @@ public class ChestSeparatorsMain implements ModInitializer {
     /** Thread-safe map of chests currently locked for editing, keyed by block position. */
     public static final Map<BlockPos, UUID> LOCKED_CHESTS = new ConcurrentHashMap<>();
 
+    /**
+     * Per-player inventory filters, synced from the client (where they live), used to enforce the
+     * "Pick Up" rule server-side: filtered inventory slots only accept their item on pickup. Keyed by
+     * player UUID, then by PlayerInventory slot index.
+     */
+    public static final Map<UUID, Map<Integer, SlotWhitelist>> INVENTORY_FILTERS = new ConcurrentHashMap<>();
+
     private static final Random EXPEL_RANDOM = new Random();
 
     @Override
@@ -57,10 +64,21 @@ public class ChestSeparatorsMain implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(EditorLockResponsePayload.ID, EditorLockResponsePayload.CODEC);
         PayloadTypeRegistry.playC2S().register(AutoDepositRequestPayload.ID, AutoDepositRequestPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(AutoDepositResultPayload.ID, AutoDepositResultPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(InventoryFiltersPayload.ID, InventoryFiltersPayload.CODEC);
 
-        // Release all locks held by a player who disconnects abruptly.
+        // Release all locks held by a player who disconnects abruptly, and drop their cached filters.
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             LOCKED_CHESTS.values().removeIf(uuid -> uuid.equals(handler.player.getUuid()));
+            INVENTORY_FILTERS.remove(handler.player.getUuid());
+        });
+
+        // Caches the player's inventory filters (synced from the client) for the Pick Up rule.
+        ServerPlayNetworking.registerGlobalReceiver(InventoryFiltersPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                if (context.player() != null) {
+                    INVENTORY_FILTERS.put(context.player().getUuid(), payload.filters());
+                }
+            });
         });
 
         // Handles editor lock requests, with support for double chests (two associated positions).

@@ -573,6 +573,7 @@ public class ChestSeparatorsEditor {
     public void saveSmart() {
         if (session.isPlayerInventory) {
             ChestConfigManager.getInstance().saveInventoryConfig();
+            io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
         } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
             ChestConfigManager.getInstance().saveShulkerConfig(session.currentShulkerUUID);
         } else if (session.isEntityChest && session.currentEntityUUID != null) {

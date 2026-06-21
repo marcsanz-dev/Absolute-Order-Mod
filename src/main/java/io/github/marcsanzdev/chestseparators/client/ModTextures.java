@@ -40,6 +40,7 @@ public class ModTextures {
     public static final Identifier ICON_CURSOR = Identifier.of(MOD_ID, "textures/gui/icon_cursor.png");
     public static final Identifier ICON_SHIFT = Identifier.of(MOD_ID, "textures/gui/icon_shift.png");
     public static final Identifier ICON_HOPPER = Identifier.of(MOD_ID, "textures/gui/icon_hopper.png");
+    public static final Identifier ICON_PICKUP = Identifier.of(MOD_ID, "textures/gui/icon_pickup.png");
     public static final Identifier ICON_AREA_SELECT = Identifier.of(MOD_ID, "textures/gui/icon_area_select.png");
     public static final Identifier ICON_TRACE_SELECT = Identifier.of(MOD_ID, "textures/gui/icon_trace_select.png");
 

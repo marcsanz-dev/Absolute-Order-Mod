@@ -63,9 +63,11 @@ public abstract class GenericContainerScreenMixin extends Screen {
         return handler.slots.size() - 36 > 2;
     }
 
-    // Injects the editor's custom rendering logic or normal mode overlays
-    // to be drawn on top of the vanilla GUI.
-    @Inject(method = "render", at = @At("TAIL"))
+    // Injects the editor's custom rendering logic or normal mode overlays to be drawn on top of the
+    // vanilla GUI. Hooked at renderMain (not render) because InventoryScreen -> RecipeBookScreen calls
+    // renderMain directly and never HandledScreen#render; renderMain is the common path for both chests
+    // and the inventory, and runs inside the render flow so deferred tooltips still flush correctly.
+    @Inject(method = "renderMain", at = @At("TAIL"))
     public void renderEditorOverlay(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (this.editor != null) {
             this.editor.render(context, mouseX, mouseY, delta);
