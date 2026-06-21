@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Si activé, la colonne de couleurs personnalisées est partagée entre les onglets Lignes, Fonds et Combo. Si désactivé, chaque onglet a les siennes.",
   "title.chestseparators.config": "Configuration d'Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Dépôt auto dans les coffres proches",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Range tout ton inventaire dans les coffres filtrés proches d'un seul geste.",
+  "config.chestseparators.auto_deposit_double_sneak": "Déclencheur : double accroupissement",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Appuie deux fois rapidement sur la touche d'accroupissement pour déposer automatiquement.",
+  "config.chestseparators.auto_deposit_radius": "Rayon de dépôt auto",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Distance autour de toi (en blocs) où les coffres sont recherchés.",
+  "config.chestseparators.auto_deposit_through_walls": "Déposer à travers les murs",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Autorise le dépôt dans les coffres bloqués par des blocs solides. Désactivé, le chemin doit être dégagé.",
+  "config.chestseparators.auto_deposit": "Dépôt auto (touche)",
+  "key.chestseparators.auto_deposit": "Dépôt auto dans les coffres proches",
+  "message.chestseparators.auto_deposit_done": "%s objets déposés automatiquement.",
+  "message.chestseparators.auto_deposit_none": "Aucun coffre filtré proche à portée."
 }

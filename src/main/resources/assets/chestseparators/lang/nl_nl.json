@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Indien ingeschakeld wordt de aangepaste kleurenkolom gedeeld tussen de tabbladen Lijnen, Achtergronden en Combo. Indien uitgeschakeld heeft elk tabblad eigen kleuren.",
   "title.chestseparators.config": "Absolute Order Configuratie",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-opslaan in nabije kisten",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Sorteer je hele inventaris met één actie in nabije gefilterde kisten.",
+  "config.chestseparators.auto_deposit_double_sneak": "Trigger: dubbel sluipen",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Tik twee keer snel op de sluiptoets om automatisch op te slaan.",
+  "config.chestseparators.auto_deposit_radius": "Auto-opslag straal",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Hoe ver om je heen (in blokken) naar kisten wordt gezocht.",
+  "config.chestseparators.auto_deposit_through_walls": "Opslaan door muren",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Sta opslaan toe in kisten die door vaste blokken worden geblokkeerd. Indien uit, moet het pad vrij zijn.",
+  "config.chestseparators.auto_deposit": "Auto-opslaan (toets)",
+  "key.chestseparators.auto_deposit": "Auto-opslaan in nabije kisten",
+  "message.chestseparators.auto_deposit_done": "%s voorwerpen automatisch opgeslagen.",
+  "message.chestseparators.auto_deposit_none": "Geen nabije gefilterde kisten binnen bereik."
 }

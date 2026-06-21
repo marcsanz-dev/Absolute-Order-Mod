@@ -189,5 +189,17 @@
   "title.chestseparators.config": "Absolute Order Configuration",
   "category.chestseparators.keys": "Absolute Order",
   "key.category.chestseparators.keys": "Absolute Order",
-  "modmenu.descriptionTranslation.chestseparators": "Achieve fast inventory clearing with custom auto-deposit. The game finally knows exactly what you really want and where you want it."
+  "modmenu.descriptionTranslation.chestseparators": "Achieve fast inventory clearing with custom auto-deposit. The game finally knows exactly what you really want and where you want it.",
+  "config.chestseparators.auto_deposit_enabled": "Auto-Deposit to Nearby Chests",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Sort your whole inventory into nearby filtered chests with a single trigger.",
+  "config.chestseparators.auto_deposit_double_sneak": "Trigger: Double-Sneak",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Quickly tap the sneak key twice to auto-deposit.",
+  "config.chestseparators.auto_deposit_radius": "Auto-Deposit Radius",
+  "config.chestseparators.auto_deposit_radius.tooltip": "How far around you (in blocks) chests are searched.",
+  "config.chestseparators.auto_deposit_through_walls": "Deposit Through Walls",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Allow depositing into chests blocked by solid blocks. When off, the path must be clear.",
+  "config.chestseparators.auto_deposit": "Auto-Deposit (Hotkey)",
+  "key.chestseparators.auto_deposit": "Auto-Deposit to Nearby Chests",
+  "message.chestseparators.auto_deposit_done": "Auto-deposited %s items.",
+  "message.chestseparators.auto_deposit_none": "No nearby filtered chests in reach."
 }

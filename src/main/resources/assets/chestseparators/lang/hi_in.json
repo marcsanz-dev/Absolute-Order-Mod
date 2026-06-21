@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "सक्षम होने पर, कस्टम रंग कॉलम लाइन, बैकग्राउंड और कॉम्बो टैब में साझा होता है। अक्षम होने पर, प्रत्येक टैब के अपने रंग होते हैं।",
   "title.chestseparators.config": "Absolute Order कॉन्फ़िगरेशन",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "पास के संदूकों में स्वतः जमा",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "एक ही क्रिया से अपनी पूरी इन्वेंटरी पास के फ़िल्टर किए गए संदूकों में व्यवस्थित करें।",
+  "config.chestseparators.auto_deposit_double_sneak": "ट्रिगर: दोहरा झुकाव",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "स्वतः जमा करने के लिए झुकने की कुंजी जल्दी से दो बार दबाएँ।",
+  "config.chestseparators.auto_deposit_radius": "स्वतः जमा त्रिज्या",
+  "config.chestseparators.auto_deposit_radius.tooltip": "आपके चारों ओर (ब्लॉक में) कितनी दूर तक संदूक खोजे जाते हैं।",
+  "config.chestseparators.auto_deposit_through_walls": "दीवारों के पार जमा करें",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "ठोस ब्लॉकों से अवरुद्ध संदूकों में जमा करने की अनुमति देता है। बंद होने पर रास्ता साफ़ होना चाहिए।",
+  "config.chestseparators.auto_deposit": "स्वतः जमा (कुंजी)",
+  "key.chestseparators.auto_deposit": "पास के संदूकों में स्वतः जमा",
+  "message.chestseparators.auto_deposit_done": "%s वस्तुएँ स्वतः जमा कीं।",
+  "message.chestseparators.auto_deposit_none": "पहुँच में पास कोई फ़िल्टर किया संदूक नहीं।"
 }

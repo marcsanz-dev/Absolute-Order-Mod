@@ -30,6 +30,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 /**
@@ -54,6 +55,8 @@ public class ChestSeparatorsMain implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(WhitelistRequestPayload.ID, WhitelistRequestPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(EditorLockRequestPayload.ID, EditorLockRequestPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(EditorLockResponsePayload.ID, EditorLockResponsePayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(AutoDepositRequestPayload.ID, AutoDepositRequestPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(AutoDepositResultPayload.ID, AutoDepositResultPayload.CODEC);
 
         // Release all locks held by a player who disconnects abruptly.
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -204,6 +207,171 @@ public class ChestSeparatorsMain implements ModInitializer {
                 }
             });
         });
+
+        // Handles the radius auto-deposit trigger: sort the player's inventory into nearby filtered
+        // containers and report back what moved so the client can animate it.
+        ServerPlayNetworking.registerGlobalReceiver(AutoDepositRequestPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                if (context.player() != null) {
+                    performAutoDeposit(context.player(), payload.radius(), payload.throughWalls());
+                }
+            });
+        });
+    }
+
+    /** Hard cap on the auto-deposit radius, regardless of what the client requests. */
+    private static final int MAX_AUTO_DEPOSIT_RADIUS = 32;
+
+    /**
+     * Sorts every stack in the player's main inventory into nearby containers whose filters list the
+     * item, nearest containers first. Containers blocked by a solid block are skipped unless
+     * {@code throughWalls} is set. Sends an {@link AutoDepositResultPayload} describing every transfer.
+     */
+    private static void performAutoDeposit(ServerPlayerEntity player, int radius, boolean throughWalls) {
+        World world = player.getEntityWorld();
+        if (!(world instanceof ServerWorld)) return;
+
+        radius = Math.max(1, Math.min(radius, MAX_AUTO_DEPOSIT_RADIUS));
+        Vec3d eye = player.getEyePos();
+        BlockPos origin = player.getBlockPos();
+        long radiusSq = (long) radius * radius;
+
+        // 1. Collect candidate containers: filtered, within range, with a clear line of sight.
+        List<Candidate> candidates = new ArrayList<>();
+        int chunkRadius = (radius >> 4) + 1;
+        int centerChunkX = origin.getX() >> 4;
+        int centerChunkZ = origin.getZ() >> 4;
+
+        for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
+            for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
+                net.minecraft.world.chunk.WorldChunk chunk = world.getChunk(centerChunkX + dx, centerChunkZ + dz);
+                for (Map.Entry<BlockPos, BlockEntity> entry :
+                        chunk.getBlockEntities().entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    BlockEntity be = entry.getValue();
+
+                    if (!(be instanceof Inventory inv) || !(be instanceof IWhitelistProvider provider)) continue;
+                    Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
+                    if (whitelists == null || whitelists.isEmpty()) continue;
+
+                    double cdx = pos.getX() + 0.5D - eye.x;
+                    double cdy = pos.getY() + 0.5D - eye.y;
+                    double cdz = pos.getZ() + 0.5D - eye.z;
+                    if (cdx * cdx + cdy * cdy + cdz * cdz > radiusSq) continue;
+
+                    if (!throughWalls && isObstructed(world, eye, pos, player)) continue;
+
+                    candidates.add(new Candidate(pos, inv, whitelists, cdx * cdx + cdy * cdy + cdz * cdz));
+                }
+            }
+        }
+        candidates.sort(java.util.Comparator.comparingDouble(c -> c.distSq));
+
+        // 2. Deposit each stack into matching candidate slots, recording moved amounts per container.
+        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
+        // Preserve discovery order so the animation roughly mirrors inventory layout.
+        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
+
+        for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
+            ItemStack stack = inventory.getStack(i);
+            if (stack.isEmpty()) continue;
+            net.minecraft.item.Item item = stack.getItem();
+            String itemId = Registries.ITEM.getId(item).toString();
+
+            for (Candidate candidate : candidates) {
+                if (stack.isEmpty()) break;
+                if (!containerListsItem(candidate.whitelists, itemId)) continue;
+
+                int before = stack.getCount();
+                insertRespectingFilter(candidate.inv, candidate.whitelists, stack, itemId);
+                int delta = before - stack.getCount();
+                if (delta > 0) {
+                    candidate.inv.markDirty();
+                    moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
+                            .merge(item, delta, Integer::sum);
+                }
+            }
+            inventory.setStack(i, stack);
+        }
+        inventory.markDirty();
+        player.playerScreenHandler.sendContentUpdates();
+
+        // 3. Build the animation report.
+        List<AutoDepositResultPayload.Flight> flights = new ArrayList<>();
+        for (Map.Entry<BlockPos, Map<net.minecraft.item.Item, Integer>> chestEntry : moved.entrySet()) {
+            for (Map.Entry<net.minecraft.item.Item, Integer> itemEntry :
+                    chestEntry.getValue().entrySet()) {
+                ItemStack representative = new ItemStack(itemEntry.getKey(), Math.min(itemEntry.getValue(), 999));
+                flights.add(new AutoDepositResultPayload.Flight(representative, chestEntry.getKey()));
+            }
+        }
+
+        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
+            ServerPlayNetworking.send(player, new AutoDepositResultPayload(flights));
+        }
+    }
+
+    /** A filtered container eligible to receive items during an auto-deposit. */
+    private record Candidate(BlockPos pos, Inventory inv, Map<Integer, SlotWhitelist> whitelists, double distSq) {}
+
+    /** True if any slot whitelist of the container lists the given item id. */
+    private static boolean containerListsItem(Map<Integer, SlotWhitelist> whitelists, String itemId) {
+        for (SlotWhitelist wl : whitelists.values()) {
+            if (wl.allowedItems().contains(itemId)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Inserts as much of {@code stack} as possible into the container, but only into slots whose
+     * filter explicitly lists the item: first merging onto matching stacks, then filling empty
+     * filtered slots. Mutates {@code stack}'s count in place.
+     */
+    private static void insertRespectingFilter(
+            Inventory inv, Map<Integer, SlotWhitelist> whitelists, ItemStack stack, String itemId) {
+        int size = inv.size();
+
+        // Phase 1: top up existing identical stacks in filtered slots.
+        for (int slot = 0; slot < size && !stack.isEmpty(); slot++) {
+            SlotWhitelist wl = whitelists.get(slot);
+            if (wl == null || !wl.allowedItems().contains(itemId)) continue;
+            ItemStack dest = inv.getStack(slot);
+            if (dest.isEmpty() || !ItemStack.areItemsAndComponentsEqual(dest, stack)) continue;
+            int max = Math.min(inv.getMaxCount(dest), dest.getMaxCount());
+            int space = max - dest.getCount();
+            if (space <= 0) continue;
+            int move = Math.min(space, stack.getCount());
+            dest.increment(move);
+            stack.decrement(move);
+        }
+
+        // Phase 2: drop the remainder into empty filtered slots.
+        for (int slot = 0; slot < size && !stack.isEmpty(); slot++) {
+            SlotWhitelist wl = whitelists.get(slot);
+            if (wl == null || !wl.allowedItems().contains(itemId)) continue;
+            if (!inv.getStack(slot).isEmpty() || !inv.isValid(slot, stack)) continue;
+            int max = Math.min(inv.getMaxCount(stack), stack.getMaxCount());
+            int move = Math.min(max, stack.getCount());
+            inv.setStack(slot, stack.copyWithCount(move));
+            stack.decrement(move);
+        }
+    }
+
+    /**
+     * True if a solid block obstructs the straight line from the player's eye to the container's
+     * center. The container's own block(s) — including the second half of a double chest — do not
+     * count as obstructions.
+     */
+    private static boolean isObstructed(World world, Vec3d eye, BlockPos chestPos, net.minecraft.entity.Entity player) {
+        Vec3d target = Vec3d.ofCenter(chestPos);
+        net.minecraft.util.hit.BlockHitResult hit = world.raycast(new net.minecraft.world.RaycastContext(
+                eye,
+                target,
+                net.minecraft.world.RaycastContext.ShapeType.COLLIDER,
+                net.minecraft.world.RaycastContext.FluidHandling.NONE,
+                player));
+        if (hit.getType() == net.minecraft.util.hit.HitResult.Type.MISS) return false;
+        return !getAssociatedPositions(world, chestPos).contains(hit.getBlockPos());
     }
 
     /**

@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Wenn aktiviert, wird die Benutzerfarben-Spalte von den Tabs Linien, Hintergründe und Kombi gemeinsam genutzt. Wenn deaktiviert, hat jeder Tab eigene.",
   "title.chestseparators.config": "Absolute Order Konfiguration",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-Einlagern in nahe Truhen",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Sortiere dein ganzes Inventar mit einem Auslöser in nahe gefilterte Truhen.",
+  "config.chestseparators.auto_deposit_double_sneak": "Auslöser: Doppeltes Schleichen",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Tippe die Schleichen-Taste schnell zweimal, um automatisch einzulagern.",
+  "config.chestseparators.auto_deposit_radius": "Auto-Einlager-Radius",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Wie weit um dich herum (in Blöcken) nach Truhen gesucht wird.",
+  "config.chestseparators.auto_deposit_through_walls": "Durch Wände einlagern",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Erlaubt das Einlagern in Truhen, die durch feste Blöcke verdeckt sind. Wenn aus, muss der Weg frei sein.",
+  "config.chestseparators.auto_deposit": "Auto-Einlagern (Taste)",
+  "key.chestseparators.auto_deposit": "Auto-Einlagern in nahe Truhen",
+  "message.chestseparators.auto_deposit_done": "%s Gegenstände automatisch eingelagert.",
+  "message.chestseparators.auto_deposit_none": "Keine gefilterten Truhen in Reichweite."
 }

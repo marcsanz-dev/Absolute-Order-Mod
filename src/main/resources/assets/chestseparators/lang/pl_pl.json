@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Po włączeniu kolumna kolorów niestandardowych jest wspólna dla kart Linie, Tła i Combo. Po wyłączeniu każda karta ma własne.",
   "title.chestseparators.config": "Konfiguracja Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-deponowanie do pobliskich skrzyń",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Posortuj cały ekwipunek do pobliskich filtrowanych skrzyń jednym ruchem.",
+  "config.chestseparators.auto_deposit_double_sneak": "Wyzwalacz: podwójne skradanie",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Naciśnij szybko dwa razy klawisz skradania, aby auto-deponować.",
+  "config.chestseparators.auto_deposit_radius": "Promień auto-deponowania",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Jak daleko wokół ciebie (w blokach) szukane są skrzynie.",
+  "config.chestseparators.auto_deposit_through_walls": "Deponowanie przez ściany",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Pozwala deponować do skrzyń zasłoniętych litymi blokami. Gdy wyłączone, droga musi być wolna.",
+  "config.chestseparators.auto_deposit": "Auto-deponowanie (klawisz)",
+  "key.chestseparators.auto_deposit": "Auto-deponowanie do pobliskich skrzyń",
+  "message.chestseparators.auto_deposit_done": "Auto-zdeponowano %s przedmiotów.",
+  "message.chestseparators.auto_deposit_none": "Brak pobliskich filtrowanych skrzyń w zasięgu."
 }

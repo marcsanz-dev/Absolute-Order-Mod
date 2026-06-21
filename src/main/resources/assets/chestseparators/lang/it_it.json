@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Se attivo, la colonna dei colori personalizzati è condivisa tra le schede Linee, Sfondi e Combo. Se disattivo, ogni scheda ha i propri.",
   "title.chestseparators.config": "Configurazione di Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Deposito automatico nei bauli vicini",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Ordina tutto l'inventario nei bauli filtrati vicini con un solo comando.",
+  "config.chestseparators.auto_deposit_double_sneak": "Attivazione: doppio accovacciamento",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Premi due volte rapidamente il tasto accovacciati per depositare automaticamente.",
+  "config.chestseparators.auto_deposit_radius": "Raggio del deposito automatico",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Distanza attorno a te (in blocchi) entro cui cercare i bauli.",
+  "config.chestseparators.auto_deposit_through_walls": "Deposita attraverso i muri",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Consente di depositare nei bauli bloccati da blocchi solidi. Se disattivato, il percorso deve essere libero.",
+  "config.chestseparators.auto_deposit": "Deposito automatico (tasto)",
+  "key.chestseparators.auto_deposit": "Deposito automatico nei bauli vicini",
+  "message.chestseparators.auto_deposit_done": "Depositati automaticamente %s oggetti.",
+  "message.chestseparators.auto_deposit_none": "Nessun baule filtrato vicino a portata."
 }

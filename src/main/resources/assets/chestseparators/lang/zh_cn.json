@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "启用后，自定义颜色列在线条、背景和组合标签页之间共享。禁用后，每个标签页各自独立。",
   "title.chestseparators.config": "Absolute Order 配置",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "自动存入附近箱子",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "一个动作即可将整个物品栏整理到附近的过滤箱子中。",
+  "config.chestseparators.auto_deposit_double_sneak": "触发：双击潜行",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "快速按两次潜行键即可自动存入。",
+  "config.chestseparators.auto_deposit_radius": "自动存入半径",
+  "config.chestseparators.auto_deposit_radius.tooltip": "在你周围（以方块计）搜索箱子的距离。",
+  "config.chestseparators.auto_deposit_through_walls": "穿墙存入",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "允许存入被实心方块阻挡的箱子。关闭时路径必须畅通。",
+  "config.chestseparators.auto_deposit": "自动存入（快捷键）",
+  "key.chestseparators.auto_deposit": "自动存入附近箱子",
+  "message.chestseparators.auto_deposit_done": "已自动存入 %s 个物品。",
+  "message.chestseparators.auto_deposit_none": "范围内没有附近的过滤箱子。"
 }

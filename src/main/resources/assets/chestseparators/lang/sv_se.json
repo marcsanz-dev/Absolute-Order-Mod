@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "När aktiverat delas kolumnen med anpassade färger mellan flikarna Linjer, Bakgrunder och Kombo. När inaktiverat har varje flik egna.",
   "title.chestseparators.config": "Absolute Order-konfiguration",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-insättning i närliggande kistor",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Sortera hela ditt inventarium till närliggande filtrerade kistor med en enda utlösare.",
+  "config.chestseparators.auto_deposit_double_sneak": "Utlösare: dubbelsmyg",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Tryck snabbt två gånger på smygtangenten för att auto-sätta in.",
+  "config.chestseparators.auto_deposit_radius": "Auto-insättningsradie",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Hur långt runt dig (i block) kistor söks.",
+  "config.chestseparators.auto_deposit_through_walls": "Sätt in genom väggar",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Tillåter insättning i kistor som blockeras av fasta block. När av måste vägen vara fri.",
+  "config.chestseparators.auto_deposit": "Auto-insättning (tangent)",
+  "key.chestseparators.auto_deposit": "Auto-insättning i närliggande kistor",
+  "message.chestseparators.auto_deposit_done": "Auto-insatte %s föremål.",
+  "message.chestseparators.auto_deposit_none": "Inga närliggande filtrerade kistor inom räckhåll."
 }

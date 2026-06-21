@@ -47,6 +47,18 @@ public class GlobalChestConfig {
         public int bgTransparency = 40;
         public int lineTransparency = 100;
 
+        // --- AUTO-DEPOSIT TO NEARBY CHESTS ---
+        // Master switch for the radius auto-deposit feature: stand in your storage area, trigger it,
+        // and every inventory item is sorted into nearby chests whose filters list it.
+        public boolean autoDepositEnabled = true;
+        // Enable the double-tap-sneak gesture as a trigger (in addition to the optional hotkey).
+        public boolean autoDepositDoubleSneak = true;
+        // Search radius in blocks around the player for filtered containers.
+        public int autoDepositRadius = 8;
+        // When false (default) a chest is skipped if a solid block obstructs the straight line between
+        // the player and the chest. When true, items can be deposited through walls.
+        public boolean autoDepositThroughWalls = false;
+
         // --- SERVER / MECHANICS ---
         public boolean defaultRuleManual = true;
         public boolean defaultRuleShift = true;

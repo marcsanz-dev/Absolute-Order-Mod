@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Quando ativado, a coluna de cores personalizadas é compartilhada entre as abas Linhas, Fundos e Combo. Quando desativado, cada aba tem as suas.",
   "title.chestseparators.config": "Configuração do Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Depósito automático em baús próximos",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Organize todo o seu inventário nos baús filtrados próximos com um único gesto.",
+  "config.chestseparators.auto_deposit_double_sneak": "Gatilho: agachar duas vezes",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Toque duas vezes rapidamente a tecla de agachar para depositar automaticamente.",
+  "config.chestseparators.auto_deposit_radius": "Raio do depósito automático",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Distância ao seu redor (em blocos) em que os baús são procurados.",
+  "config.chestseparators.auto_deposit_through_walls": "Depositar através de paredes",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Permite depositar em baús bloqueados por blocos sólidos. Quando desligado, o caminho deve estar livre.",
+  "config.chestseparators.auto_deposit": "Depósito automático (tecla)",
+  "key.chestseparators.auto_deposit": "Depósito automático em baús próximos",
+  "message.chestseparators.auto_deposit_done": "%s itens depositados automaticamente.",
+  "message.chestseparators.auto_deposit_none": "Nenhum baú filtrado próximo ao alcance."
 }

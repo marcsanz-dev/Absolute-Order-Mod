@@ -2,14 +2,21 @@ package io.github.marcsanzdev.chestseparators.event;
 
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.network.AutoDepositRequestPayload;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {
+
+    // Double-tap-sneak gesture state for the radius auto-deposit trigger.
+    private static boolean wasSneakDown = false;
+    private static long lastSneakTapTime = 0L;
+    private static final long DOUBLE_TAP_WINDOW_MS = 350L;
 
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -26,7 +33,39 @@ public class KeyInputHandler {
             while (ModKeyBindings.openEditorKey.wasPressed()) actionBar(client, togglePreviewPanel());
             while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) actionBar(client, toggleDepositButton());
             while (ModKeyBindings.toggleMagnifierKey.wasPressed()) actionBar(client, toggleMagnifier());
+
+            handleAutoDepositTriggers(client);
         });
+    }
+
+    // Fires the radius auto-deposit from either the dedicated (optional) hotkey or a quick
+    // double-tap of the sneak key. The server performs the move and replies with the animation data.
+    private static void handleAutoDepositTriggers(MinecraftClient client) {
+        boolean sneakDown = client.options.sneakKey.isPressed();
+
+        if (!GlobalChestConfig.instance.autoDepositEnabled) {
+            wasSneakDown = sneakDown;
+            return;
+        }
+
+        while (ModKeyBindings.autoDepositKey.wasPressed()) triggerAutoDeposit(client);
+
+        if (GlobalChestConfig.instance.autoDepositDoubleSneak && sneakDown && !wasSneakDown) {
+            long now = System.currentTimeMillis();
+            if (now - lastSneakTapTime <= DOUBLE_TAP_WINDOW_MS) {
+                triggerAutoDeposit(client);
+                lastSneakTapTime = 0L;
+            } else {
+                lastSneakTapTime = now;
+            }
+        }
+        wasSneakDown = sneakDown;
+    }
+
+    private static void triggerAutoDeposit(MinecraftClient client) {
+        if (client.player == null || !ClientPlayNetworking.canSend(AutoDepositRequestPayload.ID)) return;
+        ClientPlayNetworking.send(new AutoDepositRequestPayload(
+                GlobalChestConfig.instance.autoDepositRadius, GlobalChestConfig.instance.autoDepositThroughWalls));
     }
 
     // Each toggle flips its config flag and returns the feedback text, leaving the caller to display

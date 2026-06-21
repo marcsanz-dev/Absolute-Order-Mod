@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Se está activado, a columna de cores personalizadas é común ás pestanas Liñas, Fondos e Combo. Se está desactivado, cada pestana ten as súas.",
   "title.chestseparators.config": "Configuración de Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-depósito en cofres próximos",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Ordena todo o teu inventario nos cofres filtrados próximos cun só xesto.",
+  "config.chestseparators.auto_deposit_double_sneak": "Disparador: dobre agocharse",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Preme dúas veces seguidas a tecla de agocharse para auto-depositar.",
+  "config.chestseparators.auto_deposit_radius": "Raio de auto-depósito",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Distancia ao teu redor (en bloques) na que se buscan cofres.",
+  "config.chestseparators.auto_deposit_through_walls": "Depositar a través de paredes",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Permite depositar en cofres bloqueados por bloques sólidos. Se está desactivado, o camiño debe estar libre.",
+  "config.chestseparators.auto_deposit": "Auto-depósito (tecla)",
+  "key.chestseparators.auto_deposit": "Auto-depósito en cofres próximos",
+  "message.chestseparators.auto_deposit_done": "Auto-depositados %s obxectos.",
+  "message.chestseparators.auto_deposit_none": "Non hai cofres filtrados próximos ao alcance."
 }

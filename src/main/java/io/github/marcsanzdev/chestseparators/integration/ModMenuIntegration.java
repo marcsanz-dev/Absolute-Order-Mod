@@ -140,6 +140,44 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.auto_deposit_enabled"),
+                            GlobalChestConfig.instance.autoDepositEnabled)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_enabled.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositEnabled = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.auto_deposit_double_sneak"),
+                            GlobalChestConfig.instance.autoDepositDoubleSneak)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_double_sneak.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositDoubleSneak = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startIntSlider(
+                            Text.translatable("config.chestseparators.auto_deposit_radius"),
+                            GlobalChestConfig.instance.autoDepositRadius,
+                            3,
+                            32)
+                    .setDefaultValue(8)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_radius.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositRadius = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.auto_deposit_through_walls"),
+                            GlobalChestConfig.instance.autoDepositThroughWalls)
+                    .setDefaultValue(false)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_through_walls.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositThroughWalls = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
                     .startIntSlider(
                             Text.translatable("config.chestseparators.bg_transparency"),
                             GlobalChestConfig.instance.bgTransparency,
@@ -225,6 +263,7 @@ public class ModMenuIntegration implements ModMenuApi {
             addKeyEntry.accept(ModKeyBindings.toggleButtonKey, "config.chestseparators.toggle_edit_buttons");
             addKeyEntry.accept(ModKeyBindings.toggleDepositButtonKey, "config.chestseparators.toggle_deposit_button");
             addKeyEntry.accept(ModKeyBindings.toggleMagnifierKey, "config.chestseparators.toggle_magnifier");
+            addKeyEntry.accept(ModKeyBindings.autoDepositKey, "config.chestseparators.auto_deposit");
             addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");
             addKeyEntry.accept(ModKeyBindings.showPanelModifierKey, "config.chestseparators.show_panel_modifier");
             addKeyEntry.accept(ModKeyBindings.depositFilterKey, "config.chestseparators.deposit_filter");

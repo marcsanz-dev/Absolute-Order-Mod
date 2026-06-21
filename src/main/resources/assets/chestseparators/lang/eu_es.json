@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Gaituta dagoenean, kolore pertsonalizatuen zutabea Lerroak, Atzealdeak eta Konbinazioa fitxen artean partekatzen da. Desgaituta, fitxa bakoitzak bereak ditu.",
   "title.chestseparators.config": "Absolute Order-en Konfigurazioa",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-gordailua hurbileko kutxetan",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Antolatu zure inbentario osoa hurbileko iragazitako kutxetan keinu bakar batekin.",
+  "config.chestseparators.auto_deposit_double_sneak": "Abiarazlea: makurtu bikoitza",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Sakatu bizkor bi aldiz makurtzeko tekla auto-gordailatzeko.",
+  "config.chestseparators.auto_deposit_radius": "Auto-gordailuaren erradioa",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Zure inguruan (blokeetan) kutxak bilatzen diren distantzia.",
+  "config.chestseparators.auto_deposit_through_walls": "Gordailatu hormen zehar",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Baimendu bloke solidoek blokeatutako kutxetan gordailatzea. Itzalita dagoenean, bidea libre egon behar da.",
+  "config.chestseparators.auto_deposit": "Auto-gordailua (tekla)",
+  "key.chestseparators.auto_deposit": "Auto-gordailua hurbileko kutxetan",
+  "message.chestseparators.auto_deposit_done": "%s objektu auto-gordailatu dira.",
+  "message.chestseparators.auto_deposit_none": "Ez dago hurbileko iragazitako kutxarik eskura."
 }

@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "有効にすると、カスタムカラー列がライン、背景、コンボのタブ間で共有されます。無効にすると、各タブが独自の色を持ちます。",
   "title.chestseparators.config": "Absolute Order の設定",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "近くのチェストへ自動収納",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "一回の操作でインベントリ全体を近くのフィルター付きチェストに整理します。",
+  "config.chestseparators.auto_deposit_double_sneak": "トリガー：二回スニーク",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "スニークキーを素早く二回押すと自動収納します。",
+  "config.chestseparators.auto_deposit_radius": "自動収納の範囲",
+  "config.chestseparators.auto_deposit_radius.tooltip": "周囲（ブロック単位）でチェストを探す距離。",
+  "config.chestseparators.auto_deposit_through_walls": "壁越しに収納",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "固いブロックで遮られたチェストへの収納を許可します。オフの場合は経路が通っている必要があります。",
+  "config.chestseparators.auto_deposit": "自動収納（キー）",
+  "key.chestseparators.auto_deposit": "近くのチェストへ自動収納",
+  "message.chestseparators.auto_deposit_done": "%s 個のアイテムを自動収納しました。",
+  "message.chestseparators.auto_deposit_none": "範囲内に近くのフィルター付きチェストがありません。"
 }

@@ -1,6 +1,7 @@
 package io.github.marcsanzdev.chestseparators.network;
 
 import io.github.marcsanzdev.chestseparators.client.EditorState;
+import io.github.marcsanzdev.chestseparators.client.ui.AutoDepositAnimator;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.util.ChestPosStorage;
@@ -50,6 +51,11 @@ public class ModClientNetworking {
                     }
                 }
             });
+        });
+
+        // Receives the result of a radius auto-deposit and animates the deposited items flying to chests.
+        ClientPlayNetworking.registerGlobalReceiver(AutoDepositResultPayload.ID, (payload, context) -> {
+            context.client().execute(() -> AutoDepositAnimator.addFlights(payload.flights()));
         });
     }
 }

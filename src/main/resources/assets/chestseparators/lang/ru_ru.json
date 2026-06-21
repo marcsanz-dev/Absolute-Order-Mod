@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Если включено, столбец пользовательских цветов общий для вкладок «Линии», «Фоны» и «Комбо». Если выключено, у каждой вкладки свои.",
   "title.chestseparators.config": "Настройки Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Авто-складирование в ближайшие сундуки",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Разложите весь инвентарь по ближайшим сундукам с фильтрами одним действием.",
+  "config.chestseparators.auto_deposit_double_sneak": "Триггер: двойное приседание",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Быстро нажмите клавишу приседания дважды для авто-складирования.",
+  "config.chestseparators.auto_deposit_radius": "Радиус авто-складирования",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Как далеко вокруг вас (в блоках) ищутся сундуки.",
+  "config.chestseparators.auto_deposit_through_walls": "Складировать сквозь стены",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Разрешает складирование в сундуки за сплошными блоками. Когда выключено, путь должен быть свободен.",
+  "config.chestseparators.auto_deposit": "Авто-складирование (клавиша)",
+  "key.chestseparators.auto_deposit": "Авто-складирование в ближайшие сундуки",
+  "message.chestseparators.auto_deposit_done": "Авто-сложено предметов: %s.",
+  "message.chestseparators.auto_deposit_none": "Поблизости нет сундуков с фильтрами в пределах досягаемости."
 }

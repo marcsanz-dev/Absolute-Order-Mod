@@ -1,6 +1,7 @@
 package io.github.marcsanzdev.chestseparators;
 
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
+import io.github.marcsanzdev.chestseparators.client.ui.AutoDepositAnimator;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.event.KeyInputHandler;
@@ -26,6 +27,7 @@ public class ChestSeparatorsClient implements ClientModInitializer {
         ModKeyBindings.register();
         KeyInputHandler.register();
         ModClientNetworking.register();
+        AutoDepositAnimator.register();
 
         ClientPlayNetworking.registerGlobalReceiver(WhitelistPayload.ID, (payload, context) -> {
             context.client().execute(() -> {

@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Jika aktif, kolom warna kustom digunakan bersama di tab Garis, Latar, dan Combo. Jika nonaktif, tiap tab punya sendiri.",
   "title.chestseparators.config": "Konfigurasi Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Setor otomatis ke peti terdekat",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Urutkan seluruh inventarismu ke peti berfilter terdekat dengan satu pemicu.",
+  "config.chestseparators.auto_deposit_double_sneak": "Pemicu: menunduk ganda",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Tekan tombol menunduk dua kali dengan cepat untuk menyetor otomatis.",
+  "config.chestseparators.auto_deposit_radius": "Radius setor otomatis",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Seberapa jauh di sekitarmu (dalam blok) peti dicari.",
+  "config.chestseparators.auto_deposit_through_walls": "Setor menembus dinding",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Izinkan menyetor ke peti yang terhalang blok padat. Bila mati, jalur harus bebas.",
+  "config.chestseparators.auto_deposit": "Setor otomatis (tombol)",
+  "key.chestseparators.auto_deposit": "Setor otomatis ke peti terdekat",
+  "message.chestseparators.auto_deposit_done": "%s item disetor otomatis.",
+  "message.chestseparators.auto_deposit_none": "Tidak ada peti berfilter terdekat dalam jangkauan."
 }

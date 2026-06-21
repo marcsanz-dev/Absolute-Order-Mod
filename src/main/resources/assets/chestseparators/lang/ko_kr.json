@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "활성화하면 사용자 지정 색상 열이 선, 배경, 콤보 탭에서 공유됩니다. 비활성화하면 각 탭이 자체 색상을 가집니다.",
   "title.chestseparators.config": "Absolute Order 설정",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "근처 상자에 자동 보관",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "한 번의 동작으로 인벤토리 전체를 근처 필터 상자에 정리합니다.",
+  "config.chestseparators.auto_deposit_double_sneak": "트리거: 이중 웅크리기",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "웅크리기 키를 빠르게 두 번 눌러 자동 보관합니다.",
+  "config.chestseparators.auto_deposit_radius": "자동 보관 범위",
+  "config.chestseparators.auto_deposit_radius.tooltip": "주변(블록 단위)에서 상자를 검색하는 거리.",
+  "config.chestseparators.auto_deposit_through_walls": "벽 너머로 보관",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "단단한 블록으로 막힌 상자에도 보관을 허용합니다. 꺼져 있으면 경로가 뚫려 있어야 합니다.",
+  "config.chestseparators.auto_deposit": "자동 보관 (키)",
+  "key.chestseparators.auto_deposit": "근처 상자에 자동 보관",
+  "message.chestseparators.auto_deposit_done": "%s개 아이템을 자동 보관했습니다.",
+  "message.chestseparators.auto_deposit_none": "범위 내에 가까운 필터 상자가 없습니다."
 }

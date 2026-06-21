@@ -14,6 +14,7 @@ public class ModKeyBindings {
     public static KeyBinding toggleMagnifierKey;
     public static KeyBinding depositFilterKey;
     public static KeyBinding depositAllKey;
+    public static KeyBinding autoDepositKey;
 
     private static final KeyBinding.Category CATEGORY =
             KeyBinding.Category.create(Identifier.of("chestseparators", "keys"));
@@ -41,5 +42,10 @@ public class ModKeyBindings {
 
         depositAllKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.chestseparators.deposit_all", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_D, CATEGORY));
+
+        // Unbound by default: the primary trigger is the double-tap-sneak gesture, so this hotkey is an
+        // optional alternative the player may bind to avoid any conflict with other movement keys.
+        autoDepositKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.chestseparators.auto_deposit", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY));
     }
 }

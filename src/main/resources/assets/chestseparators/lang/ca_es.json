@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Si s'activa, la columna de colors personalitzats és comuna a les pestanyes Línies, Fons i Combo. Si es desactiva, cada pestanya té els seus.",
   "title.chestseparators.config": "إعدادات Absolute Order",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Auto-dipòsit a cofres propers",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Ordena tot el teu inventari als cofres filtrats propers amb un sol gest.",
+  "config.chestseparators.auto_deposit_double_sneak": "Activador: ajupir-se dos cops",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Prem dues vegades seguides la tecla d'ajupir-se per auto-dipositar.",
+  "config.chestseparators.auto_deposit_radius": "Radi d'auto-dipòsit",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Distància al teu voltant (en blocs) on es busquen cofres.",
+  "config.chestseparators.auto_deposit_through_walls": "Dipositar a través de parets",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Permet dipositar en cofres bloquejats per blocs sòlids. Si està desactivat, el camí ha d'estar lliure.",
+  "config.chestseparators.auto_deposit": "Auto-dipòsit (tecla)",
+  "key.chestseparators.auto_deposit": "Auto-dipòsit a cofres propers",
+  "message.chestseparators.auto_deposit_done": "Auto-dipositats %s objectes.",
+  "message.chestseparators.auto_deposit_none": "No hi ha cofres filtrats propers a l'abast."
 }

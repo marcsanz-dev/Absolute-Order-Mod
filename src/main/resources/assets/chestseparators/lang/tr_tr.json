@@ -185,5 +185,17 @@
   "config.chestseparators.shared_custom_colors.tooltip": "Etkinleştirildiğinde, özel renk sütunu Çizgiler, Arka Planlar ve Combo sekmeleri arasında paylaşılır. Devre dışıyken her sekmenin kendi renkleri olur.",
   "title.chestseparators.config": "Absolute Order Yapılandırması",
   "category.chestseparators.keys": "Absolute Order",
-  "key.category.chestseparators.keys": "Absolute Order"
+  "key.category.chestseparators.keys": "Absolute Order",
+  "config.chestseparators.auto_deposit_enabled": "Yakındaki sandıklara otomatik yatırma",
+  "config.chestseparators.auto_deposit_enabled.tooltip": "Tüm envanterini tek bir hareketle yakındaki filtreli sandıklara yerleştir.",
+  "config.chestseparators.auto_deposit_double_sneak": "Tetikleyici: çift eğilme",
+  "config.chestseparators.auto_deposit_double_sneak.tooltip": "Otomatik yatırmak için eğilme tuşuna hızlıca iki kez bas.",
+  "config.chestseparators.auto_deposit_radius": "Otomatik yatırma yarıçapı",
+  "config.chestseparators.auto_deposit_radius.tooltip": "Etrafında (blok cinsinden) sandıkların aranacağı mesafe.",
+  "config.chestseparators.auto_deposit_through_walls": "Duvarların arkasına yatır",
+  "config.chestseparators.auto_deposit_through_walls.tooltip": "Katı bloklarla engellenen sandıklara yatırmaya izin verir. Kapalıyken yol açık olmalı.",
+  "config.chestseparators.auto_deposit": "Otomatik yatırma (tuş)",
+  "key.chestseparators.auto_deposit": "Yakındaki sandıklara otomatik yatırma",
+  "message.chestseparators.auto_deposit_done": "%s eşya otomatik yatırıldı.",
+  "message.chestseparators.auto_deposit_none": "Menzilde yakın filtreli sandık yok."
 }
