@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Auto-gordailua (tekla)",
   "key.chestseparators.auto_deposit": "Auto-gordailua hurbileko kutxetan",
   "message.chestseparators.auto_deposit_done": "%s objektu auto-gordailatu dira.",
-  "message.chestseparators.auto_deposit_none": "Ez dago hurbileko iragazitako kutxarik eskura."
+  "message.chestseparators.auto_deposit_none": "Ez dago hurbileko iragazitako kutxarik eskura.",
+  "config.chestseparators.auto_deposit_animation": "Gordailu-animazioa",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Erakutsi 3D objektuak kutxa bakoitzera hegan. Itzalita badago, objektuak berehala gordailatzen dira animaziorik gabe.",
+  "config.chestseparators.auto_deposit_trail": "Arrasto-efektua",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Utzi partikula-arrasto bat hegan doan objektu bakoitzaren atzean. Animazioa piztuta dagoenean soilik aplikatzen da."
 }

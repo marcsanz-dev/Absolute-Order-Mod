@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Auto-opslaan (toets)",
   "key.chestseparators.auto_deposit": "Auto-opslaan in nabije kisten",
   "message.chestseparators.auto_deposit_done": "%s voorwerpen automatisch opgeslagen.",
-  "message.chestseparators.auto_deposit_none": "Geen nabije gefilterde kisten binnen bereik."
+  "message.chestseparators.auto_deposit_none": "Geen nabije gefilterde kisten binnen bereik.",
+  "config.chestseparators.auto_deposit_animation": "Opslag-animatie",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Toont de 3D-voorwerpen die naar elke kist vliegen. Indien uit, worden voorwerpen direct zonder animatie opgeslagen.",
+  "config.chestseparators.auto_deposit_trail": "Spoor-effect",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Laat een deeltjesspoor achter elk vliegend voorwerp achter. Geldt alleen als de animatie aan staat."
 }

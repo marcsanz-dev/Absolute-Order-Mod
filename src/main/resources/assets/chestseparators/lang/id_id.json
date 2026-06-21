@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Setor otomatis (tombol)",
   "key.chestseparators.auto_deposit": "Setor otomatis ke peti terdekat",
   "message.chestseparators.auto_deposit_done": "%s item disetor otomatis.",
-  "message.chestseparators.auto_deposit_none": "Tidak ada peti berfilter terdekat dalam jangkauan."
+  "message.chestseparators.auto_deposit_none": "Tidak ada peti berfilter terdekat dalam jangkauan.",
+  "config.chestseparators.auto_deposit_animation": "Animasi setor",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Menampilkan item 3D yang terbang ke setiap peti. Bila mati, item disetor seketika tanpa animasi.",
+  "config.chestseparators.auto_deposit_trail": "Efek jejak",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Meninggalkan jejak partikel di belakang setiap item yang terbang. Hanya berlaku saat animasi menyala."
 }

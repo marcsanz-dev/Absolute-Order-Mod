@@ -58,6 +58,11 @@ public class GlobalChestConfig {
         // When false (default) a chest is skipped if a solid block obstructs the straight line between
         // the player and the chest. When true, items can be deposited through walls.
         public boolean autoDepositThroughWalls = false;
+        // Show the 3D items flying from the player to each chest. When off, the deposit still happens
+        // (with sound + message) but no items are animated.
+        public boolean autoDepositAnimation = true;
+        // Leave a particle trail behind each flying item. Only applies when the animation is on.
+        public boolean autoDepositTrail = true;
 
         // --- SERVER / MECHANICS ---
         public boolean defaultRuleManual = true;

@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "الإيداع التلقائي (مفتاح)",
   "key.chestseparators.auto_deposit": "الإيداع التلقائي في الصناديق القريبة",
   "message.chestseparators.auto_deposit_done": "تم إيداع %s عنصرًا تلقائيًا.",
-  "message.chestseparators.auto_deposit_none": "لا توجد صناديق مُصفّاة قريبة في المتناول."
+  "message.chestseparators.auto_deposit_none": "لا توجد صناديق مُصفّاة قريبة في المتناول.",
+  "config.chestseparators.auto_deposit_animation": "حركة الإيداع",
+  "config.chestseparators.auto_deposit_animation.tooltip": "تُظهر العناصر ثلاثية الأبعاد وهي تطير إلى كل صندوق. عند الإيقاف تُودع العناصر فورًا دون حركة.",
+  "config.chestseparators.auto_deposit_trail": "تأثير الأثر",
+  "config.chestseparators.auto_deposit_trail.tooltip": "يترك أثرًا من الجسيمات خلف كل عنصر طائر. ينطبق فقط عند تشغيل الحركة."
 }

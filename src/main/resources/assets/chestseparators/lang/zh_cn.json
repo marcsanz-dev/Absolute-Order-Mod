@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "自动存入（快捷键）",
   "key.chestseparators.auto_deposit": "自动存入附近箱子",
   "message.chestseparators.auto_deposit_done": "已自动存入 %s 个物品。",
-  "message.chestseparators.auto_deposit_none": "范围内没有附近的过滤箱子。"
+  "message.chestseparators.auto_deposit_none": "范围内没有附近的过滤箱子。",
+  "config.chestseparators.auto_deposit_animation": "存入动画",
+  "config.chestseparators.auto_deposit_animation.tooltip": "显示飞向每个箱子的 3D 物品。关闭时，物品将无动画即时存入。",
+  "config.chestseparators.auto_deposit_trail": "拖尾效果",
+  "config.chestseparators.auto_deposit_trail.tooltip": "在每个飞行物品后方留下粒子拖尾。仅在动画开启时生效。"
 }

@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "자동 보관 (키)",
   "key.chestseparators.auto_deposit": "근처 상자에 자동 보관",
   "message.chestseparators.auto_deposit_done": "%s개 아이템을 자동 보관했습니다.",
-  "message.chestseparators.auto_deposit_none": "범위 내에 가까운 필터 상자가 없습니다."
+  "message.chestseparators.auto_deposit_none": "범위 내에 가까운 필터 상자가 없습니다.",
+  "config.chestseparators.auto_deposit_animation": "보관 애니메이션",
+  "config.chestseparators.auto_deposit_animation.tooltip": "각 상자로 날아가는 3D 아이템을 표시합니다. 꺼져 있으면 아이템이 애니메이션 없이 즉시 보관됩니다.",
+  "config.chestseparators.auto_deposit_trail": "잔상 효과",
+  "config.chestseparators.auto_deposit_trail.tooltip": "날아가는 각 아이템 뒤에 파티클 잔상을 남깁니다. 애니메이션이 켜져 있을 때만 적용됩니다."
 }

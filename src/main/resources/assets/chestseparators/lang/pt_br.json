@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Depósito automático (tecla)",
   "key.chestseparators.auto_deposit": "Depósito automático em baús próximos",
   "message.chestseparators.auto_deposit_done": "%s itens depositados automaticamente.",
-  "message.chestseparators.auto_deposit_none": "Nenhum baú filtrado próximo ao alcance."
+  "message.chestseparators.auto_deposit_none": "Nenhum baú filtrado próximo ao alcance.",
+  "config.chestseparators.auto_deposit_animation": "Animação de depósito",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Mostra os itens 3D voando para cada baú. Quando desligado, os itens são depositados instantaneamente sem animação.",
+  "config.chestseparators.auto_deposit_trail": "Efeito de rastro",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa um rastro de partículas atrás de cada item que voa. Só se aplica quando a animação está ligada."
 }

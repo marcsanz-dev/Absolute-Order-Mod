@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Dépôt auto (touche)",
   "key.chestseparators.auto_deposit": "Dépôt auto dans les coffres proches",
   "message.chestseparators.auto_deposit_done": "%s objets déposés automatiquement.",
-  "message.chestseparators.auto_deposit_none": "Aucun coffre filtré proche à portée."
+  "message.chestseparators.auto_deposit_none": "Aucun coffre filtré proche à portée.",
+  "config.chestseparators.auto_deposit_animation": "Animation de dépôt",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Affiche les objets 3D volant vers chaque coffre. Désactivé, les objets sont déposés instantanément sans animation.",
+  "config.chestseparators.auto_deposit_trail": "Effet de traînée",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Laisse une traînée de particules derrière chaque objet volant. Ne s'applique que si l'animation est activée."
 }

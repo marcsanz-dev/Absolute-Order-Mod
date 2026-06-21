@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Auto-depósito (tecla)",
   "key.chestseparators.auto_deposit": "Auto-depósito en cofres cercanos",
   "message.chestseparators.auto_deposit_done": "Auto-depositados %s objetos.",
-  "message.chestseparators.auto_deposit_none": "No hay cofres filtrados cercanos al alcance."
+  "message.chestseparators.auto_deposit_none": "No hay cofres filtrados cercanos al alcance.",
+  "config.chestseparators.auto_deposit_animation": "Animación de depósito",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Muestra los objetos 3D volando hacia cada cofre. Si está desactivado, los objetos se depositan al instante sin animación.",
+  "config.chestseparators.auto_deposit_trail": "Efecto de estela",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deja una estela de partículas tras cada objeto que vuela. Solo se aplica si la animación está activada."
 }

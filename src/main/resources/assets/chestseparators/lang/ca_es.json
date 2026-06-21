@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Auto-dipòsit (tecla)",
   "key.chestseparators.auto_deposit": "Auto-dipòsit a cofres propers",
   "message.chestseparators.auto_deposit_done": "Auto-dipositats %s objectes.",
-  "message.chestseparators.auto_deposit_none": "No hi ha cofres filtrats propers a l'abast."
+  "message.chestseparators.auto_deposit_none": "No hi ha cofres filtrats propers a l'abast.",
+  "config.chestseparators.auto_deposit_animation": "Animació de dipòsit",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Mostra els objectes 3D volant cap a cada cofre. Si està desactivat, els objectes es dipositen a l'instant sense animació.",
+  "config.chestseparators.auto_deposit_trail": "Efecte d'estela",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa una estela de partícules darrere de cada objecte que vola. Només s'aplica si l'animació està activada."
 }

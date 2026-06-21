@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Otomatik yatırma (tuş)",
   "key.chestseparators.auto_deposit": "Yakındaki sandıklara otomatik yatırma",
   "message.chestseparators.auto_deposit_done": "%s eşya otomatik yatırıldı.",
-  "message.chestseparators.auto_deposit_none": "Menzilde yakın filtreli sandık yok."
+  "message.chestseparators.auto_deposit_none": "Menzilde yakın filtreli sandık yok.",
+  "config.chestseparators.auto_deposit_animation": "Yatırma animasyonu",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Her sandığa uçan 3D eşyaları gösterir. Kapalıyken eşyalar animasyonsuz anında yatırılır.",
+  "config.chestseparators.auto_deposit_trail": "İz efekti",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Uçan her eşyanın arkasında parçacık izi bırakır. Yalnızca animasyon açıkken geçerlidir."
 }

@@ -178,6 +178,24 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.auto_deposit_animation"),
+                            GlobalChestConfig.instance.autoDepositAnimation)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_animation.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositAnimation = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.auto_deposit_trail"),
+                            GlobalChestConfig.instance.autoDepositTrail)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.auto_deposit_trail.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositTrail = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
                     .startIntSlider(
                             Text.translatable("config.chestseparators.bg_transparency"),
                             GlobalChestConfig.instance.bgTransparency,

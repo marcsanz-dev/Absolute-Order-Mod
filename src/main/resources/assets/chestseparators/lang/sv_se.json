@@ -197,5 +197,9 @@
   "config.chestseparators.auto_deposit": "Auto-insättning (tangent)",
   "key.chestseparators.auto_deposit": "Auto-insättning i närliggande kistor",
   "message.chestseparators.auto_deposit_done": "Auto-insatte %s föremål.",
-  "message.chestseparators.auto_deposit_none": "Inga närliggande filtrerade kistor inom räckhåll."
+  "message.chestseparators.auto_deposit_none": "Inga närliggande filtrerade kistor inom räckhåll.",
+  "config.chestseparators.auto_deposit_animation": "Insättningsanimation",
+  "config.chestseparators.auto_deposit_animation.tooltip": "Visar 3D-föremålen som flyger till varje kista. När av sätts föremål in direkt utan animation.",
+  "config.chestseparators.auto_deposit_trail": "Svanseffekt",
+  "config.chestseparators.auto_deposit_trail.tooltip": "Lämnar ett partikelspår efter varje flygande föremål. Gäller endast när animationen är på."
 }
