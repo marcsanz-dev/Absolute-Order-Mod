@@ -85,6 +85,10 @@ public class ChestSeparatorsEditor {
     public boolean colorPickerModified = false;
     public int restoreColorIndex = -1;
 
+    // Slots changed by the most recent undo/redo, blinked briefly to show what happened.
+    public Map<Integer, ChestConfigManager.SlotChange> undoHighlights = new HashMap<>();
+    public long undoHighlightStart = 0;
+
     public ChestSeparatorsEditor(HandledScreen<?> screen) {
         this.screen = screen;
         this.accessor = (HandledScreenAccessor) screen;
@@ -576,6 +580,10 @@ public class ChestSeparatorsEditor {
             sendWhitelistToServer();
         }
         syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
+
+        // Blink the slots that changed, colored by the kind of change.
+        undoHighlights = new HashMap<>(ChestConfigManager.getInstance().getLastUndoChanges());
+        undoHighlightStart = System.currentTimeMillis();
 
         String feedbackKey = isRedo ? "message.chestseparators.redone" : "message.chestseparators.undone";
         showStatus(Text.translatable(feedbackKey, Text.translatable(labelKey)), Formatting.GRAY);

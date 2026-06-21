@@ -104,8 +104,59 @@ public class ChestConfigManager {
     /** An immutable snapshot of the whole chest state, tagged with what changed to reach it. */
     private record ChestState(Map<Integer, int[]> visual, Map<Integer, SlotWhitelist> whitelists, String labelKey) {}
 
+    /** Per-slot classification of an undo/redo change, used to drive the on-slot blink feedback. */
+    public enum SlotChange {
+        LAYOUT,
+        FILTER_CREATED,
+        FILTER_REMOVED,
+        FILTER_MODIFIED
+    }
+
     private final java.util.Deque<ChestState> undoStack = new java.util.ArrayDeque<>();
     private final java.util.Deque<ChestState> redoStack = new java.util.ArrayDeque<>();
+
+    /** Slots that changed in the most recent undo/redo, with what kind of change the user just saw. */
+    private Map<Integer, SlotChange> lastUndoChanges = new HashMap<>();
+
+    public Map<Integer, SlotChange> getLastUndoChanges() {
+        return lastUndoChanges;
+    }
+
+    /** Classifies, per slot, the difference between the current state and the state being restored. */
+    private Map<Integer, SlotChange> computeChanges(
+            Map<Integer, int[]> oldVis,
+            Map<Integer, SlotWhitelist> oldWl,
+            Map<Integer, int[]> newVis,
+            Map<Integer, SlotWhitelist> newWl) {
+        Map<Integer, SlotChange> changes = new HashMap<>();
+        Set<Integer> slots = new HashSet<>();
+        slots.addAll(oldVis.keySet());
+        slots.addAll(newVis.keySet());
+        slots.addAll(oldWl.keySet());
+        slots.addAll(newWl.keySet());
+        for (int slot : slots) {
+            SlotWhitelist owl = oldWl.get(slot);
+            SlotWhitelist nwl = newWl.get(slot);
+            if (!java.util.Objects.equals(owl, nwl)) {
+                if (owl == null) changes.put(slot, SlotChange.FILTER_CREATED);
+                else if (nwl == null) changes.put(slot, SlotChange.FILTER_REMOVED);
+                else changes.put(slot, SlotChange.FILTER_MODIFIED);
+            } else if (!sameColors(oldVis.get(slot), newVis.get(slot))) {
+                changes.put(slot, SlotChange.LAYOUT);
+            }
+        }
+        return changes;
+    }
+
+    /** Compares only the five color channels (0-4), ignoring the paint-order sequence (5-8). */
+    private static boolean sameColors(int[] a, int[] b) {
+        for (int i = 0; i <= IDX_BG; i++) {
+            int av = (a != null && i < a.length) ? a[i] : 0;
+            int bv = (b != null && i < b.length) ? b[i] : 0;
+            if (av != bv) return false;
+        }
+        return true;
+    }
 
     private static Map<Integer, int[]> copyVisualConfig(Map<Integer, int[]> source) {
         Map<Integer, int[]> copy = new HashMap<>();
@@ -166,6 +217,8 @@ public class ChestConfigManager {
         if (undoStack.isEmpty()) return null;
         ChestState previous = undoStack.pop();
         redoStack.push(snapshotCurrent(previous.labelKey()));
+        lastUndoChanges =
+                computeChanges(currentChestConfig, currentWhitelists, previous.visual(), previous.whitelists());
         applyVisualConfig(previous.visual());
         applyWhitelists(previous.whitelists());
         return previous.labelKey();
@@ -179,6 +232,7 @@ public class ChestConfigManager {
         if (redoStack.isEmpty()) return null;
         ChestState next = redoStack.pop();
         undoStack.push(snapshotCurrent(next.labelKey()));
+        lastUndoChanges = computeChanges(currentChestConfig, currentWhitelists, next.visual(), next.whitelists());
         applyVisualConfig(next.visual());
         applyWhitelists(next.whitelists());
         return next.labelKey();

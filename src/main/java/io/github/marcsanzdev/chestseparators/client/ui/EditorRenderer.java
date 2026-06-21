@@ -95,6 +95,7 @@ public class EditorRenderer {
             context.getMatrices().pushMatrix();
             context.getMatrices().translate((float) accessor.getX(), (float) accessor.getY());
             renderSavedLinesLayer(context);
+            renderUndoHighlights(context);
             context.getMatrices().popMatrix();
 
             switch (session.currentState) {
@@ -115,6 +116,48 @@ public class EditorRenderer {
     // White washes matching the eraser tool's drag preview, reused for the Clear-button hover preview.
     private static final int ERASE_BG_WASH = 0x66FFFFFF;
     private static final int ERASE_LINE_WASH = 0x88FFFFFF;
+
+    private static final long UNDO_HIGHLIGHT_MS = 1300;
+
+    /**
+     * Blinks a colored frame around each slot changed by the last undo/redo, fading out over
+     * {@link #UNDO_HIGHLIGHT_MS}. Color encodes the exact change: green = a filter (re)appeared,
+     * red = a filter was removed, amber = a filter's items changed, cyan = separators changed.
+     */
+    private void renderUndoHighlights(DrawContext context) {
+        if (editor.undoHighlights.isEmpty()) return;
+        long elapsed = System.currentTimeMillis() - editor.undoHighlightStart;
+        if (elapsed > UNDO_HIGHLIGHT_MS) {
+            editor.undoHighlights.clear();
+            return;
+        }
+        float fade = 1.0f - (elapsed / (float) UNDO_HIGHLIGHT_MS);
+        float blink = 0.45f + 0.55f * (float) Math.abs(Math.sin(elapsed / 110.0));
+        int a = (int) (255 * fade * blink);
+        if (a <= 0) return;
+        int alpha = a << 24;
+
+        for (Slot s : accessor.getHandler().slots) {
+            if (s.inventory instanceof PlayerInventory) continue;
+            ChestConfigManager.SlotChange ch = editor.undoHighlights.get(s.getIndex());
+            if (ch == null) continue;
+            int color = (undoHighlightColor(ch) & 0x00FFFFFF) | alpha;
+            // 2px frame just outside the 16x16 slot.
+            context.fill(s.x - 2, s.y - 2, s.x + 18, s.y, color);
+            context.fill(s.x - 2, s.y + 16, s.x + 18, s.y + 18, color);
+            context.fill(s.x - 2, s.y, s.x, s.y + 16, color);
+            context.fill(s.x + 16, s.y, s.x + 18, s.y + 16, color);
+        }
+    }
+
+    private static int undoHighlightColor(ChestConfigManager.SlotChange ch) {
+        return switch (ch) {
+            case FILTER_CREATED -> 0x55FF55;
+            case FILTER_REMOVED -> 0xFF5555;
+            case FILTER_MODIFIED -> 0xFFD24C;
+            case LAYOUT -> 0x55D6FF;
+        };
+    }
 
     public void renderSavedLinesLayer(DrawContext context) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
