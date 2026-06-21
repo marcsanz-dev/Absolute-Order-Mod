@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Meninggalkan jejak partikel di belakang setiap item yang terbang. Hanya berlaku saat animasi menyala.",
   "button.chestseparators.pickup_insert": "Ambil",
   "tooltip.chestseparators.rule.pickup_active": "Aktif: memfilter item yang dipungut dari tanah",
-  "tooltip.chestseparators.rule.pickup_inactive": "Nonaktif: item yang dipungut mengabaikan filter"
+  "tooltip.chestseparators.rule.pickup_inactive": "Nonaktif: item yang dipungut mengabaikan filter",
+  "tooltip.chestseparators.edit_inventory_toggle": "Edit inventaris / peti",
+  "message.chestseparators.editing_inventory": "Mengedit: inventaris",
+  "message.chestseparators.editing_chest": "Mengedit: peti"
 }

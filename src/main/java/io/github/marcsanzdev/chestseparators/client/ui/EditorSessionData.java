@@ -98,9 +98,12 @@ public class EditorSessionData {
     // Context
     public BlockPos currentChestPos;
     public String currentDimension;
-    // True when the editor targets the player's own inventory slots (decorations + filters) instead of
-    // a container's slots. Stored as a global/per-world profile rather than per-position.
+    // True when the editor is currently targeting the player's own inventory slots (decorations +
+    // filters) instead of a container's slots. In a chest screen this can be toggled at runtime.
     public boolean isPlayerInventory = false;
+    // True only when the screen itself is the survival inventory screen (no container). Used to decide
+    // whether the chest<->inventory edit-target toggle button is available.
+    public boolean isInventoryScreenContext = false;
     public boolean isEnderChest = false;
     public boolean isEntityChest = false;
     public UUID currentEntityUUID;

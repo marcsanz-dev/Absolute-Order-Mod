@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Deja una estela de partículas tras cada objeto que vuela. Solo se aplica si la animación está activada.",
   "button.chestseparators.pickup_insert": "Recoger",
   "tooltip.chestseparators.rule.pickup_active": "Activo: Filtra items recogidos del suelo",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inactivo: Los items recogidos ignoran el filtro"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactivo: Los items recogidos ignoran el filtro",
+  "tooltip.chestseparators.edit_inventory_toggle": "Editar inventario / cofre",
+  "message.chestseparators.editing_inventory": "Editando: inventario",
+  "message.chestseparators.editing_chest": "Editando: cofre"
 }

@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Оставляет след из частиц за каждым летящим предметом. Действует только при включённой анимации.",
   "button.chestseparators.pickup_insert": "Подбор",
   "tooltip.chestseparators.rule.pickup_active": "Активно: фильтрует подобранные предметы",
-  "tooltip.chestseparators.rule.pickup_inactive": "Неактивно: подобранные предметы игнорируют фильтр"
+  "tooltip.chestseparators.rule.pickup_inactive": "Неактивно: подобранные предметы игнорируют фильтр",
+  "tooltip.chestseparators.edit_inventory_toggle": "Редактировать инвентарь / сундук",
+  "message.chestseparators.editing_inventory": "Редактирование: инвентарь",
+  "message.chestseparators.editing_chest": "Редактирование: сундук"
 }

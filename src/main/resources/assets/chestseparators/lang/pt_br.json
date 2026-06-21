@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Deixa um rastro de partículas atrás de cada item que voa. Só se aplica quando a animação está ligada.",
   "button.chestseparators.pickup_insert": "Pegar",
   "tooltip.chestseparators.rule.pickup_active": "Ativo: filtra itens pegos do chão",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inativo: itens pegos ignoram o filtro"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inativo: itens pegos ignoram o filtro",
+  "tooltip.chestseparators.edit_inventory_toggle": "Editar inventário / baú",
+  "message.chestseparators.editing_inventory": "Editando: inventário",
+  "message.chestseparators.editing_chest": "Editando: baú"
 }

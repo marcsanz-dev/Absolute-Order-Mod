@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Laisse une traînée de particules derrière chaque objet volant. Ne s'applique que si l'animation est activée.",
   "button.chestseparators.pickup_insert": "Ramasser",
   "tooltip.chestseparators.rule.pickup_active": "Actif : filtre les objets ramassés",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inactif : les objets ramassés ignorent le filtre"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactif : les objets ramassés ignorent le filtre",
+  "tooltip.chestseparators.edit_inventory_toggle": "Éditer inventaire / coffre",
+  "message.chestseparators.editing_inventory": "Édition : inventaire",
+  "message.chestseparators.editing_chest": "Édition : coffre"
 }

@@ -294,6 +294,13 @@ public class EditorInputHandler {
 
         // Edit and whitelist buttons are clickable in all states except the filter edit sub-menu.
         if (!isFilterMenuOpen) {
+            // The chest<->inventory edit-target toggle (chest screens only), independent of the
+            // show-edit-buttons option.
+            if (!session.isInventoryScreenContext
+                    && editor.inventoryToggleButton != null
+                    && editor.inventoryToggleButton.mouseClicked(mouseX, mouseY, button)) {
+                return false;
+            }
             if (GlobalChestConfig.isShowEditButton()) {
                 if (editor.entryButton != null && editor.entryButton.mouseClicked(mouseX, mouseY, button)) {
                     return false;

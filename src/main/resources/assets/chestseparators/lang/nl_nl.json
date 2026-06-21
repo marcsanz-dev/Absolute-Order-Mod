@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Laat een deeltjesspoor achter elk vliegend voorwerp achter. Geldt alleen als de animatie aan staat.",
   "button.chestseparators.pickup_insert": "Oprapen",
   "tooltip.chestseparators.rule.pickup_active": "Actief: filtert opgeraapte voorwerpen",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inactief: opgeraapte voorwerpen negeren het filter"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactief: opgeraapte voorwerpen negeren het filter",
+  "tooltip.chestseparators.edit_inventory_toggle": "Inventaris / kist bewerken",
+  "message.chestseparators.editing_inventory": "Bewerken: inventaris",
+  "message.chestseparators.editing_chest": "Bewerken: kist"
 }

@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Pozostawia smugę cząsteczek za każdym lecącym przedmiotem. Działa tylko, gdy animacja jest włączona.",
   "button.chestseparators.pickup_insert": "Podnoszenie",
   "tooltip.chestseparators.rule.pickup_active": "Aktywne: filtruje podniesione przedmioty",
-  "tooltip.chestseparators.rule.pickup_inactive": "Nieaktywne: podniesione przedmioty ignorują filtr"
+  "tooltip.chestseparators.rule.pickup_inactive": "Nieaktywne: podniesione przedmioty ignorują filtr",
+  "tooltip.chestseparators.edit_inventory_toggle": "Edytuj ekwipunek / skrzynię",
+  "message.chestseparators.editing_inventory": "Edycja: ekwipunek",
+  "message.chestseparators.editing_chest": "Edycja: skrzynia"
 }

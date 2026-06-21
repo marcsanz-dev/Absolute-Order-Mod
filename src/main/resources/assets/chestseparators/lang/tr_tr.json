@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Uçan her eşyanın arkasında parçacık izi bırakır. Yalnızca animasyon açıkken geçerlidir.",
   "button.chestseparators.pickup_insert": "Yerden Al",
   "tooltip.chestseparators.rule.pickup_active": "Etkin: Yerden alınan eşyaları filtreler",
-  "tooltip.chestseparators.rule.pickup_inactive": "Etkin değil: Yerden alınan eşyalar filtreyi yok sayar"
+  "tooltip.chestseparators.rule.pickup_inactive": "Etkin değil: Yerden alınan eşyalar filtreyi yok sayar",
+  "tooltip.chestseparators.edit_inventory_toggle": "Envanteri / sandığı düzenle",
+  "message.chestseparators.editing_inventory": "Düzenleniyor: envanter",
+  "message.chestseparators.editing_chest": "Düzenleniyor: sandık"
 }

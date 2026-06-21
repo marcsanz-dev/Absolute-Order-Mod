@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Utzi partikula-arrasto bat hegan doan objektu bakoitzaren atzean. Animazioa piztuta dagoenean soilik aplikatzen da.",
   "button.chestseparators.pickup_insert": "Jaso",
   "tooltip.chestseparators.rule.pickup_active": "Aktibo: Lurretik jasotako objektuak iragazten ditu",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inaktibo: Jasotako objektuek iragazkia alde batera uzten dute"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inaktibo: Jasotako objektuek iragazkia alde batera uzten dute",
+  "tooltip.chestseparators.edit_inventory_toggle": "Editatu inbentarioa / kutxa",
+  "message.chestseparators.editing_inventory": "Editatzen: inbentarioa",
+  "message.chestseparators.editing_chest": "Editatzen: kutxa"
 }

@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Hinterlässt eine Partikelspur hinter jedem fliegenden Gegenstand. Gilt nur, wenn die Animation an ist.",
   "button.chestseparators.pickup_insert": "Aufheben",
   "tooltip.chestseparators.rule.pickup_active": "Aktiv: Filtert aufgehobene Gegenstände",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: Aufgehobene Gegenstände ignorieren den Filter"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: Aufgehobene Gegenstände ignorieren den Filter",
+  "tooltip.chestseparators.edit_inventory_toggle": "Inventar / Truhe bearbeiten",
+  "message.chestseparators.editing_inventory": "Bearbeiten: Inventar",
+  "message.chestseparators.editing_chest": "Bearbeiten: Truhe"
 }

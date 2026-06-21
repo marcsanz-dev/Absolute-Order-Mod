@@ -69,6 +69,8 @@ public class ChestSeparatorsEditor {
     public ToolButtonWidget entryButton;
     public ToolButtonWidget whitelistButton;
     public ToolButtonWidget depositButton;
+    // In a chest screen, switches the editor between editing the chest and editing the player inventory.
+    public ToolButtonWidget inventoryToggleButton;
     public TextFieldWidget searchBox;
     public TextFieldWidget whitelistSearchBox;
 
@@ -121,48 +123,23 @@ public class ChestSeparatorsEditor {
         this.screenEditFilter = new ScreenEditFilter(this);
         this.screenEditFilter.init();
 
-        session.isPlayerInventory = this.screen instanceof InventoryScreen;
+        session.isInventoryScreenContext = this.screen instanceof InventoryScreen;
+        session.isPlayerInventory = session.isInventoryScreenContext;
 
-        // For the player-inventory editor there is no container context: clear any stale chest data
-        // left in ChestPosStorage from the last container opened.
-        session.currentChestPos = session.isPlayerInventory ? null : ChestPosStorage.lastClickedPos;
+        // The survival inventory screen has no container context: clear any stale chest data left in
+        // ChestPosStorage. In a chest screen we keep the chest context so the edit target can toggle.
+        session.currentChestPos = session.isInventoryScreenContext ? null : ChestPosStorage.lastClickedPos;
         session.currentDimension = ChestPosStorage.lastClickedDimension;
-        session.isEntityChest = !session.isPlayerInventory && ChestPosStorage.isEntityOpened;
-        session.currentEntityUUID = session.isPlayerInventory ? null : ChestPosStorage.lastClickedEntityUUID;
+        session.isEntityChest = !session.isInventoryScreenContext && ChestPosStorage.isEntityOpened;
+        session.currentEntityUUID = session.isInventoryScreenContext ? null : ChestPosStorage.lastClickedEntityUUID;
         session.isEnderChest = false;
 
-        session.isShulkerBox = !session.isPlayerInventory && this.screen instanceof ShulkerBoxScreen;
-        session.currentShulkerUUID = session.isPlayerInventory ? null : ChestPosStorage.lastOpenedShulkerUUID;
+        session.isShulkerBox = !session.isInventoryScreenContext && this.screen instanceof ShulkerBoxScreen;
+        session.currentShulkerUUID = session.isInventoryScreenContext ? null : ChestPosStorage.lastOpenedShulkerUUID;
 
         ChestConfigManager.getInstance().loadWorldPalette();
-
-        if (session.isPlayerInventory) {
-            ChestConfigManager.getInstance().loadInventoryConfig();
-        } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
-            ChestConfigManager.getInstance().loadShulkerConfig(session.currentShulkerUUID);
-        } else if (session.isEntityChest && session.currentEntityUUID != null) {
-            ChestConfigManager.getInstance().loadEntityConfig(session.currentEntityUUID);
-        } else if (session.currentChestPos != null && MinecraftClient.getInstance().world != null) {
-            if (MinecraftClient.getInstance()
-                            .world
-                            .getBlockState(session.currentChestPos)
-                            .getBlock()
-                    == Blocks.ENDER_CHEST) {
-                session.isEnderChest = true;
-                ChestConfigManager.getInstance().loadEnderConfig();
-            } else {
-                ChestConfigManager.getInstance().loadConfig(session.currentChestPos, session.currentDimension);
-            }
-        }
-
-        if (session.currentChestPos != null && !session.isEntityChest && !session.isEnderChest) {
-            if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
-                    io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload.ID)) {
-                net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                        new io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload(
-                                session.currentChestPos));
-            }
-        }
+        loadConfigForCurrentTarget();
+        requestChestWhitelistsIfNeeded();
 
         int x = accessor.getX();
         int y = accessor.getY();
@@ -208,6 +185,16 @@ public class ChestSeparatorsEditor {
                         }
                     }
                 });
+
+        // Chest screens get a backpack toggle (top-left) to switch the editor between the chest and
+        // the player inventory, so both layouts and filters are editable without leaving the chest.
+        this.inventoryToggleButton = new ToolButtonWidget(
+                x - 22,
+                y - 22,
+                ModTextures.ICON_BACKPACK_FULL,
+                Text.translatable("tooltip.chestseparators.edit_inventory_toggle")
+                        .getString(),
+                this::toggleEditTarget);
 
         this.depositButton = new ToolButtonWidget(0, 0, ModTextures.BTN_DEPOSIT, "", () -> {
             if (this.isEditMode()) return;
@@ -368,6 +355,72 @@ public class ChestSeparatorsEditor {
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         if (renderer != null) renderer.render(context, mouseX, mouseY, delta);
+    }
+
+    /** Loads the working config for whatever the editor currently targets (chest variant or inventory). */
+    private void loadConfigForCurrentTarget() {
+        if (session.isPlayerInventory) {
+            ChestConfigManager.getInstance().loadInventoryConfig();
+        } else if (session.isShulkerBox && session.currentShulkerUUID != null) {
+            ChestConfigManager.getInstance().loadShulkerConfig(session.currentShulkerUUID);
+        } else if (session.isEntityChest && session.currentEntityUUID != null) {
+            ChestConfigManager.getInstance().loadEntityConfig(session.currentEntityUUID);
+        } else if (session.currentChestPos != null && MinecraftClient.getInstance().world != null) {
+            if (MinecraftClient.getInstance()
+                            .world
+                            .getBlockState(session.currentChestPos)
+                            .getBlock()
+                    == Blocks.ENDER_CHEST) {
+                session.isEnderChest = true;
+                ChestConfigManager.getInstance().loadEnderConfig();
+            } else {
+                ChestConfigManager.getInstance().loadConfig(session.currentChestPos, session.currentDimension);
+            }
+        }
+    }
+
+    /** Fetches the chest's server-authoritative whitelists, when the current target is a real chest. */
+    private void requestChestWhitelistsIfNeeded() {
+        if (!session.isPlayerInventory
+                && session.currentChestPos != null
+                && !session.isEntityChest
+                && !session.isEnderChest) {
+            if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
+                    io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload.ID)) {
+                net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                        new io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload(
+                                session.currentChestPos));
+            }
+        }
+    }
+
+    /**
+     * In a chest screen, switches the editor between editing the chest and editing the player
+     * inventory, reloading the matching config. Both layouts and filters stay fully editable; edits to
+     * each are saved to their own store.
+     */
+    public void toggleEditTarget() {
+        if (session.isInventoryScreenContext) return; // the inventory screen has nothing to toggle to
+
+        releaseLock();
+        session.currentState = EditorState.HIDDEN;
+        session.selectedSlots.clear();
+        session.selectedGroupId = null;
+        session.isColorPickerOpen = false;
+
+        session.isPlayerInventory = !session.isPlayerInventory;
+        if (!session.isPlayerInventory) session.isEnderChest = false; // recomputed by the loader
+        ChestConfigManager.getInstance().clearHistory();
+        loadConfigForCurrentTarget();
+        requestChestWhitelistsIfNeeded();
+
+        showStatus(
+                Text.translatable(
+                        session.isPlayerInventory
+                                ? "message.chestseparators.editing_inventory"
+                                : "message.chestseparators.editing_chest"),
+                Formatting.GRAY);
+        playClickSound(1.0f);
     }
 
     public int getSidebarYOffset() {

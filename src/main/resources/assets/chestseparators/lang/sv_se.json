@@ -204,5 +204,8 @@
   "config.chestseparators.auto_deposit_trail.tooltip": "Lämnar ett partikelspår efter varje flygande föremål. Gäller endast när animationen är på.",
   "button.chestseparators.pickup_insert": "Plocka upp",
   "tooltip.chestseparators.rule.pickup_active": "Aktiv: filtrerar upplockade föremål",
-  "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: upplockade föremål ignorerar filtret"
+  "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: upplockade föremål ignorerar filtret",
+  "tooltip.chestseparators.edit_inventory_toggle": "Redigera inventarium / kista",
+  "message.chestseparators.editing_inventory": "Redigerar: inventarium",
+  "message.chestseparators.editing_chest": "Redigerar: kista"
 }
