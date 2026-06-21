@@ -365,13 +365,19 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS) {
             if (session.isDraggingLine) {
                 Slot slot = editor.accessor.getFocusedSlot();
-                if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
+                // Confine the drag to the namespace it started in (no chest<->inventory crossover).
+                if (slot != null
+                        && ChestSeparatorsEditor.isEditableSlot(slot)
+                        && (session.dragStartSlot == null
+                                || ChestSeparatorsEditor.isPlayerSlot(slot)
+                                        == ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot))) {
                     session.dragCurrentSlot = slot;
 
                     // Trace mode: immediately commit each slot as the cursor moves.
                     if (session.wlToolMode == 1) {
-                        if (session.isSelecting) session.selectedSlots.add(slot.getIndex());
-                        else session.selectedSlots.remove(slot.getIndex());
+                        int k = ChestSeparatorsEditor.slotKey(slot);
+                        if (session.isSelecting) session.selectedSlots.add(k);
+                        else session.selectedSlots.remove(k);
                     }
                 }
                 return true;
@@ -387,6 +393,9 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                         || session.currentState == EditorState.SELECT_SLOTS)) {
             // Area mode: commit the rectangular selection on mouse release.
             if (session.wlToolMode == 0 && session.dragStartSlot != null && session.dragCurrentSlot != null) {
+                // The rectangle is confined to the namespace the drag started in, so an inventory
+                // selection never mirrors onto the chest grid (and vice versa).
+                boolean playerNs = ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot);
                 int sRow = session.dragStartSlot.getIndex() / 9;
                 int sCol = session.dragStartSlot.getIndex() % 9;
                 int cRow = session.dragCurrentSlot.getIndex() / 9;
@@ -398,11 +407,13 @@ public class ScreenViewGroups extends AbstractEditorScreen {
 
                 for (Slot s : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
+                    if (ChestSeparatorsEditor.isPlayerSlot(s) != playerNs) continue;
                     int r = s.getIndex() / 9;
                     int c = s.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (session.isSelecting) session.selectedSlots.add(s.getIndex());
-                        else session.selectedSlots.remove(s.getIndex());
+                        int k = ChestSeparatorsEditor.slotKey(s);
+                        if (session.isSelecting) session.selectedSlots.add(k);
+                        else session.selectedSlots.remove(k);
                     }
                 }
             }
