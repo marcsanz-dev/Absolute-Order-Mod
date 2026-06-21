@@ -49,6 +49,18 @@ public class EditorLayout {
     public int lsbY;
     public int lsbH;
 
+    /** Trailing pixels added below the last list row so it can scroll fully clear of the scissor. */
+    public static final int LIST_TRAILING_PADDING = 4;
+
+    /**
+     * Maximum vertical scroll for the left (allowed-items) list. Single source of truth shared by the
+     * renderer and every scroll input (wheel, scrollbar drag, arrow keys) so the bar always reaches
+     * the bottom that the renderer draws.
+     */
+    public int maxListScroll(int itemCount) {
+        return Math.max(0, itemCount * itemSize + LIST_TRAILING_PADDING - listViewH);
+    }
+
     // View Groups & Tools
     public int sidebarWidth = 76;
     public int sidebarHeight;

@@ -136,10 +136,10 @@ final class FilterPanelRenderer {
         screen.drawDarkBevel(context, listX + 6, listViewY, listW - 12, listViewH, true);
 
         int totalListItems = activeListToRender.size();
-        // +4 trailing padding so scrolling to the bottom fully reveals the last row instead of
-        // clipping its last few pixels against the scissor's bottom edge.
-        int totalListHeight = totalListItems * 18 + 4;
-        float maxListScroll = Math.max(0, totalListHeight - listViewH);
+        // Trailing padding so scrolling to the bottom fully reveals the last row. Shared formula via
+        // layout.maxListScroll keeps the renderer and the scroll inputs in sync.
+        int totalListHeight = totalListItems * 18 + EditorLayout.LIST_TRAILING_PADDING;
+        float maxListScroll = layout.maxListScroll(totalListItems);
 
         if (!session.isPreviewing) session.listScrollY = MathHelper.clamp(session.listScrollY, 0, maxListScroll);
 

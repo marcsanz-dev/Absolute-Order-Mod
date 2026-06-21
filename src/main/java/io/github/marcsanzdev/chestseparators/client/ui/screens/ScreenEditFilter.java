@@ -629,7 +629,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     session.gridScrollY - (float) (verticalAmount * scrollSpeed), 0, maxGridScroll);
         } else {
             session.lastInteractedWasList = true;
-            float maxListScroll = Math.max(0, session.visibleLeftListItems.size() * layout.itemSize - layout.listViewH);
+            float maxListScroll = layout.maxListScroll(session.visibleLeftListItems.size());
             session.listScrollY = net.minecraft.util.math.MathHelper.clamp(
                     session.listScrollY - (float) (verticalAmount * scrollSpeed), 0, maxListScroll);
         }
@@ -655,7 +655,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 int direction = (input.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_UP) ? -1 : 1;
 
                 if (session.lastInteractedWasList) {
-                    float maxListScroll = Math.max(0, session.visibleLeftListItems.size() * 18 - (200 - 48));
+                    float maxListScroll = layout.maxListScroll(session.visibleLeftListItems.size());
                     session.listScrollY = net.minecraft.util.math.MathHelper.clamp(
                             session.listScrollY + (direction * scrollAmount), 0, maxListScroll);
                 } else {
@@ -674,6 +674,19 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         if (editor.searchBox != null && editor.searchBox.isFocused()) return editor.searchBox.charTyped(input);
         if (editor.whitelistSearchBox != null && editor.whitelistSearchBox.isFocused())
             return editor.whitelistSearchBox.charTyped(input);
+        // Auto-focus the item search box when typing on the search tab without clicking it first.
+        if (editor.searchBox != null && isOnSearchTab()) {
+            editor.searchBox.setFocused(true);
+            return editor.searchBox.charTyped(input);
+        }
         return false;
+    }
+
+    private boolean isOnSearchTab() {
+        int idx = session.currentCreativeTabIndex;
+        return idx >= 0
+                && idx < session.availableTabs.size()
+                && session.availableTabs.get(idx) != null
+                && session.availableTabs.get(idx).isSearchTab;
     }
 }

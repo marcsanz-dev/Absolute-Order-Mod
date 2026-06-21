@@ -130,8 +130,9 @@ public class EditorInputHandler {
                                                 .contains(wlSearch))) displayedAllowedItems.add(id);
                     }
 
-                    int totalListHeight = displayedAllowedItems.size() * 18;
-                    float maxListScroll = Math.max(0, totalListHeight - listViewH);
+                    int totalListHeight = displayedAllowedItems.size() * 18
+                            + io.github.marcsanzdev.chestseparators.client.ui.EditorLayout.LIST_TRAILING_PADDING;
+                    float maxListScroll = layout.maxListScroll(displayedAllowedItems.size());
                     int thumbH = maxListScroll > 0
                             ? Math.max(10, (int) ((listViewH / (float) Math.max(1, totalListHeight)) * lsbH))
                             : lsbH;
