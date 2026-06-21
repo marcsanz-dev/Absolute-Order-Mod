@@ -205,5 +205,8 @@
   "config.chestseparators.auto_deposit_animation": "Deposit Animation",
   "config.chestseparators.auto_deposit_animation.tooltip": "Show the 3D items flying to each chest. When off, items are deposited instantly with no animation.",
   "config.chestseparators.auto_deposit_trail": "Deposit Trail Effect",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Leave a particle trail behind each flying item. Only applies when the animation is on."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Leave a particle trail behind each flying item. Only applies when the animation is on.",
+  "button.chestseparators.pickup_insert": "Pick Up",
+  "tooltip.chestseparators.rule.pickup_active": "Active: Filters picked-up items",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactive: Picked-up items ignore filter"
 }

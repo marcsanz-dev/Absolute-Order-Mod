@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animación de depósito",
   "config.chestseparators.auto_deposit_animation.tooltip": "Muestra los objetos 3D volando hacia cada cofre. Si está desactivado, los objetos se depositan al instante sin animación.",
   "config.chestseparators.auto_deposit_trail": "Efecto de estela",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Deja una estela de partículas tras cada objeto que vuela. Solo se aplica si la animación está activada."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deja una estela de partículas tras cada objeto que vuela. Solo se aplica si la animación está activada.",
+  "button.chestseparators.pickup_insert": "Recoger",
+  "tooltip.chestseparators.rule.pickup_active": "Activo: Filtra items recogidos del suelo",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactivo: Los items recogidos ignoran el filtro"
 }

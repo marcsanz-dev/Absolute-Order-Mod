@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animació de dipòsit",
   "config.chestseparators.auto_deposit_animation.tooltip": "Mostra els objectes 3D volant cap a cada cofre. Si està desactivat, els objectes es dipositen a l'instant sense animació.",
   "config.chestseparators.auto_deposit_trail": "Efecte d'estela",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa una estela de partícules darrere de cada objecte que vola. Només s'aplica si l'animació està activada."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa una estela de partícules darrere de cada objecte que vola. Només s'aplica si l'animació està activada.",
+  "button.chestseparators.pickup_insert": "Recollir",
+  "tooltip.chestseparators.rule.pickup_active": "Actiu: Filtra els ítems recollits de terra",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactiu: Els ítems recollits ignoren el filtre"
 }

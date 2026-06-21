@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animação de depósito",
   "config.chestseparators.auto_deposit_animation.tooltip": "Mostra os itens 3D voando para cada baú. Quando desligado, os itens são depositados instantaneamente sem animação.",
   "config.chestseparators.auto_deposit_trail": "Efeito de rastro",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa um rastro de partículas atrás de cada item que voa. Só se aplica quando a animação está ligada."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Deixa um rastro de partículas atrás de cada item que voa. Só se aplica quando a animação está ligada.",
+  "button.chestseparators.pickup_insert": "Pegar",
+  "tooltip.chestseparators.rule.pickup_active": "Ativo: filtra itens pegos do chão",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inativo: itens pegos ignoram o filtro"
 }

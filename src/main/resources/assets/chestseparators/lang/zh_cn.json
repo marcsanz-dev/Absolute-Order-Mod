@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "存入动画",
   "config.chestseparators.auto_deposit_animation.tooltip": "显示飞向每个箱子的 3D 物品。关闭时，物品将无动画即时存入。",
   "config.chestseparators.auto_deposit_trail": "拖尾效果",
-  "config.chestseparators.auto_deposit_trail.tooltip": "在每个飞行物品后方留下粒子拖尾。仅在动画开启时生效。"
+  "config.chestseparators.auto_deposit_trail.tooltip": "在每个飞行物品后方留下粒子拖尾。仅在动画开启时生效。",
+  "button.chestseparators.pickup_insert": "拾取",
+  "tooltip.chestseparators.rule.pickup_active": "启用：过滤拾取的物品",
+  "tooltip.chestseparators.rule.pickup_inactive": "禁用：拾取的物品忽略过滤"
 }

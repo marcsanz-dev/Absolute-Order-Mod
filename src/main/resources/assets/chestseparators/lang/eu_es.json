@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Gordailu-animazioa",
   "config.chestseparators.auto_deposit_animation.tooltip": "Erakutsi 3D objektuak kutxa bakoitzera hegan. Itzalita badago, objektuak berehala gordailatzen dira animaziorik gabe.",
   "config.chestseparators.auto_deposit_trail": "Arrasto-efektua",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Utzi partikula-arrasto bat hegan doan objektu bakoitzaren atzean. Animazioa piztuta dagoenean soilik aplikatzen da."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Utzi partikula-arrasto bat hegan doan objektu bakoitzaren atzean. Animazioa piztuta dagoenean soilik aplikatzen da.",
+  "button.chestseparators.pickup_insert": "Jaso",
+  "tooltip.chestseparators.rule.pickup_active": "Aktibo: Lurretik jasotako objektuak iragazten ditu",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inaktibo: Jasotako objektuek iragazkia alde batera uzten dute"
 }

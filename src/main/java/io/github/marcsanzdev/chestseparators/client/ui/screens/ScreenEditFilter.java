@@ -283,23 +283,37 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                         .getString();
         widgets.add(btnShift);
 
+        // For the player inventory this third rule is "Pick Up" (filter items picked up from the
+        // ground) instead of "Hopper Insert", which does not apply to your own inventory. It reuses the
+        // same ruleHopper flag for storage.
         WideButtonWidget btnHopper = new WideButtonWidget(
                 btnX,
                 mainY + 125,
                 btnW,
                 bH,
-                Text.translatable("button.chestseparators.hopper_insert").getString(),
+                Text.translatable(
+                                session.isPlayerInventory
+                                        ? "button.chestseparators.pickup_insert"
+                                        : "button.chestseparators.hopper_insert")
+                        .getString(),
                 ModTextures.ICON_HOPPER,
                 () -> {
                     session.ruleHopper = !session.ruleHopper;
                     editor.playClickSound(1.0f);
                 });
-        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory)
+        if (session.isPlayerInventory) {
+            btnHopper.tooltipText = session.ruleHopper
+                    ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
+                            .getString()
+                    : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
+                            .getString();
+        } else if (!session.isEnderChest && !session.isEntityChest) {
             btnHopper.tooltipText = session.ruleHopper
                     ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
                             .getString()
                     : Text.translatable("tooltip.chestseparators.rule.hopper_inactive")
                             .getString();
+        }
         widgets.add(btnHopper);
 
         // Group 3 (Actions)
@@ -524,9 +538,15 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                         .getString();
 
         widgets.get(5).isActive = session.ruleHopper;
-        widgets.get(5).isDisabled = session.isEnderChest || session.isEntityChest || session.isPlayerInventory;
+        widgets.get(5).isDisabled = session.isEnderChest || session.isEntityChest;
 
-        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
+        if (session.isPlayerInventory) {
+            widgets.get(5).tooltipText = session.ruleHopper
+                    ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
+                            .getString()
+                    : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
+                            .getString();
+        } else if (!session.isEnderChest && !session.isEntityChest) {
             widgets.get(5).tooltipText = session.ruleHopper
                     ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
                             .getString()

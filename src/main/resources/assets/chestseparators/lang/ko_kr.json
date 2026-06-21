@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "보관 애니메이션",
   "config.chestseparators.auto_deposit_animation.tooltip": "각 상자로 날아가는 3D 아이템을 표시합니다. 꺼져 있으면 아이템이 애니메이션 없이 즉시 보관됩니다.",
   "config.chestseparators.auto_deposit_trail": "잔상 효과",
-  "config.chestseparators.auto_deposit_trail.tooltip": "날아가는 각 아이템 뒤에 파티클 잔상을 남깁니다. 애니메이션이 켜져 있을 때만 적용됩니다."
+  "config.chestseparators.auto_deposit_trail.tooltip": "날아가는 각 아이템 뒤에 파티클 잔상을 남깁니다. 애니메이션이 켜져 있을 때만 적용됩니다.",
+  "button.chestseparators.pickup_insert": "줍기",
+  "tooltip.chestseparators.rule.pickup_active": "활성: 주운 아이템을 필터링",
+  "tooltip.chestseparators.rule.pickup_inactive": "비활성: 주운 아이템이 필터를 무시"
 }

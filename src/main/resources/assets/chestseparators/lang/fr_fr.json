@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animation de dépôt",
   "config.chestseparators.auto_deposit_animation.tooltip": "Affiche les objets 3D volant vers chaque coffre. Désactivé, les objets sont déposés instantanément sans animation.",
   "config.chestseparators.auto_deposit_trail": "Effet de traînée",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Laisse une traînée de particules derrière chaque objet volant. Ne s'applique que si l'animation est activée."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Laisse une traînée de particules derrière chaque objet volant. Ne s'applique que si l'animation est activée.",
+  "button.chestseparators.pickup_insert": "Ramasser",
+  "tooltip.chestseparators.rule.pickup_active": "Actif : filtre les objets ramassés",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inactif : les objets ramassés ignorent le filtre"
 }

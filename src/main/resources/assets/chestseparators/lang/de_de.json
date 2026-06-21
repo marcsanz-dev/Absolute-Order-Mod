@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Einlager-Animation",
   "config.chestseparators.auto_deposit_animation.tooltip": "Zeigt die 3D-Gegenstände, die zu jeder Truhe fliegen. Wenn aus, werden Gegenstände sofort ohne Animation eingelagert.",
   "config.chestseparators.auto_deposit_trail": "Spur-Effekt",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Hinterlässt eine Partikelspur hinter jedem fliegenden Gegenstand. Gilt nur, wenn die Animation an ist."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Hinterlässt eine Partikelspur hinter jedem fliegenden Gegenstand. Gilt nur, wenn die Animation an ist.",
+  "button.chestseparators.pickup_insert": "Aufheben",
+  "tooltip.chestseparators.rule.pickup_active": "Aktiv: Filtert aufgehobene Gegenstände",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inaktiv: Aufgehobene Gegenstände ignorieren den Filter"
 }

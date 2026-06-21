@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "حركة الإيداع",
   "config.chestseparators.auto_deposit_animation.tooltip": "تُظهر العناصر ثلاثية الأبعاد وهي تطير إلى كل صندوق. عند الإيقاف تُودع العناصر فورًا دون حركة.",
   "config.chestseparators.auto_deposit_trail": "تأثير الأثر",
-  "config.chestseparators.auto_deposit_trail.tooltip": "يترك أثرًا من الجسيمات خلف كل عنصر طائر. ينطبق فقط عند تشغيل الحركة."
+  "config.chestseparators.auto_deposit_trail.tooltip": "يترك أثرًا من الجسيمات خلف كل عنصر طائر. ينطبق فقط عند تشغيل الحركة.",
+  "button.chestseparators.pickup_insert": "الالتقاط",
+  "tooltip.chestseparators.rule.pickup_active": "مفعّل: يصفّي العناصر المُلتقطة من الأرض",
+  "tooltip.chestseparators.rule.pickup_inactive": "معطّل: العناصر المُلتقطة تتجاهل المرشّح"
 }

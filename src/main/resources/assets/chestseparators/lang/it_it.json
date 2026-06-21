@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animazione di deposito",
   "config.chestseparators.auto_deposit_animation.tooltip": "Mostra gli oggetti 3D che volano verso ogni baule. Se disattivata, gli oggetti vengono depositati all'istante senza animazione.",
   "config.chestseparators.auto_deposit_trail": "Effetto scia",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Lascia una scia di particelle dietro ogni oggetto in volo. Si applica solo se l'animazione è attiva."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Lascia una scia di particelle dietro ogni oggetto in volo. Si applica solo se l'animazione è attiva.",
+  "button.chestseparators.pickup_insert": "Raccogli",
+  "tooltip.chestseparators.rule.pickup_active": "Attivo: filtra gli oggetti raccolti da terra",
+  "tooltip.chestseparators.rule.pickup_inactive": "Inattivo: gli oggetti raccolti ignorano il filtro"
 }

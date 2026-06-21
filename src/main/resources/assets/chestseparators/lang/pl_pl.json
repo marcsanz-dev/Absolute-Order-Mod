@@ -201,5 +201,8 @@
   "config.chestseparators.auto_deposit_animation": "Animacja deponowania",
   "config.chestseparators.auto_deposit_animation.tooltip": "Pokazuje przedmioty 3D lecące do każdej skrzyni. Gdy wyłączone, przedmioty są deponowane natychmiast bez animacji.",
   "config.chestseparators.auto_deposit_trail": "Efekt smugi",
-  "config.chestseparators.auto_deposit_trail.tooltip": "Pozostawia smugę cząsteczek za każdym lecącym przedmiotem. Działa tylko, gdy animacja jest włączona."
+  "config.chestseparators.auto_deposit_trail.tooltip": "Pozostawia smugę cząsteczek za każdym lecącym przedmiotem. Działa tylko, gdy animacja jest włączona.",
+  "button.chestseparators.pickup_insert": "Podnoszenie",
+  "tooltip.chestseparators.rule.pickup_active": "Aktywne: filtruje podniesione przedmioty",
+  "tooltip.chestseparators.rule.pickup_inactive": "Nieaktywne: podniesione przedmioty ignorują filtr"
 }
