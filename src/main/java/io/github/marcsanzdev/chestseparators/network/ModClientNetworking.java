@@ -61,9 +61,10 @@ public class ModClientNetworking {
             });
         });
 
-        // Receives the result of a radius auto-deposit and animates the deposited items flying to chests.
+        // Receives the result of a radius transfer and animates the items flying (to chests for a
+        // deposit, or back to the player for a grab when reverse is set).
         ClientPlayNetworking.registerGlobalReceiver(AutoDepositResultPayload.ID, (payload, context) -> {
-            context.client().execute(() -> AutoDepositAnimator.addFlights(payload.flights()));
+            context.client().execute(() -> AutoDepositAnimator.addFlights(payload.flights(), payload.reverse()));
         });
     }
 }

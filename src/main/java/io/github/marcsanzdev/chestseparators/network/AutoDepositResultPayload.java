@@ -14,10 +14,15 @@ import net.minecraft.util.math.BlockPos;
  * destination container) pair so the client can animate the deposited items flying from the player
  * toward each chest. Carries an {@link ItemStack} so it must travel over a {@link RegistryByteBuf}.
  */
-public record AutoDepositResultPayload(List<Flight> flights) implements CustomPayload {
+public record AutoDepositResultPayload(List<Flight> flights, boolean reverse) implements CustomPayload {
 
     /** One animated transfer: a representative stack (with the moved count) and its destination. */
     public record Flight(ItemStack stack, BlockPos target) {}
+
+    /** Deposit flights (player -> chest). The grab path uses the two-arg form with reverse=true. */
+    public AutoDepositResultPayload(List<Flight> flights) {
+        this(flights, false);
+    }
 
     public static final CustomPayload.Id<AutoDepositResultPayload> ID =
             new CustomPayload.Id<>(Identifier.of("chestseparators", "auto_deposit_result"));
@@ -26,7 +31,7 @@ public record AutoDepositResultPayload(List<Flight> flights) implements CustomPa
             PacketCodec.of(AutoDepositResultPayload::write, AutoDepositResultPayload::new);
 
     private AutoDepositResultPayload(RegistryByteBuf buf) {
-        this(readFlights(buf));
+        this(readFlights(buf), buf.readBoolean());
     }
 
     private void write(RegistryByteBuf buf) {
@@ -35,6 +40,7 @@ public record AutoDepositResultPayload(List<Flight> flights) implements CustomPa
             ItemStack.PACKET_CODEC.encode(buf, flight.stack());
             buf.writeBlockPos(flight.target());
         }
+        buf.writeBoolean(this.reverse);
     }
 
     private static List<Flight> readFlights(RegistryByteBuf buf) {

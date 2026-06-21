@@ -95,14 +95,26 @@ public final class AutoDepositAnimator {
         ClientTickEvents.END_CLIENT_TICK.register(client -> tickChests());
     }
 
-    /** Queues animations for a completed auto-deposit. Called on the client thread from networking. */
+    /** Queues animations for a completed auto-deposit (player -> chest). */
     public static void addFlights(List<AutoDepositResultPayload.Flight> flights) {
+        addFlights(flights, false);
+    }
+
+    /**
+     * Queues animations for a completed transfer. When {@code reverse} is true the items fly from each
+     * container toward the player (grab); otherwise from the player toward each container (deposit).
+     * Called on the client thread from networking.
+     */
+    public static void addFlights(List<AutoDepositResultPayload.Flight> flights, boolean reverse) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
 
         if (flights.isEmpty()) {
             client.player.sendMessage(
-                    Text.translatable("message.chestseparators.auto_deposit_none")
+                    Text.translatable(
+                                    reverse
+                                            ? "message.chestseparators.auto_grab_none"
+                                            : "message.chestseparators.auto_deposit_none")
                             .formatted(Formatting.GRAY),
                     true);
             return;
@@ -112,26 +124,32 @@ public final class AutoDepositAnimator {
         for (AutoDepositResultPayload.Flight flight : flights)
             total += flight.stack().getCount();
 
-        client.player.playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.5f, 1.4f);
+        client.player.playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.5f, reverse ? 1.0f : 1.4f);
         client.player.sendMessage(
-                Text.translatable("message.chestseparators.auto_deposit_done", total)
+                Text.translatable(
+                                reverse
+                                        ? "message.chestseparators.auto_grab_done"
+                                        : "message.chestseparators.auto_deposit_done",
+                                total)
                         .formatted(Formatting.GREEN),
                 true);
 
-        // The deposit already happened server-side; the flying items are pure cosmetics.
+        // The transfer already happened server-side; the flying items are pure cosmetics.
         if (!GlobalChestConfig.instance.autoDepositAnimation) return;
 
-        // Items appear to leave the player around body height.
-        Vec3d source = new Vec3d(client.player.getX(), client.player.getY() + 1.0, client.player.getZ());
+        // Items appear to leave/arrive at the player around body height.
+        Vec3d playerPos = new Vec3d(client.player.getX(), client.player.getY() + 1.0, client.player.getZ());
         long now = System.currentTimeMillis();
 
-        // Track, per destination chest, when its last item arrives so we know when to close the lid.
+        // Track, per container, when its last item leaves/arrives so we know when to close the lid.
         Map<BlockPos, Long> lastArrival = new HashMap<>();
         int index = 0;
         for (AutoDepositResultPayload.Flight flight : flights) {
             long startTime = now + (long) index * STAGGER_MS;
-            Vec3d target = Vec3d.ofCenter(flight.target());
-            FLIGHTS.add(new FlyingItem(flight.stack(), source, target, startTime));
+            Vec3d chest = Vec3d.ofCenter(flight.target());
+            Vec3d start = reverse ? chest : playerPos;
+            Vec3d end = reverse ? playerPos : chest;
+            FLIGHTS.add(new FlyingItem(flight.stack(), start, end, startTime));
             lastArrival.merge(flight.target(), startTime + DURATION_MS, Math::max);
             index++;
         }

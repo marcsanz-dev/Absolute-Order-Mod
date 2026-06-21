@@ -6,6 +6,7 @@ import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.network.*;
 import io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -230,9 +231,23 @@ public class ChestSeparatorsMain implements ModInitializer {
         // containers and report back what moved so the client can animate it.
         ServerPlayNetworking.registerGlobalReceiver(AutoDepositRequestPayload.ID, (payload, context) -> {
             context.server().execute(() -> {
-                if (context.player() != null) {
-                    performAutoDeposit(
-                            context.player(),
+                ServerPlayerEntity p = context.player();
+                if (p == null) return;
+                switch (payload.action()) {
+                    case AutoDepositRequestPayload.ACTION_DEPOSIT_JUNK -> performDepositJunk(
+                            p,
+                            payload.radius(),
+                            payload.throughWalls(),
+                            payload.enderWhitelists(),
+                            payload.entityWhitelists());
+                    case AutoDepositRequestPayload.ACTION_GRAB -> performGrab(
+                            p,
+                            payload.radius(),
+                            payload.throughWalls(),
+                            payload.enderWhitelists(),
+                            payload.entityWhitelists());
+                    default -> performAutoDeposit(
+                            p,
                             payload.radius(),
                             payload.throughWalls(),
                             payload.enderWhitelists(),
@@ -250,28 +265,32 @@ public class ChestSeparatorsMain implements ModInitializer {
      * item, nearest containers first. Containers blocked by a solid block are skipped unless
      * {@code throughWalls} is set. Sends an {@link AutoDepositResultPayload} describing every transfer.
      */
-    private static void performAutoDeposit(
+    /**
+     * Gathers every filtered container in range (block entities, chest minecarts/boats, and the
+     * player's ender inventory at the nearest reachable ender chest), sorted nearest first. Containers
+     * blocked from every lateral side are skipped unless {@code throughWalls} is set.
+     */
+    private static List<Candidate> collectCandidates(
             ServerPlayerEntity player,
             int radius,
             boolean throughWalls,
             Map<Integer, SlotWhitelist> enderWhitelists,
             Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
         World world = player.getEntityWorld();
-        if (!(world instanceof ServerWorld)) return;
+        List<Candidate> candidates = new ArrayList<>();
+        if (!(world instanceof ServerWorld)) return candidates;
 
         radius = Math.max(1, Math.min(radius, MAX_AUTO_DEPOSIT_RADIUS));
         Vec3d eye = player.getEyePos();
         BlockPos origin = player.getBlockPos();
         long radiusSq = (long) radius * radius;
 
-        // 1. Collect candidate containers: filtered, within range, with a clear line of sight.
-        List<Candidate> candidates = new ArrayList<>();
         int chunkRadius = (radius >> 4) + 1;
         int centerChunkX = origin.getX() >> 4;
         int centerChunkZ = origin.getZ() >> 4;
 
-        // Nearest reachable ender chest block, used as the deposit target for the player's ender
-        // inventory (ender filters are client-side, so they arrive in the request payload).
+        // Nearest reachable ender chest block, used as the target for the player's ender inventory
+        // (ender filters are client-side, so they arrive in the request payload).
         BlockPos nearestEnder = null;
         double nearestEnderDistSq = Double.MAX_VALUE;
 
@@ -309,9 +328,8 @@ public class ChestSeparatorsMain implements ModInitializer {
             }
         }
 
-        // 1b. Mobile filtered containers: chest minecarts and chest boats are entities, not block
-        // entities, and their filters live client-side only, so they arrive in entityWhitelists keyed
-        // by UUID.
+        // Mobile filtered containers: chest minecarts and chest boats are entities, not block entities,
+        // and their filters live client-side only, so they arrive in entityWhitelists keyed by UUID.
         net.minecraft.util.math.Box box = player.getBoundingBox().expand(radius);
         for (net.minecraft.entity.Entity entity : world.getOtherEntities(player, box, e -> e instanceof Inventory)) {
             Map<Integer, SlotWhitelist> whitelists = entityWhitelists.get(entity.getUuid());
@@ -325,14 +343,27 @@ public class ChestSeparatorsMain implements ModInitializer {
             candidates.add(new Candidate(entity.getBlockPos(), (Inventory) entity, whitelists, distSq));
         }
 
-        // 1c. Ender chest: deposit into the player's ender inventory, animated at the nearest reachable
-        // ender chest block, using the client-supplied ender filter.
+        // Ender chest: the player's ender inventory, animated at the nearest reachable ender chest
+        // block, using the client-supplied ender filter.
         if (nearestEnder != null && enderWhitelists != null && !enderWhitelists.isEmpty()) {
             candidates.add(
                     new Candidate(nearestEnder, player.getEnderChestInventory(), enderWhitelists, nearestEnderDistSq));
         }
 
         candidates.sort(java.util.Comparator.comparingDouble(c -> c.distSq));
+        return candidates;
+    }
+
+    private static void performAutoDeposit(
+            ServerPlayerEntity player,
+            int radius,
+            boolean throughWalls,
+            Map<Integer, SlotWhitelist> enderWhitelists,
+            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
+        World world = player.getEntityWorld();
+        if (!(world instanceof ServerWorld)) return;
+
+        List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
 
         // 2. Deposit each stack into matching candidate slots, recording moved amounts per container.
         net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
@@ -364,6 +395,137 @@ public class ChestSeparatorsMain implements ModInitializer {
         player.playerScreenHandler.sendContentUpdates();
 
         // 3. Build the animation report.
+        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
+            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved)));
+        }
+    }
+
+    /**
+     * Deposits the items the player's inventory filters do NOT want to keep (the "drop" hotkey): items
+     * no inventory filter lists, plus the excess of items kept beyond their target count. Only into
+     * nearby chests whose filters list the item; whatever has no home stays in the inventory.
+     */
+    private static void performDepositJunk(
+            ServerPlayerEntity player,
+            int radius,
+            boolean throughWalls,
+            Map<Integer, SlotWhitelist> enderWhitelists,
+            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
+        if (!(player.getEntityWorld() instanceof ServerWorld)) return;
+
+        Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
+        List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
+        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
+
+        // Per-item depositable budget = current amount minus what we keep (target; 0 target = keep all).
+        Map<String, Integer> budget = new HashMap<>();
+        for (Map.Entry<String, Integer> e : mainInventoryCounts(player).entrySet()) {
+            int keep = inventoryKeepLimit(invFilters, e.getKey());
+            int dep = keep == Integer.MAX_VALUE ? 0 : Math.max(0, e.getValue() - keep);
+            if (dep > 0) budget.put(e.getKey(), dep);
+        }
+
+        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
+            ItemStack stack = inventory.getStack(i);
+            if (stack.isEmpty()) continue;
+            net.minecraft.item.Item item = stack.getItem();
+            String itemId = Registries.ITEM.getId(item).toString();
+            Integer b = budget.get(itemId);
+            if (b == null || b <= 0) continue;
+
+            for (Candidate candidate : candidates) {
+                if (stack.isEmpty() || b <= 0) break;
+                if (!containerListsItem(candidate.whitelists, itemId)) continue;
+
+                ItemStack portion = stack.copyWithCount(Math.min(b, stack.getCount()));
+                int before = portion.getCount();
+                insertRespectingFilter(candidate.inv, candidate.whitelists, portion, itemId);
+                int delta = before - portion.getCount();
+                if (delta > 0) {
+                    stack.decrement(delta);
+                    b -= delta;
+                    candidate.inv.markDirty();
+                    moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
+                            .merge(item, delta, Integer::sum);
+                }
+            }
+            budget.put(itemId, b);
+            inventory.setStack(i, stack);
+        }
+        inventory.markDirty();
+        player.playerScreenHandler.sendContentUpdates();
+
+        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
+            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved)));
+        }
+    }
+
+    /**
+     * Pulls items the player's inventory filters want (the "grab" hotkey) from nearby filtered chests
+     * into the inventory, only up to each filter's target count (0 target = grab as much as fits).
+     * Items flow only out of chest slots whose filter lists the item.
+     */
+    private static void performGrab(
+            ServerPlayerEntity player,
+            int radius,
+            boolean throughWalls,
+            Map<Integer, SlotWhitelist> enderWhitelists,
+            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
+        if (!(player.getEntityWorld() instanceof ServerWorld)) return;
+
+        Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
+        List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
+        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
+
+        Map<String, Integer> startHave = mainInventoryCounts(player);
+        Map<String, Integer> grabbed = new HashMap<>();
+        Map<String, Integer> keepCache = new HashMap<>();
+        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
+
+        for (Candidate candidate : candidates) {
+            int size = candidate.inv.size();
+            for (int slot = 0; slot < size; slot++) {
+                ItemStack stack = candidate.inv.getStack(slot);
+                if (stack.isEmpty()) continue;
+                net.minecraft.item.Item item = stack.getItem();
+                String itemId = Registries.ITEM.getId(item).toString();
+
+                SlotWhitelist wl = candidate.whitelists.get(slot);
+                if (wl == null || !wl.allowedItems().contains(itemId)) continue;
+
+                int keep = keepCache.computeIfAbsent(itemId, k -> inventoryKeepLimit(invFilters, k));
+                if (keep <= 0) continue;
+                long need = (long) keep - startHave.getOrDefault(itemId, 0) - grabbed.getOrDefault(itemId, 0);
+                if (need <= 0) continue;
+
+                int take = (int) Math.min(need, stack.getCount());
+                if (take <= 0) continue;
+
+                ItemStack portion = stack.copyWithCount(take);
+                inventory.insertStack(portion);
+                int delta = take - portion.getCount();
+                if (delta > 0) {
+                    stack.decrement(delta);
+                    candidate.inv.setStack(slot, stack);
+                    candidate.inv.markDirty();
+                    grabbed.merge(itemId, delta, Integer::sum);
+                    moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
+                            .merge(item, delta, Integer::sum);
+                }
+            }
+        }
+        inventory.markDirty();
+        player.playerScreenHandler.sendContentUpdates();
+
+        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
+            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved), true));
+        }
+    }
+
+    /** Builds one animation flight per (item, container) pair from a moved-amount report. */
+    private static List<AutoDepositResultPayload.Flight> buildFlights(
+            Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved) {
         List<AutoDepositResultPayload.Flight> flights = new ArrayList<>();
         for (Map.Entry<BlockPos, Map<net.minecraft.item.Item, Integer>> chestEntry : moved.entrySet()) {
             for (Map.Entry<net.minecraft.item.Item, Integer> itemEntry :
@@ -372,10 +534,39 @@ public class ChestSeparatorsMain implements ModInitializer {
                 flights.add(new AutoDepositResultPayload.Flight(representative, chestEntry.getKey()));
             }
         }
+        return flights;
+    }
 
-        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
-            ServerPlayNetworking.send(player, new AutoDepositResultPayload(flights));
+    /** Total count of each item id currently in the player's main inventory. */
+    private static Map<String, Integer> mainInventoryCounts(ServerPlayerEntity player) {
+        Map<String, Integer> counts = new HashMap<>();
+        net.minecraft.entity.player.PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
+            ItemStack s = inv.getStack(i);
+            if (s.isEmpty()) continue;
+            counts.merge(Registries.ITEM.getId(s.getItem()).toString(), s.getCount(), Integer::sum);
         }
+        return counts;
+    }
+
+    /**
+     * How many of an item the player's inventory filters want to keep: 0 if no filter lists it (junk),
+     * {@link Integer#MAX_VALUE} if any listing filter has no target (keep all), otherwise the sum of
+     * the target counts of the distinct filter groups listing it.
+     */
+    private static int inventoryKeepLimit(Map<Integer, SlotWhitelist> invFilters, String itemId) {
+        if (invFilters == null) return 0;
+        int sum = 0;
+        boolean listed = false;
+        java.util.Set<java.util.UUID> seenGroups = new java.util.HashSet<>();
+        for (SlotWhitelist wl : invFilters.values()) {
+            if (!wl.allowedItems().contains(itemId)) continue;
+            if (!seenGroups.add(wl.groupId())) continue;
+            listed = true;
+            if (wl.targetCount() <= 0) return Integer.MAX_VALUE;
+            sum += wl.targetCount();
+        }
+        return listed ? sum : 0;
     }
 
     /** A filtered container eligible to receive items during an auto-deposit. */

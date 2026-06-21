@@ -15,6 +15,8 @@ public class ModKeyBindings {
     public static KeyBinding depositFilterKey;
     public static KeyBinding depositAllKey;
     public static KeyBinding autoDepositKey;
+    public static KeyBinding depositJunkKey;
+    public static KeyBinding grabKey;
 
     private static final KeyBinding.Category CATEGORY =
             KeyBinding.Category.create(Identifier.of("chestseparators", "keys"));
@@ -47,5 +49,13 @@ public class ModKeyBindings {
         // optional alternative the player may bind to avoid any conflict with other movement keys.
         autoDepositKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.chestseparators.auto_deposit", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY));
+
+        // "Drop" (deposit items the inventory filters don't want) and "Grab" (pull wanted items from
+        // nearby chests). Adjacent keys by default; both require Shift to be held when pressed.
+        depositJunkKey = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding("key.chestseparators.deposit_junk", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C, CATEGORY));
+
+        grabKey = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding("key.chestseparators.grab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY));
     }
 }

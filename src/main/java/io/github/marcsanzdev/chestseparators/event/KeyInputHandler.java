@@ -56,12 +56,20 @@ public class KeyInputHandler {
             return;
         }
 
-        while (ModKeyBindings.autoDepositKey.wasPressed()) triggerAutoDeposit(client);
+        while (ModKeyBindings.autoDepositKey.wasPressed())
+            triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_DEPOSIT_ALL);
+
+        // "Drop" / "Grab" only fire while Shift is held (matching the Shift+C / Shift+V binding intent);
+        // plain presses are drained without acting so they don't queue up for later.
+        while (ModKeyBindings.depositJunkKey.wasPressed())
+            if (isShiftHeld()) triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_DEPOSIT_JUNK);
+        while (ModKeyBindings.grabKey.wasPressed())
+            if (isShiftHeld()) triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_GRAB);
 
         if (GlobalChestConfig.instance.autoDepositDoubleSneak && sneakDown && !wasSneakDown) {
             long now = System.currentTimeMillis();
             if (now - lastSneakTapTime <= DOUBLE_TAP_WINDOW_MS) {
-                triggerAutoDeposit(client);
+                triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_DEPOSIT_ALL);
                 lastSneakTapTime = 0L;
             } else {
                 lastSneakTapTime = now;
@@ -70,7 +78,14 @@ public class KeyInputHandler {
         wasSneakDown = sneakDown;
     }
 
-    private static void triggerAutoDeposit(MinecraftClient client) {
+    private static boolean isShiftHeld() {
+        if (MinecraftClient.getInstance().getWindow() == null) return false;
+        long window = MinecraftClient.getInstance().getWindow().getHandle();
+        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+    }
+
+    private static void triggerAutoDeposit(MinecraftClient client, int action) {
         if (client.player == null || !ClientPlayNetworking.canSend(AutoDepositRequestPayload.ID)) return;
 
         int radius = GlobalChestConfig.instance.autoDepositRadius;
@@ -91,6 +106,7 @@ public class KeyInputHandler {
         ClientPlayNetworking.send(new AutoDepositRequestPayload(
                 radius,
                 GlobalChestConfig.instance.autoDepositThroughWalls,
+                action,
                 ChestConfigManager.getInstance().readEnderWhitelists(),
                 entityWhitelists));
     }

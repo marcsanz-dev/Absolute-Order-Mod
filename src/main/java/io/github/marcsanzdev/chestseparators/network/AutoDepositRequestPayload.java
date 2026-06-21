@@ -21,9 +21,17 @@ import net.minecraft.util.Identifier;
 public record AutoDepositRequestPayload(
         int radius,
         boolean throughWalls,
+        int action,
         Map<Integer, SlotWhitelist> enderWhitelists,
         Map<UUID, Map<Integer, SlotWhitelist>> entityWhitelists)
         implements CustomPayload {
+
+    /** Deposit every matching item (double-sneak / dedicated hotkey). */
+    public static final int ACTION_DEPOSIT_ALL = 0;
+    /** Deposit only items the player's inventory filters don't want to keep (the "drop" hotkey). */
+    public static final int ACTION_DEPOSIT_JUNK = 1;
+    /** Pull items the player's inventory filters want from nearby chests (the "grab" hotkey). */
+    public static final int ACTION_GRAB = 2;
 
     public static final CustomPayload.Id<AutoDepositRequestPayload> ID =
             new CustomPayload.Id<>(Identifier.of("chestseparators", "auto_deposit_request"));
@@ -32,12 +40,13 @@ public record AutoDepositRequestPayload(
             PacketCodec.of(AutoDepositRequestPayload::write, AutoDepositRequestPayload::new);
 
     private AutoDepositRequestPayload(PacketByteBuf buf) {
-        this(buf.readVarInt(), buf.readBoolean(), readWlMap(buf), readEntityMap(buf));
+        this(buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), readWlMap(buf), readEntityMap(buf));
     }
 
     private void write(PacketByteBuf buf) {
         buf.writeVarInt(this.radius);
         buf.writeBoolean(this.throughWalls);
+        buf.writeVarInt(this.action);
         writeWlMap(buf, this.enderWhitelists);
         buf.writeVarInt(this.entityWhitelists.size());
         for (Map.Entry<UUID, Map<Integer, SlotWhitelist>> entry : this.entityWhitelists.entrySet()) {
