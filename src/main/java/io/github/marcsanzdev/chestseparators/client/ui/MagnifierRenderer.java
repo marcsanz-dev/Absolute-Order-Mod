@@ -33,7 +33,9 @@ public final class MagnifierRenderer {
         if (client.getWindow() == null) return;
 
         int pct = Math.max(100, sizePercent);
-        int srcHalf = BASE_SRC_HALF * pct / 100;
+        // The sampled area stays fixed (small, cheap to read/draw); only the on-screen loupe grows, so
+        // a bigger size means more zoom rather than a larger — and quadratically more expensive — read.
+        int srcHalf = BASE_SRC_HALF;
         int loupeR = BASE_LOUPE_R * pct / 100;
         int cursorR = BASE_CURSOR_R * pct / 100;
         int gap = BASE_GAP * pct / 100;

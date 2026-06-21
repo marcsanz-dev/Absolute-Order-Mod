@@ -128,6 +128,30 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.magnifier_tab_lines"),
+                            GlobalChestConfig.instance.magnifierTabLines)
+                    .setDefaultValue(true)
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierTabLines = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.magnifier_tab_backgrounds"),
+                            GlobalChestConfig.instance.magnifierTabBackgrounds)
+                    .setDefaultValue(false)
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierTabBackgrounds = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.magnifier_tab_combo"),
+                            GlobalChestConfig.instance.magnifierTabCombo)
+                    .setDefaultValue(false)
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierTabCombo = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
                     .startIntSlider(
                             Text.translatable("config.chestseparators.bg_transparency"),
                             GlobalChestConfig.instance.bgTransparency,

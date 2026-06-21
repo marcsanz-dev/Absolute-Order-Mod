@@ -41,6 +41,11 @@ public class GlobalChestConfig {
         public MagnifierShape magnifierShape = MagnifierShape.CIRCLE;
         // Loupe size as a percentage of the base size (100 = the minimum/default size).
         public int magnifierSize = 100;
+        // Which painting tabs show the loupe (the eyedropper always shows it when enabled). Lines on by
+        // default; backgrounds/combo off by default but left for the user to opt into.
+        public boolean magnifierTabLines = true;
+        public boolean magnifierTabBackgrounds = false;
+        public boolean magnifierTabCombo = false;
         public int bgTransparency = 40;
         public int lineTransparency = 100;
 

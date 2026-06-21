@@ -419,9 +419,18 @@ public class EditorRenderer {
     private void renderMagnifier(DrawContext context, int mouseX, int mouseY) {
         if (!GlobalChestConfig.instance.magnifierEnabled) return;
         if (session.currentState != EditorState.DRAW_LINES || session.isColorPickerOpen) return;
+        if (!magnifierEnabledForTab(session.currentTab)) return;
         if (!isCursorOverChestSlots(mouseX, mouseY)) return;
         boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
         MagnifierRenderer.render(context, mouseX, mouseY, circle, GlobalChestConfig.instance.magnifierSize);
+    }
+
+    private static boolean magnifierEnabledForTab(int tab) {
+        return switch (tab) {
+            case EditorSessionData.TAB_BG -> GlobalChestConfig.instance.magnifierTabBackgrounds;
+            case EditorSessionData.TAB_COMBO -> GlobalChestConfig.instance.magnifierTabCombo;
+            default -> GlobalChestConfig.instance.magnifierTabLines;
+        };
     }
 
     // Extra margin around the slot area so the loupe also shows on the outer chest borders, where the
