@@ -32,6 +32,7 @@ public class ChestConfigManager {
     private static final String FOLDER_NAME = "separators";
     private static final String ENDER_FILE_NAME = "ender_chest.dat";
     private static final String PALETTE_FILE_NAME = "world_palette.dat";
+    private static final String INVENTORY_FILE_NAME = "player_inventory.dat";
 
     /**
      * Current on-disk format version. Increment when making breaking changes to the NBT schema.
@@ -72,6 +73,12 @@ public class ChestConfigManager {
     private int[] worldCustomLineColors = new int[8];
     private int[] worldCustomBgColors = new int[8];
     private int[] worldCustomComboColors = new int[8];
+
+    // The player inventory's own decorations and filters, kept in memory so they can be rendered on the
+    // player-inventory slots in any screen. Keyed by PlayerInventory slot index (not screen-handler
+    // slot index), so the same layout shows consistently in the inventory screen and inside chests.
+    private Map<Integer, int[]> playerInventoryVisual = new HashMap<>();
+    private Map<Integer, SlotWhitelist> playerInventoryFilters = new HashMap<>();
 
     private Map<Integer, SlotWhitelist> whitelistClipboard = null;
 
@@ -928,6 +935,46 @@ public class ChestConfigManager {
         } catch (IOException e) {
             LOGGER.error("chestseparators: I/O error", e);
         }
+    }
+
+    // --- PLAYER INVENTORY PROFILE (global by default, per-world when configured) ---
+
+    /** Cross-world config dir ({@code config/chestseparators}), used for the global inventory profile. */
+    private Path getGlobalConfigDir() {
+        Path dir = MinecraftClient.getInstance().runDirectory.toPath().resolve("config/" + MOD_ID);
+        try {
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
+            }
+        } catch (IOException e) {
+            LOGGER.error("chestseparators: I/O error", e);
+        }
+        return dir;
+    }
+
+    private Path getInventoryFile() {
+        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
+                ? getWorldConfigDir()
+                : getGlobalConfigDir();
+        return dir.resolve(INVENTORY_FILE_NAME);
+    }
+
+    public Map<Integer, int[]> getPlayerInventoryVisual() {
+        return playerInventoryVisual;
+    }
+
+    public Map<Integer, SlotWhitelist> getPlayerInventoryFilters() {
+        return playerInventoryFilters;
+    }
+
+    public void loadInventoryConfig() {
+        RawData data = readRawData(getInventoryFile());
+        playerInventoryVisual = data.visual;
+        playerInventoryFilters = data.filters;
+    }
+
+    public void saveInventoryConfig() {
+        writeRawData(playerInventoryVisual, playerInventoryFilters, getInventoryFile());
     }
 
     public void copyWhitelistsToClipboard() {

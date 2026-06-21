@@ -64,6 +64,12 @@ public class GlobalChestConfig {
         // Leave a particle trail behind each flying item. Only applies when the animation is on.
         public boolean autoDepositTrail = true;
 
+        // --- PLAYER INVENTORY DECORATIONS / FILTERS ---
+        // The inventory layout (separators, backgrounds, filters and presets) is a global player
+        // profile by default, shared across all worlds. Turn this on to give the current world its own
+        // separate, independent inventory profile (e.g. a modded world without disturbing survival).
+        public boolean inventoryDecorPerWorld = false;
+
         // --- SERVER / MECHANICS ---
         public boolean defaultRuleManual = true;
         public boolean defaultRuleShift = true;
