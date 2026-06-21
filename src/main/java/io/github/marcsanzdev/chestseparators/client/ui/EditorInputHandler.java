@@ -51,6 +51,18 @@ public class EditorInputHandler {
     public void setupInputHandlers() {
         ScreenMouseEvents.allowMouseClick(screen).register(this::allowMouseClick);
 
+        // The inventory screen (InventoryScreen -> RecipeBookScreen) bypasses HandledScreen#render and
+        // calls renderMain directly, so the editor overlay mixin injected at HandledScreen#render TAIL
+        // never fires there. Draw the overlay via a screen render event for the inventory editor only
+        // (chests still use the mixin, so there is no double rendering).
+        if (session.isPlayerInventory) {
+            net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen)
+                    .register((sc, context, mouseX, mouseY, tickDelta) -> {
+                        editor.render(context, mouseX, mouseY, tickDelta);
+                        editor.renderNormalModeOverlay(context, mouseX, mouseY);
+                    });
+        }
+
         ScreenMouseEvents.allowMouseRelease(screen).register((_screen, context) -> {
             session.isDraggingMainScroll = false;
             session.isDraggingListScroll = false;
