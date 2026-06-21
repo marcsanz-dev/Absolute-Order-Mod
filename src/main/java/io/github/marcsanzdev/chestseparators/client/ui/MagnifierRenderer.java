@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * Cursor zoom loupe. It samples a small block of the real framebuffer under the cursor and draws it
@@ -48,8 +48,9 @@ public final class MagnifierRenderer {
         int fbYBottom = clamp(fbH - (int) Math.round((cursorY + srcHalf) * scale), 0, fbH - blockFb);
 
         int[] pixels = new int[blockFb * blockFb];
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            ByteBuffer buf = stack.malloc(blockFb * blockFb * 4);
+        // Heap-allocated native buffer: a stack buffer (MemoryStack) overflows for large loupe sizes.
+        ByteBuffer buf = MemoryUtil.memAlloc(blockFb * blockFb * 4);
+        try {
             GL11.glReadPixels(fbX, fbYBottom, blockFb, blockFb, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
             for (int i = 0; i < pixels.length; i++) {
                 int r = buf.get(i * 4) & 0xFF;
@@ -57,6 +58,8 @@ public final class MagnifierRenderer {
                 int b = buf.get(i * 4 + 2) & 0xFF;
                 pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
             }
+        } finally {
+            MemoryUtil.memFree(buf);
         }
 
         // Place the loupe up-right of the cursor, flipping to stay on screen.
