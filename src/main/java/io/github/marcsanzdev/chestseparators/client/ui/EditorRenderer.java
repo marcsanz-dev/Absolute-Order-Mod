@@ -399,94 +399,33 @@ public class EditorRenderer {
         renderEdgesInPaintOrder(context, x, y, slotIndex, lineAlpha, false);
     }
 
-    private static final int MAGNIFIER_RADIUS = 48;
-    private static final float MAGNIFIER_ZOOM = 3.0f;
-    private static final int MAGNIFIER_BG = 0xFF1B1B1B;
-
     /**
-     * Draws a loupe that follows the cursor while painting separators or using the eyedropper,
-     * re-rendering the chest's slots (bevel, items, backgrounds, separators) magnified around the
-     * cursor so fine edges are easy to target. Shape and on/off come from config; toggle key is L.
+     * Painting loupe: only while drawing separators (not the picker) and only when the cursor is over
+     * the chest's slot area. The eyedropper loupe is handled separately in ScreenColorPicker so it can
+     * sample the whole screen. Delegates to {@link MagnifierRenderer}, which magnifies the real
+     * framebuffer (so item counts, previews and separators all show exactly as on screen).
      */
     private void renderMagnifier(DrawContext context, int mouseX, int mouseY) {
         if (!GlobalChestConfig.instance.magnifierEnabled) return;
-        boolean painting = session.currentState == EditorState.DRAW_LINES && !session.isColorPickerOpen;
-        boolean eyedropper = session.isEyedropperActive;
-        if (!painting && !eyedropper) return;
-
+        if (session.currentState != EditorState.DRAW_LINES || session.isColorPickerOpen) return;
+        if (!isCursorOverChestSlots(mouseX, mouseY)) return;
         boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
-        int r = MAGNIFIER_RADIUS;
-        int cx = mouseX;
-        int cy = mouseY;
-        int left = cx - r;
-        int top = cy - r;
-        int right = cx + r;
-        int bottom = cy + r;
-
-        context.fill(left, top, right, bottom, MAGNIFIER_BG);
-
-        context.enableScissor(left, top, right, bottom);
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float) cx, (float) cy);
-        context.getMatrices().scale(MAGNIFIER_ZOOM, MAGNIFIER_ZOOM);
-        context.getMatrices().translate((float) -mouseX, (float) -mouseY);
-        drawMagnifierContent(context);
-        context.getMatrices().popMatrix();
-        context.disableScissor();
-
-        // Round off the corners for the circular shape by repainting them with the background.
-        if (circle) {
-            for (int dy = -r; dy < r; dy++) {
-                int yy = cy + dy;
-                int dx = (int) Math.sqrt(Math.max(0, (double) r * r - (double) dy * dy));
-                context.fill(left, yy, cx - dx, yy + 1, MAGNIFIER_BG);
-                context.fill(cx + dx, yy, right, yy + 1, MAGNIFIER_BG);
-            }
-        }
-
-        drawMagnifierBorder(context, cx, cy, r, circle);
-
-        // Center crosshair marking the exact pixel under the cursor.
-        context.fill(cx - 4, cy, cx + 5, cy + 1, 0x99FFFFFF);
-        context.fill(cx, cy - 4, cx + 1, cy + 5, 0x99FFFFFF);
+        MagnifierRenderer.render(context, mouseX, mouseY, circle);
     }
 
-    private void drawMagnifierContent(DrawContext context) {
-        ChestConfigManager manager = ChestConfigManager.getInstance();
+    /** True when the cursor is within the bounding box of the chest (non-player) slots. */
+    private boolean isCursorOverChestSlots(int mouseX, int mouseY) {
         int guiX = accessor.getX();
         int guiY = accessor.getY();
-        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
-        int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
         for (Slot s : accessor.getHandler().slots) {
             if (s.inventory instanceof PlayerInventory) continue;
-            int x = guiX + s.x;
-            int y = guiY + s.y;
-            drawVanillaSlotBevel(context, x, y);
-            if (!s.getStack().isEmpty()) {
-                context.drawItem(s.getStack(), x, y);
-                drawDurabilityBar(context, s.getStack(), x, y);
-            }
-            int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
-            if (bgColor != 0) context.fill(x, y, x + 16, y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
-            renderEdgesInPaintOrder(context, x, y, s.getIndex(), lineAlpha, false);
+            minX = Math.min(minX, guiX + s.x);
+            minY = Math.min(minY, guiY + s.y);
+            maxX = Math.max(maxX, guiX + s.x + 16);
+            maxY = Math.max(maxY, guiY + s.y + 16);
         }
-    }
-
-    private void drawMagnifierBorder(DrawContext context, int cx, int cy, int r, boolean circle) {
-        int border = 0xFF000000;
-        if (circle) {
-            for (int dy = -r; dy <= r; dy++) {
-                int yy = cy + dy;
-                int dx = (int) Math.sqrt(Math.max(0, (double) r * r - (double) dy * dy));
-                context.fill(cx - dx - 1, yy, cx - dx + 1, yy + 1, border);
-                context.fill(cx + dx - 1, yy, cx + dx + 1, yy + 1, border);
-            }
-        } else {
-            context.fill(cx - r - 1, cy - r - 1, cx + r + 1, cy - r, border);
-            context.fill(cx - r - 1, cy + r, cx + r + 1, cy + r + 1, border);
-            context.fill(cx - r - 1, cy - r, cx - r, cy + r, border);
-            context.fill(cx + r, cy - r, cx + r + 1, cy + r, border);
-        }
+        if (minX == Integer.MAX_VALUE) return false;
+        return mouseX >= minX && mouseX < maxX && mouseY >= minY && mouseY < maxY;
     }
 }

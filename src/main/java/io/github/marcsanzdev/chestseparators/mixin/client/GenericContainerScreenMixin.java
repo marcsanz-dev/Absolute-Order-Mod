@@ -119,11 +119,13 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 return;
             }
 
-            // The magnifier toggle works in any editor state, since it is used while painting.
-            if (this.client != null
-                    && input.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN
+            // The magnifier toggle works in any editor state, since it is used while painting. Feedback
+            // goes through the editor's status overlay so it shows above the chest GUI.
+            if (input.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN
                     && input.key() == boundKeyCode(ModKeyBindings.toggleMagnifierKey)) {
-                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleMagnifier(this.client);
+                this.editor.showStatus(
+                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleMagnifier(),
+                        net.minecraft.util.Formatting.GRAY);
                 this.editor.playClickSound(1.0f);
                 cir.setReturnValue(true);
                 return;
@@ -132,29 +134,29 @@ public abstract class GenericContainerScreenMixin extends Screen {
             // The same UI toggles available with the chest closed (deposit button, edit buttons,
             // preview panel) also work with the chest open, applied instantly. Only when no editor
             // sub-menu is active, so they don't clash with typing in search boxes.
-            if (!this.editor.isEditMode() && this.client != null) {
+            if (!this.editor.isEditMode()) {
                 int key = input.key();
                 if (key != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
                     if (key == boundKeyCode(ModKeyBindings.toggleDepositButtonKey)) {
-                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleDepositButton(this.client);
+                        this.editor.showStatus(
+                                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleDepositButton(),
+                                net.minecraft.util.Formatting.GRAY);
                         this.editor.playClickSound(1.0f);
                         cir.setReturnValue(true);
                         return;
                     }
                     if (key == boundKeyCode(ModKeyBindings.toggleButtonKey)) {
-                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleEditButtons(this.client);
+                        this.editor.showStatus(
+                                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleEditButtons(),
+                                net.minecraft.util.Formatting.GRAY);
                         this.editor.playClickSound(1.0f);
                         cir.setReturnValue(true);
                         return;
                     }
                     if (key == boundKeyCode(ModKeyBindings.openEditorKey)) {
-                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.togglePreviewPanel(this.client);
-                        this.editor.playClickSound(1.0f);
-                        cir.setReturnValue(true);
-                        return;
-                    }
-                    if (key == boundKeyCode(ModKeyBindings.toggleMagnifierKey)) {
-                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleMagnifier(this.client);
+                        this.editor.showStatus(
+                                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.togglePreviewPanel(),
+                                net.minecraft.util.Formatting.GRAY);
                         this.editor.playClickSound(1.0f);
                         cir.setReturnValue(true);
                         return;

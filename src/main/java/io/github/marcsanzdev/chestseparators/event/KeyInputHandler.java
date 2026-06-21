@@ -21,56 +21,60 @@ public class KeyInputHandler {
                 return;
             }
 
-            while (ModKeyBindings.toggleButtonKey.wasPressed()) toggleEditButtons(client);
-            while (ModKeyBindings.openEditorKey.wasPressed()) togglePreviewPanel(client);
-            while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) toggleDepositButton(client);
-            while (ModKeyBindings.toggleMagnifierKey.wasPressed()) toggleMagnifier(client);
+            if (client.player == null) return;
+            while (ModKeyBindings.toggleButtonKey.wasPressed()) actionBar(client, toggleEditButtons());
+            while (ModKeyBindings.openEditorKey.wasPressed()) actionBar(client, togglePreviewPanel());
+            while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) actionBar(client, toggleDepositButton());
+            while (ModKeyBindings.toggleMagnifierKey.wasPressed()) actionBar(client, toggleMagnifier());
         });
     }
 
-    public static void toggleMagnifier(MinecraftClient client) {
+    // Each toggle flips its config flag and returns the feedback text, leaving the caller to display
+    // it: the action bar when no screen is open, or the editor's status overlay when a chest is open
+    // (the action bar would otherwise be hidden behind the chest GUI).
+
+    public static Text toggleMagnifier() {
         GlobalChestConfig.instance.magnifierEnabled = !GlobalChestConfig.instance.magnifierEnabled;
         GlobalChestConfig.saveConfig();
-        sendToggleMessage(
-                client,
+        return label(
                 GlobalChestConfig.instance.magnifierEnabled,
                 "message.chestseparators.magnifier_on",
                 "message.chestseparators.magnifier_off");
     }
 
-    public static void toggleEditButtons(MinecraftClient client) {
+    public static Text toggleEditButtons() {
         GlobalChestConfig.instance.showEditButtons = !GlobalChestConfig.instance.showEditButtons;
         GlobalChestConfig.saveConfig();
-        sendToggleMessage(
-                client,
+        return label(
                 GlobalChestConfig.instance.showEditButtons,
                 "message.chestseparators.edit_buttons_visible",
                 "message.chestseparators.edit_buttons_hidden");
     }
 
-    public static void togglePreviewPanel(MinecraftClient client) {
+    public static Text togglePreviewPanel() {
         GlobalChestConfig.instance.showLeftPanel = !GlobalChestConfig.instance.showLeftPanel;
         GlobalChestConfig.saveConfig();
-        sendToggleMessage(
-                client,
+        return label(
                 GlobalChestConfig.instance.showLeftPanel,
                 "message.chestseparators.preview_panel_visible",
                 "message.chestseparators.preview_panel_hidden");
     }
 
-    public static void toggleDepositButton(MinecraftClient client) {
+    public static Text toggleDepositButton() {
         GlobalChestConfig.instance.showDepositButton = !GlobalChestConfig.instance.showDepositButton;
         GlobalChestConfig.saveConfig();
-        sendToggleMessage(
-                client,
+        return label(
                 GlobalChestConfig.instance.showDepositButton,
                 "message.chestseparators.deposit_button_visible",
                 "message.chestseparators.deposit_button_hidden");
     }
 
-    private static void sendToggleMessage(MinecraftClient client, boolean on, String onKey, String offKey) {
-        if (client.player == null) return;
-        client.player.sendMessage(Text.translatable(on ? onKey : offKey).copy().formatted(Formatting.GRAY), true);
+    private static Text label(boolean on, String onKey, String offKey) {
+        return Text.translatable(on ? onKey : offKey);
+    }
+
+    private static void actionBar(MinecraftClient client, Text message) {
+        if (client.player != null) client.player.sendMessage(message.copy().formatted(Formatting.GRAY), true);
     }
 
     public static boolean isModifierPressed() {

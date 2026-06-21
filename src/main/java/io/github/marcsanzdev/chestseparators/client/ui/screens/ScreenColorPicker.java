@@ -290,6 +290,13 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         if (session.isEyedropperActive) {
             hoveredPixelColor = ColorPickerGradients.readHoveredPixelColor(mouseX, mouseY);
+            // Whole-screen zoom loupe for precise color picking, drawn before the eyedropper cursor so
+            // the cursor stays visible and is not captured into the loupe.
+            if (GlobalChestConfig.instance.magnifierEnabled) {
+                boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
+                io.github.marcsanzdev.chestseparators.client.ui.MagnifierRenderer.render(
+                        context, mouseX, mouseY, circle);
+            }
             renderEyedropperCursor(context, mouseX, mouseY);
             return;
         }
