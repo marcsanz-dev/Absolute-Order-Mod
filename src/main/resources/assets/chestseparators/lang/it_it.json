@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Se la lente è rotonda o quadrata.",
   "config.chestseparators.magnifier_shape.circle": "Cerchio",
   "config.chestseparators.magnifier_shape.square": "Quadrato",
-  "config.chestseparators.magnifier_size": "Dimensione della lente",
-  "config.chestseparators.magnifier_size.tooltip": "Dimensione della lente d'ingrandimento (100% = minimo).",
   "config.chestseparators.magnifier_tab_lines": "Lente: Linee",
   "config.chestseparators.magnifier_tab_backgrounds": "Lente: Sfondi",
   "config.chestseparators.magnifier_tab_combo": "Lente: Modalità Combinata",

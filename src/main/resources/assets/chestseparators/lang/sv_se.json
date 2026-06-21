@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Om förstoringsglaset är runt eller fyrkantigt.",
   "config.chestseparators.magnifier_shape.circle": "Cirkel",
   "config.chestseparators.magnifier_shape.square": "Fyrkant",
-  "config.chestseparators.magnifier_size": "Förstoringsglasets storlek",
-  "config.chestseparators.magnifier_size.tooltip": "Storlek på förstoringsglaset (100% = minimum).",
   "config.chestseparators.magnifier_tab_lines": "Förstoringsglas: Linjer",
   "config.chestseparators.magnifier_tab_backgrounds": "Förstoringsglas: Bakgrunder",
   "config.chestseparators.magnifier_tab_combo": "Förstoringsglas: Kombinerat läge",

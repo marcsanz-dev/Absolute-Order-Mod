@@ -165,8 +165,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Whether the magnifier loupe is round or square.",
   "config.chestseparators.magnifier_shape.circle": "Circle",
   "config.chestseparators.magnifier_shape.square": "Square",
-  "config.chestseparators.magnifier_size": "Magnifier Size",
-  "config.chestseparators.magnifier_size.tooltip": "Size of the zoom loupe (100% = minimum).",
   "config.chestseparators.magnifier_tab_lines": "Magnifier: Lines",
   "config.chestseparators.magnifier_tab_backgrounds": "Magnifier: Backgrounds",
   "config.chestseparators.magnifier_tab_combo": "Magnifier: Combo Mode",

@@ -422,7 +422,7 @@ public class EditorRenderer {
         if (!magnifierEnabledForTab(session.currentTab)) return;
         if (!isCursorOverChestSlots(mouseX, mouseY)) return;
         boolean circle = GlobalChestConfig.instance.magnifierShape == GlobalChestConfig.MagnifierShape.CIRCLE;
-        MagnifierRenderer.render(context, mouseX, mouseY, circle, GlobalChestConfig.instance.magnifierSize);
+        MagnifierRenderer.render(context, mouseX, mouseY, circle);
     }
 
     private static boolean magnifierEnabledForTab(int tab) {

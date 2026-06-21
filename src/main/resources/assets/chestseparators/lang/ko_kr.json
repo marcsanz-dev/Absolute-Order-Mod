@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "돋보기를 원형 또는 사각형으로.",
   "config.chestseparators.magnifier_shape.circle": "원",
   "config.chestseparators.magnifier_shape.square": "사각형",
-  "config.chestseparators.magnifier_size": "돋보기 크기",
-  "config.chestseparators.magnifier_size.tooltip": "확대경 크기 (100% = 최소).",
   "config.chestseparators.magnifier_tab_lines": "돋보기: 선",
   "config.chestseparators.magnifier_tab_backgrounds": "돋보기: 배경",
   "config.chestseparators.magnifier_tab_combo": "돋보기: 콤보 모드",

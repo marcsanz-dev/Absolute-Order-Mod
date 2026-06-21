@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Si la loupe est ronde ou carrée.",
   "config.chestseparators.magnifier_shape.circle": "Cercle",
   "config.chestseparators.magnifier_shape.square": "Carré",
-  "config.chestseparators.magnifier_size": "Taille de la loupe",
-  "config.chestseparators.magnifier_size.tooltip": "Taille de la loupe de zoom (100% = minimum).",
   "config.chestseparators.magnifier_tab_lines": "Loupe: Lignes",
   "config.chestseparators.magnifier_tab_backgrounds": "Loupe: Arrière-plans",
   "config.chestseparators.magnifier_tab_combo": "Loupe: Mode Combiné",

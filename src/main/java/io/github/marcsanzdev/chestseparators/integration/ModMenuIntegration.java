@@ -116,18 +116,6 @@ public class ModMenuIntegration implements ModMenuApi {
                     .build());
 
             clientCategory.addEntry(entryBuilder
-                    .startIntSlider(
-                            Text.translatable("config.chestseparators.magnifier_size"),
-                            GlobalChestConfig.instance.magnifierSize,
-                            100,
-                            250)
-                    .setDefaultValue(100)
-                    .setTextGetter(v -> Text.literal(v + "%"))
-                    .setTooltip(Text.translatable("config.chestseparators.magnifier_size.tooltip"))
-                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierSize = newValue)
-                    .build());
-
-            clientCategory.addEntry(entryBuilder
                     .startBooleanToggle(
                             Text.translatable("config.chestseparators.magnifier_tab_lines"),
                             GlobalChestConfig.instance.magnifierTabLines)

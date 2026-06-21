@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Büyütecin yuvarlak mı yoksa kare mi olduğu.",
   "config.chestseparators.magnifier_shape.circle": "Daire",
   "config.chestseparators.magnifier_shape.square": "Kare",
-  "config.chestseparators.magnifier_size": "Büyüteç Boyutu",
-  "config.chestseparators.magnifier_size.tooltip": "Yakınlaştırma büyütecinin boyutu (100% = minimum).",
   "config.chestseparators.magnifier_tab_lines": "Büyüteç: Çizgiler",
   "config.chestseparators.magnifier_tab_backgrounds": "Büyüteç: Arka Planlar",
   "config.chestseparators.magnifier_tab_combo": "Büyüteç: Kombo Modu",

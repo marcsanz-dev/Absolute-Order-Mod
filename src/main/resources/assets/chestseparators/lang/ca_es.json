@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Si la lupa és rodona o quadrada.",
   "config.chestseparators.magnifier_shape.circle": "Cercle",
   "config.chestseparators.magnifier_shape.square": "Quadrat",
-  "config.chestseparators.magnifier_size": "Mida de la lupa",
-  "config.chestseparators.magnifier_size.tooltip": "Mida de la lupa de zoom (100% = mínim).",
   "config.chestseparators.magnifier_tab_lines": "Lupa: Línies",
   "config.chestseparators.magnifier_tab_backgrounds": "Lupa: Fons",
   "config.chestseparators.magnifier_tab_combo": "Lupa: Mode combinat",

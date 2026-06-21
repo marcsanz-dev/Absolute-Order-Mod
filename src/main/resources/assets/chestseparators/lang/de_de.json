@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Ob die Lupe rund oder eckig ist.",
   "config.chestseparators.magnifier_shape.circle": "Kreis",
   "config.chestseparators.magnifier_shape.square": "Quadrat",
-  "config.chestseparators.magnifier_size": "Lupengröße",
-  "config.chestseparators.magnifier_size.tooltip": "Größe der Zoom-Lupe (100% = Minimum).",
   "config.chestseparators.magnifier_tab_lines": "Lupe: Linien",
   "config.chestseparators.magnifier_tab_backgrounds": "Lupe: Hintergründe",
   "config.chestseparators.magnifier_tab_combo": "Lupe: Kombi-Modus",

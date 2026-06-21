@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Si la lupa es redonda o cuadrada.",
   "config.chestseparators.magnifier_shape.circle": "Círculo",
   "config.chestseparators.magnifier_shape.square": "Cuadrado",
-  "config.chestseparators.magnifier_size": "Tamaño de la lupa",
-  "config.chestseparators.magnifier_size.tooltip": "Tamaño de la lupa de zoom (100% = mínimo).",
   "config.chestseparators.magnifier_tab_lines": "Lupa: Líneas",
   "config.chestseparators.magnifier_tab_backgrounds": "Lupa: Fondos",
   "config.chestseparators.magnifier_tab_combo": "Lupa: Modo Combinado",

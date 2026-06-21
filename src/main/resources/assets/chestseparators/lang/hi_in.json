@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "आवर्धक गोल है या चौकोर।",
   "config.chestseparators.magnifier_shape.circle": "वृत्त",
   "config.chestseparators.magnifier_shape.square": "वर्ग",
-  "config.chestseparators.magnifier_size": "आवर्धक का आकार",
-  "config.chestseparators.magnifier_size.tooltip": "ज़ूम लेंस का आकार (100% = न्यूनतम)।",
   "config.chestseparators.magnifier_tab_lines": "आवर्धक: रेखाएं",
   "config.chestseparators.magnifier_tab_backgrounds": "आवर्धक: पृष्ठभूमि",
   "config.chestseparators.magnifier_tab_combo": "आवर्धक: कॉम्बो मोड",

@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Of het vergrootglas rond of vierkant is.",
   "config.chestseparators.magnifier_shape.circle": "Cirkel",
   "config.chestseparators.magnifier_shape.square": "Vierkant",
-  "config.chestseparators.magnifier_size": "Vergrootglasgrootte",
-  "config.chestseparators.magnifier_size.tooltip": "Grootte van het vergrootglas (100% = minimum).",
   "config.chestseparators.magnifier_tab_lines": "Vergrootglas: Lijnen",
   "config.chestseparators.magnifier_tab_backgrounds": "Vergrootglas: Achtergronden",
   "config.chestseparators.magnifier_tab_combo": "Vergrootglas: Combomodus",

@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Круглая лупа или квадратная.",
   "config.chestseparators.magnifier_shape.circle": "Круг",
   "config.chestseparators.magnifier_shape.square": "Квадрат",
-  "config.chestseparators.magnifier_size": "Размер лупы",
-  "config.chestseparators.magnifier_size.tooltip": "Размер лупы (100% = минимум).",
   "config.chestseparators.magnifier_tab_lines": "Лупа: Линии",
   "config.chestseparators.magnifier_tab_backgrounds": "Лупа: Фоны",
   "config.chestseparators.magnifier_tab_combo": "Лупа: Комбинированный режим",

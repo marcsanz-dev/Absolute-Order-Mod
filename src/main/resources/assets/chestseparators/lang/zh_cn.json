@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "放大镜为圆形还是方形。",
   "config.chestseparators.magnifier_shape.circle": "圆形",
   "config.chestseparators.magnifier_shape.square": "方形",
-  "config.chestseparators.magnifier_size": "放大镜大小",
-  "config.chestseparators.magnifier_size.tooltip": "缩放放大镜的大小（100% = 最小）。",
   "config.chestseparators.magnifier_tab_lines": "放大镜: 线条",
   "config.chestseparators.magnifier_tab_backgrounds": "放大镜: 背景",
   "config.chestseparators.magnifier_tab_combo": "放大镜: 组合模式",

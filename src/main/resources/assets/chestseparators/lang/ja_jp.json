@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "拡大鏡を円形にするか四角形にするか。",
   "config.chestseparators.magnifier_shape.circle": "円",
   "config.chestseparators.magnifier_shape.square": "四角",
-  "config.chestseparators.magnifier_size": "拡大鏡のサイズ",
-  "config.chestseparators.magnifier_size.tooltip": "拡大鏡のサイズ (100% = 最小)。",
   "config.chestseparators.magnifier_tab_lines": "拡大鏡: ライン",
   "config.chestseparators.magnifier_tab_backgrounds": "拡大鏡: 背景",
   "config.chestseparators.magnifier_tab_combo": "拡大鏡: コンボモード",

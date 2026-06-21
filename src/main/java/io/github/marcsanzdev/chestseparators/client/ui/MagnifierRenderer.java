@@ -26,19 +26,16 @@ public final class MagnifierRenderer {
     private static final int BASE_RING = 4;
     private static final int FRAME_COLOR = 0xFF202020;
 
-    public static void render(DrawContext context, int cursorX, int cursorY, boolean circle, int sizePercent) {
+    public static void render(DrawContext context, int cursorX, int cursorY, boolean circle) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getWindow() == null) return;
 
-        int pct = Math.max(100, sizePercent);
-        // The sampled area stays fixed (small, cheap to read/draw); only the on-screen loupe grows, so
-        // a bigger size means more zoom rather than a larger — and quadratically more expensive — read.
         int srcHalf = BASE_SRC_HALF;
-        int loupeR = BASE_LOUPE_R * pct / 100;
-        int gap = BASE_GAP * pct / 100;
-        int ring = Math.max(2, BASE_RING * pct / 100);
+        int loupeR = BASE_LOUPE_R;
+        int gap = BASE_GAP;
+        int ring = BASE_RING;
         // Cursor marker: its hole equals the captured square exactly, so what is inside the marker is
-        // precisely what the big loupe magnifies (no mismatch). It does not scale with size.
+        // precisely what the big loupe magnifies (no mismatch).
         int markerInner = srcHalf;
         int markerOuter = srcHalf + 3;
 

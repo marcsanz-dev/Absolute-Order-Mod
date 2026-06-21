@@ -163,8 +163,6 @@
   "config.chestseparators.magnifier_shape.tooltip": "Lupa biribila edo karratua den.",
   "config.chestseparators.magnifier_shape.circle": "Zirkulua",
   "config.chestseparators.magnifier_shape.square": "Karratua",
-  "config.chestseparators.magnifier_size": "Luparen tamaina",
-  "config.chestseparators.magnifier_size.tooltip": "Zoom-luparen tamaina (100% = gutxienekoa).",
   "config.chestseparators.magnifier_tab_lines": "Lupa: Lerroak",
   "config.chestseparators.magnifier_tab_backgrounds": "Lupa: Hondoak",
   "config.chestseparators.magnifier_tab_combo": "Lupa: Modu konbinatua",
