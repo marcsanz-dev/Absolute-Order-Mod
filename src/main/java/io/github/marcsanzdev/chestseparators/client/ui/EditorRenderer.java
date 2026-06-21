@@ -112,67 +112,78 @@ public class EditorRenderer {
         }
     }
 
+    // White washes matching the eraser tool's drag preview, reused for the Clear-button hover preview.
+    private static final int ERASE_BG_WASH = 0x66FFFFFF;
+    private static final int ERASE_LINE_WASH = 0x88FFFFFF;
+
     public void renderSavedLinesLayer(DrawContext context) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
 
-        int bgAlphaBase = GlobalChestConfig.instance.bgTransparency * 255 / 100;
-        int lineAlphaBase = GlobalChestConfig.instance.lineTransparency * 255 / 100;
+        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
+        int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
 
-        // Clear-button hover preview: fade out the layers that would be erased so the user sees the
-        // result before clicking. Only the active tab's affected layers fade (lines/bg/both).
+        // Clear-button hover preview: render the layers that would be erased with the same white wash
+        // the eraser tool uses, so the feedback is consistent across the mod.
         boolean previewActive = session.currentState == EditorState.DRAW_LINES && session.clearPreviewTab != -1;
-        boolean fadeLines = previewActive && (session.clearPreviewTab == 0 || session.clearPreviewTab == 2);
-        boolean fadeBg = previewActive && (session.clearPreviewTab == 1 || session.clearPreviewTab == 2);
-        if (previewActive) {
-            float pulse = 0.10f + 0.12f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 320.0));
-            if (fadeLines) lineAlphaBase = (int) (lineAlphaBase * pulse);
-            if (fadeBg) bgAlphaBase = (int) (bgAlphaBase * pulse);
-        }
-
-        int bgAlpha = bgAlphaBase << 24;
-        int lineAlpha = lineAlphaBase << 24;
+        boolean clearLines = previewActive && (session.clearPreviewTab == 0 || session.clearPreviewTab == 2);
+        boolean clearBg = previewActive && (session.clearPreviewTab == 1 || session.clearPreviewTab == 2);
 
         for (Slot s : accessor.getHandler().slots) {
             if (s.inventory instanceof PlayerInventory) continue;
 
             int bgColor = manager.getColor(s.getIndex(), ChestConfigManager.ACTION_BG);
-            if (bgColor != 0) context.fill(s.x, s.y, s.x + 16, s.y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
+            if (bgColor != 0) {
+                int fill = clearBg ? ERASE_BG_WASH : ((bgColor & 0xFFFFFF) | bgAlpha);
+                context.fill(s.x, s.y, s.x + 16, s.y + 16, fill);
+            }
 
-            renderEdgesInPaintOrder(context, s.x, s.y, s.getIndex(), lineAlpha);
+            renderEdgesInPaintOrder(context, s.x, s.y, s.getIndex(), lineAlpha, clearLines);
         }
     }
 
-    private static final int[] EDGE_ACTIONS = {
-        ChestConfigManager.ACTION_TOP,
-        ChestConfigManager.ACTION_BOTTOM,
-        ChestConfigManager.ACTION_LEFT,
-        ChestConfigManager.ACTION_RIGHT
-    };
+    private static int resolveEdge(int color, int lineAlpha, boolean erasePreview) {
+        if (color == 0) return 0;
+        return erasePreview ? ERASE_LINE_WASH : ((color & 0x00FFFFFF) | lineAlpha);
+    }
 
     /**
-     * Draws a slot's four edge lines ordered by paint sequence (oldest first), so where two edges
-     * overlap in a corner the one painted later is drawn on top. The sort is stable, so legacy edges
-     * without sequence data keep the default TOP, BOTTOM, LEFT, RIGHT order.
+     * Draws a slot's four edge lines as four bodies plus four corners. Each corner pixel is painted
+     * exactly once — by the edge painted later (higher sequence) — so corners respect paint order
+     * (newest on top) without the double-draw that brightened overlapping translucent edges.
      */
-    private void renderEdgesInPaintOrder(DrawContext context, int x, int y, int slotIndex, int lineAlpha) {
-        ChestConfigManager manager = ChestConfigManager.getInstance();
-        Integer[] order = {0, 1, 2, 3};
-        java.util.Arrays.sort(
-                order, java.util.Comparator.comparingInt(i -> manager.getPaintSeq(slotIndex, EDGE_ACTIONS[i])));
-        for (int oi : order) {
-            int action = EDGE_ACTIONS[oi];
-            renderLineRaw(context, x, y, manager.getColor(slotIndex, action), action, lineAlpha);
-        }
+    private void renderEdgesInPaintOrder(
+            DrawContext context, int x, int y, int slotIndex, int lineAlpha, boolean erasePreview) {
+        ChestConfigManager m = ChestConfigManager.getInstance();
+        int rTop = resolveEdge(m.getColor(slotIndex, ChestConfigManager.ACTION_TOP), lineAlpha, erasePreview);
+        int rBot = resolveEdge(m.getColor(slotIndex, ChestConfigManager.ACTION_BOTTOM), lineAlpha, erasePreview);
+        int rLeft = resolveEdge(m.getColor(slotIndex, ChestConfigManager.ACTION_LEFT), lineAlpha, erasePreview);
+        int rRight = resolveEdge(m.getColor(slotIndex, ChestConfigManager.ACTION_RIGHT), lineAlpha, erasePreview);
+
+        int sTop = m.getPaintSeq(slotIndex, ChestConfigManager.ACTION_TOP);
+        int sBot = m.getPaintSeq(slotIndex, ChestConfigManager.ACTION_BOTTOM);
+        int sLeft = m.getPaintSeq(slotIndex, ChestConfigManager.ACTION_LEFT);
+        int sRight = m.getPaintSeq(slotIndex, ChestConfigManager.ACTION_RIGHT);
+
+        // Bodies (no corners) — never overlap each other.
+        if (rTop != 0) context.fill(x, y - 1, x + 16, y, rTop);
+        if (rBot != 0) context.fill(x, y + 16, x + 16, y + 17, rBot);
+        if (rLeft != 0) context.fill(x - 1, y, x, y + 16, rLeft);
+        if (rRight != 0) context.fill(x + 16, y, x + 17, y + 16, rRight);
+
+        // Corners — one fill each, by the later-painted edge.
+        drawCorner(context, x - 1, y - 1, rTop, sTop, rLeft, sLeft);
+        drawCorner(context, x + 16, y - 1, rTop, sTop, rRight, sRight);
+        drawCorner(context, x - 1, y + 16, rBot, sBot, rLeft, sLeft);
+        drawCorner(context, x + 16, y + 16, rBot, sBot, rRight, sRight);
     }
 
-    private void renderLineRaw(DrawContext context, int x, int y, int color, int action, int alpha) {
-        if (color == 0) return;
-        int renderColor = (color & 0x00FFFFFF) | alpha;
-
-        if (action == ChestConfigManager.ACTION_TOP) context.fill(x - 1, y - 1, x + 17, y, renderColor);
-        else if (action == ChestConfigManager.ACTION_BOTTOM) context.fill(x - 1, y + 16, x + 17, y + 17, renderColor);
-        else if (action == ChestConfigManager.ACTION_LEFT) context.fill(x - 1, y - 1, x, y + 17, renderColor);
-        else if (action == ChestConfigManager.ACTION_RIGHT) context.fill(x + 16, y - 1, x + 17, y + 17, renderColor);
+    private void drawCorner(DrawContext context, int cx, int cy, int colorA, int seqA, int colorB, int seqB) {
+        int color;
+        if (colorA == 0 && colorB == 0) return;
+        else if (colorA == 0) color = colorB;
+        else if (colorB == 0) color = colorA;
+        else color = (seqA >= seqB) ? colorA : colorB;
+        context.fill(cx, cy, cx + 1, cy + 1, color);
     }
 
     private void renderStatusMessage(DrawContext context) {
@@ -340,6 +351,6 @@ public class EditorRenderer {
 
         // Draw separator lines at the user-configured opacity so they read over the vanilla bevel.
         int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-        renderEdgesInPaintOrder(context, x, y, slotIndex, lineAlpha);
+        renderEdgesInPaintOrder(context, x, y, slotIndex, lineAlpha, false);
     }
 }
