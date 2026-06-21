@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Fyrkant",
   "message.chestseparators.magnifier_on": "Förstoringsglas: På",
   "message.chestseparators.magnifier_off": "Förstoringsglas: Av",
+  "message.chestseparators.magnifier_hint": "Tips: tryck %s för ett förstoringsglas",
   "config.chestseparators.show_deposit_button.tooltip": "Visar eller döljer snabbinsättningsknappen i kistans gränssnitt.",
   "config.chestseparators.deposit_filter": "Sätt in i Filter",
   "config.chestseparators.deposit_filter.tooltip": "Tangent för att endast sätta in föremål i fack med matchande filter.",

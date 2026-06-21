@@ -167,6 +167,7 @@
   "config.chestseparators.magnifier_shape.square": "Square",
   "message.chestseparators.magnifier_on": "Magnifier: On",
   "message.chestseparators.magnifier_off": "Magnifier: Off",
+  "message.chestseparators.magnifier_hint": "Tip: press %s for a zoom loupe",
   "config.chestseparators.show_deposit_button.tooltip": "Shows or hides the quick deposit button in the chest interface.",
   "config.chestseparators.deposit_filter": "Deposit to Filters",
   "config.chestseparators.deposit_filter.tooltip": "Key to deposit items only into slots with matching filters.",

@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "वर्ग",
   "message.chestseparators.magnifier_on": "आवर्धक: चालू",
   "message.chestseparators.magnifier_off": "आवर्धक: बंद",
+  "message.chestseparators.magnifier_hint": "सुझाव: ज़ूम लेंस के लिए %s दबाएं",
   "config.chestseparators.show_deposit_button.tooltip": "चेस्ट इंटरफ़ेस में त्वरित जमा बटन दिखाता या छुपाता है।",
   "config.chestseparators.deposit_filter": "फ़िल्टर में जमा करें",
   "config.chestseparators.deposit_filter.tooltip": "आइटम को केवल मेल खाने वाले फ़िल्टर वाले स्लॉट में जमा करने की कुंजी।",

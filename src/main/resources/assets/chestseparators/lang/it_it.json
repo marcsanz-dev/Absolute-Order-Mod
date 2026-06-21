@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Quadrato",
   "message.chestseparators.magnifier_on": "Lente: Attiva",
   "message.chestseparators.magnifier_off": "Lente: Disattivata",
+  "message.chestseparators.magnifier_hint": "Consiglio: premi %s per una lente d'ingrandimento",
   "config.chestseparators.show_deposit_button.tooltip": "Mostra o nasconde il pulsante di deposito rapido nell'interfaccia della cassa.",
   "config.chestseparators.deposit_filter": "Deposita nei Filtri",
   "config.chestseparators.deposit_filter.tooltip": "Tasto per depositare oggetti solo negli slot con filtri corrispondenti.",

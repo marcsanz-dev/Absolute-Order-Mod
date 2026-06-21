@@ -167,6 +167,7 @@
   "config.chestseparators.magnifier_shape.square": "مربع",
   "message.chestseparators.magnifier_on": "العدسة المكبرة: تشغيل",
   "message.chestseparators.magnifier_off": "العدسة المكبرة: إيقاف",
+  "message.chestseparators.magnifier_hint": "نصيحة: اضغط %s لعدسة تكبير",
   "config.chestseparators.show_deposit_button.tooltip": "يظهر أو يخفي زر الإيداع السريع في واجهة الصندوق.",
   "config.chestseparators.deposit_filter": "إيداع في الفلاتر",
   "config.chestseparators.deposit_filter.tooltip": "مفتاح لإيداع العناصر فقط في الفتحات ذات الفلاتر المطابقة.",

@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "四角",
   "message.chestseparators.magnifier_on": "拡大鏡: オン",
   "message.chestseparators.magnifier_off": "拡大鏡: オフ",
+  "message.chestseparators.magnifier_hint": "ヒント: %s で拡大鏡を表示",
   "config.chestseparators.show_deposit_button.tooltip": "チェスト画面のクイック預けるボタンを表示または非表示にします。",
   "config.chestseparators.deposit_filter": "フィルターに預ける",
   "config.chestseparators.deposit_filter.tooltip": "一致するフィルターのあるスロットにのみアイテムを預けるキー。",

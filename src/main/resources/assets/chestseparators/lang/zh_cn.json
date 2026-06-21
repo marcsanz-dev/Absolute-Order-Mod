@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "方形",
   "message.chestseparators.magnifier_on": "放大镜：开",
   "message.chestseparators.magnifier_off": "放大镜：关",
+  "message.chestseparators.magnifier_hint": "提示：按 %s 显示放大镜",
   "config.chestseparators.show_deposit_button.tooltip": "在箱子界面显示或隐藏快速存入按钮。",
   "config.chestseparators.deposit_filter": "存入过滤器",
   "config.chestseparators.deposit_filter.tooltip": "仅将物品存入具有匹配过滤器的槽位的快捷键。",

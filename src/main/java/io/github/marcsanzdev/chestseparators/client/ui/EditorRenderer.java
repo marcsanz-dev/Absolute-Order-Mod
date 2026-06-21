@@ -106,6 +106,7 @@ public class EditorRenderer {
             }
 
             renderStatusMessage(context);
+            renderMagnifierHint(context);
 
             if (session.isColorPickerOpen) {
                 editor.screenColorPicker.render(context, mouseX, mouseY, delta);
@@ -113,6 +114,16 @@ public class EditorRenderer {
 
             renderMagnifier(context, mouseX, mouseY);
         }
+    }
+
+    /** Subtle, static hint pointing players to the magnifier loupe while painting, when it is off. */
+    private void renderMagnifierHint(DrawContext context) {
+        if (session.currentState != EditorState.DRAW_LINES || GlobalChestConfig.instance.magnifierEnabled) return;
+        net.minecraft.text.Text key = ModKeyBindings.toggleMagnifierKey.getBoundKeyLocalizedText();
+        net.minecraft.text.Text hint =
+                net.minecraft.text.Text.translatable("message.chestseparators.magnifier_hint", key);
+        var tr = MinecraftClient.getInstance().textRenderer;
+        context.drawText(tr, hint, (screen.width - tr.getWidth(hint)) / 2, screen.height - 12, 0x70FFFFFF, false);
     }
 
     // White washes matching the eraser tool's drag preview, reused for the Clear-button hover preview.

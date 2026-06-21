@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Quadrat",
   "message.chestseparators.magnifier_on": "Lupe: An",
   "message.chestseparators.magnifier_off": "Lupe: Aus",
+  "message.chestseparators.magnifier_hint": "Tipp: Drücke %s für eine Zoom-Lupe",
   "config.chestseparators.show_deposit_button.tooltip": "Zeigt oder verbirgt die Schnelleinlagerungs-Schaltfläche in der Truhenoberfläche.",
   "config.chestseparators.deposit_filter": "In Filter einlagern",
   "config.chestseparators.deposit_filter.tooltip": "Taste, um Items nur in Slots mit passenden Filtern einzulagern.",

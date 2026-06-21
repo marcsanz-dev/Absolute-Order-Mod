@@ -98,7 +98,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .startBooleanToggle(
                             Text.translatable("config.chestseparators.magnifier_enabled"),
                             GlobalChestConfig.instance.magnifierEnabled)
-                    .setDefaultValue(true)
+                    .setDefaultValue(false)
                     .setTooltip(Text.translatable("config.chestseparators.magnifier_enabled.tooltip"))
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.magnifierEnabled = newValue)
                     .build());

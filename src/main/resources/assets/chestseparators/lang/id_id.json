@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Kotak",
   "message.chestseparators.magnifier_on": "Kaca Pembesar: Aktif",
   "message.chestseparators.magnifier_off": "Kaca Pembesar: Mati",
+  "message.chestseparators.magnifier_hint": "Tips: tekan %s untuk kaca pembesar",
   "config.chestseparators.show_deposit_button.tooltip": "Menampilkan atau menyembunyikan tombol simpan cepat di antarmuka peti.",
   "config.chestseparators.deposit_filter": "Simpan ke Filter",
   "config.chestseparators.deposit_filter.tooltip": "Tombol untuk menyimpan item hanya ke slot dengan filter yang cocok.",

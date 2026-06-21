@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Kare",
   "message.chestseparators.magnifier_on": "Büyüteç: Açık",
   "message.chestseparators.magnifier_off": "Büyüteç: Kapalı",
+  "message.chestseparators.magnifier_hint": "İpucu: yakınlaştırma büyüteci için %s tuşuna basın",
   "config.chestseparators.show_deposit_button.tooltip": "Sandık arayüzündeki hızlı para yatırma düğmesini gösterir veya gizler.",
   "config.chestseparators.deposit_filter": "Filtrelere Yatır",
   "config.chestseparators.deposit_filter.tooltip": "Eşyaları yalnızca eşleşen filtrelere sahip yuvalara yatırmak için tuş.",

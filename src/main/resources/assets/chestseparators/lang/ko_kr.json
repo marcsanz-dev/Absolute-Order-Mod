@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "사각형",
   "message.chestseparators.magnifier_on": "돋보기: 켜짐",
   "message.chestseparators.magnifier_off": "돋보기: 꺼짐",
+  "message.chestseparators.magnifier_hint": "팁: %s 키로 확대경 표시",
   "config.chestseparators.show_deposit_button.tooltip": "상자 인터페이스에서 빠른 보관 버튼을 표시하거나 숨깁니다.",
   "config.chestseparators.deposit_filter": "필터에 보관",
   "config.chestseparators.deposit_filter.tooltip": "일치하는 필터가 있는 슬롯에만 아이템을 보관하는 키입니다.",

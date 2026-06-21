@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Квадрат",
   "message.chestseparators.magnifier_on": "Лупа: Вкл",
   "message.chestseparators.magnifier_off": "Лупа: Выкл",
+  "message.chestseparators.magnifier_hint": "Совет: нажмите %s для лупы",
   "config.chestseparators.show_deposit_button.tooltip": "Показывает или скрывает кнопку быстрого складирования в интерфейсе сундука.",
   "config.chestseparators.deposit_filter": "Сложить в фильтры",
   "config.chestseparators.deposit_filter.tooltip": "Клавиша для складирования предметов только в слоты с подходящими фильтрами.",

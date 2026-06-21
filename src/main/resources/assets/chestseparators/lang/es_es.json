@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Cuadrado",
   "message.chestseparators.magnifier_on": "Lupa: Activada",
   "message.chestseparators.magnifier_off": "Lupa: Desactivada",
+  "message.chestseparators.magnifier_hint": "Consejo: pulsa %s para una lupa de zoom",
   "config.chestseparators.show_deposit_button.tooltip": "Muestra u oculta el botón de depósito rápido en la interfaz del cofre.",
   "config.chestseparators.deposit_filter": "Depositar en Filtros",
   "config.chestseparators.deposit_filter.tooltip": "Tecla para depositar ítems solo en los huecos con filtros coincidentes.",

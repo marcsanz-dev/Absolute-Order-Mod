@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Quadrado",
   "message.chestseparators.magnifier_on": "Lupa: Ligada",
   "message.chestseparators.magnifier_off": "Lupa: Desligada",
+  "message.chestseparators.magnifier_hint": "Dica: pressione %s para uma lupa de zoom",
   "config.chestseparators.show_deposit_button.tooltip": "Mostra ou oculta o botão de depósito rápido na interface do baú.",
   "config.chestseparators.deposit_filter": "Depositar nos Filtros",
   "config.chestseparators.deposit_filter.tooltip": "Tecla para depositar itens apenas em slots com filtros correspondentes.",

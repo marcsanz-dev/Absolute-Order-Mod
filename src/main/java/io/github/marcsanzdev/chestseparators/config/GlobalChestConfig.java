@@ -35,8 +35,9 @@ public class GlobalChestConfig {
         // When true, the custom-color column (third palette column) is shared across the Lines,
         // Backgrounds and Combo tabs. When false, each tab keeps its own custom colors.
         public boolean sharedCustomColors = true;
-        // Zoom loupe shown while painting separators or using the eyedropper.
-        public boolean magnifierEnabled = true;
+        // Zoom loupe shown while painting separators or using the eyedropper. Off by default; players
+        // are hinted that they can enable it (key L or config) if precise editing is tricky.
+        public boolean magnifierEnabled = false;
         public MagnifierShape magnifierShape = MagnifierShape.CIRCLE;
         public int bgTransparency = 40;
         public int lineTransparency = 100;

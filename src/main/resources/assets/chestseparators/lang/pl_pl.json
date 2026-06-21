@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Kwadrat",
   "message.chestseparators.magnifier_on": "Lupa: Wł.",
   "message.chestseparators.magnifier_off": "Lupa: Wył.",
+  "message.chestseparators.magnifier_hint": "Wskazówka: naciśnij %s, aby użyć lupy",
   "config.chestseparators.show_deposit_button.tooltip": "Pokazuje lub ukrywa przycisk szybkiego depozytu w interfejsie skrzyni.",
   "config.chestseparators.deposit_filter": "Zdeponuj w Filtrach",
   "config.chestseparators.deposit_filter.tooltip": "Klawisz do deponowania przedmiotów tylko w miejscach z pasującymi filtrami.",

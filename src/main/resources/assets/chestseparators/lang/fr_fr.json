@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Carré",
   "message.chestseparators.magnifier_on": "Loupe : Activée",
   "message.chestseparators.magnifier_off": "Loupe : Désactivée",
+  "message.chestseparators.magnifier_hint": "Astuce : appuyez sur %s pour une loupe",
   "config.chestseparators.show_deposit_button.tooltip": "Affiche ou masque le bouton de dépôt rapide dans l'interface du coffre.",
   "config.chestseparators.deposit_filter": "Déposer dans les filtres",
   "config.chestseparators.deposit_filter.tooltip": "Touche pour déposer des objets uniquement dans les emplacements avec des filtres correspondants.",

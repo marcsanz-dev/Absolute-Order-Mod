@@ -165,6 +165,7 @@
   "config.chestseparators.magnifier_shape.square": "Vierkant",
   "message.chestseparators.magnifier_on": "Vergrootglas: Aan",
   "message.chestseparators.magnifier_off": "Vergrootglas: Uit",
+  "message.chestseparators.magnifier_hint": "Tip: druk op %s voor een vergrootglas",
   "config.chestseparators.show_deposit_button.tooltip": "Toont of verbergt de knop voor snel storten in de kistinterface.",
   "config.chestseparators.deposit_filter": "Storten in Filters",
   "config.chestseparators.deposit_filter.tooltip": "Toets om items alleen in slots met overeenkomende filters te storten.",
