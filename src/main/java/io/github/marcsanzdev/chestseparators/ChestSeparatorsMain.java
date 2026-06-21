@@ -407,23 +407,21 @@ public class ChestSeparatorsMain implements ModInitializer {
     }
 
     /**
-     * True if no unobstructed path exists from the player's eye to the container. Rather than testing
-     * only the exact center (which a neighbouring block or a stacked chest can block even when the
-     * chest is clearly accessible), this checks the chest body and the centers of every adjacent cell:
-     * the chest is reachable if the eye has a clear line to any one of them. The container's own
-     * block(s) — including the second half of a double chest — never count as obstructions.
+     * True if no unobstructed path exists from the player's eye to a free lateral side of the
+     * container. Access must come through one of the four horizontal sides (not the top or bottom):
+     * the chest is reachable if the eye has a clear line to the center of any open cell directly beside
+     * it. A solid block beside the chest blocks that side; the other half of a double chest does not.
      */
     private static boolean isBlockObstructed(
             World world, Vec3d eye, BlockPos chestPos, net.minecraft.entity.Entity player) {
         List<BlockPos> parts = getAssociatedPositions(world, chestPos);
         for (BlockPos part : parts) {
-            // A clear line to the chest body itself counts as reachable.
-            if (!blockedToPoint(world, eye, Vec3d.ofCenter(part), player, parts)) return false;
-            // ...as does a clear line to any open cell touching the chest (an exposed side).
-            for (Direction dir : Direction.values()) {
+            for (Direction dir : Direction.Type.HORIZONTAL) {
                 BlockPos neighbor = part.offset(dir);
                 if (parts.contains(neighbor)) continue;
-                if (!blockedToPoint(world, eye, Vec3d.ofCenter(neighbor), player, parts)) return false;
+                // A clear line to this open side cell (ending in air, not blocked by any solid block,
+                // including the chest itself) means the chest is reachable from that side.
+                if (!blockedToPoint(world, eye, Vec3d.ofCenter(neighbor), player, null)) return false;
             }
         }
         return true;
