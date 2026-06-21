@@ -104,6 +104,11 @@ public abstract class GenericContainerScreenMixin extends Screen {
         }
     }
 
+    @Unique
+    private static int boundKeyCode(net.minecraft.client.option.KeyBinding binding) {
+        return KeyBindingHelper.getBoundKeyOf(binding).getCode();
+    }
+
     // Forwards keyboard input to the editor seamlessly and intercepts Deposit Hotkeys.
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void onKeyPressed(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
@@ -114,23 +119,30 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 return;
             }
 
-            // Toggle the deposit button's visibility; works whether it is currently shown or hidden,
-            // so the change is seen instantly with the chest open.
-            if (!this.editor.isEditMode()) {
-                int toggleDepositKey = KeyBindingHelper.getBoundKeyOf(ModKeyBindings.toggleDepositButtonKey)
-                        .getCode();
-                if (toggleDepositKey != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN && input.key() == toggleDepositKey) {
-                    GlobalChestConfig.instance.showDepositButton = !GlobalChestConfig.instance.showDepositButton;
-                    GlobalChestConfig.saveConfig();
-                    this.editor.playClickSound(1.0f);
-                    if (this.client != null && this.client.player != null) {
-                        Text msg = GlobalChestConfig.instance.showDepositButton
-                                ? Text.translatable("message.chestseparators.deposit_button_visible")
-                                : Text.translatable("message.chestseparators.deposit_button_hidden");
-                        this.client.player.sendMessage(msg.copy().formatted(net.minecraft.util.Formatting.GRAY), true);
+            // The same UI toggles available with the chest closed (deposit button, edit buttons,
+            // preview panel) also work with the chest open, applied instantly. Only when no editor
+            // sub-menu is active, so they don't clash with typing in search boxes.
+            if (!this.editor.isEditMode() && this.client != null) {
+                int key = input.key();
+                if (key != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+                    if (key == boundKeyCode(ModKeyBindings.toggleDepositButtonKey)) {
+                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleDepositButton(this.client);
+                        this.editor.playClickSound(1.0f);
+                        cir.setReturnValue(true);
+                        return;
                     }
-                    cir.setReturnValue(true);
-                    return;
+                    if (key == boundKeyCode(ModKeyBindings.toggleButtonKey)) {
+                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleEditButtons(this.client);
+                        this.editor.playClickSound(1.0f);
+                        cir.setReturnValue(true);
+                        return;
+                    }
+                    if (key == boundKeyCode(ModKeyBindings.openEditorKey)) {
+                        io.github.marcsanzdev.chestseparators.event.KeyInputHandler.togglePreviewPanel(this.client);
+                        this.editor.playClickSound(1.0f);
+                        cir.setReturnValue(true);
+                        return;
+                    }
                 }
             }
 

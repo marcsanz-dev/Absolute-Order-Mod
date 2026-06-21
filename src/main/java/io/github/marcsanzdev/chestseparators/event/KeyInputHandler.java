@@ -15,35 +15,51 @@ public class KeyInputHandler {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
-            // We keep the screen check to prevent hotkeys from triggering while typing in GUIs
+            // These fire only with no screen open (chest closed). The same toggles are wired into the
+            // chest screen via GenericContainerScreenMixin so they also work with the chest open.
             if (client.currentScreen != null) {
                 return;
             }
 
-            // --- 1. Toggle Edit Buttons ---
-            while (ModKeyBindings.toggleButtonKey.wasPressed()) {
-                GlobalChestConfig.instance.showEditButtons = !GlobalChestConfig.instance.showEditButtons;
-                GlobalChestConfig.saveConfig();
-
-                Text msg = GlobalChestConfig.instance.showEditButtons
-                        ? Text.translatable("message.chestseparators.edit_buttons_visible")
-                        : Text.translatable("message.chestseparators.edit_buttons_hidden");
-                client.player.sendMessage(msg.copy().formatted(Formatting.GRAY), true);
-            }
-
-            // --- 2. Toggle Left Preview Panel ---
-            while (ModKeyBindings.openEditorKey.wasPressed()) {
-                GlobalChestConfig.instance.showLeftPanel = !GlobalChestConfig.instance.showLeftPanel;
-                GlobalChestConfig.saveConfig();
-
-                Text msg = GlobalChestConfig.instance.showLeftPanel
-                        ? Text.translatable("message.chestseparators.preview_panel_visible")
-                        : Text.translatable("message.chestseparators.preview_panel_hidden");
-                client.player.sendMessage(msg.copy().formatted(Formatting.GRAY), true);
-            }
-
-            // (Deposit Items outside the GUI logic removed, it's now handled by the GenericContainerScreenMixin)
+            while (ModKeyBindings.toggleButtonKey.wasPressed()) toggleEditButtons(client);
+            while (ModKeyBindings.openEditorKey.wasPressed()) togglePreviewPanel(client);
+            while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) toggleDepositButton(client);
         });
+    }
+
+    public static void toggleEditButtons(MinecraftClient client) {
+        GlobalChestConfig.instance.showEditButtons = !GlobalChestConfig.instance.showEditButtons;
+        GlobalChestConfig.saveConfig();
+        sendToggleMessage(
+                client,
+                GlobalChestConfig.instance.showEditButtons,
+                "message.chestseparators.edit_buttons_visible",
+                "message.chestseparators.edit_buttons_hidden");
+    }
+
+    public static void togglePreviewPanel(MinecraftClient client) {
+        GlobalChestConfig.instance.showLeftPanel = !GlobalChestConfig.instance.showLeftPanel;
+        GlobalChestConfig.saveConfig();
+        sendToggleMessage(
+                client,
+                GlobalChestConfig.instance.showLeftPanel,
+                "message.chestseparators.preview_panel_visible",
+                "message.chestseparators.preview_panel_hidden");
+    }
+
+    public static void toggleDepositButton(MinecraftClient client) {
+        GlobalChestConfig.instance.showDepositButton = !GlobalChestConfig.instance.showDepositButton;
+        GlobalChestConfig.saveConfig();
+        sendToggleMessage(
+                client,
+                GlobalChestConfig.instance.showDepositButton,
+                "message.chestseparators.deposit_button_visible",
+                "message.chestseparators.deposit_button_hidden");
+    }
+
+    private static void sendToggleMessage(MinecraftClient client, boolean on, String onKey, String offKey) {
+        if (client.player == null) return;
+        client.player.sendMessage(Text.translatable(on ? onKey : offKey).copy().formatted(Formatting.GRAY), true);
     }
 
     public static boolean isModifierPressed() {
