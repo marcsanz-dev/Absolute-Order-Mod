@@ -60,12 +60,8 @@ public final class AutoDepositAnimator {
     private static final long DURATION_MS = 1900L;
     private static final long STAGGER_MS = 130L;
     private static final double ARC_HEIGHT = 1.2;
-    private static final long TRAIL_INTERVAL_MS = 30L;
+    private static final long TRAIL_INTERVAL_MS = 110L;
     private static final int FULL_BRIGHT = 0xF000F0;
-
-    // Reused per frame to avoid per-item allocation churn while still rebuilding state (some models,
-    // e.g. compass/clock, depend on position).
-    private static final ItemRenderState RENDER_STATE = new ItemRenderState();
 
     public static void register() {
         WorldRenderEvents.AFTER_ENTITIES.register(AutoDepositAnimator::onWorldRender);
@@ -146,10 +142,13 @@ public final class AutoDepositAnimator {
                 flight.lastParticleMs = now;
             }
 
-            // Build the dropped-item (GROUND) model for this stack at its current position.
+            // Build the dropped-item (GROUND) model for this stack at its current position. A fresh
+            // state is required per item: the render command queue is deferred, so a shared/reused
+            // state would be mutated before it is drawn, corrupting every item but the last.
+            ItemRenderState renderState = new ItemRenderState();
             HeldItemContext heldContext = heldContextAt(world, pos);
-            modelManager.clearAndUpdate(RENDER_STATE, flight.stack, ItemDisplayContext.GROUND, world, heldContext, 0);
-            if (RENDER_STATE.isEmpty()) continue;
+            modelManager.clearAndUpdate(renderState, flight.stack, ItemDisplayContext.GROUND, world, heldContext, 0);
+            if (renderState.isEmpty()) continue;
 
             float spin = (age * 0.18f) % 360.0f;
 
@@ -157,7 +156,7 @@ public final class AutoDepositAnimator {
             matrices.translate(pos.x - camPos.x, pos.y - camPos.y, pos.z - camPos.z);
             matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(spin));
             matrices.scale(1.25f, 1.25f, 1.25f);
-            RENDER_STATE.render(matrices, queue, FULL_BRIGHT, OverlayTexture.DEFAULT_UV, 0);
+            renderState.render(matrices, queue, FULL_BRIGHT, OverlayTexture.DEFAULT_UV, 0);
             matrices.pop();
         }
     }
