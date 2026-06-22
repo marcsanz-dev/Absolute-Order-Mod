@@ -147,8 +147,10 @@ public class EditorSessionData {
     // Unsaved Changes State
     public boolean isUnsavedPopupOpen = false;
     public boolean isExpelPopupOpen = false;
-    // The dedicated inventory-presets menu (save/load slots) overlay is open.
+    // The dedicated presets menu (save/load slots) overlay is open, and whether it targets the chest
+    // (true) or the player inventory (false). Chest and inventory presets are fully independent.
     public boolean isPresetsMenuOpen = false;
+    public boolean presetsMenuChestMode = false;
     public List<String> originalItemsSnapshot = new ArrayList<>();
     public boolean originalRuleManual = true;
     public boolean originalRuleShift = true;

@@ -320,6 +320,11 @@ public class EditorInputHandler {
                 if (editor.presetsButton != null && editor.presetsButton.mouseClicked(mouseX, mouseY, button)) {
                     return false;
                 }
+                if (editor.chestPresetsButton != null
+                        && !session.isPlayerInventory
+                        && editor.chestPresetsButton.mouseClicked(mouseX, mouseY, button)) {
+                    return false;
+                }
             }
         }
 

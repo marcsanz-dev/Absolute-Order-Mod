@@ -71,6 +71,7 @@ public class ChestSeparatorsEditor {
     public ToolButtonWidget depositButton;
     public ToolButtonWidget fillButton;
     public ToolButtonWidget presetsButton;
+    public ToolButtonWidget chestPresetsButton;
     public final io.github.marcsanzdev.chestseparators.client.ui.screens.PresetsMenu presetsMenu =
             new io.github.marcsanzdev.chestseparators.client.ui.screens.PresetsMenu(this);
     public TextFieldWidget searchBox;
@@ -215,7 +216,22 @@ public class ChestSeparatorsEditor {
                 ModTextures.ICON_SAVE,
                 Text.translatable("tooltip.chestseparators.desc.presets").getString(),
                 () -> {
-                    session.isPresetsMenuOpen = !session.isPresetsMenuOpen;
+                    boolean openingSame = session.isPresetsMenuOpen && !session.presetsMenuChestMode;
+                    session.presetsMenuChestMode = false;
+                    session.isPresetsMenuOpen = !openingSame;
+                    playClickSound(1.0f);
+                });
+
+        // "Chest presets" menu opener: independent from inventory presets, only when a chest is open.
+        this.chestPresetsButton = new ToolButtonWidget(
+                0,
+                0,
+                ModTextures.ICON_COPY,
+                Text.translatable("tooltip.chestseparators.desc.chest_presets").getString(),
+                () -> {
+                    boolean openingSame = session.isPresetsMenuOpen && session.presetsMenuChestMode;
+                    session.presetsMenuChestMode = true;
+                    session.isPresetsMenuOpen = !openingSame;
                     playClickSound(1.0f);
                 });
 
@@ -239,11 +255,15 @@ public class ChestSeparatorsEditor {
         this.fillButton.x = this.depositButton.x - 22;
         this.fillButton.y = y - 22;
 
-        // The presets button is the leftmost top icon: left of the fill button when a chest is open,
-        // otherwise left of the whitelist button (fill/deposit are hidden in the player inventory).
+        // The inventory-presets button: left of the fill button when a chest is open, otherwise left of
+        // the whitelist button (fill/deposit are hidden in the player inventory).
         int presetsAnchor = session.isInventoryScreenContext ? this.whitelistButton.x : this.fillButton.x;
         this.presetsButton.x = presetsAnchor - 22;
         this.presetsButton.y = y - 22;
+
+        // The chest-presets button is the leftmost icon, only shown when a chest is open.
+        this.chestPresetsButton.x = this.presetsButton.x - 22;
+        this.chestPresetsButton.y = y - 22;
 
         session.allGameItems.clear();
         MinecraftClient client = MinecraftClient.getInstance();
@@ -745,6 +765,30 @@ public class ChestSeparatorsEditor {
     /** Saves the current inventory layout + filters into preset {@code index} (1-based). */
     public void saveInventoryPresetSlot(int index) {
         ChestConfigManager.getInstance().saveInventoryPreset(index);
+        showStatus(Text.translatable("message.chestseparators.preset_saved", index), Formatting.GREEN);
+        playClickSound(1.2f);
+    }
+
+    /** Loads chest preset {@code index} (1-based) onto the open chest, or reports it is empty. */
+    public void loadChestPresetSlot(int index) {
+        ChestConfigManager manager = ChestConfigManager.getInstance();
+        if (!manager.loadChestPreset(index)) {
+            showStatus(Text.translatable("message.chestseparators.preset_empty", index), Formatting.RED);
+            playClickSound(0.6f);
+            return;
+        }
+        saveSmart();
+        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
+            sendWhitelistToServer();
+        }
+        syncClientInventoryWhitelists(manager.getCurrentWhitelists());
+        showStatus(Text.translatable("message.chestseparators.preset_loaded", index), Formatting.GREEN);
+        playClickSound(1.1f);
+    }
+
+    /** Saves the open chest's current layout + filters into chest preset {@code index} (1-based). */
+    public void saveChestPresetSlot(int index) {
+        ChestConfigManager.getInstance().saveChestPreset(index);
         showStatus(Text.translatable("message.chestseparators.preset_saved", index), Formatting.GREEN);
         playClickSound(1.2f);
     }

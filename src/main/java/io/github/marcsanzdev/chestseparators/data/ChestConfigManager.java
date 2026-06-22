@@ -1114,6 +1114,74 @@ public class ChestConfigManager {
         return true;
     }
 
+    private static final String CHEST_PRESET_PREFIX = "chest_preset_";
+
+    /** File backing chest preset slot {@code index} (separate from inventory presets). */
+    private Path getChestPresetFile(int index) {
+        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
+                ? getWorldConfigDir()
+                : getGlobalConfigDir();
+        return dir.resolve(CHEST_PRESET_PREFIX + index + ".json");
+    }
+
+    /** Whether chest preset slot {@code index} has been saved. */
+    public boolean chestPresetExists(int index) {
+        return Files.exists(getChestPresetFile(index));
+    }
+
+    /** Saves the open chest's current layout + filters (chest-only keys) into preset slot {@code index}. */
+    public void saveChestPreset(int index) {
+        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), getChestPresetFile(index));
+    }
+
+    /**
+     * Loads chest preset slot {@code index} onto the open chest, replacing only the chest-only keys in
+     * the working maps and leaving the mirrored inventory keys untouched. Returns false if empty.
+     */
+    public boolean loadChestPreset(int index) {
+        Path f = getChestPresetFile(index);
+        if (!Files.exists(f)) return false;
+        RawData data = readRawData(f);
+        currentChestConfig.keySet().removeIf(k -> !isInventoryKey(k));
+        currentWhitelists.keySet().removeIf(k -> !isInventoryKey(k));
+        currentChestConfig.putAll(data.visual);
+        currentWhitelists.putAll(data.filters);
+        for (int[] colors : data.visual.values()) {
+            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
+                if (colors[si] > paintSequence) paintSequence = colors[si];
+            }
+        }
+        return true;
+    }
+
+    /** Read-only snapshot of a preset's stored data, for rendering a preview without applying it. */
+    public record PresetPreview(Map<Integer, int[]> visual, Map<Integer, SlotWhitelist> filters) {}
+
+    /** The five paint colors of a slot's stored array as {top, bottom, left, right, background}. */
+    public static int[] previewColors(int[] arr) {
+        int[] c = new int[5];
+        for (int i = 0; i <= IDX_BG; i++) {
+            c[i] = (arr != null && i < arr.length) ? arr[i] : 0;
+        }
+        return c;
+    }
+
+    /** Reads an inventory preset's contents for preview (keys are raw PlayerInventory indices). */
+    public PresetPreview readInventoryPresetPreview(int index) {
+        Path f = getInventoryPresetFile(index);
+        if (!Files.exists(f)) return null;
+        RawData data = readRawData(f);
+        return new PresetPreview(data.visual, data.filters);
+    }
+
+    /** Reads a chest preset's contents for preview (keys are raw container slot indices). */
+    public PresetPreview readChestPresetPreview(int index) {
+        Path f = getChestPresetFile(index);
+        if (!Files.exists(f)) return null;
+        RawData data = readRawData(f);
+        return new PresetPreview(data.visual, data.filters);
+    }
+
     /** Chest-only view of the working visual config (excludes mirrored inventory entries at offset keys). */
     private Map<Integer, int[]> chestOnlyVisual() {
         Map<Integer, int[]> out = new HashMap<>();

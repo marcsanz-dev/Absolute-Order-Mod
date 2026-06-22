@@ -83,6 +83,8 @@ public class EditorRenderer {
             if (editor.fillButton != null && !session.isPlayerInventory)
                 editor.fillButton.render(context, bMouseX, bMouseY, delta);
             if (editor.presetsButton != null) editor.presetsButton.render(context, bMouseX, bMouseY, delta);
+            if (editor.chestPresetsButton != null && !session.isPlayerInventory)
+                editor.chestPresetsButton.render(context, bMouseX, bMouseY, delta);
         }
 
         // Deposit button is only shown in the default (closed) editor state.
@@ -103,6 +105,8 @@ public class EditorRenderer {
                 if (editor.fillButton != null && !session.isPlayerInventory)
                     editor.fillButton.render(context, bgMouseX, bgMouseY, delta);
                 if (editor.presetsButton != null) editor.presetsButton.render(context, bgMouseX, bgMouseY, delta);
+                if (editor.chestPresetsButton != null && !session.isPlayerInventory)
+                    editor.chestPresetsButton.render(context, bgMouseX, bgMouseY, delta);
             }
 
             context.getMatrices().pushMatrix();
