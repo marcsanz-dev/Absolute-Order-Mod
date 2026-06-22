@@ -40,6 +40,13 @@ public class EditorRenderer {
         layout.update(screen, accessor, editor.getSidebarYOffset());
         editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
+        // The presets menu is a modal overlay: while open, nothing else of the editor renders behind it
+        // (no sub-screen, no left panel, no tooltips), so it draws alone over the dimmed container.
+        if (session.isPresetsMenuOpen) {
+            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
+            return;
+        }
+
         boolean showButton = GlobalChestConfig.instance.showEditButtons;
         // No deposit button when editing the player inventory (you don't deposit into your own inventory).
         boolean showDeposit = GlobalChestConfig.instance.showDepositButton && !session.isPlayerInventory;
@@ -119,12 +126,6 @@ public class EditorRenderer {
             }
 
             renderMagnifier(context, mouseX, mouseY);
-        }
-
-        // The presets menu is a top-level overlay: it can be opened from the default (hidden) chest
-        // view as well as while editing, so it renders last, on top of everything.
-        if (session.isPresetsMenuOpen) {
-            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
         }
     }
 

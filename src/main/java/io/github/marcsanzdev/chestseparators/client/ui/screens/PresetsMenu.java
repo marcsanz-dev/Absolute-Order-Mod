@@ -166,6 +166,9 @@ public final class PresetsMenu {
             int ry = rowY(screenH, i);
             if (inside(mouseX, mouseY, loadX(screenW), ry + 3, BTN_W, BTN_H)) {
                 editor.loadInventoryPresetSlot(i + 1);
+                // Loading replaces the layout/filters, so close any open layout or filter sub-screen
+                // (they would otherwise show a stale view once the menu is dismissed).
+                editor.toggleState(io.github.marcsanzdev.chestseparators.client.EditorState.HIDDEN);
                 return true;
             }
             if (inside(mouseX, mouseY, saveX(screenW), ry + 3, BTN_W, BTN_H)) {

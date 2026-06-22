@@ -490,35 +490,41 @@ public class ChestSeparatorsEditor {
     }
 
     /**
-     * Slots in the filter under edit that restrict which items they accept (armor slots). Normal,
-     * hotbar and offhand slots accept anything, so they never appear here. Recomputed each time the
-     * filter editor opens; used to limit the item picker to equippable items for armor filters.
+     * Armor slots in the filter under edit that restrict which items they accept. Normal, hotbar and
+     * offhand slots accept anything, so they never appear here. Recomputed each time the filter editor
+     * opens; used to limit the item picker to equippable items for armor filters.
      */
     private final java.util.List<Slot> filterConstraintSlots = new java.util.ArrayList<>();
+
+    /** True when at least one selected slot accepts anything (so the filter has no item restriction). */
+    private boolean filterHasUnrestrictedSlot = true;
 
     /** Detects which of the filter's selected slots are restrictive (reject a non-equippable sentinel). */
     public void recomputeFilterConstraints() {
         filterConstraintSlots.clear();
+        filterHasUnrestrictedSlot = false;
         ItemStack sentinel = new ItemStack(Items.STONE);
         for (int key : session.selectedSlots) {
             Slot s = slotForKey(key);
-            if (s != null && !s.canInsert(sentinel)) {
-                filterConstraintSlots.add(s);
-            }
+            if (s == null) continue;
+            if (s.canInsert(sentinel)) filterHasUnrestrictedSlot = true;
+            else filterConstraintSlots.add(s);
         }
+        if (filterConstraintSlots.isEmpty()) filterHasUnrestrictedSlot = true;
     }
 
     /**
-     * Whether an item may be added to the filter currently being edited. Always true unless the
-     * filter targets armor slots, in which case only items equippable in every such slot pass.
+     * Whether an item may be added to the filter currently being edited. Always true unless the filter
+     * is made up only of armor slots, in which case the item must be equippable in at least one of them
+     * (so selecting all four armor slots accepts any armor piece, not none).
      */
     public boolean isItemAllowedForFilter(Item item) {
-        if (filterConstraintSlots.isEmpty()) return true;
+        if (filterHasUnrestrictedSlot) return true;
         ItemStack stack = new ItemStack(item);
         for (Slot s : filterConstraintSlots) {
-            if (!s.canInsert(stack)) return false;
+            if (s.canInsert(stack)) return true;
         }
-        return true;
+        return false;
     }
 
     public void releaseLock() {

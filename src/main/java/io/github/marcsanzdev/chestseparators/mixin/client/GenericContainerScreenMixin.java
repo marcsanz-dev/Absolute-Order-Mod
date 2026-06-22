@@ -88,7 +88,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
     // to prevent visual clutter while drawing lines.
     @Inject(method = "drawMouseoverTooltip", at = @At("HEAD"), cancellable = true)
     private void onDrawMouseoverTooltip(DrawContext context, int x, int y, CallbackInfo ci) {
-        if (this.editor != null && this.editor.isEditMode()) {
+        if (this.editor != null && (this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen)) {
             ci.cancel();
         }
     }
@@ -96,7 +96,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
     // Suppresses the vanilla background slot highlight when editing.
     @Inject(method = "drawSlotHighlightBack", at = @At("HEAD"), cancellable = true)
     private void onDrawSlotHighlightBack(DrawContext context, CallbackInfo ci) {
-        if (this.editor != null && this.editor.isEditMode()) {
+        if (this.editor != null && (this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen)) {
             ci.cancel();
         }
     }
@@ -104,7 +104,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
     // Suppresses the vanilla foreground slot highlight when editing.
     @Inject(method = "drawSlotHighlightFront", at = @At("HEAD"), cancellable = true)
     private void onDrawSlotHighlightFront(DrawContext context, CallbackInfo ci) {
-        if (this.editor != null && this.editor.isEditMode()) {
+        if (this.editor != null && (this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen)) {
             ci.cancel();
         }
     }
