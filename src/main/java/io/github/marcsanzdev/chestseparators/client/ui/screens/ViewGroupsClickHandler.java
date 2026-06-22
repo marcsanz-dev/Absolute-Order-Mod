@@ -151,12 +151,10 @@ final class ViewGroupsClickHandler {
                     && mouseX <= layout.guiX + layout.bgWidth
                     && mouseY >= layout.guiY
                     && mouseY <= layout.guiY + layout.bgHeight;
-            // The optional "fill inventory" button extends the panel by one row when a chest is open.
-            int panelBottom = layout.mainY + (session.isInventoryScreenContext ? 178 : 202) + layout.bH;
             boolean isInsideRight = mouseX >= layout.rightX
                     && mouseX <= layout.rightX + layout.btnW
                     && mouseY >= layout.mainY
-                    && mouseY <= panelBottom;
+                    && mouseY <= layout.mainY + 178 + layout.bH;
 
             boolean isInsideLeft = false;
             if (GlobalChestConfig.instance.showLeftPanel

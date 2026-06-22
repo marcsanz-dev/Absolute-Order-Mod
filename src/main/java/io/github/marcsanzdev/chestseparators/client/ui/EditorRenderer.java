@@ -73,6 +73,9 @@ public class EditorRenderer {
             int bMouseY = hideVanilla ? -1 : bgMouseY;
             if (editor.entryButton != null) editor.entryButton.render(context, bMouseX, bMouseY, delta);
             if (editor.whitelistButton != null) editor.whitelistButton.render(context, bMouseX, bMouseY, delta);
+            if (editor.fillButton != null && !session.isPlayerInventory)
+                editor.fillButton.render(context, bMouseX, bMouseY, delta);
+            if (editor.presetsButton != null) editor.presetsButton.render(context, bMouseX, bMouseY, delta);
         }
 
         // Deposit button is only shown in the default (closed) editor state.
@@ -90,6 +93,9 @@ public class EditorRenderer {
             if (showButton && !hideVanilla) {
                 if (editor.entryButton != null) editor.entryButton.render(context, bgMouseX, bgMouseY, delta);
                 if (editor.whitelistButton != null) editor.whitelistButton.render(context, bgMouseX, bgMouseY, delta);
+                if (editor.fillButton != null && !session.isPlayerInventory)
+                    editor.fillButton.render(context, bgMouseX, bgMouseY, delta);
+                if (editor.presetsButton != null) editor.presetsButton.render(context, bgMouseX, bgMouseY, delta);
             }
 
             context.getMatrices().pushMatrix();
@@ -113,6 +119,12 @@ public class EditorRenderer {
             }
 
             renderMagnifier(context, mouseX, mouseY);
+        }
+
+        // The presets menu is a top-level overlay: it can be opened from the default (hidden) chest
+        // view as well as while editing, so it renders last, on top of everything.
+        if (session.isPresetsMenuOpen) {
+            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
         }
     }
 

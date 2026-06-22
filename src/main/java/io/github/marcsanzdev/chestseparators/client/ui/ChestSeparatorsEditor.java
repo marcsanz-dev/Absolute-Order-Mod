@@ -69,6 +69,10 @@ public class ChestSeparatorsEditor {
     public ToolButtonWidget entryButton;
     public ToolButtonWidget whitelistButton;
     public ToolButtonWidget depositButton;
+    public ToolButtonWidget fillButton;
+    public ToolButtonWidget presetsButton;
+    public final io.github.marcsanzdev.chestseparators.client.ui.screens.PresetsMenu presetsMenu =
+            new io.github.marcsanzdev.chestseparators.client.ui.screens.PresetsMenu(this);
     public TextFieldWidget searchBox;
     public TextFieldWidget whitelistSearchBox;
 
@@ -196,6 +200,25 @@ public class ChestSeparatorsEditor {
             playClickSound(1.2f);
         });
 
+        // "Fill inventory from this chest": one of the top icons, only when a real container is open.
+        this.fillButton = new ToolButtonWidget(
+                0,
+                0,
+                ModTextures.ICON_BACKPACK_FULL,
+                Text.translatable("tooltip.chestseparators.desc.fill_inventory").getString(),
+                this::requestFillFromOpenChest);
+
+        // "Inventory presets" menu opener: a top icon available in any editor context.
+        this.presetsButton = new ToolButtonWidget(
+                0,
+                0,
+                ModTextures.ICON_SAVE,
+                Text.translatable("tooltip.chestseparators.desc.presets").getString(),
+                () -> {
+                    session.isPresetsMenuOpen = !session.isPresetsMenuOpen;
+                    playClickSound(1.0f);
+                });
+
         int baseX = x + bgWidth;
         if (GlobalChestConfig.instance.showEditButtons) {
             this.entryButton.x = baseX - 22;
@@ -211,6 +234,16 @@ public class ChestSeparatorsEditor {
             this.depositButton.x = baseX - 22;
             this.depositButton.y = y - 22;
         }
+
+        // The fill button sits immediately left of the deposit button.
+        this.fillButton.x = this.depositButton.x - 22;
+        this.fillButton.y = y - 22;
+
+        // The presets button is the leftmost top icon: left of the fill button when a chest is open,
+        // otherwise left of the whitelist button (fill/deposit are hidden in the player inventory).
+        int presetsAnchor = session.isInventoryScreenContext ? this.whitelistButton.x : this.fillButton.x;
+        this.presetsButton.x = presetsAnchor - 22;
+        this.presetsButton.y = y - 22;
 
         session.allGameItems.clear();
         MinecraftClient client = MinecraftClient.getInstance();
@@ -672,6 +705,21 @@ public class ChestSeparatorsEditor {
         // Player inventory portion (always) — extracted from the offset keys and synced for Pick Up.
         manager.saveInventoryFromCurrent();
         io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
+    }
+
+    /** Asks the server to fill the inventory from the container currently open (the top fill icon). */
+    public void requestFillFromOpenChest() {
+        playClickSound(1.0f);
+        net.minecraft.util.math.BlockPos pos = session.currentChestPos != null
+                ? session.currentChestPos
+                : (MinecraftClient.getInstance().player != null
+                        ? MinecraftClient.getInstance().player.getBlockPos()
+                        : net.minecraft.util.math.BlockPos.ORIGIN);
+        if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
+                io.github.marcsanzdev.chestseparators.network.FillFromChestPayload.ID)) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new io.github.marcsanzdev.chestseparators.network.FillFromChestPayload(pos));
+        }
     }
 
     /** Loads inventory preset {@code index} (1-based) into the live editor, or reports it is empty. */

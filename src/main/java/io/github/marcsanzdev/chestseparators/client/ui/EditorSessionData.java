@@ -147,6 +147,8 @@ public class EditorSessionData {
     // Unsaved Changes State
     public boolean isUnsavedPopupOpen = false;
     public boolean isExpelPopupOpen = false;
+    // The dedicated inventory-presets menu (save/load slots) overlay is open.
+    public boolean isPresetsMenuOpen = false;
     public List<String> originalItemsSnapshot = new ArrayList<>();
     public boolean originalRuleManual = true;
     public boolean originalRuleShift = true;

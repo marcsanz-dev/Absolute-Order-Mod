@@ -1013,6 +1013,15 @@ public class ChestConfigManager {
         return key >= PLAYER_KEY_OFFSET;
     }
 
+    /**
+     * True for player-inventory keys that fall outside the 9-wide grid: armor and offhand (their
+     * PlayerInventory index is >= MAIN_SIZE = 36). They are isolated cells with no grid neighbours, so
+     * blob connectors and contiguous flood-fill must not bridge them.
+     */
+    public static boolean isNonGridInventoryKey(int key) {
+        return key >= PLAYER_KEY_OFFSET + 36;
+    }
+
     /** Loads the persistent inventory profile (separators/backgrounds + filters) from disk. */
     public void loadInventoryProfile() {
         RawData data = readRawData(getInventoryFile());

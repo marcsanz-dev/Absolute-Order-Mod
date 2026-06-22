@@ -259,23 +259,12 @@ public class EditorInputHandler {
             }
         }
 
-        // Inventory presets: number keys 1..N load a preset into the inventory; Shift+number saves the
-        // current inventory layout + filters into that slot. Only while editing layout or filters.
-        if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.DRAW_LINES) {
-            int presetCount = Math.max(0, Math.min(9, GlobalChestConfig.instance.inventoryPresetCount));
-            for (int i = 1; i <= presetCount; i++) {
-                if (input.key() == GLFW.GLFW_KEY_0 + i) {
-                    long window = MinecraftClient.getInstance().getWindow().getHandle();
-                    boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                            || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-                    if (shift) editor.saveInventoryPresetSlot(i);
-                    else editor.loadInventoryPresetSlot(i);
-                    return true;
-                }
-            }
-        }
-
         if (input.key() == GLFW.GLFW_KEY_ESCAPE && session.currentState != EditorState.HIDDEN) {
+            if (session.isPresetsMenuOpen) {
+                session.isPresetsMenuOpen = false;
+                editor.playClickSound(0.8f);
+                return true;
+            }
             if (session.isColorPickerOpen) {
                 session.isColorPickerOpen = false;
             } else {
@@ -305,6 +294,12 @@ public class EditorInputHandler {
             return false;
         }
 
+        // The presets menu is a modal overlay: it swallows every click while open.
+        if (session.isPresetsMenuOpen) {
+            editor.presetsMenu.onClick(mouseX, mouseY, button, screen.width, screen.height);
+            return false;
+        }
+
         boolean isFilterMenuOpen = (session.currentState == EditorState.EDIT_FILTER);
         boolean isEditorClosed = (session.currentState == EditorState.HIDDEN);
 
@@ -315,6 +310,14 @@ public class EditorInputHandler {
                     return false;
                 }
                 if (editor.whitelistButton != null && editor.whitelistButton.mouseClicked(mouseX, mouseY, button)) {
+                    return false;
+                }
+                if (editor.fillButton != null
+                        && !session.isPlayerInventory
+                        && editor.fillButton.mouseClicked(mouseX, mouseY, button)) {
+                    return false;
+                }
+                if (editor.presetsButton != null && editor.presetsButton.mouseClicked(mouseX, mouseY, button)) {
                     return false;
                 }
             }

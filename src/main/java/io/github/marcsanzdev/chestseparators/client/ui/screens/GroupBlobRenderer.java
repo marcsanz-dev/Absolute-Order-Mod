@@ -212,9 +212,20 @@ final class GroupBlobRenderer {
 
             context.fill(x + 2, y + 2, x + 14, y + 14, colorARGB);
 
-            boolean hasRight = groupSlots.contains(slotIdx + 1) && (slotIdx % 9 != 8);
-            boolean hasDown = groupSlots.contains(slotIdx + 9);
-            boolean hasCorner = hasRight && hasDown && groupSlots.contains(slotIdx + 10);
+            // Armor and offhand are isolated (non-grid) cells: never draw connectors to/from them, or
+            // the fill would bleed into empty space since their keys are contiguous but laid out apart.
+            boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(slotIdx);
+            boolean hasRight = !nonGrid
+                    && (slotIdx % 9 != 8)
+                    && groupSlots.contains(slotIdx + 1)
+                    && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 1);
+            boolean hasDown = !nonGrid
+                    && groupSlots.contains(slotIdx + 9)
+                    && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 9);
+            boolean hasCorner = hasRight
+                    && hasDown
+                    && groupSlots.contains(slotIdx + 10)
+                    && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 10);
 
             if (hasRight) context.fill(x + 14, y + 2, x + 20, y + 14, colorARGB);
             if (hasDown) context.fill(x + 2, y + 14, x + 14, y + 20, colorARGB);
