@@ -128,9 +128,12 @@ final class SeparatorPreviewRenderer {
 
     void renderDragPreview(DrawContext context, int mouseX, int mouseY) {
         if (!session.isDraggingLine) return;
-        // The live drag preview uses raw grid indices; skip it for inventory drags (offset keys) to
-        // avoid mismatched/out-of-range lookups. The actual paint still applies correctly on commit.
-        if (session.dragStartSlot != null && ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot)) return;
+        // Inventory drags use offset keys and include the non-grid armor/offhand cells, so they get a
+        // dedicated, namespace-correct preview instead of the raw-index chest path below.
+        if (session.dragStartSlot != null && ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot)) {
+            renderPlayerDragPreview(context);
+            return;
+        }
         int guiX = layout.guiX;
         int guiY = layout.guiY;
         int tabMode = session.currentTab;
@@ -418,6 +421,124 @@ final class SeparatorPreviewRenderer {
                                                     .getColor(slotIdx, ChestConfigManager.ACTION_RIGHT)
                                             != 0)) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
                 }
+            }
+        }
+    }
+
+    /**
+     * Live drag preview for the player inventory namespace. Uses offset keys (positioned via
+     * {@link ChestSeparatorsEditor#slotForKey}) and treats armor/offhand as isolated non-grid cells so
+     * each gets its full box. Kept separate from the chest preview, which uses raw container indices.
+     */
+    private void renderPlayerDragPreview(DrawContext context) {
+        int guiX = layout.guiX;
+        int guiY = layout.guiY;
+        int tabMode = session.currentTab;
+
+        int colorVal;
+        boolean explicitEraser;
+        int tMode;
+        if (tabMode == 0) {
+            colorVal = screen.getCurrentSelectedLineColorValue();
+            explicitEraser = (session.lineColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.lineToolMode;
+        } else if (tabMode == 1) {
+            colorVal = screen.getCurrentSelectedBgColorValue();
+            explicitEraser = (session.bgColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.bgToolMode;
+        } else {
+            colorVal = screen.getCurrentSelectedComboColorValue();
+            explicitEraser = (session.comboColorIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
+            tMode = session.comboToolMode;
+        }
+        if (colorVal == 0 && !explicitEraser) return;
+
+        int colorBg = (colorVal & 0x00FFFFFF) | 0x66000000;
+        int colorLine = (colorVal & 0x00FFFFFF) | 0x88000000;
+        if (explicitEraser || session.isDragModeErasing) {
+            colorBg = 0x66FFFFFF;
+            colorLine = 0x88FFFFFF;
+        }
+
+        if (tMode == 1) { // Trace
+            java.util.Set<Integer> traceSlots = new java.util.HashSet<>();
+            for (String s : session.tracePath) traceSlots.add(Integer.parseInt(s.split("_")[0]));
+            for (String step : session.tracePath) {
+                String[] p = step.split("_");
+                int key = Integer.parseInt(p[0]);
+                int act = Integer.parseInt(p[1]);
+                Slot slot = editor.slotForKey(key);
+                if (slot == null) continue;
+                int x = guiX + slot.x;
+                int y = guiY + slot.y;
+                if (tabMode == 1) {
+                    context.fill(x, y, x + 16, y + 16, colorBg);
+                } else if (tabMode == 2) {
+                    context.fill(x, y, x + 16, y + 16, colorBg);
+                    boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(key);
+                    boolean hasTop = !nonGrid
+                            && traceSlots.contains(key - 9)
+                            && !ChestConfigManager.isNonGridInventoryKey(key - 9);
+                    boolean hasBottom = !nonGrid
+                            && traceSlots.contains(key + 9)
+                            && !ChestConfigManager.isNonGridInventoryKey(key + 9);
+                    boolean hasLeft = !nonGrid
+                            && (key % 9 != 0)
+                            && traceSlots.contains(key - 1)
+                            && !ChestConfigManager.isNonGridInventoryKey(key - 1);
+                    boolean hasRight = !nonGrid
+                            && (key % 9 != 8)
+                            && traceSlots.contains(key + 1)
+                            && !ChestConfigManager.isNonGridInventoryKey(key + 1);
+                    if (!hasTop) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                    if (!hasBottom) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                    if (!hasLeft) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                    if (!hasRight) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                } else {
+                    if ((act & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                    if ((act & ChestConfigManager.ACTION_BOTTOM) != 0)
+                        context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                    if ((act & ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                    if ((act & ChestConfigManager.ACTION_RIGHT) != 0)
+                        context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                }
+            }
+            return;
+        }
+
+        // Area: rectangle in player-grid space (confined to the player namespace).
+        int sRow = session.dragStartSlot.getIndex() / 9;
+        int sCol = session.dragStartSlot.getIndex() % 9;
+        int cRow = session.dragCurrentSlot.getIndex() / 9;
+        int cCol = session.dragCurrentSlot.getIndex() % 9;
+        int minRow = Math.min(sRow, cRow);
+        int maxRow = Math.max(sRow, cRow);
+        int minCol = Math.min(sCol, cCol);
+        int maxCol = Math.max(sCol, cCol);
+
+        for (Slot slot : editor.accessor.getHandler().slots) {
+            if (!ChestSeparatorsEditor.isEditableSlot(slot) || !ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
+            int r = slot.getIndex() / 9;
+            int c = slot.getIndex() % 9;
+            if (r < minRow || r > maxRow || c < minCol || c > maxCol) continue;
+            int x = guiX + slot.x;
+            int y = guiY + slot.y;
+            if (tabMode == 1) {
+                context.fill(x, y, x + 16, y + 16, colorBg);
+            } else if (tabMode == 2) {
+                context.fill(x, y, x + 16, y + 16, colorBg);
+                if (r == minRow) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                if (r == maxRow) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                if (c == minCol) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                if (c == maxCol) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+            } else {
+                int act = session.currentDragAction;
+                if ((act & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                if ((act & ChestConfigManager.ACTION_BOTTOM) != 0)
+                    context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                if ((act & ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                if ((act & ChestConfigManager.ACTION_RIGHT) != 0)
+                    context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             }
         }
     }

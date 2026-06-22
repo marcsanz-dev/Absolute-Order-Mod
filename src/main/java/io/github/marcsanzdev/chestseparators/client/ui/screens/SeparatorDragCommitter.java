@@ -86,10 +86,24 @@ final class SeparatorDragCommitter {
                     } else {
                         manager.paintAction(slotIdx, ChestConfigManager.ACTION_BG, colorToPaint);
 
-                        boolean hasTop = traceSlots.contains(slotIdx - 9);
-                        boolean hasBottom = traceSlots.contains(slotIdx + 9);
-                        boolean hasLeft = (slotIdx % 9 != 0) && traceSlots.contains(slotIdx - 1);
-                        boolean hasRight = (slotIdx % 9 != 8) && traceSlots.contains(slotIdx + 1);
+                        // Armor and offhand are isolated (non-grid) cells: their keys are contiguous but
+                        // they are not visual neighbours, so they never share/suppress an edge. A
+                        // non-grid cell always gets its full box; grid cells ignore non-grid neighbours.
+                        boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(slotIdx);
+                        boolean hasTop = !nonGrid
+                                && traceSlots.contains(slotIdx - 9)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx - 9);
+                        boolean hasBottom = !nonGrid
+                                && traceSlots.contains(slotIdx + 9)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 9);
+                        boolean hasLeft = !nonGrid
+                                && (slotIdx % 9 != 0)
+                                && traceSlots.contains(slotIdx - 1)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx - 1);
+                        boolean hasRight = !nonGrid
+                                && (slotIdx % 9 != 8)
+                                && traceSlots.contains(slotIdx + 1)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 1);
 
                         if (!hasTop) manager.paintAction(slotIdx, ChestConfigManager.ACTION_TOP, colorToPaint);
                         if (!hasBottom) manager.paintAction(slotIdx, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
