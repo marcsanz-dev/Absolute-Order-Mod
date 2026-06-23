@@ -35,26 +35,34 @@ public abstract class SlotWhitelistMixin {
 
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
     public void onCanInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        Map<Integer, SlotWhitelist> whitelists = null;
+
         if (this.inventory instanceof IWhitelistProvider provider) {
-            Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
+            // Block containers and entities carry their whitelist on the inventory itself.
+            whitelists = provider.getWhitelists();
+        } else if (this.inventory instanceof net.minecraft.entity.player.PlayerInventory pinv) {
+            // The player's own inventory filters live server-side, keyed by raw PlayerInventory index
+            // (which matches Slot#getIndex). Enforced here for manual and shift-click placement.
+            whitelists = io.github.marcsanzdev.chestseparators.ChestSeparatorsMain.INVENTORY_FILTERS.get(
+                    pinv.player.getUuid());
+        }
 
-            if (whitelists != null && whitelists.containsKey(this.getIndex())) {
-                SlotWhitelist wl = whitelists.get(this.getIndex());
-                String itemId = Registries.ITEM.getId(stack.getItem()).toString();
-                boolean isAllowedItem = wl.allowedItems().contains(itemId);
-                boolean isShift = ClickTracker.IS_SHIFT_CLICK.get();
+        if (whitelists != null && whitelists.containsKey(this.getIndex())) {
+            SlotWhitelist wl = whitelists.get(this.getIndex());
+            String itemId = Registries.ITEM.getId(stack.getItem()).toString();
+            boolean isAllowedItem = wl.allowedItems().contains(itemId);
+            boolean isShift = ClickTracker.IS_SHIFT_CLICK.get();
 
-                if (isShift) {
-                    // Shift rule ON + item not whitelisted → block the insertion.
-                    // Shift rule OFF → fall through to vanilla behavior.
-                    if (wl.allowShift() && !isAllowedItem) {
-                        cir.setReturnValue(false);
-                    }
-                } else {
-                    // Manual rule ON + item not whitelisted → block the insertion.
-                    if (wl.allowManual() && !isAllowedItem) {
-                        cir.setReturnValue(false);
-                    }
+            if (isShift) {
+                // Shift rule ON + item not whitelisted → block the insertion.
+                // Shift rule OFF → fall through to vanilla behavior.
+                if (wl.allowShift() && !isAllowedItem) {
+                    cir.setReturnValue(false);
+                }
+            } else {
+                // Manual rule ON + item not whitelisted → block the insertion.
+                if (wl.allowManual() && !isAllowedItem) {
+                    cir.setReturnValue(false);
                 }
             }
         }
