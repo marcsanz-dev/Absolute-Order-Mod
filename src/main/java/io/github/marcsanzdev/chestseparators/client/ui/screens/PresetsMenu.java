@@ -18,28 +18,25 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
 /**
- * The dedicated presets overlay, docked on the left. Lists each preset slot with a saved/empty
- * indicator and Load/Save buttons (in the mod's standard button style). Hovering a saved row previews
- * that preset directly on the real inventory/chest slots, alternating every couple of seconds between
- * the saved layout colors and the saved filter distribution. Drives either the inventory or the chest
- * preset store depending on {@code session.presetsMenuChestMode}. The container slots stay visible (the
- * sub-screen panels are hidden by the renderer) so the preview reads as "what would land where".
+ * The dedicated presets overlay, docked on the left and styled like the mod's other windows (beveled
+ * container, icon buttons, an Exit button). Each preset row has a saved/empty indicator and Load/Save
+ * buttons; hovering a saved row's Load button previews that preset directly on the real container
+ * slots, alternating every couple of seconds between the saved layout colors and the saved filter
+ * distribution. Drives the inventory or the chest preset store per {@code session.presetsMenuChestMode}.
  */
 public final class PresetsMenu {
 
     private static final int PANEL_X = 8;
-    private static final int PANEL_W = 184;
+    private static final int PANEL_W = 220;
     private static final int HEADER_H = 26;
     private static final int ROW_H = 22;
-    private static final int FOOTER_H = 10;
+    private static final int FOOTER_H = 28;
 
-    private static final int BTN_W = 52;
+    private static final int BTN_W = 50;
     private static final int BTN_H = 18;
 
-    // How often the on-slot preview flips between the layout view and the filter view.
     private static final long PREVIEW_FLIP_MS = 2000L;
 
-    // Stable colors for filter groups in the preview, mirroring the group view's palette.
     private static final int[] GROUP_PALETTE = {
         0xFFE53935, 0xFFF57C00, 0xFFFBC02D, 0xFF7CB342,
         0xFF388E3C, 0xFF00897B, 0xFF00ACC1, 0xFF1E88E5,
@@ -49,7 +46,7 @@ public final class PresetsMenu {
     private final ChestSeparatorsEditor editor;
 
     /** Rebuilt every render; reused by {@link #onClick} so hit-testing matches what was drawn. */
-    private final List<WideButtonWidget> rowButtons = new ArrayList<>();
+    private final List<WideButtonWidget> clickables = new ArrayList<>();
 
     public PresetsMenu(ChestSeparatorsEditor editor) {
         this.editor = editor;
@@ -81,12 +78,12 @@ public final class PresetsMenu {
         return panelY(screenH) + HEADER_H + i * ROW_H;
     }
 
-    private int loadX() {
-        return PANEL_X + PANEL_W - 8 - BTN_W * 2 - 4;
-    }
-
     private int saveX() {
         return PANEL_X + PANEL_W - 8 - BTN_W;
+    }
+
+    private int loadX() {
+        return saveX() - 4 - BTN_W;
     }
 
     public void render(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
@@ -95,24 +92,23 @@ public final class PresetsMenu {
         int py = panelY(screenH);
         int ph = panelH();
 
-        // Light dim only: the real container slots stay clearly visible for the on-slot preview.
+        // Light dim so the real container slots stay clearly visible for the on-slot preview.
         context.fill(0, 0, screenW, screenH, 0x55000000);
 
-        int hoveredRow = -1;
-        rowButtons.clear();
+        // Preview only while hovering a saved row's Load button (Save never changes the inventory).
+        int previewRow = -1;
         int count = presetCount();
         for (int i = 0; i < count; i++) {
-            int ry = rowY(screenH, i);
-            if (mouseX >= PANEL_X && mouseX <= PANEL_X + PANEL_W && mouseY >= ry && mouseY < ry + ROW_H) {
-                hoveredRow = i;
+            int by = rowY(screenH, i) + (ROW_H - BTN_H) / 2;
+            if (exists(i + 1) && inside(mouseX, mouseY, loadX(), by, BTN_W, BTN_H)) {
+                previewRow = i;
+                break;
             }
         }
-
-        // Preview the hovered preset directly on the real slots (under the panel, which sits far left).
-        if (hoveredRow >= 0 && exists(hoveredRow + 1)) {
+        if (previewRow >= 0) {
             ChestConfigManager.PresetPreview preview = chestMode()
-                    ? ChestConfigManager.getInstance().readChestPresetPreview(hoveredRow + 1)
-                    : ChestConfigManager.getInstance().readInventoryPresetPreview(hoveredRow + 1);
+                    ? ChestConfigManager.getInstance().readChestPresetPreview(previewRow + 1)
+                    : ChestConfigManager.getInstance().readInventoryPresetPreview(previewRow + 1);
             if (preview != null) {
                 boolean showFilters = ((System.currentTimeMillis() / PREVIEW_FLIP_MS) % 2) == 1;
                 renderPreviewOnSlots(context, preview, chestMode(), showFilters);
@@ -120,23 +116,25 @@ public final class PresetsMenu {
             }
         }
 
-        // Panel.
+        // Beveled container, matching the mod's other windows.
         context.fill(PANEL_X, py, PANEL_X + PANEL_W, py + ph, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        context.drawStrokedRectangle(PANEL_X, py, PANEL_W, ph, 0xFF000000);
+        drawBevel(context, PANEL_X, py, PANEL_W, ph, false);
+
         Text title = Text.translatable(
                 chestMode() ? "gui.chestseparators.chest_presets_title" : "gui.chestseparators.presets_title");
         context.drawCenteredTextWithShadow(client.textRenderer, title, PANEL_X + PANEL_W / 2, py + 9, 0xFFFFE066);
 
+        clickables.clear();
         for (int i = 0; i < count; i++) {
             int slot = i + 1;
             int ry = rowY(screenH, i);
             boolean saved = exists(slot);
 
-            // Saved/empty indicator: a generated check icon when saved, an empty box otherwise.
+            // Saved/empty indicator: the generated check icon when saved, an empty sunken box otherwise.
             int ind = PANEL_X + 8;
             int indY = ry + (ROW_H - 14) / 2;
-            context.fill(ind, indY, ind + 14, indY + 14, saved ? 0xFF24341F : 0xFF3A3A3A);
-            context.drawStrokedRectangle(ind, indY, 14, 14, 0xFF000000);
+            context.fill(ind, indY, ind + 14, indY + 14, saved ? 0xFF24341F : 0xFF2B2B2B);
+            drawBevel(context, ind, indY, 14, 14, true);
             if (saved) {
                 context.drawTexture(
                         net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED,
@@ -157,7 +155,7 @@ public final class PresetsMenu {
             context.drawText(
                     client.textRenderer,
                     Text.translatable("gui.chestseparators.preset_slot", slot),
-                    PANEL_X + 26,
+                    PANEL_X + 28,
                     ry + (ROW_H - 8) / 2,
                     isDark ? 0xFFFFFFFF : 0xFF202020,
                     isDark);
@@ -191,19 +189,25 @@ public final class PresetsMenu {
                     });
             load.render(context, mouseX, mouseY, 0);
             save.render(context, mouseX, mouseY, 0);
-            rowButtons.add(load);
-            rowButtons.add(save);
+            clickables.add(load);
+            clickables.add(save);
         }
 
-        // Close button (X).
-        int cx = PANEL_X + PANEL_W - 18;
-        int cy = py + 6;
-        boolean closeHover = inside(mouseX, mouseY, cx, cy, 14, 14);
-        context.fill(cx, cy, cx + 14, cy + 14, closeHover ? 0xFFB23030 : 0xFF852D2D);
-        context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("x"), cx + 7, cy + 3, 0xFFFFFFFF);
+        // Exit button (icon + label), like the other windows.
+        int exitW = 70;
+        WideButtonWidget exit = new WideButtonWidget(
+                PANEL_X + (PANEL_W - exitW) / 2,
+                py + ph - FOOTER_H + 5,
+                exitW,
+                BTN_H,
+                Text.translatable("button.chestseparators.exit").getString(),
+                ModTextures.ICON_CANCEL,
+                () -> editor.getSession().isPresetsMenuOpen = false);
+        exit.render(context, mouseX, mouseY, 0);
+        clickables.add(exit);
     }
 
-    /** Small label near the top of the screen telling the player which view the on-slot preview shows. */
+    /** Small label near the top telling the player which view the on-slot preview is showing. */
     private void drawPreviewBadge(DrawContext context, int screenW, boolean showFilters) {
         MinecraftClient client = MinecraftClient.getInstance();
         Text label = Text.translatable(
@@ -226,7 +230,7 @@ public final class PresetsMenu {
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
             boolean player = ChestSeparatorsEditor.isPlayerSlot(slot);
-            if (chestKind == player) continue; // chest preset -> chest slots; inventory preset -> player slots
+            if (chestKind == player) continue;
             int idx = slot.getIndex();
             int x = guiX + slot.x;
             int y = guiY + slot.y;
@@ -261,6 +265,24 @@ public final class PresetsMenu {
         return colors;
     }
 
+    /** Raised/sunken bevel matching {@code CustomWidget#drawDarkBevel} so the panel fits the mod style. */
+    private void drawBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
+        boolean isDark = GlobalChestConfig.instance.darkMode;
+        int light = isDark ? 0xFF505050 : 0xFFFFFFFF;
+        int dark = isDark ? 0xFF000000 : 0xFF555555;
+        if (sunken) {
+            context.fill(x, y, x + width - 1, y + 1, dark);
+            context.fill(x, y, x + 1, y + height - 1, dark);
+            context.fill(x + width - 1, y, x + width, y + height, light);
+            context.fill(x, y + height - 1, x + width, y + height, light);
+        } else {
+            context.fill(x, y, x + width - 1, y + 1, light);
+            context.fill(x, y, x + 1, y + height - 1, light);
+            context.fill(x + width - 1, y, x + width, y + height, dark);
+            context.fill(x, y + height - 1, x + width, y + height, dark);
+        }
+    }
+
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && mx < x + w && my >= y && my < y + h;
     }
@@ -271,24 +293,14 @@ public final class PresetsMenu {
         int py = panelY(screenH);
         int ph = panelH();
 
-        if (inside(mouseX, mouseY, PANEL_X + PANEL_W - 18, py + 6, 14, 14)) {
-            editor.getSession().isPresetsMenuOpen = false;
-            editor.playClickSound(0.8f);
-            return true;
-        }
-
-        for (WideButtonWidget b : rowButtons) {
+        for (WideButtonWidget b : clickables) {
             if (b.mouseClicked(mouseX, mouseY, button)) {
                 editor.playClickSound(1.1f);
                 return true;
             }
         }
 
-        // A click on the visible container (right of the panel) is allowed to fall through so the menu
-        // does not feel like a wall; clicks on the panel area are swallowed.
-        if (!inside(mouseX, mouseY, PANEL_X, py, PANEL_W, ph)) {
-            return false;
-        }
-        return true;
+        // Clicks on the container (right of the panel) are not consumed; panel clicks are.
+        return inside(mouseX, mouseY, PANEL_X, py, PANEL_W, ph);
     }
 }

@@ -219,6 +219,11 @@ public class ChestSeparatorsEditor {
                     boolean openingSame = session.isPresetsMenuOpen && !session.presetsMenuChestMode;
                     session.presetsMenuChestMode = false;
                     session.isPresetsMenuOpen = !openingSame;
+                    // Only one of layout/filters/presets may be selected at a time: opening presets
+                    // closes any open layout or filter sub-screen.
+                    if (session.isPresetsMenuOpen && session.currentState != EditorState.HIDDEN) {
+                        toggleState(EditorState.HIDDEN);
+                    }
                     playClickSound(1.0f);
                 });
 
@@ -232,6 +237,9 @@ public class ChestSeparatorsEditor {
                     boolean openingSame = session.isPresetsMenuOpen && session.presetsMenuChestMode;
                     session.presetsMenuChestMode = true;
                     session.isPresetsMenuOpen = !openingSame;
+                    if (session.isPresetsMenuOpen && session.currentState != EditorState.HIDDEN) {
+                        toggleState(EditorState.HIDDEN);
+                    }
                     playClickSound(1.0f);
                 });
 

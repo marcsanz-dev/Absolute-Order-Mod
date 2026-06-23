@@ -69,6 +69,21 @@ Sub-screens implement `IEditorSubScreen` and extend `AbstractEditorScreen`. The 
 
 Mouse coordinates of `(-1, -1)` are deliberately passed to background widgets while a modal popup is open, so they don't draw hover state or tooltips behind the modal. This idiom appears in several screens — preserve it.
 
+### UI design & interaction conventions (MANDATORY for every new menu, window, widget)
+
+Any new interface **must look and behave like the rest of the mod**. Before building UI, study an existing window (e.g. `ScreenColorPicker`, `ScreenViewGroups`, `PresetsMenu`) and match it. Concretely:
+
+**Visual style**
+- Container windows/panels: fill with `UiColors.SURFACE_DARK` / `SURFACE_LIGHT` (dark-mode aware via `GlobalChestConfig.instance.darkMode`) and draw a **bevel** on the border with `drawDarkBevel(...)` (raised for panels, `sunken=true` for inset wells/indicators). Never ship a flat `drawStrokedRectangle` box as the final look for a real window.
+- Buttons: reuse `WideButtonWidget` / `ActionIconButtonWidget`. **Every button carries an icon image** from `ModTextures.ICON_*`, not just text. The close/exit control is a labeled button with `ModTextures.ICON_CANCEL` (button text `button.chestseparators.exit`), **never** a bare `"x"` glyph drawn by hand.
+- Indicators, ticks, badges, etc. are **generated PNG textures** under `assets/chestseparators/textures/gui/` (32×32, drawn via `context.drawTexture(... GUI_TEXTURED ...)`), not pixels hand-placed with `context.fill`. Generate a texture when you need a new glyph.
+
+**Interaction**
+- **Mutual exclusion of mode toggles:** the top editor icons (layout = `entryButton`, filters = `whitelistButton`, presets = `presetsButton`/`chestPresetsButton`) are radio-like — **only one may be selected/pressed at a time.** Activating one must deselect the others (close the open sub-screen via `toggleState(EditorState.HIDDEN)` / close the presets menu). Apply the same rule to any new set of mode toggles.
+- Modal overlays keep the top mode icons visible and clickable, hide the unrelated sub-panels (e.g. the left whitelist preview panel), and pass `(-1,-1)` to anything that must not react behind them.
+- Hover previews fire from the **specific control** that owns them (e.g. only a row's *Load* button), not from the whole row or from controls whose action wouldn't change anything (e.g. *Save*).
+- New user-facing strings → add the key to **all 20** `lang/*.json` files (`en_us.json` is the source of truth).
+
 ### Whitelist data flow
 
 1. Client opens a container → `mixin/client/ChestInteractionMixin` records the position → client sends `WhitelistRequestPayload`.
