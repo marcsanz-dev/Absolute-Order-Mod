@@ -61,6 +61,13 @@ public class EditorRenderer {
             // Hold the pressed state for 150 ms after the click for visual feedback.
             editor.depositButton.isActive = (System.currentTimeMillis() - editor.depositClickTime < 150);
         }
+        // The presets icons are pressed only while their menu is open (radio-like with layout/filters).
+        if (editor.presetsButton != null) {
+            editor.presetsButton.isActive = session.isPresetsMenuOpen && !session.presetsMenuChestMode;
+        }
+        if (editor.chestPresetsButton != null) {
+            editor.chestPresetsButton.isActive = session.isPresetsMenuOpen && session.presetsMenuChestMode;
+        }
 
         // Presets menu: a light overlay that keeps the top buttons and the container slots visible (the
         // hover preview paints onto the real slots), while the sub-screen panels stay hidden.
@@ -310,6 +317,10 @@ public class EditorRenderer {
     }
 
     public void renderNormalModeOverlay(DrawContext context, int mouseX, int mouseY) {
+        // The presets menu owns the screen while open: never draw the always-on left filter panel or
+        // the deposit preview behind it.
+        if (session.isPresetsMenuOpen) return;
+
         if (!editor.isEditMode()) {
             if (GlobalChestConfig.instance.showLeftPanel || KeyInputHandler.isModifierPressed()) {
                 editor.screenViewGroups.renderWhitelistPreviewPanel(context, mouseX, mouseY);
