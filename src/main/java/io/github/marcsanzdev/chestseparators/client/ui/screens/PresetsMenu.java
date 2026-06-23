@@ -35,7 +35,12 @@ public final class PresetsMenu {
     private static final int BTN_W = 50;
     private static final int BTN_H = 18;
 
-    private static final long PREVIEW_FLIP_MS = 2000L;
+    private static final long PREVIEW_FLIP_MS = 5000L;
+
+    // Which row's Load button is currently being previewed and when that hover began, so each new
+    // hover restarts the cycle from the layout view rather than continuing a global clock.
+    private int lastPreviewRow = -1;
+    private long previewStartTime = 0L;
 
     private static final int[] GROUP_PALETTE = {
         0xFFE53935, 0xFFF57C00, 0xFFFBC02D, 0xFF7CB342,
@@ -105,12 +110,18 @@ public final class PresetsMenu {
                 break;
             }
         }
+        // Restart the layout<->filters cycle from the layout view whenever the hovered Load changes.
+        long now = System.currentTimeMillis();
+        if (previewRow != lastPreviewRow) {
+            lastPreviewRow = previewRow;
+            previewStartTime = now;
+        }
         if (previewRow >= 0) {
             ChestConfigManager.PresetPreview preview = chestMode()
                     ? ChestConfigManager.getInstance().readChestPresetPreview(previewRow + 1)
                     : ChestConfigManager.getInstance().readInventoryPresetPreview(previewRow + 1);
             if (preview != null) {
-                boolean showFilters = ((System.currentTimeMillis() / PREVIEW_FLIP_MS) % 2) == 1;
+                boolean showFilters = ((now - previewStartTime) / PREVIEW_FLIP_MS) % 2 == 1;
                 renderPreviewOnSlots(context, preview, chestMode(), showFilters);
                 drawPreviewBadge(context, screenW, showFilters);
             }
