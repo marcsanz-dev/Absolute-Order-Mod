@@ -65,10 +65,17 @@ final class SeparatorDragCommitter {
                         } else {
                             manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
 
-                            if (r == minRow) manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
-                            if (r == maxRow) manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
-                            if (c == minCol) manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
-                            if (c == maxCol) manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
+                            // Armor/offhand are isolated cells: always give them their full box; only the
+                            // grid slots use the rectangle border to decide which edges to paint.
+                            boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(key);
+                            if (nonGrid || r == minRow)
+                                manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
+                            if (nonGrid || r == maxRow)
+                                manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
+                            if (nonGrid || c == minCol)
+                                manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
+                            if (nonGrid || c == maxCol)
+                                manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
                         }
                         changeMade = true;
                     }

@@ -527,10 +527,11 @@ final class SeparatorPreviewRenderer {
                 context.fill(x, y, x + 16, y + 16, colorBg);
             } else if (tabMode == 2) {
                 context.fill(x, y, x + 16, y + 16, colorBg);
-                if (r == minRow) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                if (r == maxRow) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                if (c == minCol) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                if (c == maxCol) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(slot));
+                if (nonGrid || r == minRow) context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                if (nonGrid || r == maxRow) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                if (nonGrid || c == minCol) context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                if (nonGrid || c == maxCol) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             } else {
                 int act = session.currentDragAction;
                 if ((act & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);

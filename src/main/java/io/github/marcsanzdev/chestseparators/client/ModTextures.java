@@ -46,6 +46,7 @@ public class ModTextures {
 
     public static final Identifier ICON_DELETE = Identifier.of(MOD_ID, "textures/gui/icon_delete.png");
     public static final Identifier ICON_SAVE = Identifier.of(MOD_ID, "textures/gui/icon_save.png");
+    public static final Identifier ICON_CHECK = Identifier.of(MOD_ID, "textures/gui/icon_check.png");
     public static final Identifier ICON_CANCEL = Identifier.of(MOD_ID, "textures/gui/icon_cancel.png");
     public static final Identifier ICON_EYEDROPPER = Identifier.of(MOD_ID, "textures/gui/eyedropper.png");
     public static final Identifier ICON_EYEDROPPER2 = Identifier.of(MOD_ID, "textures/gui/eyedropper2.png");

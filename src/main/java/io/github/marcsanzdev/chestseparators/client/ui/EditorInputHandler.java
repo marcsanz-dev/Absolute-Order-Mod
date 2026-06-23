@@ -294,22 +294,19 @@ public class EditorInputHandler {
             return false;
         }
 
-        // The presets menu is a modal overlay: it swallows every click while open.
-        if (session.isPresetsMenuOpen) {
-            editor.presetsMenu.onClick(mouseX, mouseY, button, screen.width, screen.height);
-            return false;
-        }
-
         boolean isFilterMenuOpen = (session.currentState == EditorState.EDIT_FILTER);
         boolean isEditorClosed = (session.currentState == EditorState.HIDDEN);
 
-        // Edit and whitelist buttons are clickable in all states except the filter edit sub-menu.
+        // The top buttons stay clickable even while the presets menu is open, so the layout/filters/
+        // presets icons remain active. Clicking the layout or filters icon closes the presets menu.
         if (!isFilterMenuOpen) {
             if (GlobalChestConfig.isShowEditButton()) {
                 if (editor.entryButton != null && editor.entryButton.mouseClicked(mouseX, mouseY, button)) {
+                    session.isPresetsMenuOpen = false;
                     return false;
                 }
                 if (editor.whitelistButton != null && editor.whitelistButton.mouseClicked(mouseX, mouseY, button)) {
+                    session.isPresetsMenuOpen = false;
                     return false;
                 }
                 if (editor.fillButton != null
@@ -326,6 +323,12 @@ public class EditorInputHandler {
                     return false;
                 }
             }
+        }
+
+        // Otherwise the presets menu swallows clicks while open (its panel rows and close button).
+        if (session.isPresetsMenuOpen) {
+            editor.presetsMenu.onClick(mouseX, mouseY, button, screen.width, screen.height);
+            return false;
         }
 
         // The deposit button is only active when no editor sub-menu is open.

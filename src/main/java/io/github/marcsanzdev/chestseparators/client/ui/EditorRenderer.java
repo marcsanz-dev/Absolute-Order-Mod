@@ -40,13 +40,6 @@ public class EditorRenderer {
         layout.update(screen, accessor, editor.getSidebarYOffset());
         editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
-        // The presets menu is a modal overlay: while open, nothing else of the editor renders behind it
-        // (no sub-screen, no left panel, no tooltips), so it draws alone over the dimmed container.
-        if (session.isPresetsMenuOpen) {
-            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
-            return;
-        }
-
         boolean showButton = GlobalChestConfig.instance.showEditButtons;
         // No deposit button when editing the player inventory (you don't deposit into your own inventory).
         boolean showDeposit = GlobalChestConfig.instance.showDepositButton && !session.isPlayerInventory;
@@ -67,6 +60,24 @@ public class EditorRenderer {
         if (editor.depositButton != null) {
             // Hold the pressed state for 150 ms after the click for visual feedback.
             editor.depositButton.isActive = (System.currentTimeMillis() - editor.depositClickTime < 150);
+        }
+
+        // Presets menu: a light overlay that keeps the top buttons and the container slots visible (the
+        // hover preview paints onto the real slots), while the sub-screen panels stay hidden.
+        if (session.isPresetsMenuOpen) {
+            if (editor.presetsButton != null) editor.presetsButton.isActive = !session.presetsMenuChestMode;
+            if (editor.chestPresetsButton != null) editor.chestPresetsButton.isActive = session.presetsMenuChestMode;
+            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
+            if (showButton) {
+                if (editor.entryButton != null) editor.entryButton.render(context, mouseX, mouseY, delta);
+                if (editor.whitelistButton != null) editor.whitelistButton.render(context, mouseX, mouseY, delta);
+                if (editor.fillButton != null && !session.isPlayerInventory)
+                    editor.fillButton.render(context, mouseX, mouseY, delta);
+                if (editor.presetsButton != null) editor.presetsButton.render(context, mouseX, mouseY, delta);
+                if (editor.chestPresetsButton != null && !session.isPlayerInventory)
+                    editor.chestPresetsButton.render(context, mouseX, mouseY, delta);
+            }
+            return;
         }
 
         int bgMouseX = session.hasSelectionConflict ? -1 : mouseX;
@@ -190,6 +201,9 @@ public class EditorRenderer {
     }
 
     public void renderSavedLinesLayer(DrawContext context) {
+        // While the presets menu is open the on-slot preview takes over the slots, so the current
+        // saved layout is suppressed to keep that preview readable.
+        if (session.isPresetsMenuOpen) return;
         ChestConfigManager manager = ChestConfigManager.getInstance();
 
         int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
