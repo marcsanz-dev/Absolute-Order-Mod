@@ -5,13 +5,10 @@ import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.util.ClickTracker;
 import java.util.Map;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.Slot;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -21,27 +18,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * without delegating to its superclass, so {@link SlotWhitelistMixin} on {@code Slot} cannot
  * intercept armor-slot clicks. Applies the same Manual/Shift rule logic.
  *
- * <p>ArmorSlot is package-private, so we reference it by class name string. {@code getIndex()}
- * is inherited from {@link Slot} and cannot be {@code @Shadow}ed on a string-target mixin;
- * we cast through Slot instead (safe, since ArmorSlot extends Slot).
+ * <p>ArmorSlot is package-private; its members ({@code inventory}, {@code getIndex}) are inherited
+ * from {@link Slot} and cannot be resolved by {@code @Shadow} on a string-target mixin with no
+ * refMap. We cast through {@code Slot} instead — safe because ArmorSlot extends Slot.
  */
 @Mixin(targets = "net.minecraft.screen.slot.ArmorSlot")
 public abstract class ArmorSlotFilterMixin {
 
-    @Shadow
-    @Final
-    public Inventory inventory;
-
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
     public void onCanInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-        if (!(this.inventory instanceof PlayerInventory pinv)) return;
+        Slot self = (Slot) (Object) this;
+        if (!(self.inventory instanceof PlayerInventory pinv)) return;
 
         Map<Integer, SlotWhitelist> whitelists = ChestSeparatorsMain.INVENTORY_FILTERS.get(pinv.player.getUuid());
         if (whitelists == null) return;
 
-        // getIndex() is inherited from Slot; cast to access it without a @Shadow that Mixin
-        // cannot resolve on a package-private string-target class.
-        int slotIndex = ((Slot) (Object) this).getIndex();
+        int slotIndex = self.getIndex();
         SlotWhitelist wl = whitelists.get(slotIndex);
         if (wl == null) return;
 
