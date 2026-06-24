@@ -59,10 +59,12 @@ public abstract class PlayerInventoryFilterMixin {
         DefaultedList<ItemStack> main = getMainStacks();
 
         // Prefer an empty slot whose filter matches this item, so picked-up items land in their slot.
+        // A slot is "reserved" (or "preferred") when any of its active filter rules are on,
+        // which covers both the Pick-Up rule and the Manual rule (cursor return on screen close).
         for (int i = 0; i < main.size(); i++) {
             if (!main.get(i).isEmpty()) continue;
             SlotWhitelist wl = filters.get(i);
-            if (wl != null && wl.allowHopper() && wl.allowedItems().contains(itemId)) {
+            if (wl != null && isSlotActive(wl) && wl.allowedItems().contains(itemId)) {
                 cir.setReturnValue(i);
                 return;
             }
@@ -72,12 +74,20 @@ public abstract class PlayerInventoryFilterMixin {
             if (!main.get(i).isEmpty()) continue;
             SlotWhitelist wl = filters.get(i);
             boolean reservedForOther =
-                    wl != null && wl.allowHopper() && !wl.allowedItems().contains(itemId);
+                    wl != null && isSlotActive(wl) && !wl.allowedItems().contains(itemId);
             if (!reservedForOther) {
                 cir.setReturnValue(i);
                 return;
             }
         }
         cir.setReturnValue(-1);
+    }
+
+    // True when at least one insertion rule is enabled on this filter, meaning the slot is "owned"
+    // by its whitelist — it should attract matching items and repel non-matching ones during any
+    // automatic placement (pickup from ground, cursor return on screen close, etc.).
+    @Unique
+    private static boolean isSlotActive(SlotWhitelist wl) {
+        return wl.allowHopper() || wl.allowManual() || wl.allowShift();
     }
 }

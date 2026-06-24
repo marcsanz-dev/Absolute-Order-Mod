@@ -20,7 +20,9 @@
     "ChestBoatEntityMixin",
     "PlayerInventoryFilterMixin",
     "ArmorSlotFilterMixin",
-    "ScreenHandlerSwapFilterMixin"
+    "ScreenHandlerSwapFilterMixin",
+    "ServerPlayNetworkHandlerSwapFilterMixin",
+    "ScreenHandlerInsertPriorityMixin"
   ],
   "client": [
     "client.GenericContainerScreenMixin",

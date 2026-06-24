@@ -14,6 +14,8 @@ base {
 loom {
     //splitEnvironmentSourceSets()
 
+    accessWidenerPath = file("src/main/resources/chestseparators.accesswidener")
+
     runs {
         client {
             runDir "run/client"
