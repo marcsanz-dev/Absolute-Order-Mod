@@ -18,7 +18,9 @@
     "ShulkerBoxSlotMixin",
     "StorageMinecartEntityMixin",
     "ChestBoatEntityMixin",
-    "PlayerInventoryFilterMixin"
+    "PlayerInventoryFilterMixin",
+    "ArmorSlotFilterMixin",
+    "ScreenHandlerSwapFilterMixin"
   ],
   "client": [
     "client.GenericContainerScreenMixin",

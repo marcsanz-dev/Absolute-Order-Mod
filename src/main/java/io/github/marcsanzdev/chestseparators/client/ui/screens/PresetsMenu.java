@@ -35,8 +35,8 @@ public final class PresetsMenu {
     private static final int BTN_W = 50;
     private static final int BTN_H = 18;
 
-    // Each phase (layout, then filters) lasts this long; a full layout->filters->layout cycle is ~5s.
-    private static final long PREVIEW_FLIP_MS = 2500L;
+    // Each phase (layout, then filters) lasts this long; a full layout->filters->layout cycle is ~3s.
+    private static final long PREVIEW_FLIP_MS = 1500L;
 
     // Which row's Load button is currently being previewed and when that hover began, so each new
     // hover restarts the cycle from the layout view rather than continuing a global clock.
