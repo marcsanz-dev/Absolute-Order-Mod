@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
@@ -49,12 +50,12 @@ public abstract class PlayerInventoryFilterMixin {
 
     // Also intercept offerOrDrop: used when closing a screen with a cursor item (E key close).
     @Inject(method = "offerOrDrop", at = @At("HEAD"))
-    private void chestseparators$beginOfferOrDrop(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+    private void chestseparators$beginOfferOrDrop(ItemStack stack, CallbackInfo ci) {
         chestseparators$insertingStack = stack;
     }
 
     @Inject(method = "offerOrDrop", at = @At("RETURN"))
-    private void chestseparators$endOfferOrDrop(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+    private void chestseparators$endOfferOrDrop(ItemStack stack, CallbackInfo ci) {
         chestseparators$insertingStack = null;
     }
 
