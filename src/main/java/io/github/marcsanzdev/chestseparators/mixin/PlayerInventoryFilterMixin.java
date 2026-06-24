@@ -47,6 +47,17 @@ public abstract class PlayerInventoryFilterMixin {
         chestseparators$insertingStack = null;
     }
 
+    // Also intercept offerOrDrop: used when closing a screen with a cursor item (E key close).
+    @Inject(method = "offerOrDrop", at = @At("HEAD"))
+    private void chestseparators$beginOfferOrDrop(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        chestseparators$insertingStack = stack;
+    }
+
+    @Inject(method = "offerOrDrop", at = @At("RETURN"))
+    private void chestseparators$endOfferOrDrop(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        chestseparators$insertingStack = null;
+    }
+
     @Inject(method = "getEmptySlot", at = @At("HEAD"), cancellable = true)
     private void chestseparators$reserveFilteredSlots(CallbackInfoReturnable<Integer> cir) {
         ItemStack stack = chestseparators$insertingStack;
