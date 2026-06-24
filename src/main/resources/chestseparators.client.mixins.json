@@ -9,7 +9,8 @@
     "client.GenericContainerScreenMixin",
     "client.HandledScreenAccessor",
     "client.ChestLidAccessor",
-    "client.ShulkerAnimationAccessor"
+    "client.ShulkerAnimationAccessor",
+    "client.ArmorEquipClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

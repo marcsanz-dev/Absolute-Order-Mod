@@ -23,6 +23,7 @@
     "ScreenHandlerSwapFilterMixin",
     "ServerPlayNetworkHandlerSwapFilterMixin",
     "ArmorEquipFilterMixin",
+    "PlayerScreenHandlerFallbackMixin",
     "ScreenHandlerInsertPriorityMixin"
   ],
   "client": [
