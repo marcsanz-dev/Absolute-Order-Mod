@@ -71,10 +71,19 @@ public class EditorRenderer {
 
         // Presets menu: a light overlay that keeps the top buttons and the container slots visible (the
         // hover preview paints onto the real slots), while the sub-screen panels stay hidden.
+        // Phase 1 (dim + preview) runs first; then the saved lines are injected on top of the dim
+        // (only when no Load-button preview is active); then Phase 2 draws the panel.
         if (session.isPresetsMenuOpen) {
             if (editor.presetsButton != null) editor.presetsButton.isActive = !session.presetsMenuChestMode;
             if (editor.chestPresetsButton != null) editor.chestPresetsButton.isActive = session.presetsMenuChestMode;
-            editor.presetsMenu.render(context, screen.width, screen.height, mouseX, mouseY);
+            editor.presetsMenu.renderBackground(context, screen.width, screen.height, mouseX, mouseY);
+            if (!editor.presetsMenu.isPreviewActive()) {
+                context.getMatrices().pushMatrix();
+                context.getMatrices().translate((float) accessor.getX(), (float) accessor.getY());
+                renderSavedLinesLayer(context);
+                context.getMatrices().popMatrix();
+            }
+            editor.presetsMenu.renderPanel(context, screen.width, screen.height, mouseX, mouseY);
             if (showButton) {
                 if (editor.entryButton != null) editor.entryButton.render(context, mouseX, mouseY, delta);
                 if (editor.whitelistButton != null) editor.whitelistButton.render(context, mouseX, mouseY, delta);
@@ -208,9 +217,6 @@ public class EditorRenderer {
     }
 
     public void renderSavedLinesLayer(DrawContext context) {
-        // While the presets menu is open the on-slot preview takes over the slots, so the current
-        // saved layout is suppressed to keep that preview readable.
-        if (session.isPresetsMenuOpen) return;
         ChestConfigManager manager = ChestConfigManager.getInstance();
 
         int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;

@@ -23,6 +23,9 @@ import net.minecraft.text.Text;
  * buttons; hovering a saved row's Load button previews that preset directly on the real container
  * slots, alternating every couple of seconds between the saved layout colors and the saved filter
  * distribution. Drives the inventory or the chest preset store per {@code session.presetsMenuChestMode}.
+ *
+ * <p>The render is split into two phases so EditorRenderer can inject the saved-lines layer between
+ * the dim overlay ({@link #renderBackground}) and the panel itself ({@link #renderPanel}).
  */
 public final class PresetsMenu {
 
@@ -43,6 +46,9 @@ public final class PresetsMenu {
     private int lastPreviewRow = -1;
     private long previewStartTime = 0L;
 
+    /** Updated by renderBackground(); read by isPreviewActive() and EditorRenderer. */
+    private int currentPreviewRow = -1;
+
     private static final int[] GROUP_PALETTE = {
         0xFFE53935, 0xFFF57C00, 0xFFFBC02D, 0xFF7CB342,
         0xFF388E3C, 0xFF00897B, 0xFF00ACC1, 0xFF1E88E5,
@@ -56,6 +62,11 @@ public final class PresetsMenu {
 
     public PresetsMenu(ChestSeparatorsEditor editor) {
         this.editor = editor;
+    }
+
+    /** True when a Load-button hover preview is currently being painted on the real slots. */
+    public boolean isPreviewActive() {
+        return currentPreviewRow >= 0;
     }
 
     public static int presetCount() {
@@ -92,16 +103,15 @@ public final class PresetsMenu {
         return saveX() - 4 - BTN_W;
     }
 
-    public void render(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        boolean isDark = GlobalChestConfig.instance.darkMode;
-        int py = panelY(screenH);
-        int ph = panelH();
-
+    /**
+     * Phase 1: full-screen dim overlay and optional on-slot Load preview.
+     * Must be called before {@link #renderPanel} so EditorRenderer can paint the saved lines between.
+     */
+    public void renderBackground(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
         // Light dim so the real container slots stay clearly visible for the on-slot preview.
         context.fill(0, 0, screenW, screenH, 0x55000000);
 
-        // Preview only while hovering a saved row's Load button (Save never changes the inventory).
+        // Determine which Load button (if any) is being hovered.
         int previewRow = -1;
         int count = presetCount();
         for (int i = 0; i < count; i++) {
@@ -111,12 +121,15 @@ public final class PresetsMenu {
                 break;
             }
         }
+
         // Restart the layout<->filters cycle from the layout view whenever the hovered Load changes.
         long now = System.currentTimeMillis();
         if (previewRow != lastPreviewRow) {
             lastPreviewRow = previewRow;
             previewStartTime = now;
         }
+        currentPreviewRow = previewRow;
+
         if (previewRow >= 0) {
             ChestConfigManager.PresetPreview preview = chestMode()
                     ? ChestConfigManager.getInstance().readChestPresetPreview(previewRow + 1)
@@ -127,8 +140,18 @@ public final class PresetsMenu {
                 drawPreviewBadge(context, screenW, showFilters);
             }
         }
+    }
 
-        // Beveled container, matching the mod's other windows.
+    /**
+     * Phase 2: beveled panel, rows, and buttons.
+     * Call after {@link #renderBackground} (and after any lines injected by EditorRenderer).
+     */
+    public void renderPanel(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        boolean isDark = GlobalChestConfig.instance.darkMode;
+        int py = panelY(screenH);
+        int ph = panelH();
+
         context.fill(PANEL_X, py, PANEL_X + PANEL_W, py + ph, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
         drawBevel(context, PANEL_X, py, PANEL_W, ph, false);
 
@@ -137,31 +160,26 @@ public final class PresetsMenu {
         context.drawCenteredTextWithShadow(client.textRenderer, title, PANEL_X + PANEL_W / 2, py + 9, 0xFFFFE066);
 
         clickables.clear();
+        int count = presetCount();
         for (int i = 0; i < count; i++) {
             int slot = i + 1;
             int ry = rowY(screenH, i);
             boolean saved = exists(slot);
 
-            // Saved/empty indicator: the generated check icon when saved, an empty sunken box otherwise.
+            int by = ry + (ROW_H - BTN_H) / 2;
+            boolean hoveringSave = inside(mouseX, mouseY, saveX(), by, BTN_W, BTN_H);
+
+            // Saved/empty indicator with ghost-tick preview when hovering Save.
             int ind = PANEL_X + 8;
             int indY = ry + (ROW_H - 14) / 2;
-            context.fill(ind, indY, ind + 14, indY + 14, saved ? 0xFF24341F : 0xFF2B2B2B);
+            context.fill(ind, indY, ind + 14, indY + 14, (saved || hoveringSave) ? 0xFF24341F : 0xFF2B2B2B);
             drawBevel(context, ind, indY, 14, 14, true);
             if (saved) {
-                context.drawTexture(
-                        net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED,
-                        ModTextures.ICON_CHECK,
-                        ind + 1,
-                        indY + 1,
-                        0.0F,
-                        0.0F,
-                        12,
-                        12,
-                        32,
-                        32,
-                        32,
-                        32,
-                        -1);
+                // Dim the tick when hovering Save to hint the preset will be overwritten.
+                drawCheckIcon(context, ind + 1, indY + 1, hoveringSave ? 0xAAFFFFFF : -1);
+            } else if (hoveringSave) {
+                // Ghost tick: preview of what pressing Save would produce.
+                drawCheckIcon(context, ind + 1, indY + 1, 0x66FFFFFF);
             }
 
             context.drawText(
@@ -172,7 +190,6 @@ public final class PresetsMenu {
                     isDark ? 0xFFFFFFFF : 0xFF202020,
                     isDark);
 
-            int by = ry + (ROW_H - BTN_H) / 2;
             WideButtonWidget load = new WideButtonWidget(
                     loadX(),
                     by,
@@ -205,7 +222,6 @@ public final class PresetsMenu {
             clickables.add(save);
         }
 
-        // Exit button (icon + label), like the other windows.
         int exitW = 70;
         WideButtonWidget exit = new WideButtonWidget(
                 PANEL_X + (PANEL_W - exitW) / 2,
@@ -217,6 +233,29 @@ public final class PresetsMenu {
                 () -> editor.getSession().isPresetsMenuOpen = false);
         exit.render(context, mouseX, mouseY, 0);
         clickables.add(exit);
+    }
+
+    /** Convenience: calls both phases in order (used when no line injection is needed). */
+    public void render(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
+        renderBackground(context, screenW, screenH, mouseX, mouseY);
+        renderPanel(context, screenW, screenH, mouseX, mouseY);
+    }
+
+    private void drawCheckIcon(DrawContext context, int x, int y, int color) {
+        context.drawTexture(
+                net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED,
+                ModTextures.ICON_CHECK,
+                x,
+                y,
+                0.0F,
+                0.0F,
+                12,
+                12,
+                32,
+                32,
+                32,
+                32,
+                color);
     }
 
     /** Small label near the top telling the player which view the on-slot preview is showing. */
@@ -312,7 +351,6 @@ public final class PresetsMenu {
             }
         }
 
-        // Clicks on the container (right of the panel) are not consumed; panel clicks are.
         return inside(mouseX, mouseY, PANEL_X, py, PANEL_W, ph);
     }
 }
