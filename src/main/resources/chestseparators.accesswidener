@@ -1,3 +1,4 @@
 accessWidener v2 named
 
 accessible field net/minecraft/entity/player/PlayerInventory selectedSlot I
+accessible method net/minecraft/screen/ScreenHandler insertItem (Lnet/minecraft/item/ItemStack;IIZ)Z

@@ -8,11 +8,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.collection.DefaultedList;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -25,25 +23,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <p>PlayerScreenHandler slot layout: 0=craft output, 1-4=craft grid, 5-8=armor,
  * 9-35=main inventory, 36-44=hotbar, 45=offhand.
+ *
+ * <p>@Shadow cannot resolve insertItem/slots from parent ScreenHandler when targeting
+ * PlayerScreenHandler (no refMap). Instead we cast to ScreenHandler directly;
+ * insertItem is exposed as public via the access widener.
  */
 @Mixin(PlayerScreenHandler.class)
 public abstract class PlayerScreenHandlerFallbackMixin {
 
-    @Shadow
-    @Final
-    public DefaultedList<Slot> slots;
-
-    @Shadow
-    protected abstract boolean insertItem(ItemStack stack, int startIndex, int endIndex, boolean fromLast);
-
     @Inject(method = "quickMove", at = @At("RETURN"), cancellable = true)
     private void chestseparators$armorFallback(
             PlayerEntity player, int slotIndex, CallbackInfoReturnable<ItemStack> cir) {
-        // Non-empty return value means vanilla already moved the item.
         if (!cir.getReturnValue().isEmpty()) return;
 
-        if (slotIndex < 0 || slotIndex >= this.slots.size()) return;
-        Slot slot = this.slots.get(slotIndex);
+        ScreenHandler self = (ScreenHandler) (Object) this;
+        if (slotIndex < 0 || slotIndex >= self.slots.size()) return;
+        Slot slot = self.slots.get(slotIndex);
         ItemStack slotStack = slot.getStack();
         if (slotStack.isEmpty()) return;
 
@@ -65,18 +60,15 @@ public abstract class PlayerScreenHandlerFallbackMixin {
         SlotWhitelist wl = filters.get(rawIndex);
         if (wl == null || !wl.allowShift()) return;
         String itemId = Registries.ITEM.getId(slotStack.getItem()).toString();
-        if (wl.allowedItems().contains(itemId)) return; // Allowed — no fallback needed.
+        if (wl.allowedItems().contains(itemId)) return;
 
-        // Armor is blocked by filter. Redirect to main inventory or hotbar like a regular item.
         ItemStack copy = slotStack.copy();
         boolean fromHotbar = slotIndex >= 36 && slotIndex < 45;
         if (fromHotbar) {
-            // Item is in hotbar → try main inventory
-            this.insertItem(slotStack, 9, 36, false);
+            self.insertItem(slotStack, 9, 36, false);
         } else {
-            // Item is in main inventory or elsewhere → try hotbar first, then main inventory
-            if (!this.insertItem(slotStack, 36, 45, false)) {
-                this.insertItem(slotStack, 9, 36, false);
+            if (!self.insertItem(slotStack, 36, 45, false)) {
+                self.insertItem(slotStack, 9, 36, false);
             }
         }
 
