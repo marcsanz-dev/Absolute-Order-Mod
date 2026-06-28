@@ -10,7 +10,8 @@
     "client.HandledScreenAccessor",
     "client.ChestLidAccessor",
     "client.ShulkerAnimationAccessor",
-    "client.ArmorEquipClientMixin"
+    "client.ArmorEquipClientMixin",
+    "client.InGameHudHotbarLinesMixin"
   ],
   "injectors": {
     "defaultRequire": 1

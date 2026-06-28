@@ -80,7 +80,7 @@ public class EditorRenderer {
             if (!editor.presetsMenu.isPreviewActive()) {
                 context.getMatrices().pushMatrix();
                 context.getMatrices().translate((float) accessor.getX(), (float) accessor.getY());
-                renderSavedLinesLayer(context);
+                doRenderSavedLinesLayer(context);
                 context.getMatrices().popMatrix();
             }
             editor.presetsMenu.renderPanel(context, screen.width, screen.height, mouseX, mouseY);
@@ -216,7 +216,14 @@ public class EditorRenderer {
         };
     }
 
+    /** Called from the GenericContainerScreen mixin at drawSlots HEAD. Suppressed during presets menu
+     *  because EditorRenderer's presets block calls doRenderSavedLinesLayer() directly instead. */
     public void renderSavedLinesLayer(DrawContext context) {
+        if (session.isPresetsMenuOpen) return;
+        doRenderSavedLinesLayer(context);
+    }
+
+    private void doRenderSavedLinesLayer(DrawContext context) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
 
         int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
