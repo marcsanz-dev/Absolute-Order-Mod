@@ -3,8 +3,8 @@ package io.github.marcsanzdev.chestseparators.mixin.client;
 import io.github.marcsanzdev.chestseparators.ChestSeparatorsMain;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import java.util.Map;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -25,7 +25,7 @@ public abstract class ArmorEquipClientMixin {
 
     @Inject(method = "interactItem", at = @At("HEAD"), cancellable = true)
     private void blockArmorEquipIfFiltered(
-            ClientPlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+            PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         ItemStack stack = player.getStackInHand(hand);
         if (stack.isEmpty()) return;
 
