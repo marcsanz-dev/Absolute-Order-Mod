@@ -14,31 +14,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Draws separator backgrounds and lines on the HUD hotbar slots.
  *
- * Two injection points so draw order matches the inventory screen:
- * - Backgrounds at INVOKE (just before the first item renders, after the
- *   hotbar sprite) → items paint on top of backgrounds.
- * - 2px border lines at RETURN → always visible on top of everything.
+ * Two injection points:
+ * - Backgrounds at HEAD (before the hotbar sprite), so the sprite and items
+ *   composite on top. The vanilla slot areas are semi-transparent, letting
+ *   the background color show through while items remain fully visible.
+ *   The currently selected slot is skipped so the vanilla selection highlight
+ *   is not obscured.
+ * - 2px border lines at RETURN, always drawn on top of everything.
  */
 @Mixin(InGameHud.class)
 public class InGameHudHotbarLinesMixin {
 
-    @Inject(
-            method = "renderHotbar",
-            at =
-                    @At(
-                            value = "INVOKE",
-                            target =
-                                    "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V",
-                            ordinal = 0))
+    @Inject(method = "renderHotbar", at = @At("HEAD"))
     private void chestseparators$renderHotbarBg(DrawContext context, RenderTickCounter counter, CallbackInfo ci) {
         ChestConfigManager m = ChestConfigManager.getInstance();
         if (m.getPlayerInventoryVisual().isEmpty()) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null) return;
+        int selected = client.player.getInventory().selectedSlot;
 
         int[] pos = hotbarBase();
         int baseX = pos[0], baseY = pos[1];
         int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
 
         for (int i = 0; i < 9; i++) {
+            if (i == selected) continue; // keep vanilla selection highlight visible
             int bgColor = m.getInventoryColor(i, ChestConfigManager.ACTION_BG);
             if (bgColor != 0) {
                 int x = baseX + i * 20;
