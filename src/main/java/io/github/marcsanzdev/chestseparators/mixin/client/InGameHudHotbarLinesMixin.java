@@ -12,21 +12,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Draws separator backgrounds and lines on the HUD hotbar slots.
+ * Draws separator backgrounds and 2px border lines on the HUD hotbar slots.
  *
- * Two injection points:
- * - Backgrounds at HEAD (before the hotbar sprite), so the sprite and items
- *   composite on top. The vanilla slot areas are semi-transparent, letting
- *   the background color show through while items remain fully visible.
- *   The currently selected slot is skipped so the vanilla selection highlight
- *   is not obscured.
- * - 2px border lines at RETURN, always drawn on top of everything.
+ * Everything is drawn at RETURN (on top of items and the hotbar sprite).
+ * The selected slot is skipped entirely so the vanilla selection highlight
+ * remains intact. Slots adjacent to the selected slot suppress the border
+ * edge that faces the selected slot (right edge of selected-1, left edge of
+ * selected+1), because the vanilla selection highlight sprite is 24×23 px
+ * and extends 4px beyond the item area — those 2px border lines would
+ * visually clip the highlight's outer border.
  */
 @Mixin(InGameHud.class)
 public class InGameHudHotbarLinesMixin {
 
-    @Inject(method = "renderHotbar", at = @At("HEAD"))
-    private void chestseparators$renderHotbarBg(DrawContext context, RenderTickCounter counter, CallbackInfo ci) {
+    @Inject(method = "renderHotbar", at = @At("RETURN"))
+    private void chestseparators$renderHotbarOverlay(DrawContext context, RenderTickCounter counter, CallbackInfo ci) {
         ChestConfigManager m = ChestConfigManager.getInstance();
         if (m.getPlayerInventoryVisual().isEmpty()) return;
 
@@ -37,39 +37,31 @@ public class InGameHudHotbarLinesMixin {
         int[] pos = hotbarBase();
         int baseX = pos[0], baseY = pos[1];
         int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
-
-        for (int i = 0; i < 9; i++) {
-            if (i == selected) continue; // keep vanilla selection highlight visible
-            int bgColor = m.getInventoryColor(i, ChestConfigManager.ACTION_BG);
-            if (bgColor != 0) {
-                int x = baseX + i * 20;
-                context.fill(x, baseY, x + 16, baseY + 16, (bgColor & 0xFFFFFF) | bgAlpha);
-            }
-        }
-    }
-
-    @Inject(method = "renderHotbar", at = @At("RETURN"))
-    private void chestseparators$renderHotbarLines(DrawContext context, RenderTickCounter counter, CallbackInfo ci) {
-        ChestConfigManager m = ChestConfigManager.getInstance();
-        if (m.getPlayerInventoryVisual().isEmpty()) return;
-
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        int selected = client.player.getInventory().selectedSlot;
-
-        int[] pos = hotbarBase();
-        int baseX = pos[0], baseY = pos[1];
         int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
 
         for (int i = 0; i < 9; i++) {
-            if (i == selected) continue; // vanilla selection highlight must stay on top
+            if (i == selected) continue;
+
             int x = baseX + i * 20;
             int y = baseY;
 
+            // Background
+            int bgColor = m.getInventoryColor(i, ChestConfigManager.ACTION_BG);
+            if (bgColor != 0) {
+                context.fill(x, y, x + 16, y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
+            }
+
+            // The vanilla selection highlight is 24×23 px starting 4px left of the
+            // selected slot's item area. The 2px right border of selected-1 and the
+            // 2px left border of selected+1 land inside that 4px margin — suppress them
+            // (and the corners on that side) so the highlight always shows intact.
+            boolean skipRight = (i == selected - 1);
+            boolean skipLeft = (i == selected + 1);
+
             int rTop = applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_TOP), lineAlpha);
             int rBot = applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_BOTTOM), lineAlpha);
-            int rLeft = applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_LEFT), lineAlpha);
-            int rRight = applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_RIGHT), lineAlpha);
+            int rLeft = skipLeft ? 0 : applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_LEFT), lineAlpha);
+            int rRight = skipRight ? 0 : applyAlpha(m.getInventoryColor(i, ChestConfigManager.ACTION_RIGHT), lineAlpha);
 
             if (rTop == 0 && rBot == 0 && rLeft == 0 && rRight == 0) continue;
 
@@ -78,16 +70,18 @@ public class InGameHudHotbarLinesMixin {
             int sLeft = m.getInventoryPaintSeq(i, ChestConfigManager.ACTION_LEFT);
             int sRight = m.getInventoryPaintSeq(i, ChestConfigManager.ACTION_RIGHT);
 
-            // 2px-wide lines to completely cover the grey slot dividers in the hotbar texture.
             if (rTop != 0) context.fill(x, y - 2, x + 16, y, rTop);
             if (rBot != 0) context.fill(x, y + 16, x + 16, y + 18, rBot);
             if (rLeft != 0) context.fill(x - 2, y, x, y + 16, rLeft);
             if (rRight != 0) context.fill(x + 16, y, x + 18, y + 16, rRight);
 
-            drawCorner(context, x - 2, y - 2, rTop, sTop, rLeft, sLeft);
-            drawCorner(context, x + 16, y - 2, rTop, sTop, rRight, sRight);
-            drawCorner(context, x - 2, y + 16, rBot, sBot, rLeft, sLeft);
-            drawCorner(context, x + 16, y + 16, rBot, sBot, rRight, sRight);
+            // Corners on the selection-highlight side are suppressed with full guard
+            // (not just zeroing rRight/rLeft) because drawCorner falls back to colorA
+            // if colorB is 0, which would still paint in the highlight area.
+            if (!skipLeft) drawCorner(context, x - 2, y - 2, rTop, sTop, rLeft, sLeft);
+            if (!skipRight) drawCorner(context, x + 16, y - 2, rTop, sTop, rRight, sRight);
+            if (!skipLeft) drawCorner(context, x - 2, y + 16, rBot, sBot, rLeft, sLeft);
+            if (!skipRight) drawCorner(context, x + 16, y + 16, rBot, sBot, rRight, sRight);
         }
     }
 
@@ -102,7 +96,7 @@ public class InGameHudHotbarLinesMixin {
         return color == 0 ? 0 : (color & 0x00FFFFFF) | lineAlpha;
     }
 
-    /** Paints a 2×2 corner pixel using the edge with the higher paint sequence. */
+    /** Paints a 2×2 corner using the edge with the higher paint sequence. */
     private static void drawCorner(DrawContext context, int cx, int cy, int colorA, int seqA, int colorB, int seqB) {
         if (colorA == 0 && colorB == 0) return;
         int color;
