@@ -53,11 +53,16 @@ public class InGameHudHotbarLinesMixin {
         ChestConfigManager m = ChestConfigManager.getInstance();
         if (m.getPlayerInventoryVisual().isEmpty()) return;
 
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null) return;
+        int selected = client.player.getInventory().selectedSlot;
+
         int[] pos = hotbarBase();
         int baseX = pos[0], baseY = pos[1];
         int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
 
         for (int i = 0; i < 9; i++) {
+            if (i == selected) continue; // vanilla selection highlight must stay on top
             int x = baseX + i * 20;
             int y = baseY;
 
