@@ -6,6 +6,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,47 +16,48 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Draws separator backgrounds and 2px border lines on the HUD hotbar slots.
  *
- * <p>MC 1.21.6+ uses a deferred GUI renderer (Matrix3x2fStack, no z): elements
- * composite in submission order, items included. So the inject point decides
- * layering:
- * <ul>
- *   <li><b>Backgrounds</b> inject at the first {@code renderHotbarItem} call —
- *       i.e. after the opaque hotbar sprite + selection highlight are drawn but
- *       before any item — so backgrounds sit UNDER the items (no color mixing,
- *       same as the inventory screen).</li>
- *   <li><b>Lines</b> inject at RETURN, on top of everything.</li>
- * </ul>
+ * <p>MC 1.21.6+ uses a deferred GUI renderer (Matrix3x2fStack, no z) whose item
+ * vs colored-quad layering is not a clean global submission order: drawing all
+ * backgrounds up-front (before the item loop) leaves some slots' fills on top of
+ * their item and others underneath. To get uniform "background under item"
+ * behaviour, each slot's background is drawn at the HEAD of {@code renderHotbarItem}
+ * — immediately before that very slot's item is rendered — so the bg→item order is
+ * local and adjacent for every slot.
  *
- * <p>The vanilla selection highlight is a 24×23 frame extending 4px around the
- * 16×16 item area. A 16×16 background fills only the frame's transparent center,
- * leaving the white border intact — so the selected slot's background is drawn
- * normally. Its 2px separator lines, however, land on the highlight frame, so
- * the selected slot's own lines and the selection-facing edges of its two
- * neighbours are suppressed to keep the highlight pristine.
+ * <p>Lines inject at RETURN, on top of everything. The vanilla selection highlight
+ * is a 24×23 frame extending 4px around the 16×16 item area; a 16×16 background
+ * fills only its transparent center, so the selected slot's background draws
+ * normally, while the selected slot's own border lines (and the selection-facing
+ * edges of its neighbours) are suppressed to keep the highlight frame pristine.
  */
 @Mixin(InGameHud.class)
 public class InGameHudHotbarLinesMixin {
 
-    private static final String RENDER_HOTBAR_ITEM =
-            "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V";
-
-    @Inject(method = "renderHotbar", at = @At(value = "INVOKE", target = RENDER_HOTBAR_ITEM, ordinal = 0))
-    private void chestseparators$renderHotbarBackgrounds(
-            DrawContext context, RenderTickCounter counter, CallbackInfo ci) {
+    @Inject(method = "renderHotbarItem", at = @At("HEAD"))
+    private void chestseparators$renderSlotBackground(
+            DrawContext context,
+            int x,
+            int y,
+            RenderTickCounter counter,
+            PlayerEntity player,
+            ItemStack stack,
+            int seq,
+            CallbackInfo ci) {
         ChestConfigManager m = ChestConfigManager.getInstance();
         if (m.getPlayerInventoryVisual().isEmpty()) return;
 
-        int[] pos = hotbarBase();
-        int baseX = pos[0], baseY = pos[1];
-        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
+        // The x passed in is the slot's item-area left edge (baseX + slot*20).
+        // Derive the hotbar slot; bail on the offhand call (not an aligned slot).
+        int rel = x - hotbarBase()[0];
+        if (rel < 0 || rel % 20 != 0) return;
+        int slot = rel / 20;
+        if (slot < 0 || slot > 8) return;
 
-        for (int i = 0; i < 9; i++) {
-            int bgColor = m.getInventoryColor(i, ChestConfigManager.ACTION_BG);
-            if (bgColor != 0) {
-                int x = baseX + i * 20;
-                context.fill(x, baseY, x + 16, baseY + 16, (bgColor & 0xFFFFFF) | bgAlpha);
-            }
-        }
+        int bgColor = m.getInventoryColor(slot, ChestConfigManager.ACTION_BG);
+        if (bgColor == 0) return;
+
+        int bgAlpha = (GlobalChestConfig.instance.bgTransparency * 255 / 100) << 24;
+        context.fill(x, y, x + 16, y + 16, (bgColor & 0xFFFFFF) | bgAlpha);
     }
 
     @Inject(method = "renderHotbar", at = @At("RETURN"))
