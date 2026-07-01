@@ -86,6 +86,10 @@ public class EditorGeometry {
                 session.lockedTraceRowCol = hoverSlot.getIndex() % 9;
                 return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
+                // Armor/offhand are isolated non-grid cells: keep the locked action but paint it on
+                // the hovered cell itself instead of projecting along a meaningless grid row/col.
+                if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(hoverSlot)))
+                    return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
                 int col = hoverSlot.getIndex() % 9;
                 int correctSlotIndex = (session.lockedTraceRowCol * 9) + col;
                 return (correctSlotIndex
@@ -107,6 +111,10 @@ public class EditorGeometry {
                 session.lockedTraceRowCol = hoverSlot.getIndex() / 9;
                 return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
+                // Armor/offhand are isolated non-grid cells: keep the locked action but paint it on
+                // the hovered cell itself instead of projecting along a meaningless grid row/col.
+                if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(hoverSlot)))
+                    return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
                 int row = hoverSlot.getIndex() / 9;
                 int correctSlotIndex = (row * 9) + session.lockedTraceRowCol;
                 return (correctSlotIndex

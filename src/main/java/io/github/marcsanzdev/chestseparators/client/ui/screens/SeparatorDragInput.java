@@ -46,18 +46,18 @@ final class SeparatorDragInput {
                     }
                 } else {
                     if (toolMode == 1) {
-                        // Armor/offhand are isolated non-grid cells with no grid neighbours: the
-                        // vertex-connection and rail-locking logic below projects a straight line
-                        // along rows/columns via grid math (index%9, index/9, row*9+col), which is
-                        // meaningless for them and mispaints. Treat a hover over one as a plain
-                        // per-edge paint of the edge under the cursor — the same individual-edge
-                        // result the rest of the inventory produces, just without any connection.
+                        // Armor/offhand are isolated non-grid cells with no grid neighbours. The
+                        // vertex-connection logic below projects segments along rows/columns via grid
+                        // math (index%9, index/9, row*9+col), which is meaningless for them. But we
+                        // still honour the axis lock via calculateTraceStep (patched to paint the
+                        // locked edge on the hovered cell itself, without grid projection) so a
+                        // vertical drag paints only the left/right edge and a horizontal one only
+                        // top/bottom — exactly like the rest of the inventory. Skip the vertex
+                        // undo/advance logic since there is nothing to connect to.
                         if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(slot))) {
-                            session.lockedTraceAxis = 0;
-                            int act = editor.geometry.calculateAction(slot, mouseX, mouseY);
-                            if (act != 0 && act != ChestConfigManager.ACTION_BG) {
-                                String step = ChestSeparatorsEditor.slotKey(slot) + "_" + act;
-                                if (!session.tracePath.contains(step)) editor.updateTracePath(step);
+                            String rawStep = editor.geometry.calculateTraceStep(slot, mouseX, mouseY);
+                            if (rawStep != null && !rawStep.isEmpty() && !session.tracePath.contains(rawStep)) {
+                                editor.updateTracePath(rawStep);
                             }
                             return true;
                         }
