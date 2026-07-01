@@ -46,6 +46,22 @@ final class SeparatorDragInput {
                     }
                 } else {
                     if (toolMode == 1) {
+                        // Armor/offhand are isolated non-grid cells with no grid neighbours: the
+                        // vertex-connection and rail-locking logic below projects a straight line
+                        // along rows/columns via grid math (index%9, index/9, row*9+col), which is
+                        // meaningless for them and mispaints. Treat a hover over one as a plain
+                        // per-edge paint of the edge under the cursor — the same individual-edge
+                        // result the rest of the inventory produces, just without any connection.
+                        if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(slot))) {
+                            session.lockedTraceAxis = 0;
+                            int act = editor.geometry.calculateAction(slot, mouseX, mouseY);
+                            if (act != 0 && act != ChestConfigManager.ACTION_BG) {
+                                String step = ChestSeparatorsEditor.slotKey(slot) + "_" + act;
+                                if (!session.tracePath.contains(step)) editor.updateTracePath(step);
+                            }
+                            return true;
+                        }
+
                         int guiX = layout.guiX;
                         int guiY = layout.guiY;
 
