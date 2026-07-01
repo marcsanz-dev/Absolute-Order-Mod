@@ -131,7 +131,7 @@ final class SeparatorPreviewRenderer {
         // Inventory drags use offset keys and include the non-grid armor/offhand cells, so they get a
         // dedicated, namespace-correct preview instead of the raw-index chest path below.
         if (session.dragStartSlot != null && ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot)) {
-            renderPlayerDragPreview(context);
+            renderPlayerDragPreview(context, mouseX, mouseY);
             return;
         }
         int guiX = layout.guiX;
@@ -430,7 +430,7 @@ final class SeparatorPreviewRenderer {
      * {@link ChestSeparatorsEditor#slotForKey}) and treats armor/offhand as isolated non-grid cells so
      * each gets its full box. Kept separate from the chest preview, which uses raw container indices.
      */
-    private void renderPlayerDragPreview(DrawContext context) {
+    private void renderPlayerDragPreview(DrawContext context, int mouseX, int mouseY) {
         int guiX = layout.guiX;
         int guiY = layout.guiY;
         int tabMode = session.currentTab;
@@ -516,6 +516,16 @@ final class SeparatorPreviewRenderer {
         int minCol = Math.min(sCol, cCol);
         int maxCol = Math.max(sCol, cCol);
 
+        // The line tool's area logic (grid rectangle border + non-grid full box) is intricate enough
+        // that it must mirror SeparatorDragCommitter exactly, so it lives in its own method. Bg/combo
+        // area previews are simple per-slot fills and stay inline.
+        if (tabMode == 0) {
+            boolean erase = explicitEraser || session.isDragModeErasing;
+            renderPlayerLineAreaPreview(
+                    context, mouseX, mouseY, minRow, maxRow, minCol, maxCol, sRow, sCol, cRow, cCol, colorLine, erase);
+            return;
+        }
+
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot) || !ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
             int r = slot.getIndex() / 9;
@@ -525,22 +535,178 @@ final class SeparatorPreviewRenderer {
             int y = guiY + slot.y;
             if (tabMode == 1) {
                 context.fill(x, y, x + 16, y + 16, colorBg);
-            } else if (tabMode == 2) {
+            } else { // tabMode == 2 (combo)
                 context.fill(x, y, x + 16, y + 16, colorBg);
                 boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(slot));
                 if (nonGrid || r == minRow) context.fill(x - 1, y - 1, x + 17, y, colorLine);
                 if (nonGrid || r == maxRow) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
                 if (nonGrid || c == minCol) context.fill(x - 1, y - 1, x, y + 17, colorLine);
                 if (nonGrid || c == maxCol) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
-            } else {
-                int act = session.currentDragAction;
-                if ((act & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                if ((act & ChestConfigManager.ACTION_BOTTOM) != 0)
-                    context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                if ((act & ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                if ((act & ChestConfigManager.ACTION_RIGHT) != 0)
-                    context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             }
         }
+    }
+
+    /**
+     * Live preview for the pencil line tool in area mode over the player inventory. Mirrors
+     * {@link SeparatorDragCommitter}'s pencil-area branch edge-for-edge so what the user sees before
+     * releasing is exactly what gets committed: non-grid armor/offhand cells get their full box, while
+     * the true 9-wide grid (first 36 player slots) uses the rectangle-border / 1D-line logic.
+     */
+    private void renderPlayerLineAreaPreview(
+            DrawContext context,
+            int mouseX,
+            int mouseY,
+            int minRow,
+            int maxRow,
+            int minCol,
+            int maxCol,
+            int sRow,
+            int sCol,
+            int cRow,
+            int cCol,
+            int colorLine,
+            boolean erase) {
+        ChestConfigManager m = ChestConfigManager.getInstance();
+        int off = ChestConfigManager.PLAYER_KEY_OFFSET;
+
+        // Non-grid armor/offhand cells: full box (erase gated on existing color).
+        for (Slot slot : editor.accessor.getHandler().slots) {
+            if (!ChestSeparatorsEditor.isEditableSlot(slot) || !ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
+            int key = ChestSeparatorsEditor.slotKey(slot);
+            if (!ChestConfigManager.isNonGridInventoryKey(key)) continue;
+            int r = slot.getIndex() / 9;
+            int c = slot.getIndex() % 9;
+            if (r < minRow || r > maxRow || c < minCol || c > maxCol) continue;
+            int mask = 0;
+            if (!erase || m.getColor(key, ChestConfigManager.ACTION_TOP) != 0) mask |= ChestConfigManager.ACTION_TOP;
+            if (!erase || m.getColor(key, ChestConfigManager.ACTION_BOTTOM) != 0)
+                mask |= ChestConfigManager.ACTION_BOTTOM;
+            if (!erase || m.getColor(key, ChestConfigManager.ACTION_LEFT) != 0) mask |= ChestConfigManager.ACTION_LEFT;
+            if (!erase || m.getColor(key, ChestConfigManager.ACTION_RIGHT) != 0)
+                mask |= ChestConfigManager.ACTION_RIGHT;
+            drawPreviewEdge(context, key, mask, colorLine);
+        }
+
+        int gridSlotCount = 36;
+        int gridRows = gridSlotCount / 9;
+        if (minRow >= gridRows) return;
+
+        int yTopRaw = minRow * 2;
+        int yBotRaw = maxRow * 2 + 1;
+        if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow) yTopRaw = sRow * 2 + 1;
+        else if (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) yBotRaw = sRow * 2;
+
+        int xLeftRaw = minCol * 2;
+        int xRightRaw = maxCol * 2 + 1;
+        if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol) xLeftRaw = sCol * 2 + 1;
+        else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol) xRightRaw = sCol * 2;
+
+        boolean isOuterIntent = (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                || (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
+                || (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                || (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
+
+        int yTopExp = yTopRaw;
+        int yBotExp = yBotRaw;
+        int xLeftExp = xLeftRaw;
+        int xRightExp = xRightRaw;
+        if (isOuterIntent) {
+            if (yTopRaw % 2 == 0) yTopExp--;
+            if (yBotRaw % 2 != 0) yBotExp++;
+            if (xLeftRaw % 2 == 0) xLeftExp--;
+            if (xRightRaw % 2 != 0) xRightExp++;
+        }
+
+        int maxRows = gridRows;
+        yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
+        yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
+        xLeftExp = Math.max(0, Math.min(17, xLeftExp));
+        xRightExp = Math.max(0, Math.min(17, xRightExp));
+
+        if (geometry.isDraggingRectangle(mouseX, mouseY)) {
+            if (erase) {
+                for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
+                    for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
+                        int slotIdx = r * 9 + c;
+                        if (slotIdx >= gridSlotCount) continue;
+                        int key = slotIdx + off;
+                        int topY = r * 2, botY = r * 2 + 1;
+                        int leftX = c * 2, rightX = c * 2 + 1;
+                        boolean hInside = (leftX >= xLeftExp) && (rightX <= xRightExp);
+                        boolean vInside = (topY >= yTopExp) && (botY <= yBotExp);
+                        int mask = 0;
+                        if (hInside
+                                && topY >= yTopExp
+                                && topY <= yBotExp
+                                && m.getColor(key, ChestConfigManager.ACTION_TOP) != 0)
+                            mask |= ChestConfigManager.ACTION_TOP;
+                        if (hInside
+                                && botY >= yTopExp
+                                && botY <= yBotExp
+                                && m.getColor(key, ChestConfigManager.ACTION_BOTTOM) != 0)
+                            mask |= ChestConfigManager.ACTION_BOTTOM;
+                        if (vInside
+                                && leftX >= xLeftExp
+                                && leftX <= xRightExp
+                                && m.getColor(key, ChestConfigManager.ACTION_LEFT) != 0)
+                            mask |= ChestConfigManager.ACTION_LEFT;
+                        if (vInside
+                                && rightX >= xLeftExp
+                                && rightX <= xRightExp
+                                && m.getColor(key, ChestConfigManager.ACTION_RIGHT) != 0)
+                            mask |= ChestConfigManager.ACTION_RIGHT;
+                        drawPreviewEdge(context, key, mask, colorLine);
+                    }
+                }
+            } else {
+                int fillMinCol = (xLeftExp + 1) / 2;
+                int fillMaxCol = (xRightExp - 1) / 2;
+                int topAction = (yTopExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
+                int topRow = yTopExp / 2;
+                int botAction = (yBotExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
+                int botRow = yBotExp / 2;
+                for (int c = fillMinCol; c <= fillMaxCol; c++) {
+                    if (topRow * 9 + c < gridSlotCount)
+                        drawPreviewEdge(context, topRow * 9 + c + off, topAction, colorLine);
+                    if (botRow * 9 + c < gridSlotCount)
+                        drawPreviewEdge(context, botRow * 9 + c + off, botAction, colorLine);
+                }
+
+                int fillMinRow = (yTopExp + 1) / 2;
+                int fillMaxRow = (yBotExp - 1) / 2;
+                int leftAction = (xLeftExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
+                int leftCol = xLeftExp / 2;
+                int rightAction =
+                        (xRightExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
+                int rightCol = xRightExp / 2;
+                for (int r = fillMinRow; r <= fillMaxRow; r++) {
+                    if (r * 9 + leftCol < gridSlotCount)
+                        drawPreviewEdge(context, r * 9 + leftCol + off, leftAction, colorLine);
+                    if (r * 9 + rightCol < gridSlotCount)
+                        drawPreviewEdge(context, r * 9 + rightCol + off, rightAction, colorLine);
+                }
+            }
+        } else { // 1D Line
+            for (int r = minRow; r <= Math.min(maxRow, gridRows - 1); r++) {
+                for (int c = minCol; c <= maxCol; c++) {
+                    int key = r * 9 + c + off;
+                    if (erase && m.getColor(key, session.currentDragAction) == 0) continue;
+                    drawPreviewEdge(context, key, session.currentDragAction, colorLine);
+                }
+            }
+        }
+    }
+
+    /** Draws the requested edge(s) of a slot (looked up by its offset key) with the given preview color. */
+    private void drawPreviewEdge(DrawContext context, int key, int actionMask, int color) {
+        if (actionMask == 0) return;
+        Slot slot = editor.slotForKey(key);
+        if (slot == null) return;
+        int x = layout.guiX + slot.x;
+        int y = layout.guiY + slot.y;
+        if ((actionMask & ChestConfigManager.ACTION_TOP) != 0) context.fill(x - 1, y - 1, x + 17, y, color);
+        if ((actionMask & ChestConfigManager.ACTION_BOTTOM) != 0) context.fill(x - 1, y + 16, x + 17, y + 17, color);
+        if ((actionMask & ChestConfigManager.ACTION_LEFT) != 0) context.fill(x - 1, y - 1, x, y + 17, color);
+        if ((actionMask & ChestConfigManager.ACTION_RIGHT) != 0) context.fill(x + 16, y - 1, x + 17, y + 17, color);
     }
 }
