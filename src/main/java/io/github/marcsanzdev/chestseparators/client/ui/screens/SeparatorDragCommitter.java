@@ -171,6 +171,8 @@ final class SeparatorDragCommitter {
             if (colorToPaint == 0 && !explicitEraser) return;
 
             if (session.lineToolMode == 0) { // Pencil Area
+                boolean erase = explicitEraser || session.isDragModeErasing;
+
                 int sRow = session.dragStartSlot.getIndex() / 9;
                 int sCol = session.dragStartSlot.getIndex() % 9;
                 int cRow = session.dragCurrentSlot.getIndex() / 9;
@@ -181,111 +183,153 @@ final class SeparatorDragCommitter {
                 int minCol = Math.min(sCol, cCol);
                 int maxCol = Math.max(sCol, cCol);
 
-                int yTopRaw = minRow * 2;
-                int yBotRaw = maxRow * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
-                    yTopRaw = sRow * 2 + 1;
-                else if (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow) yBotRaw = sRow * 2;
-
-                int xLeftRaw = minCol * 2;
-                int xRightRaw = maxCol * 2 + 1;
-                if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
-                    xLeftRaw = sCol * 2 + 1;
-                else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol)
-                    xRightRaw = sCol * 2;
-
-                boolean isOuterIntent = (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
-                        || (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
-                        || (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
-                        || (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
-
-                int yTopExp = yTopRaw;
-                int yBotExp = yBotRaw;
-                int xLeftExp = xLeftRaw;
-                int xRightExp = xRightRaw;
-
-                if (isOuterIntent) {
-                    if (yTopRaw % 2 == 0) yTopExp--;
-                    if (yBotRaw % 2 != 0) yBotExp++;
-                    if (xLeftRaw % 2 == 0) xLeftExp--;
-                    if (xRightRaw % 2 != 0) xRightExp++;
+                // Armor/offhand are isolated (non-grid) cells outside the 9-wide grid: the grid
+                // rederivation below can't address them (their partial row is clamped back into the
+                // main inventory), which is why dragging lines over armor drew nothing on the armor
+                // and painted phantom lines mid-inventory. Give each covered non-grid slot its full
+                // box directly, exactly like the combo/trace tools do.
+                int allLines = ChestConfigManager.ACTION_TOP
+                        | ChestConfigManager.ACTION_BOTTOM
+                        | ChestConfigManager.ACTION_LEFT
+                        | ChestConfigManager.ACTION_RIGHT;
+                for (Slot slot : editor.accessor.getHandler().slots) {
+                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                    if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
+                    int key = ChestSeparatorsEditor.slotKey(slot);
+                    if (!ChestConfigManager.isNonGridInventoryKey(key)) continue;
+                    int r = slot.getIndex() / 9;
+                    int c = slot.getIndex() % 9;
+                    if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
+                        if (erase) {
+                            manager.removeAction(key, allLines);
+                        } else {
+                            manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
+                            manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
+                            manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
+                            manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
+                        }
+                        changeMade = true;
+                    }
                 }
 
-                int maxRows = nsCount / 9;
-                yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
-                yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
-                xLeftExp = Math.max(0, Math.min(17, xLeftExp));
-                xRightExp = Math.max(0, Math.min(17, xRightExp));
+                // Grid rederivation only covers the true 9-wide grid: the player namespace's grid is
+                // its first 36 slots (everything past that is the non-grid row handled above), while
+                // the chest namespace is fully grid. Skip entirely when the drag lies wholly in the
+                // non-grid row.
+                int gridSlotCount = playerNs ? 36 : nsCount;
+                int gridRows = gridSlotCount / 9;
+                if (minRow < gridRows) {
+                    int yTopRaw = minRow * 2;
+                    int yBotRaw = maxRow * 2 + 1;
+                    if (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                        yTopRaw = sRow * 2 + 1;
+                    else if (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
+                        yBotRaw = sRow * 2;
 
-                boolean isRectangle = editor.geometry.isDraggingRectangle(mouseX, mouseY);
-                boolean erase = explicitEraser || session.isDragModeErasing;
+                    int xLeftRaw = minCol * 2;
+                    int xRightRaw = maxCol * 2 + 1;
+                    if (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                        xLeftRaw = sCol * 2 + 1;
+                    else if (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol)
+                        xRightRaw = sCol * 2;
 
-                if (isRectangle) {
-                    if (erase) {
-                        for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
-                            for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
-                                int slotIdx = r * 9 + c;
-                                if (slotIdx >= nsCount) continue;
-                                int key = slotIdx + off;
+                    boolean isOuterIntent =
+                            (session.currentDragAction == ChestConfigManager.ACTION_BOTTOM && cRow > sRow)
+                                    || (session.currentDragAction == ChestConfigManager.ACTION_TOP && cRow < sRow)
+                                    || (session.currentDragAction == ChestConfigManager.ACTION_RIGHT && cCol > sCol)
+                                    || (session.currentDragAction == ChestConfigManager.ACTION_LEFT && cCol < sCol);
 
-                                int topY = r * 2, botY = r * 2 + 1;
-                                int leftX = c * 2, rightX = c * 2 + 1;
+                    int yTopExp = yTopRaw;
+                    int yBotExp = yBotRaw;
+                    int xLeftExp = xLeftRaw;
+                    int xRightExp = xRightRaw;
 
-                                boolean hInside = (leftX >= xLeftExp) && (rightX <= xRightExp);
-                                boolean vInside = (topY >= yTopExp) && (botY <= yBotExp);
+                    if (isOuterIntent) {
+                        if (yTopRaw % 2 == 0) yTopExp--;
+                        if (yBotRaw % 2 != 0) yBotExp++;
+                        if (xLeftRaw % 2 == 0) xLeftExp--;
+                        if (xRightRaw % 2 != 0) xRightExp++;
+                    }
 
-                                if (hInside && topY >= yTopExp && topY <= yBotExp)
-                                    manager.removeAction(key, ChestConfigManager.ACTION_TOP);
-                                if (hInside && botY >= yTopExp && botY <= yBotExp)
-                                    manager.removeAction(key, ChestConfigManager.ACTION_BOTTOM);
-                                if (vInside && leftX >= xLeftExp && leftX <= xRightExp)
-                                    manager.removeAction(key, ChestConfigManager.ACTION_LEFT);
-                                if (vInside && rightX >= xLeftExp && rightX <= xRightExp)
-                                    manager.removeAction(key, ChestConfigManager.ACTION_RIGHT);
+                    int maxRows = gridRows;
+                    yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
+                    yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
+                    xLeftExp = Math.max(0, Math.min(17, xLeftExp));
+                    xRightExp = Math.max(0, Math.min(17, xRightExp));
+
+                    boolean isRectangle = editor.geometry.isDraggingRectangle(mouseX, mouseY);
+
+                    if (isRectangle) {
+                        if (erase) {
+                            for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
+                                for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
+                                    int slotIdx = r * 9 + c;
+                                    if (slotIdx >= gridSlotCount) continue;
+                                    int key = slotIdx + off;
+
+                                    int topY = r * 2, botY = r * 2 + 1;
+                                    int leftX = c * 2, rightX = c * 2 + 1;
+
+                                    boolean hInside = (leftX >= xLeftExp) && (rightX <= xRightExp);
+                                    boolean vInside = (topY >= yTopExp) && (botY <= yBotExp);
+
+                                    if (hInside && topY >= yTopExp && topY <= yBotExp)
+                                        manager.removeAction(key, ChestConfigManager.ACTION_TOP);
+                                    if (hInside && botY >= yTopExp && botY <= yBotExp)
+                                        manager.removeAction(key, ChestConfigManager.ACTION_BOTTOM);
+                                    if (vInside && leftX >= xLeftExp && leftX <= xRightExp)
+                                        manager.removeAction(key, ChestConfigManager.ACTION_LEFT);
+                                    if (vInside && rightX >= xLeftExp && rightX <= xRightExp)
+                                        manager.removeAction(key, ChestConfigManager.ACTION_RIGHT);
+                                }
+                            }
+                        } else {
+                            int fillMinCol = (xLeftExp + 1) / 2;
+                            int fillMaxCol = (xRightExp - 1) / 2;
+                            int topAction = (yTopExp % 2 == 0)
+                                    ? ChestConfigManager.ACTION_TOP
+                                    : ChestConfigManager.ACTION_BOTTOM;
+                            int topRow = yTopExp / 2;
+                            int botAction = (yBotExp % 2 == 0)
+                                    ? ChestConfigManager.ACTION_TOP
+                                    : ChestConfigManager.ACTION_BOTTOM;
+                            int botRow = yBotExp / 2;
+
+                            for (int c = fillMinCol; c <= fillMaxCol; c++) {
+                                if (topRow * 9 + c < gridSlotCount)
+                                    manager.paintAction(topRow * 9 + c + off, topAction, colorToPaint);
+                                if (botRow * 9 + c < gridSlotCount)
+                                    manager.paintAction(botRow * 9 + c + off, botAction, colorToPaint);
+                            }
+
+                            int fillMinRow = (yTopExp + 1) / 2;
+                            int fillMaxRow = (yBotExp - 1) / 2;
+                            int leftAction = (xLeftExp % 2 == 0)
+                                    ? ChestConfigManager.ACTION_LEFT
+                                    : ChestConfigManager.ACTION_RIGHT;
+                            int leftCol = xLeftExp / 2;
+                            int rightAction = (xRightExp % 2 == 0)
+                                    ? ChestConfigManager.ACTION_LEFT
+                                    : ChestConfigManager.ACTION_RIGHT;
+                            int rightCol = xRightExp / 2;
+
+                            for (int r = fillMinRow; r <= fillMaxRow; r++) {
+                                if (r * 9 + leftCol < gridSlotCount)
+                                    manager.paintAction(r * 9 + leftCol + off, leftAction, colorToPaint);
+                                if (r * 9 + rightCol < gridSlotCount)
+                                    manager.paintAction(r * 9 + rightCol + off, rightAction, colorToPaint);
                             }
                         }
-                    } else {
-                        int fillMinCol = (xLeftExp + 1) / 2;
-                        int fillMaxCol = (xRightExp - 1) / 2;
-                        int topAction =
-                                (yTopExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
-                        int topRow = yTopExp / 2;
-                        int botAction =
-                                (yBotExp % 2 == 0) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
-                        int botRow = yBotExp / 2;
-
-                        for (int c = fillMinCol; c <= fillMaxCol; c++) {
-                            if (topRow * 9 + c < nsCount)
-                                manager.paintAction(topRow * 9 + c + off, topAction, colorToPaint);
-                            if (botRow * 9 + c < nsCount)
-                                manager.paintAction(botRow * 9 + c + off, botAction, colorToPaint);
+                        changeMade = true;
+                    } else { // 1D Line
+                        for (int r = minRow; r <= Math.min(maxRow, gridRows - 1); r++) {
+                            for (int c = minCol; c <= maxCol; c++) {
+                                if (erase) manager.removeAction(r * 9 + c + off, session.currentDragAction);
+                                else manager.paintAction(r * 9 + c + off, session.currentDragAction, colorToPaint);
+                            }
                         }
-
-                        int fillMinRow = (yTopExp + 1) / 2;
-                        int fillMaxRow = (yBotExp - 1) / 2;
-                        int leftAction =
-                                (xLeftExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
-                        int leftCol = xLeftExp / 2;
-                        int rightAction =
-                                (xRightExp % 2 == 0) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
-                        int rightCol = xRightExp / 2;
-
-                        for (int r = fillMinRow; r <= fillMaxRow; r++) {
-                            if (r * 9 + leftCol < nsCount)
-                                manager.paintAction(r * 9 + leftCol + off, leftAction, colorToPaint);
-                            if (r * 9 + rightCol < nsCount)
-                                manager.paintAction(r * 9 + rightCol + off, rightAction, colorToPaint);
-                        }
+                        changeMade = true;
                     }
-                    changeMade = true;
-                } else { // 1D Line
-                    for (int r = minRow; r <= maxRow; r++) {
-                        for (int c = minCol; c <= maxCol; c++) {
-                            if (erase) manager.removeAction(r * 9 + c + off, session.currentDragAction);
-                            else manager.paintAction(r * 9 + c + off, session.currentDragAction, colorToPaint);
-                        }
-                    }
-                    changeMade = true;
                 }
             } else { // Pencil Trace
                 for (String step : session.tracePath) {
