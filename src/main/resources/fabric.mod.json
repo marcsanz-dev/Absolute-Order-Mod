@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "chestseparators",
   "version": "${version}",
-  "name": "ChestSeparators",
-  "description": "",
-  "authors": [],
+  "name": "Absolute Order: Custom Chest Auto-Sorter",
+  "description": "Achieve fast inventory clearing with custom auto-deposit. The game finally knows exactly what you really want and where you want it.",
+  "authors": ["marcsanz-dev"],
   "contact": {},
   "license": "All-Rights-Reserved",
   "icon": "assets/chestseparators/icon.png",
@@ -14,6 +14,14 @@
       "io.github.marcsanzdev.chestseparators.ChestSeparatorsClient"
     ],
     "main": [
+      "io.github.marcsanzdev.chestseparators.ChestSeparatorsMain"
+    ],
+    "modmenu": [ "io.github.marcsanzdev.chestseparators.integration.ModMenuIntegration" ],
+    "emi": [
+      "io.github.marcsanzdev.chestseparators.compat.ChestSeparatorsEmiPlugin"
+    ],
+    "rei_client": [
+      "io.github.marcsanzdev.chestseparators.compat.ChestSeparatorsReiPlugin"
     ]
   },
   "mixins": [
