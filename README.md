@@ -159,4 +159,4 @@ If you enjoy my mods, consider supporting me on Ko-fi. It helps me spend more ti
 - Request a custom feature, tweak or a whole new mod
 - Become a monthly member for priority requests, a say in what I build next, your name in the mod credits, and access to my Discord community
 
-Support me here: https://ko-fi.com/marcsanz_dev
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/marcsanz_dev)
