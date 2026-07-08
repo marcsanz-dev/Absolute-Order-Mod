@@ -186,6 +186,30 @@
 - **T107 ✅** El slot seleccionado (índice 4) muestra el recuadro blanco vanilla INTACTO, sin
   fondo ni líneas encima ni de los vecinos. Exactamente el comportamiento que arreglamos.
 
+### Sección L + N — Filtros y Depósito (DETERMINISTA vía keybind + /data) ✅✅✅✅✅
+Setup: creé un filtro por la UI (whitelist) en el slot 0 del cofre de test permitiendo solo
+`oak_log` (Allowed:1, Blocked:1389), guardado con Save.
+- **T77 ✅** Crear filtro por UI (Area Select → seleccionar slot → Edit Filter → añadir item del
+  grid → Save): funciona. El filtro se crea, guarda y aplica al handler.
+- **T95 ✅ (deposit-filter `S`)** Con oak_log×10 + dirt×16 en el jugador y el cofre abierto, pulsar
+  `S` depositó **oak_log en el slot 0 filtrado** y dejó el dirt en el jugador.
+- **T79 ✅ (bloqueo)** El dirt (no whitelisted) NO entró en el cofre por `S` (16 siguen en player).
+- **T80 ✅ (permitido)** El oak_log (whitelisted) SÍ entró (0 en player, 10 en slot 0 del cofre).
+- **T96 ✅ (deposit-all `D`)** deposita el dirt en el **slot 1 (sin filtro)**, respetando el filtro
+  del slot 0 (el dirt NO va al slot filtrado). `/data`: `[{oak_log,Slot:0},{dirt,Slot:1}]`.
+- **Verificación:** todo con `execute_command /data get block` y `clear @p <item> 0` (cuenta) —
+  100% determinista, sin depender de capturas.
+
+### 🔴 HALLAZGO del harness: click_widget NO dispara interacción de slot de contenedor
+- `click_widget` sobre un slot de contenedor solo hace **hover** (muestra tooltip) pero no ejecuta
+  la interacción vanilla de slot (pickup / quickMove / shift-click). Prueba: clic normal sobre
+  oak_log muestra tooltip pero no lo coge al cursor; shift-click no hace quickMove.
+- **Impacto:** T81 (shift-click a slot filtrado) y mover items a mano no son accionables por slot.
+- **Workaround usado:** testear el filtro por el **depósito** (S/D), que respeta los filtros y se
+  dispara por keybind. Cubre T79/T80/T95/T96 de forma robusta.
+- **Nota para la extensión (opcional):** una tool `click_slot`/`shift_click_slot` que llame a
+  `HandledScreen.onMouseClick`/`interactionManager.clickSlot` permitiría T81 y tests de inventario.
+
 ---
 ## RESUMEN DE LA PASADA (checkpoint)
 **Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
