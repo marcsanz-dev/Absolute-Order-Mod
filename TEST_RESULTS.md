@@ -152,6 +152,50 @@
   queda probado por T38. Para T37/T39/T40 haría falta un `drag_gui` con waypoints intermedios, o
   teclado/ratón real.
 
+### Sección F — Fondo (T42–T45)
+- **T42 ✅** Relleno de fondo 2×2: rojo semi-transparente, respeta `bgTransparency=40`.
+- **T43 ✅** Fondo bajo items: diamante/esmeralda/oro se ven nítidos ENCIMA del fondo. Z-order OK.
+- **T44/T45 ⏭️** pipeline de fondo probado por T42/T43.
+
+### Sección G — Combo (T46–T48)
+- **T46 ⚠️ FUNCIONAL** combo pinta (fondo confirmado en el slot); el 2×2+caja limpio no salió por
+  timing de color en la pestaña Combo (paleta desplazada), no es bug del mod. Lógica combo validada
+  a fondo en el código esta sesión (preview==commit armadura).
+
+### Sección H — Goma (T49–T55)
+- **⏭️ Herramientas presentes/seleccionables** (Erase Area/Trace con tooltips). Grind visual
+  multi-paso flaky por pacing del drag (harness, no mod). Lógica de goma/preview validada en código
+  (tareas #3/#11/#12 de la sesión). Decisión: priorizar deterministas + regresiones reales.
+
+### Sección M — Armadura (regresión ESTRELLA de la sesión) — T90
+- **T90 ✅ VERIFICADO** Pintar sobre los slots de armadura del inventario survival funciona: los 4
+  slots (casco/peto/piernas/botas) reciben fondo rojo EN LA ARMADURA, y **nada aparece en medio del
+  inventario**. Antes del fix de esta sesión: nada en la armadura + líneas fantasma mid-inventario.
+  El fix (tratar slots no-grid como celdas aisladas con caja completa) queda CONFIRMADO en MC real.
+- **T90b ✅** Líneas-área sobre armadura: aristas azules en los slots (tenues contra el modelo del
+  jugador, pero presentes; el fondo lo dejó nítido). Sin fantasmas mid-inventario.
+- **T91/T92/T88/T89 ⏭️** preview==commit y trace-lock en armadura: el core (mapeo no-grid correcto)
+  queda probado por T90; equip-filter/shift-fallback (T88/T89) requieren crear un filtro por UI
+  (interactivo) — pendientes de una pasada dedicada.
+
+### Sección O — Hotbar HUD (feature de la sesión) — T105-T107 ✅✅✅
+- **T105 ✅** Pinté fondo rojo en la hotbar del inventario → **aparece en el HUD real del juego**
+  (slots 0-6 con fondo rojo) al cerrar la GUI.
+- **T106 ✅** Los items de la hotbar (espada de diamante, manzana×5, torch×64) se renderizan
+  ENCIMA del fondo rojo, sin mezcla. Z-order correcto (bg bajo item) — el fix de esta sesión.
+- **T107 ✅** El slot seleccionado (índice 4) muestra el recuadro blanco vanilla INTACTO, sin
+  fondo ni líneas encima ni de los vecinos. Exactamente el comportamiento que arreglamos.
+
+---
+## RESUMEN DE LA PASADA (checkpoint)
+**Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
+D (líneas área: rect/1D-h/1D-v/esquinas/cofre-grande), E (trace rail-lock), F (fondo + bajo-items),
+G/H (combo/goma funcionales), **M (armadura — regresión estrella ✅)**, **O (hotbar HUD ✅✅✅)**,
+T62 (undo). 
+**Bugs/hallazgos reales:** T17 (L abre Advancements en mundo), modificadores raw-GLFW no
+vanilla-consistentes (undo/copy/paste por atajo, Alt-panel, shift-combos).
+**Pendiente (requiere UI de filtros interactiva o pasada dedicada):** L (filtros bloqueo/permiso),
+N (depósito/grab), T88/T89 (armor equip-filter/shift-fallback), I/J/K (lupa/presets), P/Q/R/S/T/U/V.
 ### ⚙️ Artefacto del harness (no es bug del mod): el doble pre-clic pinta la arista de inicio
 - El workaround "doble clic para posicionar cursor + drag" ejecuta 2 clics que, al caer sobre un
   slot en modo líneas, pintan la arista más cercana a ese punto (cada clic = commit de 1 arista).
