@@ -133,6 +133,24 @@
   en el inicio es artefacto del doble pre-clic del harness, no del mod — mitigado pre-clicando
   alineado con la arista objetivo.)
 - **T62 ✅ (Undo por botón)** verificado arriba.
+- **T33 ✅** Orden de sobreescritura en esquinas (regresión sesión): cruz roja+azul, la línea azul
+  (posterior) gana el cruce, sin doble-brillo. Comportamiento correcto.
+- **T35 ✅** Cofre doble (Large Chest, 54 slots): abre, editor renderiza (paleta y panel derecho
+  reposicionados), rectángulo grande multi-fila (cols 0-6 × filas 1-4) limpio. Pintado en 6 filas OK.
+- **T32/T34/T36 ⏭️** (outer-intent, bordes de grid, preview==commit) — variaciones del mismo
+  pipeline ya probado (rectángulo/1D-h/1D-v/multi-fila). No re-capturadas individualmente por
+  presupuesto; el código de preview==commit ya se validó en el fix de esta sesión (armadura).
+
+### Sección E — Líneas trace (T37–T41)
+- **T38 ✅** Rail lock: arrastre recto horizontal con la herramienta Draw Trace pinta una recta
+  limpia (~6 columnas) SIN sangrado vertical. El bloqueo de eje funciona.
+- **T37/T39/T40/T41 ⏭️ Limitación del harness (no del mod):** el trace conectado en L, la
+  transición de eje y el rollback por retroceso requieren arrastres **multi-segmento / con giro**;
+  `drag_gui` interpola en LÍNEA RECTA de inicio a fin, así que no expresa un trazo con esquina en
+  una sola llamada. Encadenar `drag_gui` no sirve porque cada uno es un press-release independiente
+  (el trace se commitea al soltar). El core del trace (rail lock, pintado por celda, commit, save)
+  queda probado por T38. Para T37/T39/T40 haría falta un `drag_gui` con waypoints intermedios, o
+  teclado/ratón real.
 
 ### ⚙️ Artefacto del harness (no es bug del mod): el doble pre-clic pinta la arista de inicio
 - El workaround "doble clic para posicionar cursor + drag" ejecuta 2 clics que, al caer sobre un
