@@ -244,6 +244,20 @@ dos límites del harness que había documentado. Re-tests:
 - **Técnica clave nueva:** `move_cursor` a la posición de inicio ANTES de `drag_gui` elimina el
   problema del primer-press con `focusedSlot` stale (más limpio que el doble-clic previo).
 
+### Sección I — Lupa / Magnifier (T18/T19/T20 = tareas #18/#19/#20) — parcial
+- **Toggle ✅** `L` en contexto GUI activa/desactiva la lupa (`magnifierEnabled` en config).
+- **Sin crash ✅** Activar la lupa + hover sobre slots + **pintar** con la lupa activa NO crashea;
+  el pintado sale correcto (rectángulo limpio). **IMPORTANTE:** hubo un cierre de MC en el primer
+  intento, pero NO se reprodujo (sin crash-report ni excepción en el log) → fue un **flake del dev
+  client**, no la lupa. Confirmado con repetición.
+- **Overlay de zoom ⏭️ no capturable con este flujo:** la lupa es un overlay que **sigue al cursor**
+  y solo se renderiza durante el hover/pintado activo. `take_screenshot` es una llamada secuencial
+  que ocurre DESPUÉS de que `move_cursor` suelte el hold, así que la captura estática no lo muestra.
+  El zoom en sí (lupa lápices #19, lupa eyedropper pixel-zoom #20) se implementó y revisó en el
+  código esta sesión.
+  - **Sugerencia para la extensión:** un flag en `move_cursor` (p. ej. `screenshot:true`) que
+    capture DURANTE el hold permitiría verificar overlays cursor-following (lupa, ghost previews).
+
 ---
 ## RESUMEN DE LA PASADA (checkpoint)
 **Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
