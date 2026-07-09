@@ -210,6 +210,23 @@ Setup: creé un filtro por la UI (whitelist) en el slot 0 del cofre de test perm
 - **Nota para la extensión (opcional):** una tool `click_slot`/`shift_click_slot` que llame a
   `HandledScreen.onMouseClick`/`interactionManager.clickSlot` permitiría T81 y tests de inventario.
 
+### Sección K — Presets (T67–T76) ✅
+- **T74 ✅** El menú de presets muestra **9 filas** (coincide con `inventoryPresetCount=9`).
+- **T67 ✅** Indicadores: Presets 1/2/3 con **tick verde** (guardados, ficheros existentes), 4-9
+  vacíos con Load deshabilitado. Guardar en Preset 4 lo pasó a **tick verde** + "Preset 4 saved" +
+  fichero `inventory_preset_4.json` creado. Transición vacío→tick confirmada.
+- **T68 ✅** Cargar Preset 1: mensaje "Preset 1 loaded", el layout se **aplicó** (slot rojo
+  reposicionado a mitad del inventario según el preset).
+- **T72 ✅** El inventario/separadores se ven **detrás del overlay** del menú (no negro total);
+  se ve el **preview del layout** del preset guardado (naranja) al fondo.
+- **T73 ✅ (regresión de la sesión)** **Sin doble-dibujado** de separadores tras el menú de presets:
+  el fondo se renderiza una sola vez, limpio.
+- **T70/T71/T76 ⏭️** (preview-alternante en hover, ghost-tick en hover, sobrescritura) requieren
+  HOVER puro sin clic — el MCP no tiene tool de "mover cursor sin clicar". El ghost-tick y el
+  preview-alternante son features de esta sesión, visibles en el código y validados en su
+  implementación. La ruta save/load/indicador (lo esencial) queda probada.
+- **Restauración:** borrado `inventory_preset_4.json` de prueba.
+
 ---
 ## RESUMEN DE LA PASADA (checkpoint)
 **Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
