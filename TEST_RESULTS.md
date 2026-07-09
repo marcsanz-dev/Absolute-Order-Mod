@@ -227,6 +227,23 @@ Setup: creé un filtro por la UI (whitelist) en el slot 0 del cofre de test perm
   implementación. La ruta save/load/indicador (lo esencial) queda probada.
 - **Restauración:** borrado `inventory_preset_4.json` de prueba.
 
+### Desbloqueados por `move_cursor` (hover puro) y `drag_gui`+`waypoints` (extensión mejorada)
+La extensión añadió `move_cursor` (hover sin pulsar) y `waypoints` en `drag_gui`, resolviendo los
+dos límites del harness que había documentado. Re-tests:
+- **T71 ✅ (ghost-tick en hover de Save)** Hover sobre Save de un preset VACÍO → aparece el
+  **tick fantasma** (semitransparente) + Save resaltado + preview del layout. Hover sobre Save de
+  un preset GUARDADO → tick **atenuado** (señal de sobrescritura). Al mover el cursor, el ghost
+  desaparece (confirma que es efecto de hover en vivo). Feature de esta sesión, VERIFICADA.
+- **T70 ✅ (preview en hover de Load)** Hover sobre Load de un preset guardado → el **preview del
+  layout** (naranja) se pinta sobre los slots reales del inventario detrás del menú. (La fase de
+  filtros no se distingue porque el preset no tenía filtros → fase en blanco.)
+- **T37 ✅ (trace L-shape multi-segmento)** Con `drag_gui`+`waypoints`
+  `[{142,72},{214,72},{214,104}]` (+ `move_cursor` para pre-posicionar y evitar el primer-press
+  stale) → se pinta una **línea roja en L** conectada: tramo horizontal que gira a vertical. El
+  trace conectado, antes imposible con drag lineal, ahora funciona.
+- **Técnica clave nueva:** `move_cursor` a la posición de inicio ANTES de `drag_gui` elimina el
+  problema del primer-press con `focusedSlot` stale (más limpio que el doble-clic previo).
+
 ---
 ## RESUMEN DE LA PASADA (checkpoint)
 **Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
