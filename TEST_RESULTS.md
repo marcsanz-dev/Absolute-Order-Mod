@@ -258,6 +258,31 @@ dos límites del harness que había documentado. Re-tests:
   - **Sugerencia para la extensión:** un flag en `move_cursor` (p. ej. `screenshot:true`) que
     capture DURANTE el hold permitiría verificar overlays cursor-following (lupa, ghost previews).
 
+### Sección J — Copy/Paste/Undo/Redo (T60–T66) — parcial + hallazgo importante
+- **Undo/Redo ✅ (T62)** El botón "Undo Action" (y "Redo") funciona: lo usé decenas de veces a lo
+  largo de TODA la batería para limpiar cofres entre tests. Verificado exhaustivamente.
+- **Copy ✅ (parcial)** `Ctrl+C` (con `modifiers:["ctrl"]`) habilita el botón "Paste Layout" (antes
+  gris) → el copy al clipboard funciona. **Los atajos copy/paste requieren Ctrl** (no la tecla sola;
+  la `C`/`V` a secas no hacen nada — confirmado con el botón Paste que seguía deshabilitado).
+- **T60/T61 (paste a otro cofre) ⚠️ NO VERIFICADO LIMPIAMENTE — artefacto del harness, no bug:**
+  Descubrí que abrir un contenedor con **`set_use`** (mi helper `open_chest`) NO dispara el mixin
+  `ChestInteractionMixin` del mod (que captura `ChestPosStorage.lastClickedPos` en el `interactBlock`
+  del cliente). Consecuencia: al abrir el cofre B (-3) con set_use, el mod retenía la posición
+  ANTERIOR (A, -8), así que TODO lo que pintaba/pegaba en "B" se guardaba en el `.dat` de A.
+  **Diagnóstico definitivo:** pinté una línea en el cofre abierto por `open_chest(-3)` → se modificó
+  `minecraft_overworld_-8_119_-10.dat`, NO el de -3. Confirma la posición stale.
+  - **RESOLUCIÓN (usar en la próxima pasada):** abrir contenedores con **`interact_block`** (que la
+    extensión ya enruta por el interaction manager del cliente y SÍ dispara el mixin), no con
+    `set_use`. Añadido helper `open_chest_ib` a `lib.sh`. Con eso, copy→paste cross-cofre debería
+    verificarse limpiamente (cada cofre con su `.dat` propio).
+  - No es un bug de ChestSeparators: en juego real el clic-derecho siempre dispara el mixin.
+
+### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
+El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
+crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
+matar/relanzar + ruta en OneDrive + carga de capturas. Recomendación: **una sola instancia estable
+reutilizada** (evitar relanzar), y si es posible mover el proyecto fuera de OneDrive.
+
 ---
 ## RESUMEN DE LA PASADA (checkpoint)
 **Verificado en MC 1.21.11 real:** Secciones 0,A,B (harness/arranque/keybinds), C (editor nav),
