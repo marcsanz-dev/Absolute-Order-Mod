@@ -304,13 +304,48 @@ dos límites del harness que había documentado. Re-tests:
   - `lineTransparency:100` → líneas opacas.
   - `inventoryPresetCount:9` → 9 filas de presets (T74).
   - `showDepositButton` → togglea con `G` y persiste (T16).
-- **⏭️ Pantalla de config ModMenu (sliders/toggles/rebind) NO ALCANZABLE:** es una pantalla
-  cloth-config accesible SOLO por ModMenu (`getModConfigScreenFactory`), no desde el editor.
-  **Limitación del harness:** `key_action escape` en el mundo devuelve `context:"world"` y NO abre
-  el menú de pausa (GameMenuScreen) — el escape-en-mundo no es un keybind, es vanilla. Sin pausa no
-  se llega al botón "Mods" → ni a la config del mod → ni a "Save and Quit to Title".
-  - **Sugerencia para la extensión:** una tool para abrir el menú de pausa / volver al título
-    (o `open_screen "pause"/"title"`) desbloquearía ModMenu-config, rebinds y navegación de menús.
+- **⏭️ Pantalla de config ModMenu (sliders/toggles/rebind) — estado inicial: NO ALCANZABLE** (ver
+  actualización P-UI abajo tras añadir `open_screen`).
+
+### Sección P-UI — RE-EJECUTADA con `open_screen` (extensión mejorada 12 jul) — ✅ mayormente desbloqueada
+Con las tools nuevas de la extensión (`open_screen`, `world_ready`), verificado en MC real:
+- **T113 ✅ `open_screen pause`** → abre `GameMenuScreen` con sus 9 widgets enumerables
+  (Back to Game, Advancements, Statistics, **Mods**, Report Bugs, Options…, Open to LAN,
+  Save and Quit to Title). Los botones estándar responden a `click_widget` ("Done" cerró la
+  ModsScreen con `screen_changed:true`).
+- **T114 ✅ `open_screen controls` → Key Binds:** navegación `controls` → `ControlsOptionsScreen`
+  → clic "Key Binds…" → `KeybindsScreen`. Los **10 keybinds del mod están registrados y bindeados**
+  (verificado además de forma determinista en `options.txt`):
+  `toggle_preview_panel:O`, `show_panel_modifier:Left Alt`, `toggle_edit_buttons:H`,
+  `toggle_deposit_button:G`, `toggle_magnifier:L`, `deposit_filter:S`, `deposit_all:D`,
+  `deposit_junk:C`, `grab:V`, `auto_deposit:unbound`. → **son rebindables desde la UI vanilla.**
+- **🟡 HALLAZGO de harness (NO bug del mod): la pantalla cloth-config del mod sigue sin alcanzarse.**
+  `open_screen mod_config` abre la **lista** `ModsScreen`, y ahí ChestSeparators aparece como
+  *"Absolute Order: Custom Chests" v1.3.1 by marcsanz-dev* (seleccionable por búsqueda). PERO el
+  último salto falla: `click_widget` **no dispara los widgets custom de ModMenu** — ni el botón
+  `ModMenuButtonWidget "Mods"`, ni la rueda de config `LegacyTexturedButtonWidget`, ni las filas
+  del `ModListWidget` (probado clic por índice, por coordenada centrada, hover+clic y doble-clic;
+  todos `clicked:true` pero `screen_changed:false`, sin excepción en el log). Los botones **estándar**
+  sí funcionan (Done, Key Binds). El cloth-config del mod es de widgets estándar (sería clicable),
+  pero se construye **solo** vía `ModMenuIntegration.getModConfigScreenFactory()` (no hay entrada
+  in-game). → El único bloqueo restante es la incompatibilidad de `click_widget` con los botones
+  texturizados de ModMenu.
+  - **Sugerencia concreta para la extensión:** que `open_screen mod_config` **invoque directamente
+    el `ConfigScreenFactory` del mod** (vía el entrypoint ModMenuApi por reflexión) en lugar de abrir
+    la lista de mods. Eso saltaría el botón de ModMenu y dejaría el cloth-config 100% testeable.
+
+### Sección Q — Persistencia entre recargas de mundo — ✅ PASSED (con `disconnect_to_title`/`open_world`)
+Ciclo de recarga completo, determinista + [SHOT]:
+1. Cofre doble con separadores guardados en `-19,119,-10` → abierto → [SHOT ANTES]: contorno naranja
+   en L en la zona superior-izquierda + backgrounds tan del inventario.
+2. **`disconnect_to_title`** → `TitleScreen` (`disconnected:true`); `world_ready` confirma
+   `ready:false, level_loaded:false` (fuera del mundo de verdad).
+3. **`open_world "New World"`** → bloquea hasta `ready:true, player_present:true`; el jugador reaparece
+   en su posición previa (persistió).
+4. Reabrir el MISMO cofre → **[SHOT DESPUÉS] idéntico al de ANTES**: mismos separadores naranjas,
+   mismos backgrounds.
+→ Tanto el bloque (world-save) como la **config cliente `.dat`** sobreviven a la recarga completa.
+`open_world` y `disconnect_to_title` funcionan y **bloquean hasta estado listo** como documenta la guía.
 
 ### Sección R — Contenedores (T118–T136) — ✅ COMPLETA (deterministic screen-class check)
 - **T118 ✅** Cofre simple (27). **T119 ✅** Cofre doble (Large Chest, 54, sección D).
