@@ -418,18 +418,47 @@ silenciosamente los separadores del barril anterior.
 - **Severidad:** baja (no rompe render ni corrompe; solo acumula archivos y puede sorprender por
   herencia de layout en posiciones reutilizadas). Decisión de diseño para el autor.
 
-**Bloqueado (no automatizable con el harness):**
-- **T (Multiplayer)** — requiere servidor dedicado + 2 clientes simultáneos con telemetría.
-- **Q (reload de mundo)** — reabrir el mundo con `open_world`/`quit_game` es viable pero de alto
-  riesgo dada la inestabilidad del dev client (4 cierres). No ejecutado para no perder la sesión.
-- **P-UI (pantalla ModMenu / rebinds)** — sin tool para abrir el menú de pausa (`escape` en mundo es
-  vanilla y no lo abre). Requiere una tool `open_screen` en la extensión.
+### Sección T — Multiplayer (2 jugadores, LAN) — ✅ PASSED (extensión + build.gradle con `runClient2`)
+Ejecutada con la extensión mejorada (`open_to_lan`, `connect_server`) + una tarea `runClient2` añadida
+al `build.gradle` (runDir `run/client2`, usuario `Bot2`, `-Dmcclaude.port=8723`, jar mcclaude copiado
+a `run/client2/mods`). **Dos clientes MC reales simultáneos**, controlados por sus puertos MCP
+(A=8722 host, B=8723 cliente).
+- **T-infra ✅:** A `open_to_lan` → `{published:true, online_mode:false, port:60129}`; B
+  `connect_server 127.0.0.1:60129` → bloquea hasta `ready:true`; `/list` en el host confirma
+  **2 jugadores: Player77 (A) + Bot2 (B)**. (Las tools *de servidor* solo van en A; en B se usan las
+  *de cliente*, como documenta la guía.)
+- **T-cliente ✅:** al abrir el cofre en **B**, B **renderiza la toolbar del editor y el panel de
+  filtros** ("No Filter / Items:0 / Hover a group…") → el mod cliente está activo en el 2º cliente.
+  El cofre se ve **sin separadores** en B (correcto: las líneas/backgrounds son config LOCAL por
+  cliente, no se sincronizan por red).
+- **T-ENFORCEMENT ✅ (el test estrella):** A (host) fijó un whitelist server-authoritative en el
+  cofre `-15,119,-10` slot 0 = **solo `minecraft:diamond`** (vía `data merge block`, que reaplica el
+  NBT al block entity → `readData` actualiza el mapa en memoria). Bot2 tenía 5 diamantes + 5 tierra.
+  **B pulsó `S` (deposit_filter)** con el cofre abierto (`context:"gui"`, manejado en B):
+  - Cofre ANTES: `[]` (vacío) → DESPUÉS: **`{Slot:0, diamond×5}`**.
+  - Inventario de Bot2 DESPUÉS: **solo queda la tierra** (los diamantes se depositaron).
+  → **Cadena cross-player completa:** A configura el whitelist → el servidor lo envía a **otro**
+  jugador (B) al abrir (`WhitelistPayload`, `LootableContainerBlockEntityMixin.onOpenMenu`) → el
+  deposit de B respeta el whitelist: deposita el item permitido (diamante→slot0) y **rechaza** el no
+  permitido (la tierra se queda). Enforcement server-authoritative sobre un 2º jugador **confirmado**.
+
+**Nota de arquitectura (confirmada en vivo):** separadores/backgrounds = **config local por cliente**
+(no viajan por red); whitelists/filtros = **server-authoritative** y se sincronizan a cada cliente que
+abre el contenedor. Por eso el único comportamiento "de 2 jugadores" real es el del whitelist, y
+**funciona**.
 
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
-El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
-crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
-matar/relanzar + ruta en OneDrive + carga de capturas. Recomendación: **una sola instancia estable
-reutilizada** (evitar relanzar), y si es posible mover el proyecto fuera de OneDrive.
+El dev client (`runClient`) se cerró/colgó **5 veces** durante la sesión, siempre **sin excepción, sin
+crash-report, sin OOM** — muere en la carga del mundo o de recursos. El 5º cuelgue (al relanzar para
+P-UI/Q/T) fue al lanzarlo **minimizado/en segundo plano**: se congeló construyendo el atlas de
+fuentes. **Fix confirmado:** relanzar con **ventana de consola normal (visible)** — así arrancó
+estable y aguantó P-UI + Q + T (incluidos **2 clientes simultáneos**). Recomendación: reutilizar una
+instancia con ventana visible, evitar minimizar/segundo plano, y si es posible mover el proyecto fuera
+de OneDrive.
+
+> Nota de lanzamiento (Windows): el `.bat` fallaba con "gradlew.bat no se reconoce" porque el sistema
+> tiene `NoDefaultCurrentDirectoryInExePath` (cmd no busca ejecutables en el cwd). Solución: invocar
+> **`.\gradlew.bat`** con ruta explícita, no `gradlew.bat` a secas.
 
 ---
 ## RESUMEN DE LA PASADA (checkpoint)

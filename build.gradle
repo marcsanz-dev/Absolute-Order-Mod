@@ -21,6 +21,13 @@ loom {
             runDir "run/client"
             property "mcclaude.debugEvents", "true"
         }
+        client2 {
+            client()
+            name = "Minecraft Client 2"
+            runDir "run/client2"
+            programArgs "--username", "Bot2"
+            property "mcclaude.port", "8723"
+        }
         server {
             runDir "run/server"
         }
