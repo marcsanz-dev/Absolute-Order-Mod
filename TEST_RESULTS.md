@@ -297,6 +297,30 @@ dos límites del harness que había documentado. Re-tests:
     construcción del editor). No pude desambiguarlo de forma 100% concluyente por vía automatizada.
 - **Undo/Redo ✅** (botones) — usados con éxito decenas de veces en toda la batería.
 
+### Sección P — Config / ModMenu (T113–T121) — valores verificados; UI de ModMenu inalcanzable
+- **Efectos de config ✅ (verificados indirectamente a lo largo de la batería):**
+  - `darkMode:true` → tema oscuro en TODAS las capturas del editor.
+  - `bgTransparency:40` → fondo rojo oscuro atenuado (T42).
+  - `lineTransparency:100` → líneas opacas.
+  - `inventoryPresetCount:9` → 9 filas de presets (T74).
+  - `showDepositButton` → togglea con `G` y persiste (T16).
+- **⏭️ Pantalla de config ModMenu (sliders/toggles/rebind) NO ALCANZABLE:** es una pantalla
+  cloth-config accesible SOLO por ModMenu (`getModConfigScreenFactory`), no desde el editor.
+  **Limitación del harness:** `key_action escape` en el mundo devuelve `context:"world"` y NO abre
+  el menú de pausa (GameMenuScreen) — el escape-en-mundo no es un keybind, es vanilla. Sin pausa no
+  se llega al botón "Mods" → ni a la config del mod → ni a "Save and Quit to Title".
+  - **Sugerencia para la extensión:** una tool para abrir el menú de pausa / volver al título
+    (o `open_screen "pause"/"title"`) desbloquearía ModMenu-config, rebinds y navegación de menús.
+
+### Sección R — Contenedores (T118–T136) — parcial
+- **T118 ✅** Cofre simple (27). **T119 ✅** Cofre doble (Large Chest, 54, sección D).
+- **T131 ✅** Barril (abierto en tests previos).
+- **T132 ✅ Shulker Box:** abre (`ShulkerBoxScreen`, clase distinta de GenericContainerScreen), los
+  iconos del editor del mod están presentes (el mod engancha esa pantalla), y el render NO se rompe
+  con la animación del lid → `ShulkerAnimationAccessor` (mixin de la sesión) OK.
+- **T130/T133/T134/T135 ⏭️** trapped/ender/hopper/dispenser — no re-probados individualmente
+  (hopper/dispenser tienen layout no-9; el mod hookea GenericContainerScreen genérico).
+
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
 El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
 crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
