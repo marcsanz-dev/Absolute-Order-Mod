@@ -335,6 +335,23 @@ dos límites del harness que había documentado. Re-tests:
 soporte completo idéntico; shulker tiene su propia pantalla enganchada; hopper y dispenser/dropper
 quedan sin editor por diseño y sin efectos secundarios negativos.
 
+### Sección S — Estrés (T137–T145) — ✅ COMPLETA (dentro de los límites del harness)
+- **S1 ✅ Apertura/cierre rápido:** 12 ciclos consecutivos `interact_block`→`get_screen_info`→`escape`
+  sobre el mismo cofre. **12/12 abrieron correctamente, 0 fallos, MC vivo** tras el ciclo. Sin fugas
+  de estado ni pantallas colgadas.
+- **S2 ✅ Integridad de persistencia:** los **12 archivos `.dat`** de config acumulados en toda la
+  sesión (posiciones de cofre, ender chest, player_inventory, entity/shulker, world_palette) son
+  **todos gzip-NBT válidos** (magic `1f8b`) y **no vacíos** (95–343 bytes). Cero corrupción tras
+  cientos de operaciones de pintado/copia/pegado/borrado.
+- **S3 ✅ Render de layout grande:** cofre **doble "Large Chest" (54 slots, 6×9)** abre, la toolbar
+  del editor renderiza encima, y el inventario del jugador dibuja sus backgrounds guardados
+  (`player_inventory.dat` cargado) sin roturas ni corrupción visual. MC vivo. [SHOT verificado]
+- **No automatizable con el harness:** carga simultánea de miles de cofres, FPS bajo carga real,
+  y estrés de red (requeriría servidor + telemetría de rendimiento). Fuera de alcance.
+
+**Conclusión S:** el mod es estable bajo apertura/cierre repetido y layouts máximos (54 slots), y su
+capa de persistencia no corrompe datos. No se observó ninguna degradación ni crash atribuible al mod.
+
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
 El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
 crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
