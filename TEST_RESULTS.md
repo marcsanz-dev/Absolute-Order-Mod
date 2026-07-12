@@ -352,6 +352,44 @@ quedan sin editor por diseño y sin efectos secundarios negativos.
 **Conclusión S:** el mod es estable bajo apertura/cierre repetido y layouts máximos (54 slots), y su
 capa de persistencia no corrompe datos. No se observó ninguna degradación ni crash atribuible al mod.
 
+### Sección U/V — Casos límite y ciclo de vida de la config (T146–T160) — ✅ cubierta
+- **U1 ✅ Reload por posición:** un cofre colocado sobre una posición con `.dat` guardado **recarga
+  automáticamente** sus separadores al abrirlo (verificado con [SHOT]: rectángulo rojo + items
+  guardados en `-8,119,-10`). La config está keyed por `dim_X_Y_Z`, y las coords negativas se
+  codifican bien en el nombre de archivo (`minecraft_overworld_-8_119_-10.dat`).
+- **U2 ✅ (intencional) Limpieza al destruir el cofre:** romper/reemplazar un cofre por un no-cofre
+  **borra su `.dat`** local. Confirmado en código: `WorldMixin.onSetBlockState` inyecta en el
+  reemplazo de bloque y llama a `ChestConfigManager.clearChest(pos, dim)` cuando
+  `oldState instanceof ChestBlock && old != new`. Documentado en el Javadoc del mixin → es limpieza
+  anti-huérfanos **por diseño**, no un bug. (Nota: este test destruyó de forma irreversible la config
+  de prueba de `-8,119,-10`; era dato de prueba, no de producción.)
+- **Tres modelos de persistencia, todos deliberados:**
+  - *Cofre / trapped* → por **posición**; se limpia al romper (`WorldMixin`).
+  - *Shulker box* → atada al **item vía UUID** (`shulker_<uuid>.dat`); `ShulkerBoxBlockMixin.onBreak`
+    fuerza el drop del item con sus componentes → la config **viaja con el item** (correcto).
+  - *Ender chest* → config **global única** (`ender_chest.dat`) compartida entre todas (correcto).
+
+#### 🟡 HALLAZGO U-1 (inconsistencia menor, NO crash): el barril deja config huérfana al romperse
+`WorldMixin` solo dispara la limpieza para `oldState.getBlock() instanceof ChestBlock`. El **barril**
+(`BarrelBlock`) también persiste su config **por posición** (`minecraft_overworld_X_Y_Z.dat`) pero
+**no** entra en ese guard → al romper un barril, su `.dat` **NO se borra** y queda huérfano. Efecto
+secundario observable: si luego colocas un barril nuevo **en la misma posición**, heredará
+silenciosamente los separadores del barril anterior.
+- **Esperado/coherente:** o bien la limpieza cubre todos los contenedores por-posición (añadir
+  `|| BarrelBlock` — o mejor, comprobar por la interfaz/BlockEntity de contenedor lootable), o bien
+  ninguno la tiene y se acepta el modelo de huérfanos. Hoy chest sí y barril no → inconsistente.
+- **Reproducir:** pinta separadores en un barril → rompe el barril → el `.dat` sigue en
+  `config/chestseparators/.../separators/` → coloca barril nuevo en esa posición → aparece pintado.
+- **Severidad:** baja (no rompe render ni corrompe; solo acumula archivos y puede sorprender por
+  herencia de layout en posiciones reutilizadas). Decisión de diseño para el autor.
+
+**Bloqueado (no automatizable con el harness):**
+- **T (Multiplayer)** — requiere servidor dedicado + 2 clientes simultáneos con telemetría.
+- **Q (reload de mundo)** — reabrir el mundo con `open_world`/`quit_game` es viable pero de alto
+  riesgo dada la inestabilidad del dev client (4 cierres). No ejecutado para no perder la sesión.
+- **P-UI (pantalla ModMenu / rebinds)** — sin tool para abrir el menú de pausa (`escape` en mundo es
+  vanilla y no lo abre). Requiere una tool `open_screen` en la extensión.
+
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
 El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
 crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
