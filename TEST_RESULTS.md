@@ -312,14 +312,28 @@ dos límites del harness que había documentado. Re-tests:
   - **Sugerencia para la extensión:** una tool para abrir el menú de pausa / volver al título
     (o `open_screen "pause"/"title"`) desbloquearía ModMenu-config, rebinds y navegación de menús.
 
-### Sección R — Contenedores (T118–T136) — parcial
+### Sección R — Contenedores (T118–T136) — ✅ COMPLETA (deterministic screen-class check)
 - **T118 ✅** Cofre simple (27). **T119 ✅** Cofre doble (Large Chest, 54, sección D).
 - **T131 ✅** Barril (abierto en tests previos).
 - **T132 ✅ Shulker Box:** abre (`ShulkerBoxScreen`, clase distinta de GenericContainerScreen), los
   iconos del editor del mod están presentes (el mod engancha esa pantalla), y el render NO se rompe
   con la animación del lid → `ShulkerAnimationAccessor` (mixin de la sesión) OK.
-- **T130/T133/T134/T135 ⏭️** trapped/ender/hopper/dispenser — no re-probados individualmente
-  (hopper/dispenser tienen layout no-9; el mod hookea GenericContainerScreen genérico).
+- **T130 ✅ Trapped Chest:** abre como `GenericContainerScreen` título "Chest" — **misma clase que
+  el cofre normal** → hereda soporte completo del editor. Verificado con `interact_block` + `data merge`.
+- **T133 ✅ Ender Chest:** `GenericContainerScreen` título "Ender Chest" → soporte completo heredado.
+- **T134 ⚠️ Hopper:** abre como `HopperScreen` (5 slots). **T135 ⚠️ Dispenser** y **Dropper:**
+  `Generic3x3ContainerScreen` (3×3). El mod **NO** engancha estas clases — su único mixin de pantalla
+  es `GenericContainerScreenMixin` (verificado en `chestseparators.mixins.json` y en el árbol de
+  clases enganchadas). **Por tanto no hay overlay de separadores en hopper/dispenser/dropper.**
+  Abrirlos **NO** rompe render ni lanza excepción (log limpio tras cada apertura; único ERROR del
+  tail es el fallo de auth de Realms del arranque, normal en dev). → Comportamiento **esperado, no
+  bug**: es una limitación de diseño (los separadores 9×N no aplican a layouts 5-slot / 3×3).
+  Si en el futuro se quisiera soportarlos, habría que añadir mixins para `HopperScreen` y
+  `Generic3x3ContainerScreen` con su propia geometría.
+
+**Conclusión R:** todo lo que use `GenericContainerScreen` (cofre / trapped / ender / barril) tiene
+soporte completo idéntico; shulker tiene su propia pantalla enganchada; hopper y dispenser/dropper
+quedan sin editor por diseño y sin efectos secundarios negativos.
 
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
 El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
