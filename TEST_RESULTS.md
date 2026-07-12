@@ -277,6 +277,26 @@ dos límites del harness que había documentado. Re-tests:
     verificarse limpiamente (cada cofre con su `.dat` propio).
   - No es un bug de ChestSeparators: en juego real el clic-derecho siempre dispara el mixin.
 
+### Sección J (re-test con interact_block) — Copy/Paste FUNCIONA en UI, PERSISTENCIA a verificar
+- **Atajos Ctrl+C/V/Z/Y ❌ vía MCP (raw-GLFW):** `EditorInputHandler.keyPressed` (línea 180) chequea
+  Ctrl con **`GLFW.glfwGetKey()` nativo**, que la inyección de modificadores del MCP NO falsea. Los
+  atajos no se disparan por `key_action modifiers:["ctrl"]`. **Los BOTONES sí funcionan.** (Mismo
+  patrón raw-GLFW que los otros hallazgos de modificadores.)
+- **T60 Copy ✅ (botón)** "Copy Layout" copia al clipboard (`copyToClipboard()`); habilita "Paste".
+- **T61 Paste — UI ✅ / PERSISTENCIA ⚠️ A VERIFICAR MANUALMENTE:**
+  - **UI funciona:** con `interact_block` abrí el cofre B correcto (vacío, sin items de A → posición
+    capturada bien), pegué con el botón "Paste Layout" → apareció el **rectángulo rojo 3×3** en B +
+    mensaje **"Layout Pasted!"**. El botón llama `saveSmart()` (ScreenDrawLines:171).
+  - **PROBLEMA:** al cerrar B y reabrirlo, **estaba vacío**. Verificado por ficheros: `-8.dat` (A)
+    quedó **sin cambios** (`54acc...`) y **`-3.dat` (B) NUNCA se creó**. Es decir, el `saveSmart()`
+    del paste **no escribió a disco** (ni a A ni a B).
+  - **⚠️ ACCIÓN PARA EL USUARIO — verificar a mano:** pintar un layout en el cofre A, Copy Layout,
+    abrir un cofre B DISTINTO, Paste Layout, **cerrar y reabrir B**. Si el layout desaparece → es un
+    **bug real de persistencia del paste** (el paste aplica en memoria pero no guarda al cofre destino
+    recién abierto). Si persiste → fue un artefacto de timing de la automatización (interact_block +
+    construcción del editor). No pude desambiguarlo de forma 100% concluyente por vía automatizada.
+- **Undo/Redo ✅** (botones) — usados con éxito decenas de veces en toda la batería.
+
 ### Estabilidad del dev client (nota de infraestructura, NO bug del mod)
 El dev client (`runClient`) se cerró **4 veces** durante la sesión, siempre **sin excepción, sin
 crash-report, sin OOM** — muere en la carga del mundo o mid-sesión. Correlaciona con los ciclos
