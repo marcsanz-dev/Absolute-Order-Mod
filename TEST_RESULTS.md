@@ -10,6 +10,52 @@
 
 ---
 
+## 🛠️ CORRECCIONES APLICADAS Y RE-VERIFICADAS (2026-07-13)
+
+Los 3 bugs reales del mod se han corregido y re-testeado en MC real (verificación determinista por
+archivos `.dat`/config, sin capturas). Todos compilan y pasan.
+
+1. **T17 — Lupa chocaba con Advancements (`L`) — ✅ CORREGIDO.**
+   - Fix: default de `toggle_magnifier` cambiado de `GLFW_KEY_L` a **`GLFW_KEY_M`** en
+     `ModKeyBindings.java`.
+   - Re-test: `options.txt` regenera el default como `key.keyboard.m`; pulsar `M` en el mundo togglea
+     `magnifierEnabled` (true↔false, persistido en `chestseparators_config.json`); pulsar `L` ahora
+     abre `AdvancementsScreen` vanilla (conflicto eliminado).
+
+2. **U-1 — Barril dejaba config huérfana al romperse — ✅ CORREGIDO.**
+   - Fix: `WorldMixin` amplía la limpieza a **todos los contenedores por-posición** (guard
+     `ChestBlock || BarrelBlock`).
+   - Re-test: barril con `.dat` → romper (`setblock air`) → el `.dat` **se borra** (antes quedaba).
+
+3. **Persistencia del 2º cofre / Paste (T61) — ✅ CONFIRMADO REAL y CORREGIDO.**
+   - **Era un bug real** (no artefacto): al abrir un **segundo** cofre en la misma sesión, sus ediciones
+     (pintado directo *o* paste) **no persistían**. Reproducido: B como 1er cofre guarda; como 2º no,
+     y el `.dat` de A no se tocaba → `currentChestPos` acababa `null`.
+   - **Causa raíz:** race en `ChestPosStorage.lastClickedPos`. `GenericContainerScreenMixin.onRemoved`
+     lo nulificaba al cerrar un cofre; al abrir el siguiente, el orden
+     `interactBlock(B)[set B]` → `setScreen(B)` → `A.removed()[null]` → `B.init()[lee null]` dejaba
+     `currentChestPos=null`, y `saveSmart()` (rama `else if currentChestPos != null`) **no guardaba**.
+   - **Fix:** mover la limpieza del handoff a **consume-on-read** en `ChestSeparatorsEditor#init`
+     (tras copiar los valores a la sesión), y quitarla de `onRemoved`. Elimina la race y mantiene la
+     prevención de fugas (el único lector es el init).
+   - Re-test: escenario **A→B** (el que fallaba) → ahora el `.dat` de B **se crea** (134 b). El paste
+     usa el mismo `saveSmart`→`saveConfig(currentChestPos)`, así que queda arreglado por la misma causa.
+
+### 🔴 Causa raíz de la inestabilidad del dev client — `take_screenshot` (glReadPixels)
+Los 6 cierres del dev client durante la sesión son un **crash NATIVO** (`EXCEPTION_ACCESS_VIOLATION
+0xc0000005`) en **`nvoglv64.dll`** (driver NVIDIA), con pila
+`GL11C.glReadPixels ← nglReadPixels ← nvoglv64.dll`. Es decir, **la tool `take_screenshot` (que usa
+`glReadPixels`) revienta el driver NVIDIA** en esta máquina. **No es bug del mod.** Mitigaciones:
+(1) lanzar el cliente con **ventana visible** (no minimizado); (2) para verificación automatizada,
+**evitar `take_screenshot`** y usar comprobaciones deterministas (JSON/archivos). Sugerencia para la
+extensión: capturar por otra vía (blit a framebuffer / API de screenshot de vanilla) en vez de
+`glReadPixels` directo.
+
+> **Nota Windows:** el `.bat` de lanzamiento fallaba con "gradlew.bat no se reconoce" por
+> `NoDefaultCurrentDirectoryInExePath`. Solución: invocar **`.\gradlew.bat`** (ruta explícita).
+
+---
+
 ## Incidencias de setup (previas a la batería)
 
 ### SETUP-1 — mcclaude 1.21 incompatible con MC 1.21.11 ❌→✅ (resuelto)
