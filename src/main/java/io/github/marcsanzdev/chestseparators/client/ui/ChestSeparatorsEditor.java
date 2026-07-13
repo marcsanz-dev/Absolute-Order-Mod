@@ -140,6 +140,16 @@ public class ChestSeparatorsEditor {
         session.isShulkerBox = !session.isInventoryScreenContext && this.screen instanceof ShulkerBoxScreen;
         session.currentShulkerUUID = session.isInventoryScreenContext ? null : ChestPosStorage.lastOpenedShulkerUUID;
 
+        // Consume the interactBlock -> screen-init handoff: the values now live in the session, so clear
+        // the shared storage here (on read) instead of in the screen's removed(). Clearing on removed()
+        // races with the NEXT container: interactBlock(B) sets the position, then the OLD screen's
+        // removed() would null it before B's init reads it, leaving currentChestPos == null and silently
+        // dropping B's saves. Clearing on read keeps leak-prevention without the race.
+        ChestPosStorage.lastClickedPos = null;
+        ChestPosStorage.lastClickedEntityUUID = null;
+        ChestPosStorage.lastOpenedShulkerUUID = null;
+        ChestPosStorage.isEntityOpened = false;
+
         ChestConfigManager.getInstance().loadWorldPalette();
         loadConfigForCurrentTarget();
         requestChestWhitelistsIfNeeded();

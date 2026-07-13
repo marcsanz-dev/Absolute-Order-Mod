@@ -3,7 +3,6 @@ package io.github.marcsanzdev.chestseparators.mixin.client;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
-import io.github.marcsanzdev.chestseparators.util.ChestPosStorage;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -212,11 +211,10 @@ public abstract class GenericContainerScreenMixin extends Screen {
             this.editor.onClose();
         }
 
-        // Clear cached context to prevent state leaking into the next container that is opened.
-        ChestPosStorage.lastClickedPos = null;
-        ChestPosStorage.lastClickedEntityUUID = null;
-        ChestPosStorage.lastOpenedShulkerUUID = null;
-        ChestPosStorage.isEntityOpened = false;
+        // NOTE: the ChestPosStorage handoff is now cleared on read in ChestSeparatorsEditor#init
+        // (consume-on-read), NOT here. Clearing it on removed() raced with the next container being
+        // opened: interactBlock(B) set the position, then this removed() nulled it before B's init read
+        // it, so the second chest opened in a session saved to nowhere. See the editor init for details.
     }
 
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
