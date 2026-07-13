@@ -37,7 +37,7 @@ public class ModKeyBindings {
                 "key.chestseparators.toggle_deposit_button", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
 
         toggleMagnifierKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chestseparators.toggle_magnifier", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_L, CATEGORY));
+                "key.chestseparators.toggle_magnifier", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY));
 
         depositFilterKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.chestseparators.deposit_filter", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_S, CATEGORY));
