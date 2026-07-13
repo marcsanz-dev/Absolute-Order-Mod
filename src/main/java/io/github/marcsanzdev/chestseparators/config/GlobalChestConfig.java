@@ -65,10 +65,10 @@ public class GlobalChestConfig {
         public boolean autoDepositTrail = true;
 
         // --- PLAYER INVENTORY DECORATIONS / FILTERS ---
-        // The inventory layout (separators, backgrounds, filters and presets) is a global player
-        // profile by default, shared across all worlds. Turn this on to give the current world its own
-        // separate, independent inventory profile (e.g. a modded world without disturbing survival).
-        public boolean inventoryDecorPerWorld = false;
+        // The active inventory layout (separators, backgrounds and filters) is always stored per-world
+        // (and, being client-side, per account), so it never bleeds across worlds/servers. Inventory
+        // presets, by contrast, are global reusable templates. See ChestConfigManager#getInventoryFile
+        // and #getInventoryPresetFile.
 
         // How many inventory preset slots are available (bound to number keys 1-9 in the editor).
         public int inventoryPresetCount = 9;

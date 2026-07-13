@@ -987,10 +987,10 @@ public class ChestConfigManager {
     }
 
     private Path getInventoryFile() {
-        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
-                ? getWorldConfigDir()
-                : getGlobalConfigDir();
-        return dir.resolve(INVENTORY_FILE_NAME);
+        // The active inventory decorators + filters are ALWAYS per-world (and, being client-side, per
+        // account): they must not bleed across worlds/servers. Reusable inventory PRESETS stay global
+        // (see getInventoryPresetFile) so they can be applied to any world as templates.
+        return getWorldConfigDir().resolve(INVENTORY_FILE_NAME);
     }
 
     public Map<Integer, int[]> getPlayerInventoryVisual() {
@@ -1065,12 +1065,13 @@ public class ChestConfigManager {
 
     private static final String INVENTORY_PRESET_PREFIX = "inventory_preset_";
 
-    /** File backing inventory preset slot {@code index}, following the same global/per-world choice. */
+    /**
+     * File backing inventory preset slot {@code index}. Presets are intentionally GLOBAL (shared across
+     * all worlds/servers): they are reusable templates the player applies to any world. The active
+     * inventory layout, by contrast, is per-world (see getInventoryFile).
+     */
     private Path getInventoryPresetFile(int index) {
-        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
-                ? getWorldConfigDir()
-                : getGlobalConfigDir();
-        return dir.resolve(INVENTORY_PRESET_PREFIX + index + ".json");
+        return getGlobalConfigDir().resolve(INVENTORY_PRESET_PREFIX + index + ".json");
     }
 
     /** Whether inventory preset slot {@code index} has been saved. */
@@ -1116,12 +1117,12 @@ public class ChestConfigManager {
 
     private static final String CHEST_PRESET_PREFIX = "chest_preset_";
 
-    /** File backing chest preset slot {@code index} (separate from inventory presets). */
+    /**
+     * File backing chest preset slot {@code index} (separate from inventory presets). Global reusable
+     * template, like inventory presets — applicable to any chest in any world.
+     */
     private Path getChestPresetFile(int index) {
-        Path dir = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.inventoryDecorPerWorld
-                ? getWorldConfigDir()
-                : getGlobalConfigDir();
-        return dir.resolve(CHEST_PRESET_PREFIX + index + ".json");
+        return getGlobalConfigDir().resolve(CHEST_PRESET_PREFIX + index + ".json");
     }
 
     /** Whether chest preset slot {@code index} has been saved. */
