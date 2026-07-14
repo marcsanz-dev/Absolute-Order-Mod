@@ -65,6 +65,17 @@ public final class UiTheme {
         c.fill(x + 3, y + 1, x + w - 3, y + 2, PANEL_HILITE);
     }
 
+    /**
+     * OPAQUE tab (category tabs, editor mode tabs). Tabs overlap the panel edge, so they must be solid —
+     * a translucent tab would let the panel/items behind bleed through and look like it crosses the menu.
+     */
+    public static void tab(DrawContext c, int x, int y, int w, int h, boolean hover, boolean active) {
+        int bg = active ? 0xFF2C6BAE : (hover ? 0xFF2E2E3A : 0xFF23232C);
+        int border = active ? ACCENT_BORDER : 0xFF3A3A45;
+        roundRect(c, x, y, w, h, bg);
+        roundBorder(c, x, y, w, h, border);
+    }
+
     /** Recessed inset box (search fields, list viewports): darker translucent fill + faint border. */
     public static void inset(DrawContext c, int x, int y, int w, int h) {
         roundRect(c, x, y, w, h, 0x50000000);

@@ -277,7 +277,7 @@ final class FilterPanelRenderer {
             boolean isSelected = (session.currentCreativeTabIndex == actualGlobalIndex);
             boolean hover = editor.isHovering(tabX, tabY, tabW, tabH, mouseX, mouseY);
 
-            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
                     context, tabX, tabY, tabW, tabH, hover, isSelected);
             context.drawItem(info.icon, tabX + 3, tabY + (isTop ? 2 : 4));
 

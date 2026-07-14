@@ -495,17 +495,10 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             int tabY = startY + (i * 24);
             boolean isSelected = (session.currentTab == i);
             boolean hover = !session.isColorPickerOpen && editor.isHovering(tabX, tabY, 20, 20, mouseX, mouseY);
-            boolean isDark = GlobalChestConfig.instance.darkMode;
-            int bgColor = isDark
-                    ? (isSelected ? UiColors.SURFACE_DARK : (hover ? 0xFF303030 : 0xFF151515))
-                    : (isSelected ? UiColors.SURFACE_LIGHT : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
-
-            context.fill(tabX, tabY, tabX + 20, tabY + 20, bgColor);
-            drawDarkBevel(context, tabX, tabY, 20, 20, isSelected);
-
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(context, tabX, tabY, 20, 20, hover, isSelected);
             if (isSelected) {
-                int connectColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
-                context.fill(tabX + 18, tabY + 1, tabX + 22, tabY + 19, connectColor);
+                // Opaque connector bridging the selected (blue) tab into the sidebar panel edge.
+                context.fill(tabX + 18, tabY + 1, tabX + 22, tabY + 19, 0xFF2C6BAE);
             }
 
             Identifier icon = (i == 0)
