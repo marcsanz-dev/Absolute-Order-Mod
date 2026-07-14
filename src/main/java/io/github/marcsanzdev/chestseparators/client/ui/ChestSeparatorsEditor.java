@@ -253,35 +253,9 @@ public class ChestSeparatorsEditor {
                     playClickSound(1.0f);
                 });
 
-        int baseX = x + bgWidth;
-        if (GlobalChestConfig.instance.showEditButtons) {
-            this.entryButton.x = baseX - 22;
-            this.entryButton.y = y - 22;
-
-            this.whitelistButton.x = baseX - 44;
-            this.whitelistButton.y = y - 22;
-
-            this.depositButton.x = baseX - 66;
-            this.depositButton.y = y - 22;
-        } else {
-            // When edit buttons are hidden, the deposit button takes the rightmost slot.
-            this.depositButton.x = baseX - 22;
-            this.depositButton.y = y - 22;
-        }
-
-        // The fill button sits immediately left of the deposit button.
-        this.fillButton.x = this.depositButton.x - 22;
-        this.fillButton.y = y - 22;
-
-        // The inventory-presets button: left of the fill button when a chest is open, otherwise left of
-        // the whitelist button (fill/deposit are hidden in the player inventory).
-        int presetsAnchor = session.isInventoryScreenContext ? this.whitelistButton.x : this.fillButton.x;
-        this.presetsButton.x = presetsAnchor - 22;
-        this.presetsButton.y = y - 22;
-
-        // The chest-presets button is the leftmost icon, only shown when a chest is open.
-        this.chestPresetsButton.x = this.presetsButton.x - 22;
-        this.chestPresetsButton.y = y - 22;
+        // Toolbar positioning is now handled per-frame by EditorRenderer#renderToolbar, which docks the
+        // visible icons into a vertical column on the right edge of the screen (adaptive to how many are
+        // enabled in the config). The buttons keep their constructor positions until the first render.
 
         session.allGameItems.clear();
         MinecraftClient client = MinecraftClient.getInstance();

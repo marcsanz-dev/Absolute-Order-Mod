@@ -29,8 +29,16 @@ public class GlobalChestConfig {
         public boolean darkMode = true;
         public boolean showLeftPanel = true;
         public boolean enablePreviewAnimation = true;
+        // --- EDITOR TOOLBAR (right-side vertical dock) ---
+        // showEditButtons is the MASTER toggle for the whole toolbar. Each icon below can be turned on
+        // or off individually from the mod settings (ModMenu); there is no keybind for this.
         public boolean showEditButtons = true;
         public boolean showDepositButton = true;
+        public boolean btnEditLines = true;
+        public boolean btnFilters = true;
+        public boolean btnFillFromChest = true;
+        public boolean btnInventoryPresets = true;
+        public boolean btnChestPresets = true;
         public boolean closeOnClickOutside = false;
         // When true, the custom-color column (third palette column) is shared across the Lines,
         // Backgrounds and Combo tabs. When false, each tab keeps its own custom colors.

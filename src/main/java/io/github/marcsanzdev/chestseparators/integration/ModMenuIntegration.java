@@ -78,6 +78,51 @@ public class ModMenuIntegration implements ModMenuApi {
 
             clientCategory.addEntry(entryBuilder
                     .startBooleanToggle(
+                            Text.translatable("config.chestseparators.btn_edit_lines"),
+                            GlobalChestConfig.instance.btnEditLines)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.btn_edit_lines.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.btnEditLines = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.btn_filters"),
+                            GlobalChestConfig.instance.btnFilters)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.btn_filters.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.btnFilters = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.btn_fill_from_chest"),
+                            GlobalChestConfig.instance.btnFillFromChest)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.btn_fill_from_chest.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.btnFillFromChest = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.btn_inventory_presets"),
+                            GlobalChestConfig.instance.btnInventoryPresets)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.btn_inventory_presets.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.btnInventoryPresets = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
+                            Text.translatable("config.chestseparators.btn_chest_presets"),
+                            GlobalChestConfig.instance.btnChestPresets)
+                    .setDefaultValue(true)
+                    .setTooltip(Text.translatable("config.chestseparators.btn_chest_presets.tooltip"))
+                    .setSaveConsumer(newValue -> GlobalChestConfig.instance.btnChestPresets = newValue)
+                    .build());
+
+            clientCategory.addEntry(entryBuilder
+                    .startBooleanToggle(
                             Text.translatable("config.chestseparators.close_on_click_outside"),
                             GlobalChestConfig.instance.closeOnClickOutside)
                     .setDefaultValue(false)

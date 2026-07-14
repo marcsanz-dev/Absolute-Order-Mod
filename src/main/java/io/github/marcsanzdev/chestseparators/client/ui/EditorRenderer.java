@@ -40,10 +40,6 @@ public class EditorRenderer {
         layout.update(screen, accessor, editor.getSidebarYOffset());
         editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
-        boolean showButton = GlobalChestConfig.instance.showEditButtons;
-        // No deposit button when editing the player inventory (you don't deposit into your own inventory).
-        boolean showDeposit = GlobalChestConfig.instance.showDepositButton && !session.isPlayerInventory;
-
         boolean hideInFilter = (session.currentState == EditorState.EDIT_FILTER);
         boolean hideVanilla = session.isColorPickerOpen || hideInFilter || session.hasSelectionConflict;
         boolean isEditorClosed = (session.currentState == EditorState.HIDDEN);
@@ -84,15 +80,7 @@ public class EditorRenderer {
                 context.getMatrices().popMatrix();
             }
             editor.presetsMenu.renderPanel(context, screen.width, screen.height, mouseX, mouseY);
-            if (showButton) {
-                if (editor.entryButton != null) editor.entryButton.render(context, mouseX, mouseY, delta);
-                if (editor.whitelistButton != null) editor.whitelistButton.render(context, mouseX, mouseY, delta);
-                if (editor.fillButton != null && !session.isPlayerInventory)
-                    editor.fillButton.render(context, mouseX, mouseY, delta);
-                if (editor.presetsButton != null) editor.presetsButton.render(context, mouseX, mouseY, delta);
-                if (editor.chestPresetsButton != null && !session.isPlayerInventory)
-                    editor.chestPresetsButton.render(context, mouseX, mouseY, delta);
-            }
+            renderToolbar(context, mouseX, mouseY, delta, false);
             return;
         }
 
@@ -102,22 +90,9 @@ public class EditorRenderer {
         // Background layer (rendered behind the dim overlay).
         // When a sub-menu is active, pass mouse coordinates of (-1, -1) so the buttons
         // remain visible but do not react to hover visually.
-        if (showButton) {
-            int bMouseX = hideVanilla ? -1 : bgMouseX;
-            int bMouseY = hideVanilla ? -1 : bgMouseY;
-            if (editor.entryButton != null) editor.entryButton.render(context, bMouseX, bMouseY, delta);
-            if (editor.whitelistButton != null) editor.whitelistButton.render(context, bMouseX, bMouseY, delta);
-            if (editor.fillButton != null && !session.isPlayerInventory)
-                editor.fillButton.render(context, bMouseX, bMouseY, delta);
-            if (editor.presetsButton != null) editor.presetsButton.render(context, bMouseX, bMouseY, delta);
-            if (editor.chestPresetsButton != null && !session.isPlayerInventory)
-                editor.chestPresetsButton.render(context, bMouseX, bMouseY, delta);
-        }
-
-        // Deposit button is only shown in the default (closed) editor state.
-        if (showDeposit && isEditorClosed) {
-            if (editor.depositButton != null) editor.depositButton.render(context, bgMouseX, bgMouseY, delta);
-        }
+        // Right-side vertical toolbar (background layer). Deposit is included only in the closed editor
+        // state (where the deposit action is valid); it is filtered out inside renderToolbar otherwise.
+        renderToolbar(context, hideVanilla ? -1 : bgMouseX, hideVanilla ? -1 : bgMouseY, delta, isEditorClosed);
 
         if (session.currentState != EditorState.HIDDEN) {
             if (!session.isEyedropperActive) {
@@ -126,14 +101,9 @@ public class EditorRenderer {
 
             // Foreground layer (rendered on top of the dim overlay).
             // Skipped when a sub-menu is open so clicks pass through to the screen below.
-            if (showButton && !hideVanilla) {
-                if (editor.entryButton != null) editor.entryButton.render(context, bgMouseX, bgMouseY, delta);
-                if (editor.whitelistButton != null) editor.whitelistButton.render(context, bgMouseX, bgMouseY, delta);
-                if (editor.fillButton != null && !session.isPlayerInventory)
-                    editor.fillButton.render(context, bgMouseX, bgMouseY, delta);
-                if (editor.presetsButton != null) editor.presetsButton.render(context, bgMouseX, bgMouseY, delta);
-                if (editor.chestPresetsButton != null && !session.isPlayerInventory)
-                    editor.chestPresetsButton.render(context, bgMouseX, bgMouseY, delta);
+            // Right-side vertical toolbar (foreground layer, drawn above the dim when a sub-menu is open).
+            if (!hideVanilla) {
+                renderToolbar(context, bgMouseX, bgMouseY, delta, false);
             }
 
             context.getMatrices().pushMatrix();
@@ -158,6 +128,82 @@ public class EditorRenderer {
 
             renderMagnifier(context, mouseX, mouseY);
         }
+    }
+
+    // --- Right-side vertical toolbar dock ---
+
+    /**
+     * Lays out the visible toolbar icons in a vertical column docked to the right edge of the screen,
+     * inside a modern semi-transparent rounded panel, then renders them. Visibility depends on the
+     * per-button config flags, the screen context (player inventory vs container) and, for the deposit
+     * icon, {@code withDeposit}. Hidden buttons are parked off-screen so they receive no hover or clicks.
+     */
+    private void renderToolbar(DrawContext context, int hoverX, int hoverY, float delta, boolean withDeposit) {
+        parkToolbarButtons();
+        if (!GlobalChestConfig.instance.showEditButtons) return;
+
+        boolean inv = session.isPlayerInventory;
+        java.util.List<io.github.marcsanzdev.chestseparators.client.ui.widgets.ToolButtonWidget> vis =
+                new java.util.ArrayList<>();
+        if (GlobalChestConfig.instance.btnEditLines && editor.entryButton != null) vis.add(editor.entryButton);
+        if (GlobalChestConfig.instance.btnFilters && editor.whitelistButton != null) vis.add(editor.whitelistButton);
+        if (withDeposit && GlobalChestConfig.instance.showDepositButton && !inv && editor.depositButton != null) {
+            vis.add(editor.depositButton);
+        }
+        if (GlobalChestConfig.instance.btnFillFromChest && !inv && editor.fillButton != null) {
+            vis.add(editor.fillButton);
+        }
+        if (GlobalChestConfig.instance.btnInventoryPresets && editor.presetsButton != null) {
+            vis.add(editor.presetsButton);
+        }
+        if (GlobalChestConfig.instance.btnChestPresets && !inv && editor.chestPresetsButton != null) {
+            vis.add(editor.chestPresetsButton);
+        }
+
+        int n = vis.size();
+        if (n == 0) return;
+
+        final int btn = 20;
+        final int gap = 3;
+        final int pad = 4;
+        final int margin = 6;
+        int panelW = btn + 2 * pad;
+        int panelH = n * btn + (n - 1) * gap + 2 * pad;
+        int panelX = layout.screenWidth - panelW - margin;
+        int panelY = Math.max(2, (layout.screenHeight - panelH) / 2);
+
+        drawToolbarPanel(context, panelX, panelY, panelW, panelH);
+
+        for (int i = 0; i < n; i++) {
+            var b = vis.get(i);
+            b.x = panelX + pad;
+            b.y = panelY + pad + i * (btn + gap);
+            b.render(context, hoverX, hoverY, delta);
+        }
+    }
+
+    /** Parks every toolbar button off-screen so hidden ones never register hover or clicks. */
+    private void parkToolbarButtons() {
+        io.github.marcsanzdev.chestseparators.client.ui.widgets.ToolButtonWidget[] all = {
+            editor.entryButton, editor.whitelistButton, editor.depositButton,
+            editor.fillButton, editor.presetsButton, editor.chestPresetsButton
+        };
+        for (var b : all) {
+            if (b != null) {
+                b.x = -1000;
+                b.y = -1000;
+            }
+        }
+    }
+
+    /** Dark, semi-transparent rounded panel behind the toolbar column (soft 2px corners). */
+    private void drawToolbarPanel(DrawContext context, int x, int y, int w, int h) {
+        int fill = 0xC8121218;
+        context.fill(x + 2, y, x + w - 2, y + h, fill);
+        context.fill(x, y + 2, x + w, y + h - 2, fill);
+        context.fill(x + 1, y + 1, x + w - 1, y + 2, fill);
+        context.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, fill);
+        context.fill(x + 3, y + 1, x + w - 3, y + 2, 0x1EFFFFFF);
     }
 
     /** Subtle, static hint pointing players to the magnifier loupe while painting, when it is off. */
