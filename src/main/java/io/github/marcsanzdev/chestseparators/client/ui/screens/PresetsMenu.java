@@ -152,8 +152,7 @@ public final class PresetsMenu {
         int py = panelY(screenH);
         int ph = panelH();
 
-        context.fill(PANEL_X, py, PANEL_X + PANEL_W, py + ph, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        drawBevel(context, PANEL_X, py, PANEL_W, ph, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, PANEL_X, py, PANEL_W, ph);
 
         Text title = Text.translatable(
                 chestMode() ? "gui.chestseparators.chest_presets_title" : "gui.chestseparators.presets_title");

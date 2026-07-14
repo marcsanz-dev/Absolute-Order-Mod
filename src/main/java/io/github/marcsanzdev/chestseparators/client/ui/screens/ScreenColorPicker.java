@@ -323,8 +323,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int y = layout.popupY;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(x, y, x + w, y + h, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        drawDarkBevel(context, x, y, w, h, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, x, y, w, h);
 
         MinecraftClient client = MinecraftClient.getInstance();
 

@@ -45,9 +45,7 @@ final class WhitelistPreviewPanelRenderer {
 
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(
-                listX, listY, listX + listW, listY + listH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        screen.drawDarkBevel(context, listX, listY, listW, listH, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, listX, listY, listW, listH);
 
         Slot hoveredSlot = null;
         for (Slot slot : editor.accessor.getHandler().slots) {
@@ -117,8 +115,8 @@ final class WhitelistPreviewPanelRenderer {
 
         int listViewY = listY + 32;
         int listViewH = listH - 38;
-        context.fill(listX + 6, listViewY, listX + listW - 6, listViewY + listViewH, isDark ? 0xFF101010 : 0xFFE0E0E0);
-        screen.drawDarkBevel(context, listX + 6, listViewY, listW - 12, listViewH, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(
+                context, listX + 6, listViewY, listW - 12, listViewH);
 
         if (!session.isPreviewing) {
             Text hoverText = Text.translatable("gui.chestseparators.hover_group");

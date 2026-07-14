@@ -3,7 +3,6 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,8 +102,7 @@ final class FilterPanelRenderer {
         }
         context.getMatrices().popMatrix();
 
-        context.fill(listX + 6, listY + 22, listX + listW - 6, listY + 38, isDark ? 0xFF101010 : 0xFFE0E0E0);
-        screen.drawDarkBevel(context, listX + 6, listY + 22, listW - 12, 16, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(context, listX + 6, listY + 22, listW - 12, 16);
 
         if (editor.whitelistSearchBox != null) {
             editor.whitelistSearchBox.setX(listX + 10);
@@ -130,8 +128,8 @@ final class FilterPanelRenderer {
 
         int listViewY = layout.listViewY;
         int listViewH = layout.listViewH;
-        context.fill(listX + 6, listViewY, listX + listW - 6, listViewY + listViewH, isDark ? 0xFF101010 : 0xFFE0E0E0);
-        screen.drawDarkBevel(context, listX + 6, listViewY, listW - 12, listViewH, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(
+                context, listX + 6, listViewY, listW - 12, listViewH);
 
         int totalListItems = activeListToRender.size();
         // Trailing padding so scrolling to the bottom fully reveals the last row. Shared formula via
@@ -279,11 +277,8 @@ final class FilterPanelRenderer {
             boolean isSelected = (session.currentCreativeTabIndex == actualGlobalIndex);
             boolean hover = editor.isHovering(tabX, tabY, tabW, tabH, mouseX, mouseY);
 
-            int bgColor = isDark
-                    ? (isSelected ? UiColors.SURFACE_DARK : (hover ? 0xFF303030 : 0xFF151515))
-                    : (isSelected ? UiColors.SURFACE_LIGHT : (hover ? 0xFFA0A0A0 : 0xFF8B8B8B));
-            context.fill(tabX, tabY, tabX + tabW, tabY + tabH, bgColor);
-            screen.drawDarkBevel(context, tabX, tabY, tabW, tabH, isSelected);
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(
+                    context, tabX, tabY, tabW, tabH, hover, isSelected);
             context.drawItem(info.icon, tabX + 3, tabY + (isTop ? 2 : 4));
 
             if (hover) context.drawTooltip(MinecraftClient.getInstance().textRenderer, info.name, mouseX, mouseY);
@@ -310,16 +305,6 @@ final class FilterPanelRenderer {
                     }
                 }
             }
-        }
-
-        if (activeSlot != -1) {
-            boolean isTopActive = activeSlot < 8;
-            int activeCol = activeSlot % 8;
-            int tX = mainX + 3 + (activeCol * 23);
-            int patchColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
-
-            if (isTopActive) context.fill(tX + 1, mainY, tX + 21, mainY + 2, patchColor);
-            else context.fill(tX + 1, mainY + mainH - 2, tX + 21, mainY + mainH, patchColor);
         }
 
         // --- 5. TITLE & CAROUSEL OR SEARCH BOX ---
@@ -353,8 +338,7 @@ final class FilterPanelRenderer {
             int boxY = mainY + 6;
             int boxW = (mainX + mainW - 12) - boxX;
 
-            context.fill(boxX, boxY, boxX + boxW, boxY + 16, isDark ? 0xFF101010 : 0xFFE0E0E0);
-            screen.drawDarkBevel(context, boxX, boxY, boxW, 16, true);
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(context, boxX, boxY, boxW, 16);
             editor.searchBox.setX(boxX + 4);
             editor.searchBox.setY(boxY + 4);
             editor.searchBox.setWidth(boxW - 8);
@@ -416,13 +400,8 @@ final class FilterPanelRenderer {
         int cols = layout.cols;
         int itemSize = layout.itemSize;
 
-        context.fill(
-                gridX - 2,
-                gridViewY - 2,
-                gridX + (cols * itemSize) + 2,
-                gridViewY + gridViewH + 2,
-                isDark ? 0xFF101010 : 0xFFE0E0E0);
-        screen.drawDarkBevel(context, gridX - 2, gridViewY - 2, (cols * itemSize) + 4, gridViewH + 4, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(
+                context, gridX - 2, gridViewY - 2, (cols * itemSize) + 4, gridViewH + 4);
 
         int totalGridItems = session.filteredItems.size();
         int totalGridHeight = (int) Math.ceil((double) totalGridItems / cols) * itemSize;
@@ -499,8 +478,7 @@ final class FilterPanelRenderer {
             session.dropdownX = dX;
             session.dropdownY = dY;
 
-            context.fill(dX, dY, dX + dropW, dY + dropH, isDark ? 0xFF151515 : 0xFFE0E0E0);
-            screen.drawDarkBevel(context, dX, dY, dropW, dropH, false);
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, dX, dY, dropW, dropH);
 
             for (int i = 0; i < session.activeDropdownTags.size(); i++) {
                 String tag = session.activeDropdownTags.get(i);

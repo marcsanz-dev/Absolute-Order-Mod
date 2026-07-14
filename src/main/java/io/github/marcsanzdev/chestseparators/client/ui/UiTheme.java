@@ -65,6 +65,12 @@ public final class UiTheme {
         c.fill(x + 3, y + 1, x + w - 3, y + 2, PANEL_HILITE);
     }
 
+    /** Recessed inset box (search fields, list viewports): darker translucent fill + faint border. */
+    public static void inset(DrawContext c, int x, int y, int w, int h) {
+        roundRect(c, x, y, w, h, 0x50000000);
+        roundBorder(c, x, y, w, h, 0x16FFFFFF);
+    }
+
     /** Cristal glass button background for the given hover/active state. */
     public static void button(DrawContext c, int x, int y, int w, int h, boolean hover, boolean active) {
         int bg = active ? ACCENT_BG : (hover ? BTN_BG_HOVER : BTN_BG);
