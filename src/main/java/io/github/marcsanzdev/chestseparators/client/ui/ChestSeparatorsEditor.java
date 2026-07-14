@@ -253,9 +253,17 @@ public class ChestSeparatorsEditor {
                     playClickSound(1.0f);
                 });
 
+        // Modern flat glyphs (drawn in code, not textures) for each toolbar icon.
+        this.entryButton.glyph = ToolButtonWidget.Glyph.PENCIL;
+        this.whitelistButton.glyph = ToolButtonWidget.Glyph.FUNNEL;
+        this.depositButton.glyph = ToolButtonWidget.Glyph.DEPOSIT;
+        this.fillButton.glyph = ToolButtonWidget.Glyph.FILL;
+        this.presetsButton.glyph = ToolButtonWidget.Glyph.FLOPPY;
+        this.chestPresetsButton.glyph = ToolButtonWidget.Glyph.COPY;
+
         // Toolbar positioning is now handled per-frame by EditorRenderer#renderToolbar, which docks the
-        // visible icons into a vertical column on the right edge of the screen (adaptive to how many are
-        // enabled in the config). The buttons keep their constructor positions until the first render.
+        // visible icons into a vertical column on the right edge of the container GUI (adaptive to how
+        // many are enabled in the config). The buttons keep their constructor positions until first render.
 
         session.allGameItems.clear();
         MinecraftClient client = MinecraftClient.getInstance();

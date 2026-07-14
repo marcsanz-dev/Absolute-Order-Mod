@@ -166,11 +166,13 @@ public class EditorRenderer {
         final int btn = 20;
         final int gap = 3;
         final int pad = 4;
-        final int margin = 6;
+        final int gapToChest = 3;
         int panelW = btn + 2 * pad;
         int panelH = n * btn + (n - 1) * gap + 2 * pad;
-        int panelX = layout.screenWidth - panelW - margin;
-        int panelY = Math.max(2, (layout.screenHeight - panelH) / 2);
+        // Dock the toolbar to the RIGHT edge of the container GUI (not the screen edge), top-aligned with
+        // the container window, so it reads as attached to the chest.
+        int panelX = accessor.getX() + accessor.getBackgroundWidth() + gapToChest;
+        int panelY = accessor.getY();
 
         drawToolbarPanel(context, panelX, panelY, panelW, panelH);
 

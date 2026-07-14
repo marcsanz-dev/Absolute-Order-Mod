@@ -10,6 +10,19 @@ import net.minecraft.util.Identifier;
 
 public class ToolButtonWidget extends CustomWidget {
 
+    /** Modern flat glyphs drawn in code instead of a texture (see {@link #drawGlyph}). */
+    public enum Glyph {
+        NONE,
+        PENCIL,
+        FUNNEL,
+        DEPOSIT,
+        FILL,
+        FLOPPY,
+        COPY
+    }
+
+    public Glyph glyph = Glyph.NONE;
+
     public Identifier baseIcon;
     public Identifier maskIcon;
     public Identifier disabledIconFallback;
@@ -76,6 +89,12 @@ public class ToolButtonWidget extends CustomWidget {
     }
 
     private void drawIcon(DrawContext context, Identifier base, Identifier mask, int color) {
+        if (this.glyph != Glyph.NONE) {
+            boolean sunken = this.isActive || this.isTempClicked;
+            int gcol = sunken ? 0xFF9CC3FF : 0xFFDDDDDD;
+            drawGlyph(context, this.glyph, x + 2, y + 2, gcol);
+            return;
+        }
         if (base == null) return;
         com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
 
@@ -85,6 +104,67 @@ public class ToolButtonWidget extends CustomWidget {
             int colorARGB = color | 0xFF000000;
             context.drawTexture(
                     pipeline, mask, x + 2 + maskOffsetX, y + 2, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, colorARGB);
+        }
+    }
+
+    // --- Code-drawn flat glyphs (16x16 icon area, origin ox/oy) ---
+
+    /** Fills a rectangle in glyph-local coordinates. */
+    private static void g(DrawContext c, int ox, int oy, int x0, int y0, int x1, int y1, int col) {
+        c.fill(ox + x0, oy + y0, ox + x1, oy + y1, col);
+    }
+
+    private void drawGlyph(DrawContext c, Glyph gl, int ox, int oy, int col) {
+        switch (gl) {
+            case PENCIL -> {
+                for (int i = 0; i < 8; i++) {
+                    g(c, ox, oy, 11 - i, 3 + i, 13 - i, 5 + i, col);
+                }
+                g(c, ox, oy, 3, 11, 5, 13, col);
+                g(c, ox, oy, 2, 13, 4, 14, col);
+                g(c, ox, oy, 11, 2, 14, 5, col);
+            }
+            case FUNNEL -> {
+                g(c, ox, oy, 2, 2, 14, 4, col);
+                g(c, ox, oy, 3, 4, 13, 5, col);
+                g(c, ox, oy, 4, 5, 12, 6, col);
+                g(c, ox, oy, 5, 6, 11, 7, col);
+                g(c, ox, oy, 6, 7, 10, 8, col);
+                g(c, ox, oy, 7, 8, 9, 14, col);
+            }
+            case DEPOSIT -> {
+                g(c, ox, oy, 7, 2, 9, 9, col);
+                g(c, ox, oy, 5, 8, 11, 9, col);
+                g(c, ox, oy, 6, 9, 10, 10, col);
+                g(c, ox, oy, 7, 10, 9, 12, col);
+                g(c, ox, oy, 3, 14, 13, 15, col);
+            }
+            case FILL -> {
+                g(c, ox, oy, 7, 5, 9, 12, col);
+                g(c, ox, oy, 5, 6, 11, 7, col);
+                g(c, ox, oy, 6, 5, 10, 6, col);
+                g(c, ox, oy, 7, 3, 9, 5, col);
+                g(c, ox, oy, 3, 14, 13, 15, col);
+            }
+            case FLOPPY -> {
+                g(c, ox, oy, 2, 2, 14, 3, col);
+                g(c, ox, oy, 2, 13, 14, 14, col);
+                g(c, ox, oy, 2, 2, 3, 14, col);
+                g(c, ox, oy, 13, 2, 14, 14, col);
+                g(c, ox, oy, 9, 3, 12, 6, col);
+                g(c, ox, oy, 5, 9, 11, 13, col);
+            }
+            case COPY -> {
+                g(c, ox, oy, 6, 2, 15, 3, col);
+                g(c, ox, oy, 6, 2, 7, 10, col);
+                g(c, ox, oy, 14, 2, 15, 10, col);
+                g(c, ox, oy, 6, 9, 15, 10, col);
+                g(c, ox, oy, 1, 6, 11, 7, col);
+                g(c, ox, oy, 1, 6, 2, 15, col);
+                g(c, ox, oy, 10, 6, 11, 15, col);
+                g(c, ox, oy, 1, 14, 11, 15, col);
+            }
+            default -> {}
         }
     }
 }
