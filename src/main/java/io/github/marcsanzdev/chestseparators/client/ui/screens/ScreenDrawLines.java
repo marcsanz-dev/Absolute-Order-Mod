@@ -325,14 +325,8 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         int margin = 8;
         int fixedSidebarHeight = (bottomOfLastColor - panelStartY) + margin;
 
-        boolean isDark = GlobalChestConfig.instance.darkMode;
-        context.fill(
-                sx,
-                panelStartY,
-                sx + layout.sidebarWidth,
-                panelStartY + fixedSidebarHeight,
-                isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        drawDarkBevel(context, sx, panelStartY, layout.sidebarWidth, fixedSidebarHeight, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(
+                context, sx, panelStartY, layout.sidebarWidth, fixedSidebarHeight);
 
         // While the color picker is open, pass (-1, -1) as mouse coordinates so background
         // buttons do not react to hover or draw tooltips behind the picker window.

@@ -1,6 +1,5 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -33,16 +32,13 @@ public class WideButtonWidget extends CustomWidget {
         boolean sunken = this.isActive;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        int bgColor =
-                isDark ? (sunken ? 0xFF101010 : UiColors.SURFACE_DARK) : (sunken ? 0xFFA0A0A0 : UiColors.SURFACE_LIGHT);
-        context.fill(x, y, x + width, y + height, bgColor);
-        drawDarkBevel(context, x, y, width, height, sunken);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(context, x, y, width, height, hover, sunken);
 
         int iconColor;
         if (this.isActive && !this.keepNormalTextColor) {
-            iconColor = isDark ? 0xFF55FF55 : 0xFF00AA00;
+            iconColor = io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT;
         } else {
-            iconColor = isDark ? 0xFFFFFFFF : 0xFF202020;
+            iconColor = io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT;
         }
 
         if (this.icon != null) {
@@ -71,24 +67,19 @@ public class WideButtonWidget extends CustomWidget {
         context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, iconColor, isDark);
         context.getMatrices().popMatrix();
 
-        if (hover) {
-            context.drawStrokedRectangle(x, y, width, height, 0x40FFFFFF);
-            if (this.tooltipText != null && !this.isDisabled) {
-                context.drawTooltip(
-                        MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
-            }
+        if (hover && this.tooltipText != null && !this.isDisabled) {
+            context.drawTooltip(
+                    MinecraftClient.getInstance().textRenderer, Text.literal(this.tooltipText), mouseX, mouseY);
         }
     }
 
     private void renderDisabled(DrawContext context) {
         boolean isDark = GlobalChestConfig.instance.darkMode;
-        int bgColor = isDark ? 0xFF454545 : 0xFFA0A0A0;
-
-        context.fill(x, y, x + width, y + height, bgColor);
-        drawDarkBevel(context, x, y, width, height, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(context, x, y, width, height, 0x0AFFFFFF);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(context, x, y, width, height, 0x14FFFFFF);
 
         Identifier iconToDraw = this.disabledIconFallback != null ? this.disabledIconFallback : this.icon;
-        int disabledColor = isDark ? 0xFFAAAAAA : 0xFF777777;
+        int disabledColor = 0xFF6A6A72;
 
         if (iconToDraw != null) {
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;

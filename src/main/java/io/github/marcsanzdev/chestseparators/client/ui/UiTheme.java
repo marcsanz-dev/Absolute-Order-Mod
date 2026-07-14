@@ -33,12 +33,15 @@ public final class UiTheme {
     public static final int TEXT = 0xFFE6E6E6;
     public static final int TEXT_MUTED = 0xFF9A9AA2;
 
-    /** Fills a rounded rectangle (2px corners). */
+    /**
+     * Fills a rounded rectangle (2px corners) with NON-OVERLAPPING rects so a translucent color keeps a
+     * uniform opacity everywhere (overlapping fills would double-blend the center and leave the edges
+     * looking lighter — the cause of the mismatched left/right vertical strips).
+     */
     public static void roundRect(DrawContext c, int x, int y, int w, int h, int col) {
-        c.fill(x + 2, y, x + w - 2, y + h, col);
-        c.fill(x, y + 2, x + w, y + h - 2, col);
-        c.fill(x + 1, y + 1, x + w - 1, y + 2, col);
-        c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, col);
+        c.fill(x + 2, y, x + w - 2, y + h, col); // center band, full height
+        c.fill(x, y + 2, x + 2, y + h - 2, col); // left band, middle rows
+        c.fill(x + w - 2, y + 2, x + w, y + h - 2, col); // right band, middle rows
     }
 
     /** Draws a thin (1px) rounded border around the rectangle. */
