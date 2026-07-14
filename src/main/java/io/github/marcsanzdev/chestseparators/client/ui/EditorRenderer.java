@@ -174,7 +174,7 @@ public class EditorRenderer {
         int panelX = accessor.getX() + accessor.getBackgroundWidth() + gapToChest;
         int panelY = accessor.getY();
 
-        drawToolbarPanel(context, panelX, panelY, panelW, panelH);
+        UiTheme.panel(context, panelX, panelY, panelW, panelH);
 
         for (int i = 0; i < n; i++) {
             var b = vis.get(i);
@@ -196,16 +196,6 @@ public class EditorRenderer {
                 b.y = -1000;
             }
         }
-    }
-
-    /** Dark, semi-transparent rounded panel behind the toolbar column (soft 2px corners). */
-    private void drawToolbarPanel(DrawContext context, int x, int y, int w, int h) {
-        int fill = 0xC8121218;
-        context.fill(x + 2, y, x + w - 2, y + h, fill);
-        context.fill(x, y + 2, x + w, y + h - 2, fill);
-        context.fill(x + 1, y + 1, x + w - 1, y + 2, fill);
-        context.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, fill);
-        context.fill(x + 3, y + 1, x + w - 3, y + 2, 0x1EFFFFFF);
     }
 
     /** Subtle, static hint pointing players to the magnifier loupe while painting, when it is off. */

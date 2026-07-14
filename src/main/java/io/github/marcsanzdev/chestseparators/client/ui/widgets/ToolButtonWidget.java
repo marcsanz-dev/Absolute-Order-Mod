@@ -1,8 +1,7 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.client.ui.UiTheme;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -14,8 +13,9 @@ public class ToolButtonWidget extends CustomWidget {
     // vector-exported icons. Used as the u/v region and texture dimensions when sampling.
     public int texSize = 32;
     // When true the base icon is a single-color (white) glyph that is tinted by the button state
-    // (light-gray normally, accent blue when active). Used by the smooth line icons.
+    // (light-gray normally, brighter on hover, accent blue when active). Used by the smooth line icons.
     public boolean tintByState = false;
+    private boolean hovered = false;
 
     public Identifier baseIcon;
     public Identifier maskIcon;
@@ -46,39 +46,26 @@ public class ToolButtonWidget extends CustomWidget {
             this.isTempClicked = false;
         }
 
-        boolean isDark = GlobalChestConfig.instance.darkMode;
+        this.hovered = isHovering(mouseX, mouseY);
+        boolean active = this.isActive || this.isTempClicked;
 
         if (this.isDisabled) {
-            int bgDisabled = isDark ? 0xFF454545 : 0xFFA0A0A0;
-            context.fill(x, y, x + width, y + height, bgDisabled);
-            drawDarkBevel(context, x, y, width, height, false);
-            Identifier iconToDraw = this.disabledIconFallback != null ? this.disabledIconFallback : this.baseIcon;
-            drawIcon(context, iconToDraw, null, 0xFFFFFF);
-
-            int overlayColor = isDark ? 0xAA212121 : 0xAAC6C6C6;
-            context.fill(x + 2, y + 2, x + 18, y + 18, overlayColor);
+            UiTheme.roundRect(context, x, y, width, height, 0x0AFFFFFF);
+            UiTheme.roundBorder(context, x, y, width, height, 0x14FFFFFF);
+            drawIcon(context, this.baseIcon, this.maskIcon, 0xFFFFFF);
+            UiTheme.roundRect(context, x, y, width, height, 0x66121218);
             return;
         }
 
-        boolean hover = isHovering(mouseX, mouseY);
-        boolean sunken = this.isActive || this.isTempClicked;
-
-        int bgColor =
-                isDark ? (sunken ? 0xFF101010 : UiColors.SURFACE_DARK) : (sunken ? 0xFFA0A0A0 : UiColors.SURFACE_LIGHT);
-        context.fill(x, y, x + width, y + height, bgColor);
-        drawDarkBevel(context, x, y, width, height, sunken);
-
+        UiTheme.button(context, x, y, width, height, this.hovered, active);
         drawIcon(context, this.baseIcon, this.maskIcon, this.dynamicColor);
 
-        if (hover && !this.isDisabled) {
-            context.drawStrokedRectangle(x, y, width, height, 0x40FFFFFF);
-            if (this.tooltipText != null) {
-                java.util.List<Text> tooltipLines = new java.util.ArrayList<>();
-                for (String line : this.tooltipText.split("\n")) {
-                    tooltipLines.add(Text.literal(line));
-                }
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, tooltipLines, mouseX, mouseY);
+        if (this.hovered && this.tooltipText != null) {
+            java.util.List<Text> tooltipLines = new java.util.ArrayList<>();
+            for (String line : this.tooltipText.split("\n")) {
+                tooltipLines.add(Text.literal(line));
             }
+            context.drawTooltip(MinecraftClient.getInstance().textRenderer, tooltipLines, mouseX, mouseY);
         }
     }
 
@@ -88,8 +75,8 @@ public class ToolButtonWidget extends CustomWidget {
 
         int baseColor = -1;
         if (this.tintByState) {
-            boolean sunken = this.isActive || this.isTempClicked;
-            baseColor = sunken ? 0xFF9CC3FF : 0xFFDDDDDD;
+            boolean active = this.isActive || this.isTempClicked;
+            baseColor = active ? UiTheme.ICON_ACTIVE : (this.hovered ? UiTheme.ICON_HOVER : UiTheme.ICON);
         }
         context.drawTexture(
                 pipeline, base, x + 2 + baseOffsetX, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, baseColor);
