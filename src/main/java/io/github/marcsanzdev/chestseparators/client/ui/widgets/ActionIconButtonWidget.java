@@ -1,12 +1,9 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 
 public class ActionIconButtonWidget extends CustomWidget {
 
@@ -22,40 +19,13 @@ public class ActionIconButtonWidget extends CustomWidget {
         this.baseColor = baseColor;
     }
 
-    private int shiftColor(int color, int amount) {
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        r = MathHelper.clamp(r + amount, 0, 255);
-        g = MathHelper.clamp(g + amount, 0, 255);
-        b = MathHelper.clamp(b + amount, 0, 255);
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         if (this.isDisabled) return;
 
         boolean hover = isHovering(mouseX, mouseY);
-        boolean isDark = GlobalChestConfig.instance.darkMode;
-
-        // Auto-adapt base color from Dark to Light Vanilla Gray
-        int renderBaseColor = this.baseColor;
-        if (!isDark && this.baseColor == UiColors.SURFACE_DARK) {
-            renderBaseColor = UiColors.SURFACE_LIGHT;
-        }
-
-        // Shift darker on hover for light mode, brighter for dark mode
-        int hoverShift = isDark ? 30 : -20;
-        int color = hover ? shiftColor(renderBaseColor, hoverShift) : renderBaseColor;
-
-        context.fill(x, y, x + width, y + height, 0xFF000000 | color);
-        drawDarkBevel(context, x, y, width, height, false);
-
-        if (hover) {
-            context.drawStrokedRectangle(x, y, width, height, 0x40FFFFFF);
-        }
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(
+                context, x, y, width, height, hover, this.isActive);
 
         float scale = 0.85f;
         int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(label);
@@ -83,14 +53,14 @@ public class ActionIconButtonWidget extends CustomWidget {
             startX += 20;
         }
 
-        // Adaptive text color and shadow based on the button background
-        int textColor = (isDark || renderBaseColor != UiColors.SURFACE_LIGHT) ? 0xFFFFFFFF : 0xFF202020;
-        boolean drawShadow = (isDark || renderBaseColor != UiColors.SURFACE_LIGHT);
+        int textColor = this.isActive
+                ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT
+                : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT;
 
         context.getMatrices().pushMatrix();
         context.getMatrices().translate((float) startX, (float) (y + (height - 9 * scale) / 2));
         context.getMatrices().scale(scale, scale);
-        context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, textColor, drawShadow);
+        context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, textColor, true);
         context.getMatrices().popMatrix();
 
         if (hover && this.tooltipText != null && !this.isDisabled) {
