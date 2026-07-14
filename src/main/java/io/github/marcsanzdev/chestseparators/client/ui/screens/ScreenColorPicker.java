@@ -375,7 +375,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         ColorPickerGradients.drawSaturationValueBox(
                 context, contentX, contentY, layout.pickerBoxSize, layout.pickerBoxSize, session.pickerHue);
-        drawDarkBevel(context, contentX - 1, contentY - 1, 102, 102, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
+                context, contentX - 1, contentY - 1, 102, 102, 0x33FFFFFF);
 
         int cursorX = contentX + (int) (session.pickerSat * 100);
         int cursorY = contentY + (int) ((1.0f - session.pickerVal) * 100);
@@ -384,7 +385,8 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
         int hueX = contentX + 115;
         ColorPickerGradients.drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
-        drawDarkBevel(context, hueX - 1, contentY - 1, 22, 102, true);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
+                context, hueX - 1, contentY - 1, 22, 102, 0x33FFFFFF);
 
         int hueCursorY = contentY + (int) (session.pickerHue * 100);
         context.fill(hueX - 3, hueCursorY - 1, hueX + 23, hueCursorY + 2, 0xFF000000);

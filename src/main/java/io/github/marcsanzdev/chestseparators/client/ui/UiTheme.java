@@ -72,8 +72,13 @@ public final class UiTheme {
     public static void tab(DrawContext c, int x, int y, int w, int h, boolean hover, boolean active) {
         int bg = active ? 0xFF2C6BAE : (hover ? 0xFF2E2E3A : 0xFF23232C);
         int border = active ? ACCENT_BORDER : 0xFF3A3A45;
-        roundRect(c, x, y, w, h, bg);
-        roundBorder(c, x, y, w, h, border);
+        // FULL opaque rect (no rounded corners) so nothing behind bleeds through where the tab overlaps
+        // the panel. Then a simple 1px square border.
+        c.fill(x, y, x + w, y + h, bg);
+        c.fill(x, y, x + w, y + 1, border);
+        c.fill(x, y + h - 1, x + w, y + h, border);
+        c.fill(x, y + 1, x + 1, y + h - 1, border);
+        c.fill(x + w - 1, y + 1, x + w, y + h - 1, border);
     }
 
     /** Recessed inset box (search fields, list viewports): darker translucent fill + faint border. */
@@ -84,9 +89,14 @@ public final class UiTheme {
 
     /** Cristal glass button background for the given hover/active state. */
     public static void button(DrawContext c, int x, int y, int w, int h, boolean hover, boolean active) {
-        int bg = active ? ACCENT_BG : (hover ? BTN_BG_HOVER : BTN_BG);
-        int border = active ? ACCENT_BORDER : BTN_BORDER;
-        roundRect(c, x, y, w, h, bg);
-        roundBorder(c, x, y, w, h, border);
+        if (active) {
+            // Pushed-in: draw the active (blue) button 1px smaller on every side, so it reads as slightly
+            // recessed/sunken. The 1px gap shows the panel behind — a clean "pressed" cue with no shadow.
+            roundRect(c, x + 1, y + 1, w - 2, h - 2, ACCENT_BG);
+            roundBorder(c, x + 1, y + 1, w - 2, h - 2, ACCENT_BORDER);
+            return;
+        }
+        roundRect(c, x, y, w, h, hover ? BTN_BG_HOVER : BTN_BG);
+        roundBorder(c, x, y, w, h, BTN_BORDER);
     }
 }

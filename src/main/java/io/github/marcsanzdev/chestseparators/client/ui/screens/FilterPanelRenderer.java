@@ -238,7 +238,10 @@ final class FilterPanelRenderer {
 
         if (session.currentTabPage >= maxPages) session.currentTabPage = maxPages - 1;
 
-        // --- 2. DRAW TABS BEHIND PANEL ---
+        // --- MAIN PANEL FIRST so the opaque tabs drawn next sit ON TOP and don't bleed through it ---
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, mainX, mainY, mainW, mainH);
+
+        // --- 2. DRAW TABS ON TOP OF THE PANEL ---
         for (int slot = 0; slot < 16; slot++) {
             EditorSessionData.CreativeTabInfo info = null;
             int actualGlobalIndex = -1;
@@ -282,29 +285,6 @@ final class FilterPanelRenderer {
             context.drawItem(info.icon, tabX + 3, tabY + (isTop ? 2 : 4));
 
             if (hover) context.drawTooltip(MinecraftClient.getInstance().textRenderer, info.name, mouseX, mouseY);
-        }
-
-        // --- 3. DRAW MAIN PANEL WINDOW ---
-        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, mainX, mainY, mainW, mainH);
-
-        // --- 4. ACTIVE TAB SEAMLESS PATCH ---
-        int activeSlot = -1;
-        if (searchTab != null && session.currentCreativeTabIndex == searchTabIndexGlobal) {
-            activeSlot = 7;
-        } else {
-            int normalListIndex = normalIndices.indexOf(session.currentCreativeTabIndex);
-            if (normalListIndex != -1) {
-                if (session.currentTabPage == 0) {
-                    if (normalListIndex >= 0 && normalListIndex <= 4) activeSlot = normalListIndex;
-                    else if (normalListIndex >= 5 && normalListIndex <= 9) activeSlot = 8 + (normalListIndex - 5);
-                } else {
-                    int pageForIndex = 1 + (normalListIndex - 10) / normalTabsPerPage;
-                    if (session.currentTabPage == pageForIndex) {
-                        int offset = (normalListIndex - 10) % normalTabsPerPage;
-                        activeSlot = (offset >= 7) ? offset + 1 : offset;
-                    }
-                }
-            }
         }
 
         // --- 5. TITLE & CAROUSEL OR SEARCH BOX ---
