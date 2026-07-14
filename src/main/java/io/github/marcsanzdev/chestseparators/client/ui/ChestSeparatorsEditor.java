@@ -253,13 +253,22 @@ public class ChestSeparatorsEditor {
                     playClickSound(1.0f);
                 });
 
-        // Modern flat glyphs (drawn in code, not textures) for each toolbar icon.
-        this.entryButton.glyph = ToolButtonWidget.Glyph.PENCIL;
-        this.whitelistButton.glyph = ToolButtonWidget.Glyph.FUNNEL;
-        this.depositButton.glyph = ToolButtonWidget.Glyph.DEPOSIT;
-        this.fillButton.glyph = ToolButtonWidget.Glyph.FILL;
-        this.presetsButton.glyph = ToolButtonWidget.Glyph.FLOPPY;
-        this.chestPresetsButton.glyph = ToolButtonWidget.Glyph.COPY;
+        // Smooth vector-exported icons (128px, linear-filtered via .mcmeta) for the toolbar. They are
+        // single-color white glyphs tinted by the button state (light-gray / accent blue).
+        ToolButtonWidget[] toolbarBtns = {
+            this.entryButton, this.whitelistButton, this.depositButton,
+            this.fillButton, this.presetsButton, this.chestPresetsButton
+        };
+        net.minecraft.util.Identifier[] toolbarIcons = {
+            ModTextures.ICON_SM_EDIT, ModTextures.ICON_SM_FILTER, ModTextures.ICON_SM_DEPOSIT,
+            ModTextures.ICON_SM_FILL, ModTextures.ICON_SM_SAVE, ModTextures.ICON_SM_COPY
+        };
+        for (int i = 0; i < toolbarBtns.length; i++) {
+            toolbarBtns[i].baseIcon = toolbarIcons[i];
+            toolbarBtns[i].maskIcon = null;
+            toolbarBtns[i].texSize = 128;
+            toolbarBtns[i].tintByState = true;
+        }
 
         // Toolbar positioning is now handled per-frame by EditorRenderer#renderToolbar, which docks the
         // visible icons into a vertical column on the right edge of the container GUI (adaptive to how

@@ -6,6 +6,14 @@ public class ModTextures {
 
     public static final String MOD_ID = "chestseparators";
 
+    // Smooth (vector-exported, 128px, linear-filtered) toolbar icons.
+    public static final Identifier ICON_SM_EDIT = Identifier.of(MOD_ID, "textures/gui/icon_sm_edit.png");
+    public static final Identifier ICON_SM_FILTER = Identifier.of(MOD_ID, "textures/gui/icon_sm_filter.png");
+    public static final Identifier ICON_SM_DEPOSIT = Identifier.of(MOD_ID, "textures/gui/icon_sm_deposit.png");
+    public static final Identifier ICON_SM_FILL = Identifier.of(MOD_ID, "textures/gui/icon_sm_fill.png");
+    public static final Identifier ICON_SM_SAVE = Identifier.of(MOD_ID, "textures/gui/icon_sm_save.png");
+    public static final Identifier ICON_SM_COPY = Identifier.of(MOD_ID, "textures/gui/icon_sm_copy.png");
+
     // Pencil tool textures.
     public static final Identifier PENCIL_BASE = Identifier.of(MOD_ID, "textures/gui/pencil_base.png");
     public static final Identifier PENCIL_MASK_AREA = Identifier.of(MOD_ID, "textures/gui/pencil_mask_area.png");
