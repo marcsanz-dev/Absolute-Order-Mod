@@ -261,7 +261,7 @@ public class ChestSeparatorsEditor {
         };
         net.minecraft.util.Identifier[] toolbarIcons = {
             ModTextures.ICON_SM_EDIT, ModTextures.ICON_SM_FILTER, ModTextures.ICON_SM_DEPOSIT,
-            ModTextures.ICON_SM_FILL, ModTextures.ICON_SM_SAVE, ModTextures.ICON_SM_COPY
+            ModTextures.ICON_SM_FILL, ModTextures.ICON_SM_INV_PRESETS, ModTextures.ICON_SM_CHEST_PRESETS
         };
         for (int i = 0; i < toolbarBtns.length; i++) {
             toolbarBtns[i].baseIcon = toolbarIcons[i];

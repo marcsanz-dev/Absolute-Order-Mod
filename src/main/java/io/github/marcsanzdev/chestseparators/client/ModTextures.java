@@ -13,6 +13,8 @@ public class ModTextures {
     public static final Identifier ICON_SM_FILL = Identifier.of(MOD_ID, "textures/gui/icon_sm_fill.png");
     public static final Identifier ICON_SM_SAVE = Identifier.of(MOD_ID, "textures/gui/icon_sm_save.png");
     public static final Identifier ICON_SM_COPY = Identifier.of(MOD_ID, "textures/gui/icon_sm_copy.png");
+    public static final Identifier ICON_SM_INV_PRESETS = Identifier.of(MOD_ID, "textures/gui/icon_sm_inv_presets.png");
+    public static final Identifier ICON_SM_CHEST_PRESETS = Identifier.of(MOD_ID, "textures/gui/icon_sm_chest_presets.png");
 
     // Pencil tool textures.
     public static final Identifier PENCIL_BASE = Identifier.of(MOD_ID, "textures/gui/pencil_base.png");
