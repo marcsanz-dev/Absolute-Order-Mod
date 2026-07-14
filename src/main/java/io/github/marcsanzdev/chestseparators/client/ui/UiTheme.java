@@ -21,15 +21,17 @@ public final class UiTheme {
     public static final int BTN_BG_HOVER = 0x24FFFFFF;
     public static final int BTN_BORDER = 0x2AFFFFFF;
 
-    // Accent (blue) — active/selected
+    // Accent (blue) — active/selected. Active buttons use a near-solid blue FILL (clearly "on") rather
+    // than a faint tint, so they read as toggled without any muddy inset shadow.
     public static final int ACCENT = 0xFF4A9EFF;
-    public static final int ACCENT_BG = 0x394A9EFF; // translucent blue fill
-    public static final int ACCENT_BORDER = 0xFF3F86D0;
+    public static final int ACCENT_BG = 0xF02C6BAE; // near-solid blue fill for active buttons
+    public static final int ACCENT_BORDER = 0xFF5FA8FF;
 
     // Icons / text
     public static final int ICON = 0xFFDDDDDD;
     public static final int ICON_HOVER = 0xFFFFFFFF;
-    public static final int ICON_ACTIVE = 0xFFBFDBFF;
+    public static final int ICON_ACTIVE = 0xFFFFFFFF; // white on the solid blue fill
+    public static final int ON_ACCENT = 0xFFFFFFFF; // text/icon color on an active (blue) button
     public static final int TEXT = 0xFFE6E6E6;
     public static final int TEXT_MUTED = 0xFF9A9AA2;
 
@@ -69,22 +71,5 @@ public final class UiTheme {
         int border = active ? ACCENT_BORDER : BTN_BORDER;
         roundRect(c, x, y, w, h, bg);
         roundBorder(c, x, y, w, h, border);
-        if (active) {
-            pressedInset(c, x, y, w, h);
-        }
-    }
-
-    /**
-     * Draws a "pushed-in" inset: a dark shadow on the inner top/left edges and a light highlight on the
-     * inner bottom/right edges, so an active (blue) button clearly reads as physically sunken rather
-     * than just recoloured.
-     */
-    public static void pressedInset(DrawContext c, int x, int y, int w, int h) {
-        int shadow = 0x66000000;
-        int light = 0x22FFFFFF;
-        c.fill(x + 2, y + 1, x + w - 2, y + 3, shadow); // inner top shadow (2px)
-        c.fill(x + 1, y + 2, x + 3, y + h - 2, shadow); // inner left shadow (2px)
-        c.fill(x + 2, y + h - 2, x + w - 2, y + h - 1, light); // inner bottom highlight
-        c.fill(x + w - 2, y + 2, x + w - 1, y + h - 2, light); // inner right highlight
     }
 }

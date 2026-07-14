@@ -40,9 +40,7 @@ final class FilterPanelRenderer {
         int listY = layout.listY;
         boolean isDark = GlobalChestConfig.instance.darkMode;
 
-        context.fill(
-                listX, listY, listX + listW, listY + listH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        screen.drawDarkBevel(context, listX, listY, listW, listH, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, listX, listY, listW, listH);
 
         List<String> activeListToRender;
         float activeScrollY;
@@ -292,9 +290,7 @@ final class FilterPanelRenderer {
         }
 
         // --- 3. DRAW MAIN PANEL WINDOW ---
-        context.fill(
-                mainX, mainY, mainX + mainW, mainY + mainH, isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        screen.drawDarkBevel(context, mainX, mainY, mainW, mainH, false);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, mainX, mainY, mainW, mainH);
 
         // --- 4. ACTIVE TAB SEAMLESS PATCH ---
         int activeSlot = -1;

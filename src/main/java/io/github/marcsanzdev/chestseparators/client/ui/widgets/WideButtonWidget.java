@@ -36,7 +36,7 @@ public class WideButtonWidget extends CustomWidget {
 
         int iconColor;
         if (this.isActive && !this.keepNormalTextColor) {
-            iconColor = io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT;
+            iconColor = io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ON_ACCENT;
         } else {
             iconColor = io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT;
         }

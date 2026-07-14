@@ -54,7 +54,7 @@ public class ActionIconButtonWidget extends CustomWidget {
         }
 
         int textColor = this.isActive
-                ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT
+                ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ON_ACCENT
                 : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT;
 
         context.getMatrices().pushMatrix();
