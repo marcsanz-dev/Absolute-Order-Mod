@@ -69,6 +69,8 @@ public class ChestInteractionMixin {
                     || entity.getClass().getName().contains("Chest")) {
                 ChestPosStorage.lastClickedEntityUUID = entity.getUuid();
                 ChestPosStorage.isEntityOpened = true;
+                // Chest/hopper minecarts accept hopper input, so the Hopper rule is available for them.
+                ChestPosStorage.isMinecartEntity = entity instanceof net.minecraft.entity.vehicle.StorageMinecartEntity;
                 ChestPosStorage.lastOpenedShulkerUUID = null;
 
                 if (MinecraftClient.getInstance().world != null) {

@@ -62,6 +62,11 @@ public class EditorInputHandler {
                 return true;
             }
 
+            if (session.reorderDragItem != null || session.pendingDragItem != null) {
+                editor.screenEditFilter.commitPointerRelease(context.x(), context.y());
+                return true;
+            }
+
             if (button == 0 && session.isDraggingLine) {
                 if (session.currentState == EditorState.VIEW_GROUPS
                         || session.currentState == EditorState.SELECT_SLOTS) {
@@ -94,6 +99,15 @@ public class EditorInputHandler {
                 layout.update(screen, accessor, editor.getSidebarYOffset());
 
                 int mainX = layout.mainX;
+
+                // Reordering the filter list: just follow the cursor. The drop position and the edge
+                // auto-scroll are resolved per frame while rendering, so they keep working even when the
+                // mouse is held still against the top or bottom of the list.
+                if (session.reorderDragItem != null) {
+                    session.reorderMouseX = (int) mouseX;
+                    session.reorderMouseY = (int) mouseY;
+                    return false;
+                }
 
                 session.lastInteractedWasList = (mouseX < mainX);
 
@@ -162,6 +176,12 @@ public class EditorInputHandler {
     private void registerScrollEvent() {
         ScreenMouseEvents.allowMouseScroll(screen)
                 .register((_screen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
+                    // The presets menu (when open, over a Load preview) grabs the wheel to scroll its
+                    // detail list, before the group view below it can react.
+                    if (session.isPresetsMenuOpen
+                            && editor.presetsMenu.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+                        return false;
+                    }
                     if (session.currentState == EditorState.VIEW_GROUPS
                             || session.currentState == EditorState.SELECT_SLOTS) {
                         if (editor.screenViewGroups.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount))
@@ -177,6 +197,12 @@ public class EditorInputHandler {
     }
 
     public boolean keyPressed(KeyInput input) {
+        // While a preset name is being edited inline, all keys belong to that field (typing, Enter, Esc) —
+        // before any shortcut or the Esc-closes-menu handling below can steal them.
+        if (session.isPresetsMenuOpen && editor.presetsMenu.isRenaming()) {
+            if (editor.presetsMenu.keyPressed(input)) return true;
+        }
+
         boolean isControlDown = GLFW.glfwGetKey(
                                 MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL)
                         == GLFW.GLFW_PRESS
@@ -276,6 +302,9 @@ public class EditorInputHandler {
     }
 
     public boolean charTyped(CharInput input) {
+        if (session.isPresetsMenuOpen && editor.presetsMenu.isRenaming()) {
+            if (editor.presetsMenu.charTyped(input)) return true;
+        }
         if (session.currentState == EditorState.EDIT_FILTER) {
             return editor.screenEditFilter.charTyped(input);
         }
@@ -283,10 +312,17 @@ public class EditorInputHandler {
     }
 
     private boolean allowMouseClick(Screen _screen, Click context) {
+        return handleClick(context.x(), context.y(), context.button());
+    }
+
+    /**
+     * The editor's click handling. Normally invoked from the Fabric allowMouseClick event (returning
+     * false cancels the vanilla click). The creative-inventory mixin also calls it directly, because that
+     * screen processes its own tab/search clicks BEFORE the Fabric event can cancel them — so while
+     * editing there, the mixin routes the click here and swallows vanilla entirely.
+     */
+    public boolean handleClick(double mouseX, double mouseY, int button) {
         layout.update(screen, accessor, editor.getSidebarYOffset());
-        double mouseX = context.x();
-        double mouseY = context.y();
-        int button = context.button();
 
         // While the color picker is open, all clicks outside it must be suppressed.
         if (session.isColorPickerOpen) {
@@ -297,31 +333,42 @@ public class EditorInputHandler {
         boolean isFilterMenuOpen = (session.currentState == EditorState.EDIT_FILTER);
         boolean isEditorClosed = (session.currentState == EditorState.HIDDEN);
 
-        // The top buttons stay clickable even while the presets menu is open, so the layout/filters/
-        // presets icons remain active. Clicking the layout or filters icon closes the presets menu.
-        if (!isFilterMenuOpen) {
-            if (GlobalChestConfig.isShowEditButton()) {
-                if (editor.entryButton != null && editor.entryButton.mouseClicked(mouseX, mouseY, button)) {
-                    session.isPresetsMenuOpen = false;
-                    return false;
-                }
-                if (editor.whitelistButton != null && editor.whitelistButton.mouseClicked(mouseX, mouseY, button)) {
-                    session.isPresetsMenuOpen = false;
-                    return false;
-                }
-                if (editor.fillButton != null
-                        && !session.isPlayerInventory
-                        && editor.fillButton.mouseClicked(mouseX, mouseY, button)) {
-                    return false;
-                }
-                if (editor.presetsButton != null && editor.presetsButton.mouseClicked(mouseX, mouseY, button)) {
-                    return false;
-                }
-                if (editor.chestPresetsButton != null
-                        && !session.isPlayerInventory
-                        && editor.chestPresetsButton.mouseClicked(mouseX, mouseY, button)) {
-                    return false;
-                }
+        // PUSH (deposit) and PULL (fill) act on the open container and stay clickable in the editor
+        // screens — edit layout, groups, presets. Hidden buttons are parked off-screen, so a disabled
+        // one is never hit here. They are NOT clickable while the filter item-picker is open: that panel
+        // covers the container, so moving items underneath it would be an invisible, unintended action.
+        if (!session.isPlayerInventory && !isFilterMenuOpen) {
+            if (editor.depositButton != null && editor.depositButton.mouseClicked(mouseX, mouseY, button)) {
+                return false;
+            }
+            if (editor.fillButton != null && editor.fillButton.mouseClicked(mouseX, mouseY, button)) {
+                return false;
+            }
+        }
+
+        // The layout/filters/presets icons stay clickable except while the filter menu is open. Clicking
+        // layout or filters also closes the presets menu.
+        if (!isFilterMenuOpen && GlobalChestConfig.isShowEditButton()) {
+            if (editor.entryButton != null && editor.entryButton.mouseClicked(mouseX, mouseY, button)) {
+                editor.presetsMenu.cancelRename();
+                session.isPresetsMenuOpen = false;
+                editor.ensureCreativeInventoryTab();
+                return false;
+            }
+            if (editor.whitelistButton != null && editor.whitelistButton.mouseClicked(mouseX, mouseY, button)) {
+                editor.presetsMenu.cancelRename();
+                session.isPresetsMenuOpen = false;
+                editor.ensureCreativeInventoryTab();
+                return false;
+            }
+            if (editor.presetsButton != null && editor.presetsButton.mouseClicked(mouseX, mouseY, button)) {
+                editor.ensureCreativeInventoryTab();
+                return false;
+            }
+            if (editor.chestPresetsButton != null
+                    && !session.isPlayerInventory
+                    && editor.chestPresetsButton.mouseClicked(mouseX, mouseY, button)) {
+                return false;
             }
         }
 
@@ -329,13 +376,6 @@ public class EditorInputHandler {
         if (session.isPresetsMenuOpen) {
             editor.presetsMenu.onClick(mouseX, mouseY, button, screen.width, screen.height);
             return false;
-        }
-
-        // The deposit button is only active when no editor sub-menu is open.
-        if (isEditorClosed && GlobalChestConfig.instance.showDepositButton) {
-            if (editor.depositButton != null && editor.depositButton.mouseClicked(mouseX, mouseY, button)) {
-                return false;
-            }
         }
 
         if (!GlobalChestConfig.isShowEditButton() || isEditorClosed) {

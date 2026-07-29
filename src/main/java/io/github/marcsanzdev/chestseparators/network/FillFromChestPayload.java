@@ -12,7 +12,8 @@ import net.minecraft.util.math.BlockPos;
  * and pulls items the player's inventory filters want, up to each filter's target count. The block
  * position is used only as the origin of the cosmetic fly-back animation.
  */
-public record FillFromChestPayload(BlockPos animPos) implements CustomPayload {
+public record FillFromChestPayload(BlockPos animPos, boolean includeEmpty, boolean lockHotbar)
+        implements CustomPayload {
 
     public static final CustomPayload.Id<FillFromChestPayload> ID =
             new CustomPayload.Id<>(Identifier.of("chestseparators", "fill_from_chest"));
@@ -21,11 +22,15 @@ public record FillFromChestPayload(BlockPos animPos) implements CustomPayload {
             PacketCodec.of(FillFromChestPayload::write, FillFromChestPayload::new);
 
     private FillFromChestPayload(PacketByteBuf buf) {
-        this(buf.readBlockPos());
+        this(buf.readBlockPos(), buf.readBoolean(), buf.readBoolean());
     }
 
     private void write(PacketByteBuf buf) {
         buf.writeBlockPos(this.animPos);
+        buf.writeBoolean(this.includeEmpty);
+        // Client-side setting (GlobalChestConfig is client-only), forwarded so the server-side re-sort can
+        // honour it without referencing the client config class.
+        buf.writeBoolean(this.lockHotbar);
     }
 
     @Override

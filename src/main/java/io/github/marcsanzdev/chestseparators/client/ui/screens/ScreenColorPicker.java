@@ -46,7 +46,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 85,
                 bH,
                 Text.translatable("button.chestseparators.eyedropper").getString(),
-                ModTextures.ICON_EYEDROPPER2,
+                ModTextures.ICON_SM_EYEDROPPER,
                 () -> {
                     session.isEyedropperActive = true;
                     org.lwjgl.glfw.GLFW.glfwSetInputMode(
@@ -57,6 +57,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 });
         btnEyedropper.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.eyedropper").getString();
+        btnEyedropper.texSize = 128;
         widgets.add(btnEyedropper);
 
         WideButtonWidget btnExit = new WideButtonWidget(
@@ -65,7 +66,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 55,
                 bH,
                 Text.translatable("button.chestseparators.exit").getString(),
-                ModTextures.ICON_CANCEL,
+                ModTextures.ICON_SM_CANCEL,
                 () -> {
                     saveCurrentCustomColor();
                     editor.playClickSound(0.8f);
@@ -75,6 +76,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 });
         btnExit.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.exit").getString();
+        btnExit.deferAction = true; // flash before the Exit button closes the colour picker
         widgets.add(btnExit);
 
         MinecraftClient client = MinecraftClient.getInstance();
@@ -439,8 +441,10 @@ public class ScreenColorPicker extends AbstractEditorScreen {
     }
 
     private void renderEyedropperCursor(DrawContext context, int mx, int my) {
+        // The diagonal dropper's tip sits at (3.47, 12.53) within its 16px footprint; offset the sprite so
+        // that tip lands exactly on (mx, my) — the pixel that readHoveredPixelColor(mx, my) samples.
         int iconX = mx - 3;
-        int iconY = my - 12;
+        int iconY = my - 13;
 
         int previewX = mx + 18;
         int previewY = my - 24;
@@ -453,17 +457,17 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
         context.drawTexture(
                 pipeline,
-                io.github.marcsanzdev.chestseparators.client.ModTextures.ICON_EYEDROPPER,
+                io.github.marcsanzdev.chestseparators.client.ModTextures.ICON_SM_EYEDROPPER,
                 iconX,
                 iconY,
                 0.0F,
                 0.0F,
                 16,
                 16,
-                32,
-                32,
-                32,
-                32,
+                128,
+                128,
+                128,
+                128,
                 -1);
     }
 }

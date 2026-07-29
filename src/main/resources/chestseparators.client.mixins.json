@@ -8,6 +8,9 @@
   "client": [
     "client.GenericContainerScreenMixin",
     "client.HandledScreenAccessor",
+    "client.CreativeInventoryScreenAccessor",
+    "client.CreativeInventoryScreenMixin",
+    "client.CreativeSlotAccessor",
     "client.ChestLidAccessor",
     "client.ShulkerAnimationAccessor",
     "client.ArmorEquipClientMixin",

@@ -130,13 +130,28 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         editor.playClickSound(1.0f);
     }
 
+    /** Top edge of the left tools/colours sidebar. */
+    private int sidebarTop() {
+        return layout.guiY + editor.getSidebarYOffset() - 4;
+    }
+
+    /** Height of that sidebar: down to the last custom colour swatch, plus a small margin. */
+    private int sidebarHeight() {
+        int bottomOfLastColor = layout.paletteY + (7 * (layout.swatchSize + 4)) + layout.swatchSize;
+        return (bottomOfLastColor - sidebarTop()) + 8;
+    }
+
     @Override
     protected void buildWidgets() {
         // --- 1. RIGHT ACTION PANEL (Copy, Paste, Undo, Redo) ---
         int rightX = layout.rightX;
-        int sy = layout.mainY;
         int btnW = layout.btnW;
         int bH = layout.bH;
+
+        // Centred against the left sidebar rather than pinned to the top of the container: with only four
+        // buttons they otherwise sat far above the panel they visually pair with.
+        int blockHeight = 3 * 24 + bH; // four rows on a 24px pitch
+        int sy = Math.max(4, sidebarTop() + (sidebarHeight() - blockHeight) / 2);
 
         WideButtonWidget btnCopy = new WideButtonWidget(
                 rightX,
@@ -144,7 +159,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.copy_layout").getString(),
-                ModTextures.ICON_COPY,
+                ModTextures.ICON_SM_COPY,
                 () -> {
                     btnCopyClickTime = System.currentTimeMillis();
                     ChestConfigManager.getInstance().copyAllToClipboard();
@@ -154,6 +169,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnCopy.keepNormalTextColor = true;
         btnCopy.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.copy_layout").getString();
+        btnCopy.texSize = 128;
         widgets.add(btnCopy);
 
         WideButtonWidget btnPaste = new WideButtonWidget(
@@ -162,7 +178,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.paste_layout").getString(),
-                ModTextures.ICON_PASTE,
+                ModTextures.ICON_SM_PASTE,
                 () -> {
                     btnPasteClickTime = System.currentTimeMillis();
                     if (ChestConfigManager.getInstance().hasClipboardData()) {
@@ -176,6 +192,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnPaste.keepNormalTextColor = true;
         btnPaste.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.paste_layout").getString();
+        btnPaste.texSize = 128;
         widgets.add(btnPaste);
 
         WideButtonWidget btnUndo = new WideButtonWidget(
@@ -184,7 +201,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.undo_action").getString(),
-                ModTextures.ICON_UNDO,
+                ModTextures.ICON_SM_UNDO,
                 () -> {
                     btnUndoClickTime = System.currentTimeMillis();
                     editor.applyUndoRedo(ChestConfigManager.getInstance().undo(), false);
@@ -192,6 +209,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnUndo.keepNormalTextColor = true;
         btnUndo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.undo_action").getString();
+        btnUndo.texSize = 128;
         widgets.add(btnUndo);
 
         WideButtonWidget btnRedo = new WideButtonWidget(
@@ -200,7 +218,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.redo_action").getString(),
-                ModTextures.ICON_REDO,
+                ModTextures.ICON_SM_REDO,
                 () -> {
                     btnRedoClickTime = System.currentTimeMillis();
                     editor.applyUndoRedo(ChestConfigManager.getInstance().redo(), true);
@@ -208,6 +226,7 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnRedo.keepNormalTextColor = true;
         btnRedo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.redo_action").getString();
+        btnRedo.texSize = 128;
         widgets.add(btnRedo);
 
         // --- 2. LEFT SIDEBAR TOOLS ---
@@ -226,15 +245,16 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnEraserArea = new ToolButtonWidget(
                 contentX + 22,
                 currentY,
-                ModTextures.ERASER_AREA,
+                ModTextures.ICON_SM_ERASER_AREA,
                 Text.translatable("tooltip.chestseparators.erase_area").getString(),
                 () -> selectEraseTool(0));
 
         btnClear = new ToolButtonWidget(
                 contentX + 44,
                 currentY,
-                ModTextures.ICON_DELETE,
-                Text.translatable("tooltip.chestseparators.clear_layer").getString(),
+                ModTextures.ICON_SM_TRASH,
+                // Placeholder for the first frame only; updateWidgetStates() renames it per active tab.
+                Text.translatable("tooltip.chestseparators.clear_lines").getString(),
                 () -> {
                     btnClearClickTime = System.currentTimeMillis();
                     ChestConfigManager.getInstance().saveSnapshot();
@@ -258,14 +278,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnEraserTrace = new ToolButtonWidget(
                 contentX + 22,
                 row2Y,
-                ModTextures.ERASER_TRACE,
+                ModTextures.ICON_SM_ERASER_TRACE,
                 Text.translatable("tooltip.chestseparators.erase_trace").getString(),
                 () -> selectEraseTool(1));
 
         btnColorPicker = new ToolButtonWidget(
                 contentX + 44,
                 row2Y,
-                ModTextures.ICON_PALETTE,
+                ModTextures.ICON_SM_PALETTE,
                 Text.translatable("tooltip.chestseparators.open_palette").getString(),
                 () -> {
                     btnColorPickerClickTime = System.currentTimeMillis();
@@ -296,6 +316,14 @@ public class ScreenDrawLines extends AbstractEditorScreen {
                     editor.playClickSound(1.0f);
                 });
 
+        // Smooth (vector) tool icons: sample at 128px with linear filtering.
+        btnPencilArea.texSize = 128;
+        btnEraserArea.texSize = 128;
+        btnClear.texSize = 128;
+        btnPencilTrace.texSize = 128;
+        btnEraserTrace.texSize = 128;
+        btnColorPicker.texSize = 128;
+
         widgets.add(btnPencilArea);
         widgets.add(btnEraserArea);
         widgets.add(btnClear);
@@ -316,17 +344,8 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         updateWidgetStates();
 
         // 1. Draw Left Sidebar Background
-        int sx = layout.sidebarX;
-        int currentY = layout.guiY + editor.getSidebarYOffset();
-
-        // Panel height extends to the bottom of the last custom color swatch (index 7) plus a small margin.
-        int bottomOfLastColor = layout.paletteY + (7 * (layout.swatchSize + 4)) + layout.swatchSize;
-        int panelStartY = currentY - 4;
-        int margin = 8;
-        int fixedSidebarHeight = (bottomOfLastColor - panelStartY) + margin;
-
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(
-                context, sx, panelStartY, layout.sidebarWidth, fixedSidebarHeight);
+                context, layout.sidebarX, sidebarTop(), layout.sidebarWidth, sidebarHeight());
 
         // While the color picker is open, pass (-1, -1) as mouse coordinates so background
         // buttons do not react to hover or draw tooltips behind the picker window.
@@ -362,6 +381,16 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         else if (tabMode == 2) dynamicColor = getCurrentSelectedComboColorValue();
         if (dynamicColor == 0) dynamicColor = 0xFFFFFF;
 
+        // The trash button clears whatever the active tab edits, so its tooltip names that instead of the
+        // generic "layer" — it is the only cue for what a click is about to wipe.
+        btnClear.tooltipText = Text.translatable(
+                        tabMode == 0
+                                ? "tooltip.chestseparators.clear_lines"
+                                : tabMode == 1
+                                        ? "tooltip.chestseparators.clear_backgrounds"
+                                        : "tooltip.chestseparators.clear_both")
+                .getString();
+
         // Tool Active States
         btnPencilArea.isActive = (tMode == 0 && cIndex != ChestSeparatorsEditor.TOOL_ERASER_ID);
         btnPencilTrace.isActive = (tMode == 1 && cIndex != ChestSeparatorsEditor.TOOL_ERASER_ID);
@@ -369,25 +398,19 @@ public class ScreenDrawLines extends AbstractEditorScreen {
         btnEraserTrace.isActive = (tMode == 1 && cIndex == ChestSeparatorsEditor.TOOL_ERASER_ID);
 
         // Tool Icons & Colors
-        Identifier baseTex = (tabMode == 0)
-                ? ModTextures.PENCIL_BASE
-                : ((tabMode == 1) ? ModTextures.BRUSH_BASE : ModTextures.BTN_EDIT_LINES);
-        Identifier maskAreaTex = (tabMode == 1)
-                ? ModTextures.BRUSH_MASK_AREA
-                : ((tabMode == 2) ? ModTextures.COMBO_MASK_AREA : ModTextures.PENCIL_MASK_AREA);
-        Identifier maskTraceTex = (tabMode == 1)
-                ? ModTextures.BRUSH_MASK_TRACE
-                : ((tabMode == 2) ? ModTextures.COMBO_MASK_TRACE : ModTextures.PENCIL_MASK_TRACE);
-
-        btnPencilArea.baseIcon = baseTex;
-        btnPencilArea.maskIcon = maskAreaTex;
+        // The two paint buttons show the AREA / TRACE mode icon (dashed square / wavy line) drawn ENTIRELY
+        // in the current paint colour; the tool type (pencil/brush/combo) is conveyed by the active tab.
+        btnPencilArea.baseIcon = ModTextures.ICON_SM_AREA_SELECT;
+        btnPencilArea.maskIcon = null;
+        btnPencilArea.baseUsesDynamicColor = true;
         btnPencilArea.dynamicColor = dynamicColor;
 
-        btnPencilTrace.baseIcon = baseTex;
-        btnPencilTrace.maskIcon = maskTraceTex;
+        btnPencilTrace.baseIcon = ModTextures.ICON_SM_TRACE_SELECT;
+        btnPencilTrace.maskIcon = null;
+        btnPencilTrace.baseUsesDynamicColor = true;
         btnPencilTrace.dynamicColor = dynamicColor;
-        btnPencilTrace.baseOffsetX = (tabMode == 0) ? -3 : 0;
-        btnPencilTrace.maskOffsetX = (tabMode == 0) ? -3 : 0;
+        btnPencilTrace.baseOffsetX = 0;
+        btnPencilTrace.maskOffsetX = 0;
 
         // Right Panel Disabled States
         // Right Panel Disabled States & Animations
@@ -495,17 +518,24 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             int tabY = startY + (i * 24);
             boolean isSelected = (session.currentTab == i);
             boolean hover = !session.isColorPickerOpen && editor.isHovering(tabX, tabY, 20, 20, mouseX, mouseY);
-            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(context, tabX, tabY, 20, 20, hover, isSelected);
-            if (isSelected) {
-                // Opaque connector bridging the selected (blue) tab into the sidebar panel edge.
-                context.fill(tabX + 18, tabY + 1, tabX + 22, tabY + 19, 0xFF2C6BAE);
-            }
+            // The tab reaches flush to the sidebar (right edge = sidebarX) and is embedded into it: its
+            // right edge has no border/gap so it merges into the panel, and a selected tab shrinks anchored
+            // to that right edge so it never pulls away from the sidebar.
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
+                    context, tabX, tabY, 20, 20, hover, isSelected,
+                    io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_RIGHT);
 
             Identifier icon = (i == 0)
-                    ? ModTextures.ICON_TAB_LINES
-                    : (i == 1) ? ModTextures.ICON_TAB_BG : ModTextures.BTN_EDIT_LINES;
+                    ? ModTextures.ICON_SM_PENCIL
+                    : (i == 1) ? ModTextures.ICON_SM_BRUSH : ModTextures.ICON_SM_COMBO;
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-            context.drawTexture(pipeline, icon, tabX + 2, tabY + 2, 0.0F, 0.0F, 16, 16, 16, 16, 16, 16, -1);
+            if (isSelected) {
+                io.github.marcsanzdev.chestseparators.client.ui.UiTheme.pushActiveContent(context, tabX, tabY, 20, 20);
+            }
+            context.drawTexture(pipeline, icon, tabX + 2, tabY + 2, 0.0F, 0.0F, 16, 16, 128, 128, 128, 128, -1);
+            if (isSelected) {
+                context.getMatrices().popMatrix();
+            }
 
             if (hover) {
                 Text name = (i == 0)

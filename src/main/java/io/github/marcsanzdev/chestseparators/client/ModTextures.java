@@ -16,6 +16,41 @@ public class ModTextures {
     public static final Identifier ICON_SM_INV_PRESETS = Identifier.of(MOD_ID, "textures/gui/icon_sm_inv_presets.png");
     public static final Identifier ICON_SM_CHEST_PRESETS = Identifier.of(MOD_ID, "textures/gui/icon_sm_chest_presets.png");
 
+    // Smooth (vector) filter-editor icons — batch 1 of the full icon redesign.
+    public static final Identifier ICON_SM_IMPORT = Identifier.of(MOD_ID, "textures/gui/icon_sm_import.png");
+    public static final Identifier ICON_SM_SEARCH = Identifier.of(MOD_ID, "textures/gui/icon_sm_search.png");
+    public static final Identifier ICON_SM_ALLOW_ALL = Identifier.of(MOD_ID, "textures/gui/icon_sm_allow_all.png");
+    public static final Identifier ICON_SM_CLEAR = Identifier.of(MOD_ID, "textures/gui/icon_sm_clear.png");
+    public static final Identifier ICON_SM_MANUAL = Identifier.of(MOD_ID, "textures/gui/icon_sm_manual.png");
+    public static final Identifier ICON_SM_SHIFT = Identifier.of(MOD_ID, "textures/gui/icon_sm_shift.png");
+    public static final Identifier ICON_SM_HOPPER = Identifier.of(MOD_ID, "textures/gui/icon_sm_hopper.png");
+    public static final Identifier ICON_SM_PICKUP = Identifier.of(MOD_ID, "textures/gui/icon_sm_pickup.png");
+    public static final Identifier ICON_SM_TRASH = Identifier.of(MOD_ID, "textures/gui/icon_sm_trash.png");
+    public static final Identifier ICON_SM_CANCEL = Identifier.of(MOD_ID, "textures/gui/icon_sm_cancel.png");
+    public static final Identifier ICON_SM_CHECK = Identifier.of(MOD_ID, "textures/gui/icon_sm_check.png");
+
+    // Smooth (vector) edit-layout / group-view / color-picker / presets icons — batch 2.
+    public static final Identifier ICON_SM_PASTE = Identifier.of(MOD_ID, "textures/gui/icon_sm_paste.png");
+    public static final Identifier ICON_SM_UNDO = Identifier.of(MOD_ID, "textures/gui/icon_sm_undo.png");
+    public static final Identifier ICON_SM_REDO = Identifier.of(MOD_ID, "textures/gui/icon_sm_redo.png");
+    public static final Identifier ICON_SM_AREA_SELECT = Identifier.of(MOD_ID, "textures/gui/icon_sm_area_select.png");
+    public static final Identifier ICON_SM_TRACE_SELECT = Identifier.of(MOD_ID, "textures/gui/icon_sm_trace_select.png");
+    public static final Identifier ICON_SM_EYEDROPPER = Identifier.of(MOD_ID, "textures/gui/icon_sm_eyedropper.png");
+
+    // Smooth (vector) edit-layout tool + tab icons — batch 3. Bases are tinted by state; masks by paint colour.
+    public static final Identifier ICON_SM_PENCIL = Identifier.of(MOD_ID, "textures/gui/icon_sm_pencil.png");
+    public static final Identifier ICON_SM_BRUSH = Identifier.of(MOD_ID, "textures/gui/icon_sm_brush.png");
+    public static final Identifier ICON_SM_COMBO = Identifier.of(MOD_ID, "textures/gui/icon_sm_combo.png");
+    public static final Identifier ICON_SM_ERASER_AREA = Identifier.of(MOD_ID, "textures/gui/icon_sm_eraser_area.png");
+    public static final Identifier ICON_SM_ERASER_TRACE = Identifier.of(MOD_ID, "textures/gui/icon_sm_eraser_trace.png");
+    public static final Identifier ICON_SM_PALETTE = Identifier.of(MOD_ID, "textures/gui/icon_sm_palette.png");
+    public static final Identifier ICON_SM_BROOM = Identifier.of(MOD_ID, "textures/gui/icon_sm_broom.png");
+    public static final Identifier ICON_SM_MASK_AREA = Identifier.of(MOD_ID, "textures/gui/icon_sm_mask_area.png");
+    public static final Identifier ICON_SM_MASK_TRACE = Identifier.of(MOD_ID, "textures/gui/icon_sm_mask_trace.png");
+
+    // Smooth (vector) misc icons — batch 4 (final): conflict warning + eyedropper cursor (reuses pipette).
+    public static final Identifier ICON_SM_CONFLICT = Identifier.of(MOD_ID, "textures/gui/icon_sm_conflict.png");
+
     // Pencil tool textures.
     public static final Identifier PENCIL_BASE = Identifier.of(MOD_ID, "textures/gui/pencil_base.png");
     public static final Identifier PENCIL_MASK_AREA = Identifier.of(MOD_ID, "textures/gui/pencil_mask_area.png");

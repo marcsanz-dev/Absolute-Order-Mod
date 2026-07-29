@@ -12,6 +12,9 @@ public abstract class CustomWidget {
     public boolean isActive = false;
     public boolean isDisabled = false;
     public String tooltipText = null;
+    /** When true, the click plays the press flash first and runs the action a moment later (see PressAnim).
+     *  Use for buttons whose action closes their own screen, so the flash is actually seen. */
+    public boolean deferAction = false;
 
     protected Runnable onClickAction;
 
@@ -32,8 +35,16 @@ public abstract class CustomWidget {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && !isDisabled && isHovering(mouseX, mouseY)) {
-            if (onClickAction != null) {
-                onClickAction.run();
+            // Flash the button "pressed" (accent + shrunk) briefly, so stateless actions (Save, Load,
+            // Copy, Undo…) visibly react instead of staying static. Close-screen buttons defer the action
+            // until the flash has played, so it is still visible.
+            if (deferAction) {
+                PressAnim.pressAndDefer(x, y, onClickAction);
+            } else {
+                PressAnim.press(x, y);
+                if (onClickAction != null) {
+                    onClickAction.run();
+                }
             }
             return true; // Click consumed
         }

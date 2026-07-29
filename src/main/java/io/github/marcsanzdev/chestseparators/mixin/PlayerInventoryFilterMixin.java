@@ -73,13 +73,25 @@ public abstract class PlayerInventoryFilterMixin {
         // Prefer an empty slot whose filter matches this item, so picked-up items land in their slot.
         // A slot is "reserved" (or "preferred") when any of its active filter rules are on,
         // which covers both the Pick-Up rule and the Manual rule (cursor return on screen close).
+        // Among the matching empty slots, pick the one the filter's own order ranks best (the item first
+        // in the list heads for the group's first slot, and so on); ties keep the lowest index. This is
+        // the same priority the shift, hopper and deposit paths use, so every route fills in one order.
+        int bestSlot = -1;
+        int bestPreference = Integer.MAX_VALUE;
         for (int i = 0; i < main.size(); i++) {
             if (!main.get(i).isEmpty()) continue;
             SlotWhitelist wl = filters.get(i);
-            if (wl != null && isSlotActive(wl) && wl.allowedItems().contains(itemId)) {
-                cir.setReturnValue(i);
-                return;
+            if (wl == null || !isSlotActive(wl) || !wl.allowedItems().contains(itemId)) continue;
+            int preference =
+                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(filters, i, itemId);
+            if (preference < bestPreference) {
+                bestPreference = preference;
+                bestSlot = i;
             }
+        }
+        if (bestSlot >= 0) {
+            cir.setReturnValue(bestSlot);
+            return;
         }
         // Otherwise the first empty slot not reserved by a non-matching filter.
         for (int i = 0; i < main.size(); i++) {

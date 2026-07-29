@@ -26,6 +26,13 @@ public class ScreenEditFilter extends AbstractEditorScreen {
     final List<CustomWidget> unsavedPopupWidgets = new ArrayList<>();
     final List<CustomWidget> expelPopupWidgets = new ArrayList<>();
 
+    /** How long the held row takes to fly from where it was grabbed to the cursor. */
+    static final long PICKUP_MS = 140L;
+    /** How long the list takes to settle after a drop, rows sliding to their new places. */
+    static final long DROP_MS = 170L;
+    /** How long a row takes to shrink away after being dragged out of the filter onto the grid. */
+    static final long DELETE_MS = 220L;
+
     private final FilterPanelRenderer panelRenderer;
     private final FilterClickHandler clickHandler;
 
@@ -51,6 +58,10 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
         expelPopupWidgets.clear();
         buildExpelPopupWidgets();
+
+        // Every popup button closes the popup, so flash it before acting (else the press is never seen).
+        for (CustomWidget w : unsavedPopupWidgets) w.deferAction = true;
+        for (CustomWidget w : expelPopupWidgets) w.deferAction = true;
     }
 
     private void buildUnsavedPopupWidgets() {
@@ -136,17 +147,316 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 }));
     }
 
+    /**
+     * The item being dragged, drawn following the cursor: slightly smaller than in the list and washed
+     * down so it reads as "held" rather than as another entry. Items are rendered by their own pipeline
+     * and cannot simply be given an alpha, so the translucency is faked by laying the panel colour back
+     * over it — the same trick the push/pull ghost preview uses.
+     */
+    private void drawReorderGhost(DrawContext context) {
+        drawDeleteAnim(context);
+
+        if (session.reorderDragItem != null) {
+            // Pick-up: the row travels from wherever it was grabbed to the cursor, and the bar
+            // (background, name, cross) fades in around the icon on the way — so a grid item visibly
+            // becomes an entry instead of popping into one.
+            float t = net.minecraft.util.math.MathHelper.clamp(
+                    (System.currentTimeMillis() - session.reorderStartTime) / (float) PICKUP_MS, 0f, 1f);
+            float eased = 1f - (1f - t) * (1f - t) * (1f - t); // ease-out cubic
+            int rowW = layout.listW - 20;
+            int restX = session.reorderMouseX - (int) (rowW * 0.9f) / 2;
+            int restY = session.reorderMouseY - (int) (18 * 0.9f) / 2;
+            drawGhostRow(
+                    context,
+                    session.reorderDragItem,
+                    Math.round(session.reorderOriginX + (restX - session.reorderOriginX) * eased),
+                    Math.round(session.reorderOriginY + (restY - session.reorderOriginY) * eased),
+                    eased,
+                    1f,
+                    isRemovalDrop(session.reorderMouseX, session.reorderMouseY));
+            return;
+        }
+
+        if (session.dropGhostItem == null) return;
+        float t = (System.currentTimeMillis() - session.dropGhostStart) / (float) DROP_MS;
+        if (t >= 1f) {
+            session.dropGhostItem = null;
+            return;
+        }
+        // Landing: the exact reverse of the pick-up — it flies into its new row and the bar fades away.
+        float eased = 1f - (1f - t) * (1f - t) * (1f - t);
+        drawGhostRow(
+                context,
+                session.dropGhostItem,
+                Math.round(session.dropGhostFromX + (session.dropGhostToX - session.dropGhostFromX) * eased),
+                Math.round(session.dropGhostFromY + (session.dropGhostToY - session.dropGhostFromY) * eased),
+                1f - eased,
+                1f,
+                false);
+    }
+
+    /** The dropped row collapsing in on itself, the visual counterpart of leaving the filter. */
+    private void drawDeleteAnim(DrawContext context) {
+        if (session.deleteAnimItem == null) return;
+        float t = (System.currentTimeMillis() - session.deleteAnimStart) / (float) DELETE_MS;
+        if (t >= 1f) {
+            session.deleteAnimItem = null;
+            return;
+        }
+        float eased = 1f - (1f - t) * (1f - t) * (1f - t);
+        drawGhostRow(
+                context, session.deleteAnimItem, session.deleteAnimX, session.deleteAnimY, 1f - eased, 1f - eased, true);
+    }
+
+    /**
+     * Draws the floating row at {@code (gx, gy)}. {@code presence} fades the bar around the item icon,
+     * {@code shrink} scales the whole row about its own centre, and {@code danger} tints it red to say
+     * that letting go here drops the item out of the filter.
+     */
+    private void drawGhostRow(
+            DrawContext context, String itemId, int gx, int gy, float presence, float shrink, boolean danger) {
+        Item item = Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(itemId));
+        if (item == null) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        int rowW = layout.listW - 20; // the row's width inside the list's inset
+        int rowH = 18;
+        shrink = net.minecraft.util.math.MathHelper.clamp(shrink, 0f, 1f);
+        float scale = 0.9f * shrink;
+        int barAlpha = (int) (0xFF * net.minecraft.util.math.MathHelper.clamp(presence, 0f, 1f));
+
+        // Shrinking pulls the row towards its own centre rather than towards its top-left corner, so it
+        // collapses in place instead of sliding up and to the left as it goes.
+        int drawnW = (int) (rowW * 0.9f * shrink);
+        int drawnH = (int) (rowH * 0.9f * shrink);
+        gx += ((int) (rowW * 0.9f) - drawnW) / 2;
+        gy += ((int) (rowH * 0.9f) - drawnH) / 2;
+
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(gx, gy);
+        context.getMatrices().scale(scale, scale);
+
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                context, 0, 0, rowW, rowH, ((barAlpha * 0xC8 / 0xFF) << 24) | (danger ? 0x2A1214 : 0x121218));
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
+                context, 0, 0, rowW, rowH, danger ? (barAlpha << 24) | 0xFF5555 : ((barAlpha * 0x55 / 0xFF) << 24) | 0xFFFFFF);
+
+        context.drawItem(item.getDefaultStack(), 3, 1);
+
+        String name = item.getName().getString();
+        context.getMatrices().pushMatrix();
+        float textScale = 0.75f;
+        context.getMatrices().scale(textScale, textScale);
+        int maxNameW = (int) ((rowW - 42) / textScale);
+        if (client.textRenderer.getWidth(name) > maxNameW) {
+            name = client.textRenderer.trimToWidth(name, maxNameW - 6) + "...";
+        }
+        context.drawText(
+                client.textRenderer,
+                name,
+                (int) (22 / textScale),
+                (int) (6 / textScale),
+                (barAlpha << 24) | (danger ? 0xFFAAAA : 0xFFFFFF),
+                false);
+        context.getMatrices().popMatrix();
+
+        context.drawText(
+                client.textRenderer, "x", rowW - 13, 5, (barAlpha << 24) | (danger ? 0xFF5555 : 0xAAAAAA), false);
+        context.getMatrices().popMatrix();
+
+        // Items are drawn by their own pipeline and take no alpha, so the "held" translucency is faked by
+        // laying the panel colour back over the finished row. Over the grid the wash turns red, which is
+        // the whole preview: the row you are holding reads as "about to be thrown away".
+        context.fill(gx, gy, gx + drawnW, gy + drawnH, danger ? 0x66B02020 : 0x55121218);
+    }
+
+    /** True while the cursor is over the item grid, where letting go throws the row out of the filter. */
+    boolean isOverGrid(double mouseX, double mouseY) {
+        return mouseX >= layout.mainX
+                && mouseX <= layout.mainX + layout.mainW
+                && mouseY >= layout.mainY
+                && mouseY <= layout.mainY + layout.mainH;
+    }
+
+    /**
+     * True when releasing right now would remove the held item instead of repositioning it: only rows
+     * picked up from the filter's own list can be thrown away, so an item dragged in from the grid never
+     * turns red on its way back over it.
+     */
+    boolean isRemovalDrop(double mouseX, double mouseY) {
+        return session.reorderDragItem != null && !session.reorderFromGrid && isOverGrid(mouseX, mouseY);
+    }
+
+    /** Row index the cursor is currently over in the visible list, clamped to "past the last row". */
+    int reorderTargetRow(double mouseY) {
+        int row = (int) ((mouseY - layout.listViewY + session.listScrollY) / 18);
+        return Math.max(0, Math.min(row, session.visibleLeftListItems.size()));
+    }
+
+    /**
+     * Drops the dragged item at the cursor's row, shifting the rest along. The list on screen may be
+     * filtered by the search box, so the drop point is resolved through the item that is currently shown
+     * at that row and then translated back to its position in the filter's own list.
+     */
+    /** True while the cursor is over the filter list, the only place a drop can land. */
+    boolean isOverList(double mouseX, double mouseY) {
+        return mouseX >= layout.listX
+                && mouseX <= layout.listX + layout.listW
+                && mouseY >= layout.listViewY
+                && mouseY <= layout.listViewY + layout.listViewH;
+    }
+
+    /** Turns a held grid press into a real drag once it is held long enough or moved far enough. */
+    private void promotePendingDrag() {
+        if (session.pendingDragItem == null || session.reorderDragItem != null) return;
+        long held = System.currentTimeMillis() - session.pendingDragTime;
+        int dx = session.reorderMouseX - session.pendingDragX;
+        int dy = session.reorderMouseY - session.pendingDragY;
+        if (held < 160L && (dx * dx + dy * dy) < 16) return;
+
+        session.reorderDragItem = session.pendingDragItem;
+        session.reorderFromGrid = true;
+        session.reorderStartTime = System.currentTimeMillis();
+        session.pendingDragItem = null;
+    }
+
+    /** Mouse button released: either finish a drag, or resolve the press as a plain click. */
+    public void commitPointerRelease(double mouseX, double mouseY) {
+        if (session.reorderDragItem != null) {
+            commitReorder(mouseX, mouseY);
+            return;
+        }
+        String clicked = session.pendingDragItem;
+        session.pendingDragItem = null;
+        if (clicked == null) return;
+
+        // Never promoted, so it was a click: keep the original add-to-the-end / remove toggle.
+        List<String> all = session.currentAllowedItems;
+        if (all.contains(clicked)) {
+            all.remove(clicked);
+            editor.playClickSound(0.8f);
+        } else {
+            all.add(clicked);
+            editor.playClickSound(1.0f);
+        }
+        editor.updateWhitelistSearchCache();
+    }
+
+    public void commitReorder(double mouseX, double mouseY) {
+        String dragged = session.reorderDragItem;
+        int releaseX = session.reorderMouseX;
+        int releaseY = session.reorderMouseY;
+        boolean removal = isRemovalDrop(mouseX, mouseY);
+        session.reorderDragItem = null;
+        session.reorderFromGrid = false;
+        if (dragged == null) return;
+
+        List<String> all = session.currentAllowedItems;
+
+        // Remember where every row sat, so they can slide to their new places instead of jumping.
+        java.util.Map<String, Integer> before = new java.util.HashMap<>();
+        for (int i = 0; i < session.visibleLeftListItems.size(); i++) {
+            before.put(session.visibleLeftListItems.get(i), i);
+        }
+
+        // Dragging a row out of the filter and onto the grid is the same as removing it: the grid is where
+        // items that are not in the filter live, so dropping one back there returns it.
+        if (removal) {
+            if (!all.remove(dragged)) return;
+            editor.updateWhitelistSearchCache();
+            session.dropAnimFrom = before;
+            session.dropAnimStart = System.currentTimeMillis();
+
+            int rowW = layout.listW - 20;
+            session.deleteAnimItem = dragged;
+            session.deleteAnimX = releaseX - (int) (rowW * 0.9f) / 2;
+            session.deleteAnimY = releaseY - (int) (18 * 0.9f) / 2;
+            session.deleteAnimStart = System.currentTimeMillis();
+            editor.playClickSound(0.8f);
+            return;
+        }
+
+        // Dropping anywhere else does nothing at all — same rule the caret follows, so what you see is
+        // what happens.
+        if (!isOverList(mouseX, mouseY)) return;
+
+        List<String> visible = session.visibleLeftListItems;
+        int row = reorderTargetRow(mouseY);
+
+        int insertBefore;
+        if (row >= visible.size()) {
+            insertBefore = all.size(); // dropped past the last row: send it to the end
+        } else {
+            String anchor = visible.get(row);
+            if (anchor.equals(dragged)) return; // dropped on itself: nothing to do
+            insertBefore = all.indexOf(anchor);
+            if (insertBefore < 0) return;
+        }
+
+        int from = all.indexOf(dragged);
+        if (from >= 0) {
+            all.remove(from);
+            if (insertBefore > from) insertBefore--; // removing the item shifted everything after it
+        }
+        all.add(Math.max(0, Math.min(insertBefore, all.size())), dragged);
+
+        editor.updateWhitelistSearchCache();
+        session.dropAnimFrom = before;
+        session.dropAnimStart = System.currentTimeMillis();
+
+        // Reverse of the pick-up: the held row flies from the cursor down into the slot it just took,
+        // fading out as it lands, instead of vanishing the instant the button comes up.
+        int landed = session.visibleLeftListItems.indexOf(dragged);
+        if (landed >= 0) {
+            int rowW = layout.listW - 20;
+            session.dropGhostItem = dragged;
+            session.dropGhostFromX = releaseX - (int) (rowW * 0.9f) / 2;
+            session.dropGhostFromY = releaseY - (int) (18 * 0.9f) / 2;
+            session.dropGhostToX = layout.listX + 6;
+            session.dropGhostToY = layout.listViewY + (landed * 18) - (int) session.listScrollY;
+            session.dropGhostStart = System.currentTimeMillis();
+        }
+        editor.playClickSound(1.1f);
+    }
+
+    /** Scrolls the list while an item is held against its top or bottom edge. */
+    private void updateReorderAutoScroll() {
+        if (session.reorderDragItem == null) return;
+        float maxScroll = layout.maxListScroll(session.visibleLeftListItems.size());
+        if (maxScroll <= 0) return;
+
+        int edge = 14;
+        int top = layout.listViewY;
+        int bottom = layout.listViewY + layout.listViewH;
+        float step = 2.5f;
+        if (session.reorderMouseY < top + edge) {
+            session.listScrollY = net.minecraft.util.math.MathHelper.clamp(session.listScrollY - step, 0, maxScroll);
+        } else if (session.reorderMouseY > bottom - edge) {
+            session.listScrollY = net.minecraft.util.math.MathHelper.clamp(session.listScrollY + step, 0, maxScroll);
+        }
+    }
+
+    /**
+     * True when the filter under edit targets player-inventory slots — so its third rule is "Pick Up"
+     * rather than "Hopper Insert". Decided by the filter's own slots (their keys are offset into the
+     * inventory namespace), NOT by the screen it was opened from: an inventory filter edited from a chest
+     * must still show Pick Up.
+     */
+    boolean isInventoryFilter() {
+        for (int key : session.selectedSlots) {
+            if (io.github.marcsanzdev.chestseparators.data.ChestConfigManager.isInventoryKey(key)) return true;
+        }
+        return false;
+    }
+
     boolean hasUnsavedChanges() {
         if (session.originalRuleManual != session.ruleManual) return true;
         if (session.originalRuleShift != session.ruleShift) return true;
         if (session.originalRuleHopper != session.ruleHopper) return true;
-        if (session.originalTargetCount != session.filterTargetCount) return true;
 
-        // Compare sets so item order differences do not trigger a false positive.
-        Set<String> originalSet = new HashSet<>(session.originalItemsSnapshot);
-        Set<String> currentSet = new HashSet<>(session.currentAllowedItems);
-
-        return !originalSet.equals(currentSet);
+        // Order is part of the filter now (it can be rearranged by dragging and is saved), so compare the
+        // lists as they are: reordering alone counts as an unsaved change.
+        return !session.originalItemsSnapshot.equals(session.currentAllowedItems);
     }
 
     @Override
@@ -156,6 +466,14 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         int btnX = layout.rightX;
         int mainY = layout.mainY;
 
+        // Ender Chests have no Hopper Insert rule (hoppers cannot reach them), so that button is dropped
+        // entirely. With only two rule buttons left, they are re-centred in the middle section so the three
+        // groups stay balanced between the panel's top and bottom edges instead of leaving a gap. An
+        // inventory filter always keeps its third rule (Pick Up) even inside an Ender Chest screen.
+        boolean showThirdRule = !session.isEnderChest || isInventoryFilter();
+        int ruleManualY = showThirdRule ? mainY + 83 : mainY + 95;
+        int ruleShiftY = showThirdRule ? mainY + 107 : mainY + 119;
+
         // Group 1
         WideButtonWidget btnImport = new WideButtonWidget(
                 btnX,
@@ -163,7 +481,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.import_extracted").getString(),
-                ModTextures.ICON_IMPORT,
+                ModTextures.ICON_SM_IMPORT,
                 () -> {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
                     boolean isSearching = editor.searchBox != null
@@ -207,6 +525,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 });
         btnImport.tooltipText = Text.translatable("tooltip.chestseparators.desc.import_extracted")
                 .getString();
+        btnImport.texSize = 128;
         widgets.add(btnImport);
 
         WideButtonWidget btnAllowAll = new WideButtonWidget(
@@ -215,7 +534,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.allow_all").getString(),
-                ModTextures.ICON_BACKPACK_FULL,
+                ModTextures.ICON_SM_ALLOW_ALL,
                 () -> {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
                     session.currentAllowedItems.clear();
@@ -231,6 +550,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 });
         btnAllowAll.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.allow_all").getString();
+        btnAllowAll.texSize = 128;
         widgets.add(btnAllowAll);
 
         WideButtonWidget btnClearAll = new WideButtonWidget(
@@ -239,7 +559,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.clear_all").getString(),
-                ModTextures.ICON_BACKPACK_EMPTY,
+                ModTextures.ICON_SM_CLEAR,
                 () -> {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
                     session.currentAllowedItems.clear();
@@ -251,16 +571,17 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 });
         btnClearAll.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.clear_all").getString();
+        btnClearAll.texSize = 128;
         widgets.add(btnClearAll);
 
         // Group 2
         WideButtonWidget btnManual = new WideButtonWidget(
                 btnX,
-                mainY + 77,
+                ruleManualY,
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.manual_insert").getString(),
-                ModTextures.ICON_CURSOR,
+                ModTextures.ICON_SM_MANUAL,
                 () -> {
                     session.ruleManual = !session.ruleManual;
                     editor.playClickSound(1.0f);
@@ -270,15 +591,16 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                         .getString()
                 : Text.translatable("tooltip.chestseparators.rule.manual_inactive")
                         .getString();
+        btnManual.texSize = 128;
         widgets.add(btnManual);
 
         WideButtonWidget btnShift = new WideButtonWidget(
                 btnX,
-                mainY + 101,
+                ruleShiftY,
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.shift_insert").getString(),
-                ModTextures.ICON_SHIFT,
+                ModTextures.ICON_SM_SHIFT,
                 () -> {
                     session.ruleShift = !session.ruleShift;
                     editor.playClickSound(1.0f);
@@ -287,53 +609,56 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 ? Text.translatable("tooltip.chestseparators.rule.shift_active").getString()
                 : Text.translatable("tooltip.chestseparators.rule.shift_inactive")
                         .getString();
+        btnShift.texSize = 128;
         widgets.add(btnShift);
 
-        // For the player inventory this third rule is "Pick Up" (filter items picked up from the
-        // ground) instead of "Hopper Insert", which does not apply to your own inventory. It reuses the
-        // same ruleHopper flag for storage.
-        WideButtonWidget btnHopper = new WideButtonWidget(
-                btnX,
-                mainY + 125,
-                btnW,
-                bH,
-                Text.translatable(
-                                session.isPlayerInventory
-                                        ? "button.chestseparators.pickup_insert"
-                                        : "button.chestseparators.hopper_insert")
-                        .getString(),
-                session.isPlayerInventory ? ModTextures.ICON_PICKUP : ModTextures.ICON_HOPPER,
-                () -> {
-                    session.ruleHopper = !session.ruleHopper;
-                    editor.playClickSound(1.0f);
-                });
-        if (session.isPlayerInventory) {
-            String base = session.ruleHopper
-                    ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
-                            .getString()
-                    : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
-                            .getString();
-            btnHopper.tooltipText = base
-                    + " | "
-                    + Text.translatable("tooltip.chestseparators.rule.pickup_target_hint")
-                            .getString();
-        } else if (!session.isEnderChest && !session.isEntityChest) {
-            btnHopper.tooltipText = session.ruleHopper
-                    ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
-                            .getString()
-                    : Text.translatable("tooltip.chestseparators.rule.hopper_inactive")
-                            .getString();
+        // For an inventory filter this third rule is "Pick Up" (filter items picked up from the ground)
+        // instead of "Hopper Insert", which does not apply to your own inventory. It reuses the same
+        // ruleHopper flag for storage. Whether it is Pick Up or Hopper depends on the FILTER'S slots, not
+        // the screen: an inventory filter edited from a chest must still show Pick Up. Ender Chests drop
+        // the Hopper rule (hoppers cannot reach them), but an inventory filter always keeps Pick Up.
+        boolean invFilter = isInventoryFilter();
+        if (showThirdRule) {
+            WideButtonWidget btnHopper = new WideButtonWidget(
+                    btnX,
+                    mainY + 131,
+                    btnW,
+                    bH,
+                    Text.translatable(
+                                    invFilter
+                                            ? "button.chestseparators.pickup_insert"
+                                            : "button.chestseparators.hopper_insert")
+                            .getString(),
+                    invFilter ? ModTextures.ICON_SM_PICKUP : ModTextures.ICON_SM_HOPPER,
+                    () -> {
+                        session.ruleHopper = !session.ruleHopper;
+                        editor.playClickSound(1.0f);
+                    });
+            if (invFilter) {
+                btnHopper.tooltipText = session.ruleHopper
+                        ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
+                                .getString()
+                        : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
+                                .getString();
+            } else if (!session.isEntityChest || session.isMinecartChest) {
+                btnHopper.tooltipText = session.ruleHopper
+                        ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
+                                .getString()
+                        : Text.translatable("tooltip.chestseparators.rule.hopper_inactive")
+                                .getString();
+            }
+            btnHopper.texSize = 128;
+            widgets.add(btnHopper);
         }
-        widgets.add(btnHopper);
 
-        // Group 3 (Actions)
+        // Group 3 (Actions) — stacked full-width in visual order: Save, Delete, Cancel.
         ActionIconButtonWidget btnDelete = new ActionIconButtonWidget(
                 btnX,
-                mainY + 154,
+                mainY + 190,
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.delete").getString(),
-                ModTextures.ICON_TRASH,
+                ModTextures.ICON_SM_TRASH,
                 UiColors.SURFACE_DARK,
                 () -> {
                     ChestConfigManager.getInstance().saveWhitelistSnapshot();
@@ -344,15 +669,17 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 });
         btnDelete.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.delete_group").getString();
+        btnDelete.texSize = 128;
+        btnDelete.deferAction = true; // flash before this button closes the filter screen
         widgets.add(btnDelete);
 
         ActionIconButtonWidget btnSave = new ActionIconButtonWidget(
                 btnX,
-                mainY + 178,
-                (btnW - 4) / 2,
+                mainY + 166,
+                btnW,
                 bH,
                 Text.translatable("button.chestseparators.save").getString(),
-                ModTextures.ICON_SAVE,
+                ModTextures.ICON_SM_SAVE,
                 UiColors.SURFACE_DARK,
                 () -> {
                     // Check whether saving will cause existing items to be expelled.
@@ -398,23 +725,27 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 });
         btnSave.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.save").getString();
+        btnSave.texSize = 128;
+        btnSave.deferAction = true; // flash before saving closes the filter screen (or opens the expel popup)
         widgets.add(btnSave);
 
         ActionIconButtonWidget btnCancel = new ActionIconButtonWidget(
-                btnX + (btnW - 4) / 2 + 4,
-                mainY + 178,
-                (btnW - 4) / 2,
+                btnX,
+                mainY + 214,
+                btnW,
                 bH,
                 Text.translatable("button.chestseparators.cancel").getString(),
-                ModTextures.ICON_CANCEL,
+                ModTextures.ICON_SM_CANCEL,
                 UiColors.SURFACE_DARK,
                 () -> {
                     session.selectedSlots.clear();
                     editor.toggleState(EditorState.VIEW_GROUPS);
                     editor.playClickSound(1.0f);
                 });
+        btnCancel.texSize = 128;
         btnCancel.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.cancel").getString();
+        btnCancel.deferAction = true; // flash before this button closes the filter screen
         widgets.add(btnCancel);
     }
 
@@ -423,29 +754,44 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
         context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0x77000000);
 
-        // When any popup is active, pass (-1, -1) as mouse coordinates so background
-        // methods do not react to hover or draw tooltips.
+        // When any popup is active — or an item is being carried on the cursor — pass (-1, -1) as mouse
+        // coordinates so background methods do not react to hover or draw tooltips. While dragging, a
+        // tooltip or a button preview firing under the held row is just noise on top of it.
         boolean isAnyPopupOpen = session.isUnsavedPopupOpen || session.isExpelPopupOpen;
-        int bgMouseX = isAnyPopupOpen ? -1 : mouseX;
-        int bgMouseY = isAnyPopupOpen ? -1 : mouseY;
+        boolean suppressHover = isAnyPopupOpen || session.reorderDragItem != null;
+        int bgMouseX = suppressHover ? -1 : mouseX;
+        int bgMouseY = suppressHover ? -1 : mouseY;
+
+        if (session.pendingDragItem != null) {
+            session.reorderMouseX = mouseX;
+            session.reorderMouseY = mouseY;
+            promotePendingDrag();
+        }
 
         updateWidgetStates(bgMouseX, bgMouseY);
         handlePreviewLogic(bgMouseX, bgMouseY);
+        updateReorderAutoScroll();
 
         panelRenderer.drawLeftPanel(context, bgMouseX, bgMouseY);
         panelRenderer.drawMainPanel(context, bgMouseX, bgMouseY);
 
         super.render(context, bgMouseX, bgMouseY, delta);
 
-        // Target-count badge on the Pick Up rule button (player inventory only). 0 means no target.
-        if (session.isPlayerInventory && session.filterTargetCount > 0) {
+        // Static hint at the very bottom, matching the magnifier one in the layout editor: middle-clicking
+        // an item is not discoverable on its own, and it is the entry point to the whole tag mechanic.
+        if (!isAnyPopupOpen) {
             MinecraftClient client = MinecraftClient.getInstance();
-            String txt = "x" + session.filterTargetCount;
-            int tw = client.textRenderer.getWidth(txt);
-            int bx = layout.rightX + layout.btnW - tw - 4;
-            int by = layout.mainY + 125 + (layout.bH - client.textRenderer.fontHeight) / 2 + 1;
-            context.drawText(client.textRenderer, txt, bx, by, 0xFFFFE066, true);
+            Text hint = Text.translatable("message.chestseparators.tag_hint");
+            context.drawText(
+                    client.textRenderer,
+                    hint,
+                    (layout.screenWidth - client.textRenderer.getWidth(hint)) / 2,
+                    layout.screenHeight - 12,
+                    0x70FFFFFF,
+                    false);
         }
+
+        drawReorderGhost(context);
 
         panelRenderer.drawTagDropdown(context, bgMouseX, bgMouseY);
 
@@ -456,14 +802,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             int currentPopupH = layout.conflictPopupH;
             boolean isDark = GlobalChestConfig.instance.darkMode;
 
-            context.fill(
-                    layout.conflictPopupX,
-                    layout.conflictPopupY,
-                    layout.conflictPopupX + layout.conflictPopupW,
-                    layout.conflictPopupY + currentPopupH,
-                    UiColors.SURFACE_DARK);
-            drawDarkBevel(
-                    context, layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupW, currentPopupH, false);
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(
+                    context, layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupW, currentPopupH);
 
             MinecraftClient client = MinecraftClient.getInstance();
             int maxContentWidth = layout.conflictPopupW - 20; // Margen interno de 10px por lado
@@ -529,7 +869,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         boolean isSearching =
                 editor.searchBox != null && !editor.searchBox.getText().isEmpty();
         WideButtonWidget importBtn = (WideButtonWidget) widgets.get(0);
-        importBtn.icon = isSearching ? ModTextures.ICON_SEARCH : ModTextures.ICON_IMPORT;
+        importBtn.icon = isSearching ? ModTextures.ICON_SM_SEARCH : ModTextures.ICON_SM_IMPORT;
         importBtn.tooltipText = isSearching
                 ? Text.translatable("tooltip.chestseparators.desc.import_search")
                         .getString()
@@ -557,23 +897,31 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 : Text.translatable("tooltip.chestseparators.rule.shift_inactive")
                         .getString();
 
-        widgets.get(5).isActive = session.ruleHopper;
-        widgets.get(5).isDisabled = session.isEnderChest || session.isEntityChest;
+        // The third rule button (index 5) exists unless it is an Ender Chest chest-filter (there it is
+        // dropped and index 5 would be a different widget). An inventory filter always has it (Pick Up).
+        boolean invFilter = isInventoryFilter();
+        if (!session.isEnderChest || invFilter) {
+            widgets.get(5).isActive = session.ruleHopper;
+            // Chest minecarts CAN be filled by hoppers and now sync their filter to the server, so the rule
+            // is enabled for them. Other entity containers (chest boats, animals) still cannot, so stay
+            // disabled. Inventory filters (Pick Up) are always enabled.
+            widgets.get(5).isDisabled = !invFilter && session.isEntityChest && !session.isMinecartChest;
 
-        if (session.isPlayerInventory) {
-            widgets.get(5).tooltipText = session.ruleHopper
-                    ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
-                            .getString()
-                    : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
-                            .getString();
-        } else if (!session.isEnderChest && !session.isEntityChest) {
-            widgets.get(5).tooltipText = session.ruleHopper
-                    ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
-                            .getString()
-                    : Text.translatable("tooltip.chestseparators.rule.hopper_inactive")
-                            .getString();
-        } else {
-            widgets.get(5).tooltipText = null;
+            if (invFilter) {
+                widgets.get(5).tooltipText = session.ruleHopper
+                        ? Text.translatable("tooltip.chestseparators.rule.pickup_active")
+                                .getString()
+                        : Text.translatable("tooltip.chestseparators.rule.pickup_inactive")
+                                .getString();
+            } else if (!session.isEntityChest || session.isMinecartChest) {
+                widgets.get(5).tooltipText = session.ruleHopper
+                        ? Text.translatable("tooltip.chestseparators.rule.hopper_active")
+                                .getString()
+                        : Text.translatable("tooltip.chestseparators.rule.hopper_inactive")
+                                .getString();
+            } else {
+                widgets.get(5).tooltipText = null;
+            }
         }
     }
 
@@ -628,17 +976,22 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     float maxScroll = Math.max(0, session.previewItems.size() * 18 - (layout.listH - 48));
                     if (maxScroll > 0) {
                         float speed = (session.previewType == 2) ? 80f : 25f;
+                        // Restarting the clock at each end re-triggers the one second wait above, so the
+                        // list settles for a moment at the bottom and at the top instead of turning around
+                        // the instant it arrives — otherwise the ends are the hardest part to read.
                         if (session.previewScrollDirectionDown) {
                             session.previewScrollY += speed * dt;
                             if (session.previewScrollY >= maxScroll) {
                                 session.previewScrollY = maxScroll;
                                 session.previewScrollDirectionDown = false;
+                                session.previewStartTime = now;
                             }
                         } else {
                             session.previewScrollY -= speed * dt;
                             if (session.previewScrollY <= 0) {
                                 session.previewScrollY = 0;
                                 session.previewScrollDirectionDown = true;
+                                session.previewStartTime = now;
                             }
                         }
                     }
@@ -649,21 +1002,6 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         float scrollSpeed = 18f;
-
-        // Player-inventory filters carry a target amount (how much to keep). Scrolling over the
-        // "Pick Up" rule button adjusts it (0 = no target). Drives the grab/deposit-junk hotkeys.
-        if (session.isPlayerInventory) {
-            int hx = layout.rightX;
-            int hy = layout.mainY + 125;
-            int hw = layout.btnW;
-            int hh = layout.bH;
-            if (mouseX >= hx && mouseX <= hx + hw && mouseY >= hy && mouseY <= hy + hh) {
-                int step = (verticalAmount > 0) ? 1 : -1;
-                session.filterTargetCount = Math.max(0, Math.min(9999, session.filterTargetCount + step));
-                editor.playClickSound(1.0f);
-                return true;
-            }
-        }
 
         // While previewing, the scroll wheel always controls the preview panel.
         if (session.isPreviewing) {
@@ -678,7 +1016,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             session.lastInteractedWasList = false;
             float maxGridScroll = Math.max(
                     0,
-                    (int) Math.ceil((double) session.filteredItems.size() / layout.cols) * layout.itemSize
+                    (int) Math.ceil((double) session.filteredItems.size() / layout.cols) * layout.gridCell
                             - layout.gridViewH);
             session.gridScrollY = net.minecraft.util.math.MathHelper.clamp(
                     session.gridScrollY - (float) (verticalAmount * scrollSpeed), 0, maxGridScroll);
@@ -702,6 +1040,22 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         if (isWhitelistSearchFocused) {
             if (editor.whitelistSearchBox.keyPressed(input)) return true;
             if (input.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) return true;
+        }
+
+        // Typing anywhere in the filter editor jumps to the item search, so the inventory key ("e" by
+        // default) is a character being typed into the search field — not a request to close the container.
+        // This now applies on ANY tab, not only the search tab: switch to the search tab first, focus the
+        // box and consume the key; charTyped then inserts the character.
+        if (!isSearchFocused && !isWhitelistSearchFocused && editor.searchBox != null) {
+            int inventoryKey = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(
+                            MinecraftClient.getInstance().options.inventoryKey)
+                    .getCode();
+            if (input.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN && input.key() == inventoryKey) {
+                if (!isOnSearchTab()) switchToSearchTab();
+                editor.searchBox.setFocused(true);
+                if (editor.whitelistSearchBox != null) editor.whitelistSearchBox.setFocused(false);
+                return true;
+            }
         }
 
         if (!isSearchFocused && !isWhitelistSearchFocused) {
@@ -729,12 +1083,28 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         if (editor.searchBox != null && editor.searchBox.isFocused()) return editor.searchBox.charTyped(input);
         if (editor.whitelistSearchBox != null && editor.whitelistSearchBox.isFocused())
             return editor.whitelistSearchBox.charTyped(input);
-        // Auto-focus the item search box when typing on the search tab without clicking it first.
-        if (editor.searchBox != null && isOnSearchTab()) {
-            editor.searchBox.setFocused(true);
-            return editor.searchBox.charTyped(input);
+        // Typing anywhere else jumps straight to the item search: switch to the search tab if needed, focus
+        // the box and insert the character — no need to find and click the search tab first.
+        if (editor.searchBox != null) {
+            if (!isOnSearchTab()) switchToSearchTab();
+            if (isOnSearchTab()) {
+                editor.searchBox.setFocused(true);
+                if (editor.whitelistSearchBox != null) editor.whitelistSearchBox.setFocused(false);
+                return editor.searchBox.charTyped(input);
+            }
         }
         return false;
+    }
+
+    /** Switches the item grid to the creative search tab, if one is present. */
+    private void switchToSearchTab() {
+        for (int i = 0; i < session.availableTabs.size(); i++) {
+            var tab = session.availableTabs.get(i);
+            if (tab != null && tab.isSearchTab) {
+                editor.switchCreativeTab(i);
+                return;
+            }
+        }
     }
 
     private boolean isOnSearchTab() {

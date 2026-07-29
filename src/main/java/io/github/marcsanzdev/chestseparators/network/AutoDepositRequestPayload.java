@@ -28,10 +28,6 @@ public record AutoDepositRequestPayload(
 
     /** Deposit every matching item (double-sneak / dedicated hotkey). */
     public static final int ACTION_DEPOSIT_ALL = 0;
-    /** Deposit only items the player's inventory filters don't want to keep (the "drop" hotkey). */
-    public static final int ACTION_DEPOSIT_JUNK = 1;
-    /** Pull items the player's inventory filters want from nearby chests (the "grab" hotkey). */
-    public static final int ACTION_GRAB = 2;
 
     public static final CustomPayload.Id<AutoDepositRequestPayload> ID =
             new CustomPayload.Id<>(Identifier.of("chestseparators", "auto_deposit_request"));

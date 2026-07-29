@@ -142,13 +142,13 @@ final class FilterPanelRenderer {
         int lsbX = layout.lsbX;
         int lsbY = layout.lsbY;
         int lsbH = layout.lsbH;
-        context.fill(lsbX, lsbY, lsbX + 6, lsbY + lsbH, isDark ? 0xFF000000 : 0xFFAAAAAA);
         int listThumbH = maxListScroll > 0
                 ? Math.max(10, (int) ((listViewH / (float) Math.max(1, totalListHeight)) * lsbH))
                 : lsbH;
         int listThumbY =
                 maxListScroll > 0 ? lsbY + (int) ((activeScrollY / maxListScroll) * (lsbH - listThumbH)) : lsbY;
-        context.fill(lsbX + 1, listThumbY + 1, lsbX + 5, listThumbY + listThumbH - 1, isDark ? 0xFF888888 : 0xFF666666);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.scrollbar(
+                context, lsbX, lsbY, 6, lsbH, listThumbY, listThumbH);
 
         context.enableScissor(listX + 6, listViewY + 1, listX + listW - 14, listViewY + listViewH - 1);
         int startIndex = (int) (activeScrollY / 18);
@@ -159,8 +159,26 @@ final class FilterPanelRenderer {
             if (idx >= totalListItems) break;
 
             String itemIdStr = activeListToRender.get(idx);
+
+            // The row being carried leaves an empty gap behind it: it is on the cursor, not in the list,
+            // and the space stays open until the drop rebuilds the order. Drawing it here too would show
+            // the same entry twice.
+            if (!session.reorderFromGrid && itemIdStr.equals(session.reorderDragItem)) continue;
+
             Item item = Registries.ITEM.get(Identifier.tryParse(itemIdStr));
             int itemY = listViewY + (i * 18) - (int) (activeScrollY % 18) + 2;
+
+            // Settle animation: right after a drop, every row starts from where it used to be and slides
+            // to its new place, so the list opens a gap for the dropped item instead of snapping.
+            long sinceDrop = System.currentTimeMillis() - session.dropAnimStart;
+            if (sinceDrop < ScreenEditFilter.DROP_MS && !session.dropAnimFrom.isEmpty()) {
+                Integer previousIndex = session.dropAnimFrom.get(itemIdStr);
+                if (previousIndex != null) {
+                    float k = 1f - (float) sinceDrop / ScreenEditFilter.DROP_MS;
+                    k = k * k; // ease-out: most of the travel happens immediately
+                    itemY += Math.round((previousIndex - idx) * 18 * k);
+                }
+            }
 
             context.drawItem(item.getDefaultStack(), listX + 8, itemY);
 
@@ -199,6 +217,19 @@ final class FilterPanelRenderer {
             }
         }
         context.disableScissor();
+
+        // Insertion caret: where the held item will land if released now. Drawn OUTSIDE the scissor and
+        // kept one pixel inside the viewport: the clip region starts just below the top edge, so a caret
+        // for the very first position fell entirely outside it and never showed up.
+        // Only while the cursor is actually over the list: outside it a drop changes nothing, so promising
+        // a landing spot there would be a lie.
+        if (session.reorderDragItem != null
+                && screen.isOverList(session.reorderMouseX, session.reorderMouseY)) {
+            int row = screen.reorderTargetRow(session.reorderMouseY);
+            int caretY = listViewY + (row * 18) - (int) session.listScrollY;
+            caretY = MathHelper.clamp(caretY, listViewY + 1, listViewY + listViewH - 1);
+            context.fill(listX + 6, caretY - 1, listX + listW - 14, caretY + 1, 0xFF4A9EFF);
+        }
     }
 
     void drawMainPanel(DrawContext context, int mouseX, int mouseY) {
@@ -272,17 +303,33 @@ final class FilterPanelRenderer {
 
             boolean isTop = slot < 8;
             int col = slot % 8;
-            int tabW = 22;
-            int tabH = 22;
-            int tabX = mainX + 3 + (col * 23);
+            int tabW = layout.tabW;
+            int tabH = layout.tabW;
+            int tabX = layout.tabX(col);
             int tabY = isTop ? mainY - tabH + 2 : mainY + mainH - 2;
 
             boolean isSelected = (session.currentCreativeTabIndex == actualGlobalIndex);
             boolean hover = editor.isHovering(tabX, tabY, tabW, tabH, mouseX, mouseY);
 
+            // The tab sits flush against the panel and is embedded into it along the touching edge: top
+            // tabs attach on their BOTTOM, bottom tabs on their TOP. That edge has no border/gap, and a
+            // selected tab shrinks anchored to it so it never separates from the panel.
+            int drawY = isTop ? tabY : tabY + 2;
+            int drawH = tabH - 2;
+            int attach = isTop
+                    ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_BOTTOM
+                    : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_TOP;
             io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
-                    context, tabX, tabY, tabW, tabH, hover, isSelected);
+                    context, tabX, drawY, tabW, drawH, hover, isSelected, attach);
+            // A selected tab draws 1px smaller; shrink its item icon by the same proportion.
+            if (isSelected) {
+                io.github.marcsanzdev.chestseparators.client.ui.UiTheme.pushActiveContent(
+                        context, tabX, drawY, tabW, drawH);
+            }
             context.drawItem(info.icon, tabX + 3, tabY + (isTop ? 2 : 4));
+            if (isSelected) {
+                context.getMatrices().popMatrix();
+            }
 
             if (hover) context.drawTooltip(MinecraftClient.getInstance().textRenderer, info.name, mouseX, mouseY);
         }
@@ -378,7 +425,7 @@ final class FilterPanelRenderer {
         int gridViewY = layout.gridViewY;
         int gridViewH = layout.gridViewH;
         int cols = layout.cols;
-        int itemSize = layout.itemSize;
+        int itemSize = layout.gridCell;
 
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.inset(
                 context, gridX - 2, gridViewY - 2, (cols * itemSize) + 4, gridViewH + 4);
@@ -391,13 +438,13 @@ final class FilterPanelRenderer {
         int msbX = layout.msbX;
         int msbY = layout.msbY;
         int msbH = layout.msbH;
-        context.fill(msbX, msbY, msbX + 6, msbY + msbH, isDark ? 0xFF000000 : 0xFFAAAAAA);
         int gridThumbH = maxGridScroll > 0
                 ? Math.max(10, (int) ((gridViewH / (float) Math.max(1, totalGridHeight)) * msbH))
                 : msbH;
         int gridThumbY =
                 maxGridScroll > 0 ? msbY + (int) ((session.gridScrollY / maxGridScroll) * (msbH - gridThumbH)) : msbY;
-        context.fill(msbX + 1, gridThumbY + 1, msbX + 5, gridThumbY + gridThumbH - 1, isDark ? 0xFF888888 : 0xFF666666);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.scrollbar(
+                context, msbX, msbY, 6, msbH, gridThumbY, gridThumbH);
 
         context.enableScissor(gridX, gridViewY, gridX + (cols * itemSize), gridViewY + gridViewH);
         int startGridRow = (int) (session.gridScrollY / itemSize);
@@ -417,28 +464,51 @@ final class FilterPanelRenderer {
                 boolean isAllowed = session.currentAllowedItems.contains(itemId);
                 boolean isPreviewed = session.isPreviewing && session.previewItems.contains(itemId);
 
-                context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, isDark ? 0xFF2A2A2A : 0xFF8B8B8B);
+                // Cristal slot: a faint glass cell. Allowed items carry the blue accent — the same "on"
+                // language as every active button — while the preview washes stay neutral so they still
+                // read as a temporary state on top of it.
+                int cell = itemSize - 2; // slot visual: the cell minus a 1px breathing gap
+                io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                        context, drawX + 1, drawY + 1, cell, cell, 0x18FFFFFF);
+                final int allowedWash = 0x662C6BAE;
                 if (session.isPreviewing) {
                     if (session.previewType == 1) {
-                        if (isAllowed) context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x66FFFFFF);
-                        if (isPreviewed) context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x44FFFFFF);
+                        if (isAllowed)
+                            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                                    context, drawX + 1, drawY + 1, cell, cell, allowedWash);
+                        if (isPreviewed)
+                            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                                    context, drawX + 1, drawY + 1, cell, cell, 0x44FFFFFF);
                     } else if (session.previewType == 2) {
-                        if (isAllowed) context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x66FFFFFF);
-                        else context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x44FFFFFF);
+                        if (isAllowed)
+                            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                                    context, drawX + 1, drawY + 1, cell, cell, allowedWash);
+                        else
+                            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                                    context, drawX + 1, drawY + 1, cell, cell, 0x44FFFFFF);
                     } else if (session.previewType == 3) {
-                        if (isAllowed) context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x44000000);
+                        if (isAllowed)
+                            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                                    context, drawX + 1, drawY + 1, cell, cell, 0x44000000);
                     }
                 } else if (isAllowed) {
-                    context.fill(drawX + 1, drawY + 1, drawX + 17, drawY + 17, 0x66FFFFFF);
+                    io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
+                            context, drawX + 1, drawY + 1, cell, cell, allowedWash);
                 }
 
-                context.drawItem(item.getDefaultStack(), drawX + 1, drawY + 1);
+                // The item keeps its native 16px size (scaling it down resamples the sprite and looks
+                // pixelated); the cell is what grew, so it now sits centred with a margin all round.
+                int itemInset = (itemSize - 16) / 2;
+                context.drawItem(item.getDefaultStack(), drawX + itemInset, drawY + itemInset);
 
                 if (session.activeDropdownTags.isEmpty()
-                        && editor.isHovering(drawX + 1, drawY + 1, 16, 16, mouseX, mouseY)
+                        && editor.isHovering(drawX, drawY, itemSize, itemSize, mouseX, mouseY)
                         && mouseY >= gridViewY
                         && mouseY <= gridViewY + gridViewH) {
-                    context.drawStrokedRectangle(drawX, drawY, 18, 18, 0xFFFFFFFF);
+                    // Exactly the cell's own geometry, so the hover ring traces the slot instead of
+                    // floating around it with a different shape.
+                    io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
+                            context, drawX + 1, drawY + 1, cell, cell, 0xFFFFFFFF);
                     context.drawTooltip(MinecraftClient.getInstance().textRenderer, item.getName(), mouseX, mouseY);
                 }
             }
@@ -475,7 +545,9 @@ final class FilterPanelRenderer {
                 context.getMatrices().translate((float) (dX + 6), (itemY + (14 - 8 * scale) / 2));
                 context.getMatrices().scale(scale, scale);
 
-                int textColor = isHoveringTag ? (isDark ? 0xFF55FF55 : 0xFF00AA00) : (isDark ? 0xFFDDDDDD : 0xFF222222);
+                int textColor = isHoveringTag
+                        ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT
+                        : 0xFFFFFFFF;
                 context.drawText(MinecraftClient.getInstance().textRenderer, "#" + tag, 0, 0, textColor, false);
                 context.getMatrices().popMatrix();
             }

@@ -83,14 +83,14 @@ public class EditorGeometry {
                 session.lockedTraceAction =
                         (distLeft <= distRight) ? ChestConfigManager.ACTION_LEFT : ChestConfigManager.ACTION_RIGHT;
                 session.lockedLineCoord = (distLeft <= distRight) ? (guiX + hoverSlot.x) : (guiX + hoverSlot.x + 16);
-                session.lockedTraceRowCol = hoverSlot.getIndex() % 9;
+                session.lockedTraceRowCol = ChestSeparatorsEditor.realIndex(hoverSlot) % 9;
                 return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
                 // Armor/offhand are isolated non-grid cells: keep the locked action but paint it on
                 // the hovered cell itself instead of projecting along a meaningless grid row/col.
                 if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(hoverSlot)))
                     return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
-                int col = hoverSlot.getIndex() % 9;
+                int col = ChestSeparatorsEditor.realIndex(hoverSlot) % 9;
                 int correctSlotIndex = (session.lockedTraceRowCol * 9) + col;
                 return (correctSlotIndex
                                 + (ChestSeparatorsEditor.isPlayerSlot(hoverSlot)
@@ -108,14 +108,14 @@ public class EditorGeometry {
                 session.lockedTraceAction =
                         (distTop <= distBottom) ? ChestConfigManager.ACTION_TOP : ChestConfigManager.ACTION_BOTTOM;
                 session.lockedLineCoord = (distTop <= distBottom) ? (guiY + hoverSlot.y) : (guiY + hoverSlot.y + 16);
-                session.lockedTraceRowCol = hoverSlot.getIndex() / 9;
+                session.lockedTraceRowCol = ChestSeparatorsEditor.realIndex(hoverSlot) / 9;
                 return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
             } else {
                 // Armor/offhand are isolated non-grid cells: keep the locked action but paint it on
                 // the hovered cell itself instead of projecting along a meaningless grid row/col.
                 if (ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(hoverSlot)))
                     return ChestSeparatorsEditor.slotKey(hoverSlot) + "_" + session.lockedTraceAction;
-                int row = hoverSlot.getIndex() / 9;
+                int row = ChestSeparatorsEditor.realIndex(hoverSlot) / 9;
                 int correctSlotIndex = (row * 9) + session.lockedTraceRowCol;
                 return (correctSlotIndex
                                 + (ChestSeparatorsEditor.isPlayerSlot(hoverSlot)
@@ -130,10 +130,10 @@ public class EditorGeometry {
     }
 
     public boolean isDraggingRectangle(double mouseX, double mouseY) {
-        int minRow = Math.min(session.dragStartSlot.getIndex() / 9, session.dragCurrentSlot.getIndex() / 9);
-        int maxRow = Math.max(session.dragStartSlot.getIndex() / 9, session.dragCurrentSlot.getIndex() / 9);
-        int minCol = Math.min(session.dragStartSlot.getIndex() % 9, session.dragCurrentSlot.getIndex() % 9);
-        int maxCol = Math.max(session.dragStartSlot.getIndex() % 9, session.dragCurrentSlot.getIndex() % 9);
+        int minRow = Math.min(ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
+        int maxRow = Math.max(ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
+        int minCol = Math.min(ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
+        int maxCol = Math.max(ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
 
         // Spanning multiple rows AND columns is always a 2-D rectangle.
         if (minRow != maxRow && minCol != maxCol) return true;

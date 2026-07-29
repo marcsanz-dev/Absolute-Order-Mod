@@ -10,6 +10,8 @@ public class ActionIconButtonWidget extends CustomWidget {
     public String label;
     public Identifier icon;
     public int baseColor;
+    /** Source texture size to sample. 32 = legacy pixel icons; 128 = smooth vector icons (with blur mcmeta). */
+    public int texSize = 32;
 
     public ActionIconButtonWidget(
             int x, int y, int width, int height, String label, Identifier icon, int baseColor, Runnable onClickAction) {
@@ -24,8 +26,14 @@ public class ActionIconButtonWidget extends CustomWidget {
         if (this.isDisabled) return;
 
         boolean hover = isHovering(mouseX, mouseY);
+        boolean active = this.isActive || PressAnim.active(x, y);
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(
-                context, x, y, width, height, hover, this.isActive);
+                context, x, y, width, height, hover, active);
+
+        // The active/pressed button draws 1px smaller; shrink its icon+label by the same proportion.
+        if (active) {
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.pushActiveContent(context, x, y, width, height);
+        }
 
         float scale = 0.85f;
         int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(label);
@@ -49,11 +57,11 @@ public class ActionIconButtonWidget extends CustomWidget {
 
         if (icon != null) {
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-            context.drawTexture(pipeline, icon, startX, y + (height - 16) / 2, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, -1);
+            context.drawTexture(pipeline, icon, startX, y + (height - 16) / 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, -1);
             startX += 20;
         }
 
-        int textColor = this.isActive
+        int textColor = active
                 ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ON_ACCENT
                 : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT;
 
@@ -62,6 +70,10 @@ public class ActionIconButtonWidget extends CustomWidget {
         context.getMatrices().scale(scale, scale);
         context.drawText(MinecraftClient.getInstance().textRenderer, displayText, 0, 0, textColor, true);
         context.getMatrices().popMatrix();
+
+        if (active) {
+            context.getMatrices().popMatrix();
+        }
 
         if (hover && this.tooltipText != null && !this.isDisabled) {
             context.drawTooltip(

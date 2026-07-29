@@ -23,8 +23,7 @@
     "ScreenHandlerSwapFilterMixin",
     "ServerPlayNetworkHandlerSwapFilterMixin",
     "ArmorEquipFilterMixin",
-    "PlayerScreenHandlerFallbackMixin",
-    "ScreenHandlerInsertPriorityMixin"
+    "PlayerScreenHandlerFallbackMixin"
   ],
   "client": [
     "client.GenericContainerScreenMixin",

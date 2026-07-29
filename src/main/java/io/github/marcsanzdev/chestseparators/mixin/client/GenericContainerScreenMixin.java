@@ -44,6 +44,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
         boolean isValidScreen = (Object) this instanceof GenericContainerScreen
                 || (Object) this instanceof ShulkerBoxScreen
                 || (Object) this instanceof InventoryScreen
+                || (Object) this instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen
                 || isHorseScreenWithCargo();
 
         if (!isValidScreen) return;
@@ -71,6 +72,13 @@ public abstract class GenericContainerScreenMixin extends Screen {
         if (this.editor != null) {
             this.editor.render(context, mouseX, mouseY, delta);
             this.editor.renderNormalModeOverlay(context, mouseX, mouseY);
+
+            // Creative's drawForeground sets a pointer cursor over its tabs/scrollbar, making them look
+            // clickable even while the editor has them blocked. This overlay renders last, so forcing the
+            // default cursor here wins the frame and keeps the tab bar looking inert while editing.
+            if (this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen) {
+                context.setCursor(net.minecraft.client.gui.cursor.Cursor.DEFAULT);
+            }
         }
     }
 
@@ -108,6 +116,16 @@ public abstract class GenericContainerScreenMixin extends Screen {
         }
     }
 
+    // Skips the vanilla item render for slots taking part in the push/pull preview, so the editor can
+    // draw a clean ghost with no real item (or its count) showing through underneath.
+    @Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
+    private void onDrawSlot(
+            DrawContext context, net.minecraft.screen.slot.Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+        if (this.editor != null && this.editor.isPreviewSlot(slot)) {
+            ci.cancel();
+        }
+    }
+
     @Unique
     private static int boundKeyCode(net.minecraft.client.option.KeyBinding binding) {
         return KeyBindingHelper.getBoundKeyOf(binding).getCode();
@@ -141,22 +159,6 @@ public abstract class GenericContainerScreenMixin extends Screen {
             if (!this.editor.isEditMode()) {
                 int key = input.key();
                 if (key != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
-                    if (key == boundKeyCode(ModKeyBindings.toggleDepositButtonKey)) {
-                        this.editor.showStatus(
-                                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleDepositButton(),
-                                net.minecraft.util.Formatting.GRAY);
-                        this.editor.playClickSound(1.0f);
-                        cir.setReturnValue(true);
-                        return;
-                    }
-                    if (key == boundKeyCode(ModKeyBindings.toggleButtonKey)) {
-                        this.editor.showStatus(
-                                io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleEditButtons(),
-                                net.minecraft.util.Formatting.GRAY);
-                        this.editor.playClickSound(1.0f);
-                        cir.setReturnValue(true);
-                        return;
-                    }
                     if (key == boundKeyCode(ModKeyBindings.openEditorKey)) {
                         this.editor.showStatus(
                                 io.github.marcsanzdev.chestseparators.event.KeyInputHandler.togglePreviewPanel(),
@@ -168,27 +170,33 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 }
             }
 
-            // Deposit hotkeys only fire when no editor sub-menu is active.
+            // Push/Pull hotkeys act on the open container and only fire when no editor sub-menu is active.
+            // Holding Shift runs the "+ empty slots" variant of each — push also into empty slots, pull also
+            // unfiltered items — matching the Shift behaviour of the deposit and fill buttons.
             if (!this.editor.isEditMode() && GlobalChestConfig.instance.showDepositButton) {
-
                 int currentKey = input.key();
-                int depositFilterKey = KeyBindingHelper.getBoundKeyOf(ModKeyBindings.depositFilterKey)
-                        .getCode();
-                int depositAllKey = KeyBindingHelper.getBoundKeyOf(ModKeyBindings.depositAllKey)
-                        .getCode();
+                if (currentKey != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+                    long window = net.minecraft.client.MinecraftClient.getInstance()
+                            .getWindow()
+                            .getHandle();
+                    boolean shift = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT)
+                                    == org.lwjgl.glfw.GLFW.GLFW_PRESS
+                            || org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT)
+                                    == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
-                if (currentKey == depositFilterKey) {
-                    this.editor.depositClickTime = System.currentTimeMillis();
-                    this.editor.executeDeposit(false);
-                    this.editor.playClickSound(1.2f);
-                    cir.setReturnValue(true);
-                    return;
-                } else if (currentKey == depositAllKey) {
-                    this.editor.depositClickTime = System.currentTimeMillis();
-                    this.editor.executeDeposit(true);
-                    this.editor.playClickSound(1.2f);
-                    cir.setReturnValue(true);
-                    return;
+                    if (currentKey == boundKeyCode(ModKeyBindings.pushKey)) {
+                        this.editor.depositClickTime = System.currentTimeMillis();
+                        this.editor.executeDeposit(shift);
+                        this.editor.playClickSound(1.2f);
+                        cir.setReturnValue(true);
+                        return;
+                    }
+                    if (currentKey == boundKeyCode(ModKeyBindings.pullKey)) {
+                        this.editor.requestFillFromOpenChest(shift);
+                        this.editor.playClickSound(1.2f);
+                        cir.setReturnValue(true);
+                        return;
+                    }
                 }
             }
         }

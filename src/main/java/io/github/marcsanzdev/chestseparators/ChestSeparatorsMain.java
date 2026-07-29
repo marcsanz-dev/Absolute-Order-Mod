@@ -67,6 +67,9 @@ public class ChestSeparatorsMain implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(AutoDepositResultPayload.ID, AutoDepositResultPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(InventoryFiltersPayload.ID, InventoryFiltersPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(FillFromChestPayload.ID, FillFromChestPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(SortOpenFiltersPayload.ID, SortOpenFiltersPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(EntityWhitelistPayload.ID, EntityWhitelistPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(EntityWhitelistPayload.ID, EntityWhitelistPayload.CODEC);
 
         // Release all locks held by a player who disconnects abruptly, and drop their cached filters.
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -78,8 +81,27 @@ public class ChestSeparatorsMain implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(FillFromChestPayload.ID, (payload, context) -> {
             context.server().execute(() -> {
                 if (context.player() != null) {
-                    performFillFromOpenContainer(context.player(), payload.animPos());
+                    performFillFromOpenContainer(
+                            context.player(), payload.animPos(), payload.includeEmpty(), payload.lockHotbar());
                 }
+            });
+        });
+
+        // After a "push into the open chest" deposit, re-sort that container's filtered groups by priority
+        // order (the deposit itself is done client-side via slot clicks; this makes higher-priority arrivals
+        // move ahead of lower-priority items already stored).
+        ServerPlayNetworking.registerGlobalReceiver(SortOpenFiltersPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                net.minecraft.server.network.ServerPlayerEntity p = context.player();
+                if (p == null || p.currentScreenHandler == null) return;
+                for (net.minecraft.screen.slot.Slot s : p.currentScreenHandler.slots) {
+                    if (s.inventory instanceof net.minecraft.entity.player.PlayerInventory) continue;
+                    if (s.inventory instanceof IWhitelistProvider provider) {
+                        reorderFilteredGroups(s.inventory, provider.getWhitelists());
+                    }
+                    break; // the container is a single inventory shared by all its slots
+                }
+                p.currentScreenHandler.sendContentUpdates();
             });
         });
 
@@ -88,6 +110,22 @@ public class ChestSeparatorsMain implements ModInitializer {
             context.server().execute(() -> {
                 if (context.player() != null) {
                     INVENTORY_FILTERS.put(context.player().getUuid(), payload.filters());
+                }
+            });
+        });
+
+        // Persists incoming whitelist updates for ENTITY containers (chest/hopper minecarts). Applying it
+        // to the live server-side entity is what makes the Hopper Insert rule actually enforce on minecarts
+        // (see HopperBlockEntityMixin), and the entity's own NBT persistence keeps it across reload.
+        ServerPlayNetworking.registerGlobalReceiver(EntityWhitelistPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                if (context.player() == null) return;
+                World world = context.player().getEntityWorld();
+                if (!(world instanceof ServerWorld serverWorld)) return;
+
+                net.minecraft.entity.Entity entity = serverWorld.getEntity(payload.entityUuid());
+                if (entity instanceof IWhitelistProvider provider) {
+                    provider.setWhitelists(payload.whitelists());
                 }
             });
         });
@@ -243,26 +281,12 @@ public class ChestSeparatorsMain implements ModInitializer {
             context.server().execute(() -> {
                 ServerPlayerEntity p = context.player();
                 if (p == null) return;
-                switch (payload.action()) {
-                    case AutoDepositRequestPayload.ACTION_DEPOSIT_JUNK -> performDepositJunk(
-                            p,
-                            payload.radius(),
-                            payload.throughWalls(),
-                            payload.enderWhitelists(),
-                            payload.entityWhitelists());
-                    case AutoDepositRequestPayload.ACTION_GRAB -> performGrab(
-                            p,
-                            payload.radius(),
-                            payload.throughWalls(),
-                            payload.enderWhitelists(),
-                            payload.entityWhitelists());
-                    default -> performAutoDeposit(
-                            p,
-                            payload.radius(),
-                            payload.throughWalls(),
-                            payload.enderWhitelists(),
-                            payload.entityWhitelists());
-                }
+                performAutoDeposit(
+                        p,
+                        payload.radius(),
+                        payload.throughWalls(),
+                        payload.enderWhitelists(),
+                        payload.entityWhitelists());
             });
         });
     }
@@ -379,6 +403,9 @@ public class ChestSeparatorsMain implements ModInitializer {
         net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
         // Preserve discovery order so the animation roughly mirrors inventory layout.
         Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
+        // Containers that actually received items, so only those get their groups re-sorted afterwards
+        // (nearby chests nothing was deposited into are left exactly as the player arranged them).
+        java.util.Set<Candidate> touched = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
         for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
             ItemStack stack = inventory.getStack(i);
@@ -395,12 +422,19 @@ public class ChestSeparatorsMain implements ModInitializer {
                 int delta = before - stack.getCount();
                 if (delta > 0) {
                     candidate.inv.markDirty();
+                    touched.add(candidate);
                     moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
                             .merge(item, delta, Integer::sum);
                 }
             }
             inventory.setStack(i, stack);
         }
+
+        // Auto-organize each container that received items: sort every filtered group by priority order.
+        for (Candidate candidate : touched) {
+            reorderFilteredGroups(candidate.inv, candidate.whitelists);
+        }
+
         inventory.markDirty();
         player.playerScreenHandler.sendContentUpdates();
 
@@ -411,135 +445,13 @@ public class ChestSeparatorsMain implements ModInitializer {
     }
 
     /**
-     * Deposits the items the player's inventory filters do NOT want to keep (the "drop" hotkey): items
-     * no inventory filter lists, plus the excess of items kept beyond their target count. Only into
-     * nearby chests whose filters list the item; whatever has no home stays in the inventory.
-     */
-    private static void performDepositJunk(
-            ServerPlayerEntity player,
-            int radius,
-            boolean throughWalls,
-            Map<Integer, SlotWhitelist> enderWhitelists,
-            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
-        if (!(player.getEntityWorld() instanceof ServerWorld)) return;
-
-        Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
-        List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
-        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
-
-        // Per-item depositable budget = current amount minus what we keep (target; 0 target = keep all).
-        Map<String, Integer> budget = new HashMap<>();
-        for (Map.Entry<String, Integer> e : mainInventoryCounts(player).entrySet()) {
-            int keep = inventoryKeepLimit(invFilters, e.getKey());
-            int dep = keep == Integer.MAX_VALUE ? 0 : Math.max(0, e.getValue() - keep);
-            if (dep > 0) budget.put(e.getKey(), dep);
-        }
-
-        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
-        for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
-            ItemStack stack = inventory.getStack(i);
-            if (stack.isEmpty()) continue;
-            net.minecraft.item.Item item = stack.getItem();
-            String itemId = Registries.ITEM.getId(item).toString();
-            Integer b = budget.get(itemId);
-            if (b == null || b <= 0) continue;
-
-            for (Candidate candidate : candidates) {
-                if (stack.isEmpty() || b <= 0) break;
-                if (!containerListsItem(candidate.whitelists, itemId)) continue;
-
-                ItemStack portion = stack.copyWithCount(Math.min(b, stack.getCount()));
-                int before = portion.getCount();
-                insertRespectingFilter(candidate.inv, candidate.whitelists, portion, itemId);
-                int delta = before - portion.getCount();
-                if (delta > 0) {
-                    stack.decrement(delta);
-                    b -= delta;
-                    candidate.inv.markDirty();
-                    moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
-                            .merge(item, delta, Integer::sum);
-                }
-            }
-            budget.put(itemId, b);
-            inventory.setStack(i, stack);
-        }
-        inventory.markDirty();
-        player.playerScreenHandler.sendContentUpdates();
-
-        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
-            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved)));
-        }
-    }
-
-    /**
-     * Pulls items the player's inventory filters want (the "grab" hotkey) from nearby filtered chests
-     * into the inventory, only up to each filter's target count (0 target = grab as much as fits).
-     * Items flow only out of chest slots whose filter lists the item.
-     */
-    private static void performGrab(
-            ServerPlayerEntity player,
-            int radius,
-            boolean throughWalls,
-            Map<Integer, SlotWhitelist> enderWhitelists,
-            Map<java.util.UUID, Map<Integer, SlotWhitelist>> entityWhitelists) {
-        if (!(player.getEntityWorld() instanceof ServerWorld)) return;
-
-        Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
-        List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
-        net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
-
-        Map<String, Integer> startHave = mainInventoryCounts(player);
-        Map<String, Integer> grabbed = new HashMap<>();
-        Map<String, Integer> keepCache = new HashMap<>();
-        Map<BlockPos, Map<net.minecraft.item.Item, Integer>> moved = new java.util.LinkedHashMap<>();
-
-        for (Candidate candidate : candidates) {
-            int size = candidate.inv.size();
-            for (int slot = 0; slot < size; slot++) {
-                ItemStack stack = candidate.inv.getStack(slot);
-                if (stack.isEmpty()) continue;
-                net.minecraft.item.Item item = stack.getItem();
-                String itemId = Registries.ITEM.getId(item).toString();
-
-                SlotWhitelist wl = candidate.whitelists.get(slot);
-                if (wl == null || !wl.allowedItems().contains(itemId)) continue;
-
-                int keep = keepCache.computeIfAbsent(itemId, k -> inventoryKeepLimit(invFilters, k));
-                if (keep <= 0) continue;
-                long need = (long) keep - startHave.getOrDefault(itemId, 0) - grabbed.getOrDefault(itemId, 0);
-                if (need <= 0) continue;
-
-                int take = (int) Math.min(need, stack.getCount());
-                if (take <= 0) continue;
-
-                ItemStack portion = stack.copyWithCount(take);
-                inventory.insertStack(portion);
-                int delta = take - portion.getCount();
-                if (delta > 0) {
-                    stack.decrement(delta);
-                    candidate.inv.setStack(slot, stack);
-                    candidate.inv.markDirty();
-                    grabbed.merge(itemId, delta, Integer::sum);
-                    moved.computeIfAbsent(candidate.pos, k -> new java.util.LinkedHashMap<>())
-                            .merge(item, delta, Integer::sum);
-                }
-            }
-        }
-        inventory.markDirty();
-        player.playerScreenHandler.sendContentUpdates();
-
-        if (ServerPlayNetworking.canSend(player, AutoDepositResultPayload.ID)) {
-            ServerPlayNetworking.send(player, new AutoDepositResultPayload(buildFlights(moved), true));
-        }
-    }
-
-    /**
      * Fills the player's inventory from the container they currently have open (the editor's "fill
-     * inventory" button): pulls items the player's inventory filters want, up to each target count.
-     * Pulls from every container slot, not only the chest's own filtered slots, since it is a
+     * inventory" button): pulls every item any inventory filter lists, or — with Shift ({@code includeEmpty})
+     * — everything into whatever free space is left. Pulls from every container slot, since it is a
      * deliberate per-chest action. {@code animPos} is only the origin of the fly-back animation.
      */
-    private static void performFillFromOpenContainer(ServerPlayerEntity player, BlockPos animPos) {
+    private static void performFillFromOpenContainer(
+            ServerPlayerEntity player, BlockPos animPos, boolean includeEmpty, boolean lockHotbar) {
         if (!(player.getEntityWorld() instanceof ServerWorld)) return;
 
         // The open container's inventory: the first screen-handler slot not backed by the player.
@@ -554,9 +466,6 @@ public class ChestSeparatorsMain implements ModInitializer {
 
         Map<Integer, SlotWhitelist> invFilters = INVENTORY_FILTERS.get(player.getUuid());
         net.minecraft.entity.player.PlayerInventory inventory = player.getInventory();
-        Map<String, Integer> startHave = mainInventoryCounts(player);
-        Map<String, Integer> grabbed = new HashMap<>();
-        Map<String, Integer> keepCache = new HashMap<>();
         Map<net.minecraft.item.Item, Integer> movedItems = new java.util.LinkedHashMap<>();
 
         int size = container.size();
@@ -566,24 +475,37 @@ public class ChestSeparatorsMain implements ModInitializer {
             net.minecraft.item.Item item = stack.getItem();
             String itemId = Registries.ITEM.getId(item).toString();
 
-            int keep = keepCache.computeIfAbsent(itemId, k -> inventoryKeepLimit(invFilters, k));
-            if (keep <= 0) continue;
-            long need = (long) keep - startHave.getOrDefault(itemId, 0) - grabbed.getOrDefault(itemId, 0);
-            if (need <= 0) continue;
+            // Pull items the inventory filters list; with Shift, pull everything (into free space).
+            if (!includeEmpty && !inventoryListsItem(invFilters, itemId)) continue;
 
-            int take = (int) Math.min(need, stack.getCount());
-            if (take <= 0) continue;
-
+            int take = stack.getCount();
             ItemStack portion = stack.copyWithCount(take);
             inventory.insertStack(portion);
             int delta = take - portion.getCount();
             if (delta > 0) {
                 stack.decrement(delta);
                 container.setStack(slot, stack);
-                grabbed.merge(itemId, delta, Integer::sum);
                 movedItems.merge(item, delta, Integer::sum);
             }
         }
+
+        // Auto-organize the inventory's filtered groups after a pull, so items land in priority order and
+        // higher-priority arrivals sit ahead of lower-priority ones already stored. Restricted to the MAIN
+        // inventory (0..MAIN_SIZE): armor and offhand slots are type-specific, so re-laying stacks there by
+        // priority (which bypasses slot validation) could drop the wrong piece into an equipment slot.
+        if (!movedItems.isEmpty() && invFilters != null) {
+            // Hotbar is slots 0-8; keep it out of the sort when the option is on so a held item never moves.
+            // The flag is forwarded from the client (GlobalChestConfig is client-only — never read it here).
+            int firstSortable = lockHotbar ? 9 : 0;
+            Map<Integer, SlotWhitelist> mainFilters = new java.util.HashMap<>();
+            for (Map.Entry<Integer, SlotWhitelist> e : invFilters.entrySet()) {
+                if (e.getKey() >= firstSortable && e.getKey() < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE) {
+                    mainFilters.put(e.getKey(), e.getValue());
+                }
+            }
+            reorderFilteredGroups(inventory, mainFilters);
+        }
+
         container.markDirty();
         inventory.markDirty();
         player.currentScreenHandler.sendContentUpdates();
@@ -609,36 +531,13 @@ public class ChestSeparatorsMain implements ModInitializer {
         return flights;
     }
 
-    /** Total count of each item id currently in the player's main inventory. */
-    private static Map<String, Integer> mainInventoryCounts(ServerPlayerEntity player) {
-        Map<String, Integer> counts = new HashMap<>();
-        net.minecraft.entity.player.PlayerInventory inv = player.getInventory();
-        for (int i = 0; i < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE; i++) {
-            ItemStack s = inv.getStack(i);
-            if (s.isEmpty()) continue;
-            counts.merge(Registries.ITEM.getId(s.getItem()).toString(), s.getCount(), Integer::sum);
-        }
-        return counts;
-    }
-
-    /**
-     * How many of an item the player's inventory filters want to keep: 0 if no filter lists it (junk),
-     * {@link Integer#MAX_VALUE} if any listing filter has no target (keep all), otherwise the sum of
-     * the target counts of the distinct filter groups listing it.
-     */
-    private static int inventoryKeepLimit(Map<Integer, SlotWhitelist> invFilters, String itemId) {
-        if (invFilters == null) return 0;
-        int sum = 0;
-        boolean listed = false;
-        java.util.Set<java.util.UUID> seenGroups = new java.util.HashSet<>();
+    /** True when any of the player's inventory filters lists the item (so a Fill should pull it in). */
+    private static boolean inventoryListsItem(Map<Integer, SlotWhitelist> invFilters, String itemId) {
+        if (invFilters == null) return false;
         for (SlotWhitelist wl : invFilters.values()) {
-            if (!wl.allowedItems().contains(itemId)) continue;
-            if (!seenGroups.add(wl.groupId())) continue;
-            listed = true;
-            if (wl.targetCount() <= 0) return Integer.MAX_VALUE;
-            sum += wl.targetCount();
+            if (wl.allowedItems().contains(itemId)) return true;
         }
-        return listed ? sum : 0;
+        return false;
     }
 
     /** A filtered container eligible to receive items during an auto-deposit. */
@@ -675,16 +574,75 @@ public class ChestSeparatorsMain implements ModInitializer {
             stack.decrement(move);
         }
 
-        // Phase 2: drop the remainder into empty filtered slots.
-        for (int slot = 0; slot < size && !stack.isEmpty(); slot++) {
+        // Phase 2: drop the remainder into empty filtered slots, in the filter's priority order — the
+        // item ranked first in the list heads for the group's first slot, and so on — so a deposit lays
+        // items out in the same order the player arranged by dragging.
+        List<Integer> emptySlots = new java.util.ArrayList<>();
+        for (int slot = 0; slot < size; slot++) {
             SlotWhitelist wl = whitelists.get(slot);
             if (wl == null || !wl.allowedItems().contains(itemId)) continue;
             if (!inv.getStack(slot).isEmpty() || !inv.isValid(slot, stack)) continue;
+            emptySlots.add(slot);
+        }
+        emptySlots.sort(java.util.Comparator.comparingInt(
+                        (Integer slot) -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                                whitelists, slot, itemId))
+                .thenComparingInt(slot -> slot));
+        for (int slot : emptySlots) {
+            if (stack.isEmpty()) break;
             int max = Math.min(inv.getMaxCount(stack), stack.getMaxCount());
             int move = Math.min(max, stack.getCount());
             inv.setStack(slot, stack.copyWithCount(move));
             stack.decrement(move);
         }
+    }
+
+    /**
+     * Re-lays every filtered group of {@code inv} so its stacks sit in the filter's priority order, packed
+     * from the group's first slot. This is the push/pull "auto-organize" step: after a deposit or fill, a
+     * higher-priority item that arrived into a later slot is moved ahead of the lower-priority items already
+     * stored, and no gap is left reserved for an item that is not present. Server-authoritative (direct
+     * {@link Inventory#setStack}) so nothing can desync or leave ghosts. Items the filter does not list keep
+     * their relative place at the end of the group, so a manually stored foreign item is preserved.
+     */
+    private static void reorderFilteredGroups(Inventory inv, Map<Integer, SlotWhitelist> whitelists) {
+        if (inv == null || whitelists == null || whitelists.isEmpty()) return;
+
+        // Collect each group's slot indices in ascending (normal Minecraft) slot order.
+        Map<java.util.UUID, java.util.List<Integer>> groups = new java.util.LinkedHashMap<>();
+        java.util.List<Integer> keys = new ArrayList<>(whitelists.keySet());
+        java.util.Collections.sort(keys);
+        for (int slot : keys) {
+            if (slot < 0 || slot >= inv.size()) continue;
+            SlotWhitelist wl = whitelists.get(slot);
+            if (wl == null || wl.groupId() == null) continue;
+            groups.computeIfAbsent(wl.groupId(), g -> new ArrayList<>()).add(slot);
+        }
+
+        for (java.util.List<Integer> slots : groups.values()) {
+            if (slots.size() < 2) continue;
+            java.util.List<String> order = whitelists.get(slots.get(0)).allowedItems();
+
+            // Snapshot the group's non-empty stacks (references), then sort by the filter's priority order.
+            // The sort is stable, so equal-ranked and unlisted items keep their relative order.
+            java.util.List<ItemStack> stacks = new ArrayList<>();
+            for (int slot : slots) {
+                ItemStack st = inv.getStack(slot);
+                if (!st.isEmpty()) stacks.add(st);
+            }
+            if (stacks.isEmpty()) continue;
+            stacks.sort(java.util.Comparator.comparingInt(st -> {
+                int rank = order.indexOf(Registries.ITEM.getId(st.getItem()).toString());
+                return rank < 0 ? Integer.MAX_VALUE : rank;
+            }));
+
+            // Re-lay packed from the first slot; any trailing slots become empty. Every stack came from this
+            // same group, so nothing can be lost (stacks.size() <= slots.size()).
+            for (int i = 0; i < slots.size(); i++) {
+                inv.setStack(slots.get(i), i < stacks.size() ? stacks.get(i) : ItemStack.EMPTY);
+            }
+        }
+        inv.markDirty();
     }
 
     /**

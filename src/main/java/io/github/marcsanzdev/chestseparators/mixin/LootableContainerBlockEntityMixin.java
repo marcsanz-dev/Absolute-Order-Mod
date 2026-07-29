@@ -125,7 +125,18 @@ public abstract class LootableContainerBlockEntityMixin extends BlockEntity impl
 
                         List<String> allowedItems = new ArrayList<>();
                         wlTag.getCompound("AllowedItems").ifPresent(itemsTag -> {
-                            for (String itemKey : itemsTag.getKeys()) {
+                            // The items were written under numeric keys, but the tag's key set has no
+                            // order of its own. Sorting numerically restores the order they were saved
+                            // in — which is the order the player arranged in the filter list.
+                            List<String> keys = new ArrayList<>(itemsTag.getKeys());
+                            keys.sort(java.util.Comparator.comparingInt(k -> {
+                                try {
+                                    return Integer.parseInt(k);
+                                } catch (NumberFormatException e) {
+                                    return Integer.MAX_VALUE;
+                                }
+                            }));
+                            for (String itemKey : keys) {
                                 itemsTag.getString(itemKey).ifPresent(allowedItems::add);
                             }
                         });

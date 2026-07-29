@@ -27,6 +27,10 @@ public class ChestPosStorage {
     // or a static block. Used by the ConfigManager to select the appropriate loading strategy.
     public static boolean isEntityOpened = false;
 
+    // True when the opened entity is a chest/hopper minecart. Hoppers can insert into these, so the mod
+    // enables the Hopper Insert rule for them and syncs their filter to the server for enforcement.
+    public static boolean isMinecartEntity = false;
+
     // --- NETWORK EXTENSIONS ---
 
     // Transient storage for the incoming Shulker Box UUID received via the S2C network packet.

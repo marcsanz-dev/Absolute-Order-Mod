@@ -22,11 +22,15 @@ public abstract class ScreenHandlerClickMixin {
     protected void onInsertItemBegin(
             ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
         ClickTracker.IS_SHIFT_CLICK.set(true);
+        // Publish the destination range so the filter-priority rule only defers to slots this
+        // insertion can actually reach.
+        ClickTracker.INSERT_RANGE.set(new int[] {startIndex, endIndex});
     }
 
     @Inject(method = "insertItem", at = @At("RETURN"))
     protected void onInsertItemEnd(
             ItemStack stack, int startIndex, int endIndex, boolean fromLast, CallbackInfoReturnable<Boolean> cir) {
         ClickTracker.IS_SHIFT_CLICK.set(false);
+        ClickTracker.INSERT_RANGE.remove();
     }
 }

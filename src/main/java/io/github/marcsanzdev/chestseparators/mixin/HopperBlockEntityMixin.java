@@ -35,9 +35,16 @@ public abstract class HopperBlockEntityMixin {
                     String itemId = Registries.ITEM.getId(stack.getItem()).toString();
                     if (!wl.allowedItems().contains(itemId)) {
                         cir.setReturnValue(false);
+                        return;
                     }
                 }
             }
+        }
+
+        // Same ordering rule as the shift-click quick-move: an item that has a dedicated filter slot
+        // fills that slot first, so ordinary slots decline it while the dedicated one still has room.
+        if (io.github.marcsanzdev.chestseparators.util.FilterPriority.shouldDefer(inventory, slot, stack)) {
+            cir.setReturnValue(false);
         }
     }
 }

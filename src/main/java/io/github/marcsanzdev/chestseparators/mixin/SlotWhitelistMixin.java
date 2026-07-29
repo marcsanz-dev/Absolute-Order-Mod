@@ -35,6 +35,10 @@ public abstract class SlotWhitelistMixin {
 
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
     public void onCanInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        // The editor probes canInsert to detect vanilla slot restrictions; don't let our own filter
+        // enforcement pollute that probe (it would hide every unfiltered item when editing a filter).
+        if (io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.get()) return;
+
         Map<Integer, SlotWhitelist> whitelists = null;
 
         if (this.inventory instanceof IWhitelistProvider provider) {

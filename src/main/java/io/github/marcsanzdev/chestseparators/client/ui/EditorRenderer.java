@@ -37,12 +37,13 @@ public class EditorRenderer {
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Fire any deferred "flash then act" button actions whose flash has finished playing.
+        io.github.marcsanzdev.chestseparators.client.ui.widgets.PressAnim.tick();
         layout.update(screen, accessor, editor.getSidebarYOffset());
         editor.syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
         boolean hideInFilter = (session.currentState == EditorState.EDIT_FILTER);
         boolean hideVanilla = session.isColorPickerOpen || hideInFilter || session.hasSelectionConflict;
-        boolean isEditorClosed = (session.currentState == EditorState.HIDDEN);
 
         // Reflect current editor state in each button's pressed/released visual.
         if (editor.entryButton != null) {
@@ -80,7 +81,7 @@ public class EditorRenderer {
                 context.getMatrices().popMatrix();
             }
             editor.presetsMenu.renderPanel(context, screen.width, screen.height, mouseX, mouseY);
-            renderToolbar(context, mouseX, mouseY, delta, false);
+            renderToolbar(context, mouseX, mouseY, delta);
             return;
         }
 
@@ -90,20 +91,25 @@ public class EditorRenderer {
         // Background layer (rendered behind the dim overlay).
         // When a sub-menu is active, pass mouse coordinates of (-1, -1) so the buttons
         // remain visible but do not react to hover visually.
-        // Right-side vertical toolbar (background layer). Deposit is included only in the closed editor
-        // state (where the deposit action is valid); it is filtered out inside renderToolbar otherwise.
-        renderToolbar(context, hideVanilla ? -1 : bgMouseX, hideVanilla ? -1 : bgMouseY, delta, isEditorClosed);
+        // Toolbar (background layer).
+        renderToolbar(context, hideVanilla ? -1 : bgMouseX, hideVanilla ? -1 : bgMouseY, delta);
 
         if (session.currentState != EditorState.HIDDEN) {
+            // Transfer (push/pull) preview: drawn FIRST — at the same layer the real container items sit on —
+            // so the dim overlay below fades the ghost together with the stationary items. This keeps it
+            // coherent with the rest of the darkened inventory instead of floating bright above the dim. It
+            // still lands below the sub-screen's filter indicators, which are drawn later.
+            renderTransferPreviewOverlay(context, mouseX, mouseY);
+
             if (!session.isEyedropperActive) {
                 context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0x66000000);
             }
 
             // Foreground layer (rendered on top of the dim overlay).
             // Skipped when a sub-menu is open so clicks pass through to the screen below.
-            // Right-side vertical toolbar (foreground layer, drawn above the dim when a sub-menu is open).
+            // Toolbar (foreground layer, drawn above the dim when a sub-menu is open).
             if (!hideVanilla) {
-                renderToolbar(context, bgMouseX, bgMouseY, delta, false);
+                renderToolbar(context, bgMouseX, bgMouseY, delta);
             }
 
             context.getMatrices().pushMatrix();
@@ -133,12 +139,13 @@ public class EditorRenderer {
     // --- Right-side vertical toolbar dock ---
 
     /**
-     * Lays out the visible toolbar icons in a vertical column docked to the right edge of the screen,
-     * inside a modern semi-transparent rounded panel, then renders them. Visibility depends on the
-     * per-button config flags, the screen context (player inventory vs container) and, for the deposit
-     * icon, {@code withDeposit}. Hidden buttons are parked off-screen so they receive no hover or clicks.
+     * Lays out the visible toolbar icons in a horizontal bar docked on top of the container GUI, inside a
+     * semi-transparent rounded panel, then renders them. Visibility depends on the per-button config flags
+     * and the screen context (player inventory vs container) — never on the editor state, so the bar keeps
+     * the same icons in the same places while a sub-screen is open. Hidden buttons are parked off-screen
+     * so they receive no hover or clicks.
      */
-    private void renderToolbar(DrawContext context, int hoverX, int hoverY, float delta, boolean withDeposit) {
+    private void renderToolbar(DrawContext context, int hoverX, int hoverY, float delta) {
         parkToolbarButtons();
         if (!GlobalChestConfig.instance.showEditButtons) return;
 
@@ -147,17 +154,19 @@ public class EditorRenderer {
                 new java.util.ArrayList<>();
         if (GlobalChestConfig.instance.btnEditLines && editor.entryButton != null) vis.add(editor.entryButton);
         if (GlobalChestConfig.instance.btnFilters && editor.whitelistButton != null) vis.add(editor.whitelistButton);
-        if (withDeposit && GlobalChestConfig.instance.showDepositButton && !inv && editor.depositButton != null) {
+        if (GlobalChestConfig.instance.showDepositButton && !inv && editor.depositButton != null) {
             vis.add(editor.depositButton);
         }
         if (GlobalChestConfig.instance.btnFillFromChest && !inv && editor.fillButton != null) {
             vis.add(editor.fillButton);
         }
-        if (GlobalChestConfig.instance.btnInventoryPresets && editor.presetsButton != null) {
-            vis.add(editor.presetsButton);
-        }
+        // Chest presets first when a container is open — the chest is what you're looking at, so its presets
+        // should be the first of the two you reach; the inventory presets follow.
         if (GlobalChestConfig.instance.btnChestPresets && !inv && editor.chestPresetsButton != null) {
             vis.add(editor.chestPresetsButton);
+        }
+        if (GlobalChestConfig.instance.btnInventoryPresets && editor.presetsButton != null) {
+            vis.add(editor.presetsButton);
         }
 
         int n = vis.size();
@@ -167,19 +176,27 @@ public class EditorRenderer {
         final int gap = 3;
         final int pad = 4;
         final int gapToChest = 3;
-        int panelW = btn + 2 * pad;
-        int panelH = n * btn + (n - 1) * gap + 2 * pad;
-        // Dock the toolbar to the RIGHT edge of the container GUI (not the screen edge), top-aligned with
-        // the container window, so it reads as attached to the chest.
-        int panelX = accessor.getX() + accessor.getBackgroundWidth() + gapToChest;
-        int panelY = accessor.getY();
+        // HORIZONTAL bar docked on TOP of the container GUI and centred on it. The editor sub-screens put
+        // their button columns to the left and right of the chest, so sitting above it is the one spot
+        // that can never collide with them.
+        int panelW = n * btn + (n - 1) * gap + 2 * pad;
+        int panelH = btn + 2 * pad;
+        int panelX = accessor.getX() + (accessor.getBackgroundWidth() - panelW) / 2;
+        // Anchored to the chest, always in the same place — by design it may end up behind a sub-screen's
+        // taller panels, which is accepted in exchange for the bar never moving.
+        int panelY = accessor.getY() - panelH - gapToChest;
+        // The creative screen draws its item-group tab row above the GUI top, which would overlap the bar,
+        // so lift the bar above those tabs.
+        if (screen instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen) {
+            panelY -= 30;
+        }
 
         UiTheme.panel(context, panelX, panelY, panelW, panelH);
 
         for (int i = 0; i < n; i++) {
             var b = vis.get(i);
-            b.x = panelX + pad;
-            b.y = panelY + pad + i * (btn + gap);
+            b.x = panelX + pad + i * (btn + gap);
+            b.y = panelY + pad;
             b.render(context, hoverX, hoverY, delta);
         }
     }
@@ -198,12 +215,15 @@ public class EditorRenderer {
         }
     }
 
-    /** Subtle, static hint pointing players to the magnifier loupe while painting, when it is off. */
+    /** Subtle, static hint under the editor telling players how to toggle the magnifier loupe. */
     private void renderMagnifierHint(DrawContext context) {
-        if (session.currentState != EditorState.DRAW_LINES || GlobalChestConfig.instance.magnifierEnabled) return;
+        if (session.currentState != EditorState.DRAW_LINES) return;
         net.minecraft.text.Text key = ModKeyBindings.toggleMagnifierKey.getBoundKeyLocalizedText();
-        net.minecraft.text.Text hint =
-                net.minecraft.text.Text.translatable("message.chestseparators.magnifier_hint", key);
+        // Reflect the current state: prompt to turn it ON when off, and OFF when on.
+        String hintKey = GlobalChestConfig.instance.magnifierEnabled
+                ? "message.chestseparators.magnifier_hint_off"
+                : "message.chestseparators.magnifier_hint";
+        net.minecraft.text.Text hint = net.minecraft.text.Text.translatable(hintKey, key);
         var tr = MinecraftClient.getInstance().textRenderer;
         context.drawText(tr, hint, (screen.width - tr.getWidth(hint)) / 2, screen.height - 12, 0x70FFFFFF, false);
     }
@@ -378,103 +398,130 @@ public class EditorRenderer {
             }
         }
 
+        // When a sub-screen is open, render() already drew the deposit preview at the right z-order
+        // (above the dim so it isn't faded, below the filter indicators). Draw it here — on the bright,
+        // undimmed chest — only when the editor is fully closed.
+        if (session.currentState == EditorState.HIDDEN) {
+            renderTransferPreviewOverlay(context, mouseX, mouseY);
+        }
+    }
+
+    /**
+     * Updates + draws the push (deposit) OR pull (fill) preview depending on which toolbar button is
+     * hovered. Push shows outgoing player items + incoming container ghosts; pull highlights the
+     * container items that would be pulled to you (accent wash + count).
+     */
+    void renderTransferPreviewOverlay(DrawContext context, int mouseX, int mouseY) {
         long window = MinecraftClient.getInstance().getWindow().getHandle();
         boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
 
-        boolean hover = false;
-        if (!editor.isEditMode()
-                && GlobalChestConfig.instance.showDepositButton
+        boolean hoverDeposit = false;
+        if (GlobalChestConfig.instance.showDepositButton
                 && !session.isPlayerInventory
                 && editor.depositButton != null) {
             editor.depositButton.tooltipText = shift
-                    ? Text.translatable("key.chestseparators.deposit_all").getString()
-                    : Text.translatable("key.chestseparators.deposit_filter").getString();
-
-            hover = editor.isHovering(editor.depositButton.x, editor.depositButton.y, 20, 20, mouseX, mouseY);
+                    ? Text.translatable("tooltip.chestseparators.push_to_chest.shift").getString()
+                    : Text.translatable("tooltip.chestseparators.push_to_chest").getString();
+            hoverDeposit = editor.isHovering(editor.depositButton.x, editor.depositButton.y, 20, 20, mouseX, mouseY);
+        }
+        boolean hoverFill = false;
+        if (GlobalChestConfig.instance.btnFillFromChest
+                && !session.isPlayerInventory
+                && editor.fillButton != null) {
+            hoverFill = editor.isHovering(editor.fillButton.x, editor.fillButton.y, 20, 20, mouseX, mouseY);
         }
 
-        if (hover) {
+        if (hoverDeposit) {
+            editor.isHoveringFill = false;
             // Toggling Shift is an explicit request for the other preview (filtered vs. all),
             // so lift the post-deposit suspension and let it recompute below.
             if (editor.suspendDepositPreview && shift != editor.depositPreviewShift) {
                 editor.suspendDepositPreview = false;
             }
-
             // Otherwise, do not re-show the preview right after a deposit — wait for the cursor to leave first.
             if (editor.suspendDepositPreview) {
                 editor.isHoveringDeposit = false;
                 return;
             }
-
             editor.isHoveringDeposit = true;
             if (editor.depositPreviewShift != shift || editor.previewSourceRemaining.isEmpty()) {
                 editor.depositPreviewShift = shift;
                 editor.updateDepositPreview(shift);
             }
             renderDepositPreview(context);
-        } else {
+        } else if (hoverFill) {
             editor.isHoveringDeposit = false;
             editor.suspendDepositPreview = false;
-
+            editor.isHoveringFill = true;
+            editor.updateFillPreview(shift);
+            renderDepositPreview(context);
+        } else {
+            editor.isHoveringDeposit = false;
+            editor.isHoveringFill = false;
+            editor.suspendDepositPreview = false;
             editor.previewSourceRemaining.clear();
             editor.previewTargetIncoming.clear();
         }
     }
 
+
     private void renderDepositPreview(DrawContext context) {
-        if (!editor.isHoveringDeposit || editor.previewTargetIncoming.isEmpty()) return;
+        if ((!editor.isHoveringDeposit && !editor.isHoveringFill) || editor.previewTargetIncoming.isEmpty()) return;
 
         int guiX = accessor.getX();
         int guiY = accessor.getY();
 
-        // Player inventory — outgoing items (dimmed with remaining count).
+        // The real item in every preview slot is already suppressed (GenericContainerScreenMixin#drawSlot),
+        // so we paint NO slot background. Translucency is faked WITHOUT altering the background: over the
+        // opaque ghost we lay a wash the exact colour of the slot's own background. On the empty pixels
+        // around the item that wash sits colour-over-identical-colour (invisible); over the item pixels it
+        // blends the model toward the background — the exact result of real per-pixel alpha (the 1.21.11
+        // deferred GUI pipeline has no item-alpha API, so this is how we honour "fade the item, not the box").
+        // In edit-layout the preview is drawn BEFORE the screen dim (see render()), so the global dim fades
+        // the ghost together with the stationary items; the wash therefore matches the plain, un-dimmed slot.
+
+        // Source — items leaving. Show the projected leftover (nothing when the whole stack goes).
         for (Map.Entry<Integer, Integer> entry : editor.previewSourceRemaining.entrySet()) {
             Slot slot = accessor.getHandler().getSlot(entry.getKey());
             int remaining = entry.getValue();
+            if (remaining <= 0) continue; // whole stack leaves → slot shown empty
             int x = guiX + slot.x;
             int y = guiY + slot.y;
 
-            drawVanillaSlotBevel(context, x, y);
-
-            if (remaining > 0) {
-                ItemStack visualStack = slot.getStack().copy();
-                visualStack.setCount(remaining);
-                context.drawItem(visualStack, x, y);
-                drawDurabilityBar(context, visualStack, x, y);
-
-                // Gray wash to signal items leaving the player inventory.
-                context.fill(x, y, x + 16, y + 16, 0xAA8B8B8B);
-
-                if (remaining > 1) {
-                    drawProjectedCount(context, x, y, remaining, 0xAAFFFFFF);
-                }
-            } else {
-                context.drawItem(slot.getStack(), x, y);
-                drawDurabilityBar(context, slot.getStack(), x, y);
-                context.fill(x, y, x + 16, y + 16, 0xAA8B8B8B);
+            ItemStack ghost = slot.getStack().copy();
+            ghost.setCount(remaining);
+            drawGhostItem(context, ghost, x, y, previewGhostWash(ChestSeparatorsEditor.slotKey(slot)));
+            if (remaining > 1) {
+                drawProjectedCount(context, x, y, remaining, 0xDDFFFFFF);
             }
         }
 
-        // Container — incoming items (ghost overlay with projected total).
+        // Target — the slot's FINAL projected stack (already the full post-action content, including any
+        // group re-sort; see ChestSeparatorsEditor#applyPreviewReorder). A slot emptied by the re-sort holds
+        // an empty stack: the real item is already suppressed, so we simply draw nothing there.
         for (Map.Entry<Integer, ItemStack> entry : editor.previewTargetIncoming.entrySet()) {
-            Slot slot = accessor.getHandler().getSlot(entry.getKey());
             ItemStack incoming = entry.getValue();
+            if (incoming.isEmpty()) continue;
+            Slot slot = accessor.getHandler().getSlot(entry.getKey());
             int x = guiX + slot.x;
             int y = guiY + slot.y;
 
-            int total = incoming.getCount();
-            if (slot.hasStack()) total += slot.getStack().getCount();
-
-            drawVanillaSlotBevel(context, x, y);
-            context.drawItem(incoming, x, y);
-            drawDurabilityBar(context, incoming, x, y);
-            drawCustomPreviewGlow(context, x, y, slot.getIndex());
-
-            if (total > 1) {
-                drawProjectedCount(context, x, y, total, 0xAAFFFFFF);
+            drawGhostItem(context, incoming, x, y, previewGhostWash(ChestSeparatorsEditor.slotKey(slot)));
+            if (incoming.getCount() > 1) {
+                drawProjectedCount(context, x, y, incoming.getCount(), 0xDDFFFFFF);
             }
         }
+    }
+
+    /**
+     * Draws an item as a translucent ghost. {@code wash} is the slot's own background colour at the ghost's
+     * complementary alpha, so it fades the item to ~45% without ever changing the box behind it.
+     */
+    private void drawGhostItem(DrawContext context, ItemStack stack, int x, int y, int wash) {
+        context.drawItem(stack, x, y);
+        drawDurabilityBar(context, stack, x, y);
+        context.fill(x, y, x + 16, y + 16, wash);
     }
 
     /** Draws the item durability bar, mirroring vanilla's exact rendering logic. */
@@ -495,32 +542,40 @@ public class EditorRenderer {
         context.drawText(MinecraftClient.getInstance().textRenderer, text, x + 17 - textW, y + 9, color, true);
     }
 
-    private void drawVanillaSlotBevel(DrawContext context, int x, int y) {
-        context.fill(x, y, x + 16, y + 16, 0xFF8B8B8B);
-        context.fill(x - 1, y - 1, x + 16, y, 0xFF373737);
-        context.fill(x - 1, y, x, y + 16, 0xFF373737);
-        context.fill(x, y + 16, x + 17, y + 17, 0xFFFFFFFF);
-        context.fill(x + 16, y, x + 17, y + 16, 0xFFFFFFFF);
-    }
+    // 0x8C ≈ 55% alpha. Laying the slot's background colour over the opaque ghost at this alpha leaves the
+    // item at the complementary ~45% opacity — the "Medio" level the user picked.
+    private static final int GHOST_WASH_ALPHA = 0x8C;
 
     /**
-     * Draws the ghost glow for a container slot during the deposit preview.
-     * Respects any custom background color and separator lines the player has configured.
+     * The wash colour that fades a ghost item to ~45% while leaving the slot box untouched: the slot's own
+     * background colour (vanilla grey plus any custom bg) at {@link #GHOST_WASH_ALPHA}. Painting this over the
+     * item reproduces exactly what real per-pixel alpha would show, and over the empty pixels it is
+     * colour-over-identical-colour, i.e. invisible. The edit-layout dim is applied globally AFTER the ghost
+     * (see render()), so it is intentionally NOT baked in here — that lets the dim fade the ghost like a
+     * stationary item.
      */
-    private void drawCustomPreviewGlow(DrawContext context, int x, int y, int slotIndex) {
+    private int previewGhostWash(int slotKey) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
-        int previewAlpha = 0x88000000;
+        // Vanilla container slots have a flat 0x8B8B8B interior under the 16×16 item area.
+        int base = 0x8B8B8B;
 
-        int customBg = manager.getColor(slotIndex, ChestConfigManager.ACTION_BG);
+        int customBg = manager.getColor(slotKey, ChestConfigManager.ACTION_BG);
         if (customBg != 0) {
-            context.fill(x, y, x + 16, y + 16, (customBg & 0x00FFFFFF) | previewAlpha);
-        } else {
-            context.fill(x, y, x + 16, y + 16, 0xAA8B8B8B);
+            int bgAlpha = GlobalChestConfig.instance.bgTransparency * 255 / 100;
+            base = compositeOver(base, customBg & 0xFFFFFF, bgAlpha);
         }
+        return (base & 0xFFFFFF) | (GHOST_WASH_ALPHA << 24);
+    }
 
-        // Draw separator lines at the user-configured opacity so they read over the vanilla bevel.
-        int lineAlpha = (GlobalChestConfig.instance.lineTransparency * 255 / 100) << 24;
-        renderEdgesInPaintOrder(context, x, y, slotIndex, lineAlpha, false);
+    /** Composites an RGB source at {@code srcAlpha} (0–255) over an opaque RGB destination. */
+    private static int compositeOver(int dstRgb, int srcRgb, int srcAlpha) {
+        float a = srcAlpha / 255f;
+        int dr = (dstRgb >> 16) & 0xFF, dg = (dstRgb >> 8) & 0xFF, db = dstRgb & 0xFF;
+        int sr = (srcRgb >> 16) & 0xFF, sg = (srcRgb >> 8) & 0xFF, sb = srcRgb & 0xFF;
+        int rr = Math.round(sr * a + dr * (1 - a));
+        int rg = Math.round(sg * a + dg * (1 - a));
+        int rb = Math.round(sb * a + db * (1 - a));
+        return (rr << 16) | (rg << 8) | rb;
     }
 
     /**

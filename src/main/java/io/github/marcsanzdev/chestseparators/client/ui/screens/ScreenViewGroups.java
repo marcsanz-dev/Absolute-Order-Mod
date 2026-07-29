@@ -3,7 +3,6 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.ActionIconButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.CustomWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
@@ -60,6 +59,10 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         buildPopupWidgets();
         selectSlotsWidgets.clear();
         buildSelectSlotsWidgets();
+
+        // Every conflict-popup button dismisses the popup, so flash the press before acting — otherwise
+        // the popup closes on the same frame and the click is never seen.
+        for (CustomWidget w : popupWidgets) w.deferAction = true;
     }
 
     @Override
@@ -76,7 +79,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.edit_filter").getString(),
-                ModTextures.BTN_WHITELIST,
+                ModTextures.ICON_SM_FILTER,
                 () -> {
                     editor.playClickSound(1.0f);
                     if (session.selectedSlots.isEmpty()) {
@@ -101,6 +104,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 });
         btnEditFilter.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.edit_filter").getString();
+        btnEditFilter.texSize = 128;
         widgets.add(btnEditFilter);
 
         WideButtonWidget btnClearAll = new WideButtonWidget(
@@ -109,7 +113,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.delete_all_filters").getString(),
-                ModTextures.ICON_TRASH,
+                ModTextures.ICON_SM_TRASH,
                 () -> {
                     btnClearAllClickTime = System.currentTimeMillis();
                     var whitelists = ChestConfigManager.getInstance().getCurrentWhitelists();
@@ -129,6 +133,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnClearAll.tooltipText = Text.translatable("tooltip.chestseparators.desc.delete_all_filters")
                 .getString();
         btnClearAll.keepNormalTextColor = true;
+        btnClearAll.texSize = 128;
         widgets.add(btnClearAll);
 
         // --- Block 2: Selection Tools ---
@@ -138,13 +143,14 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.area_select").getString(),
-                ModTextures.ICON_AREA_SELECT,
+                ModTextures.ICON_SM_AREA_SELECT,
                 () -> {
                     session.wlToolMode = 0;
                     editor.playClickSound(1.2f);
                 });
         btnAreaSelect.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.area_select").getString();
+        btnAreaSelect.texSize = 128;
         widgets.add(btnAreaSelect);
 
         WideButtonWidget btnTraceSelect = new WideButtonWidget(
@@ -153,13 +159,14 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.trace_select").getString(),
-                ModTextures.ICON_TRACE_SELECT,
+                ModTextures.ICON_SM_TRACE_SELECT,
                 () -> {
                     session.wlToolMode = 1;
                     editor.playClickSound(1.2f);
                 });
         btnTraceSelect.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.trace_select").getString();
+        btnTraceSelect.texSize = 128;
         widgets.add(btnTraceSelect);
 
         WideButtonWidget btnClearSelect = new WideButtonWidget(
@@ -168,7 +175,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.clear_selection").getString(),
-                ModTextures.ICON_DELETE,
+                ModTextures.ICON_SM_TRASH,
                 () -> {
                     btnClearSelectClickTime = System.currentTimeMillis();
                     session.selectedSlots.clear();
@@ -177,6 +184,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnClearSelect.tooltipText = Text.translatable("tooltip.chestseparators.desc.clear_selection")
                 .getString();
         btnClearSelect.keepNormalTextColor = true;
+        btnClearSelect.texSize = 128;
         widgets.add(btnClearSelect);
 
         // --- Block 3: Global Actions ---
@@ -186,7 +194,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.copy_filters").getString(),
-                ModTextures.ICON_COPY,
+                ModTextures.ICON_SM_COPY,
                 () -> {
                     btnCopyClickTime = System.currentTimeMillis();
                     ChestConfigManager.getInstance().copyWhitelistsToClipboard();
@@ -196,6 +204,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnCopy.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.copy_filters").getString();
         btnCopy.keepNormalTextColor = true;
+        btnCopy.texSize = 128;
         widgets.add(btnCopy);
 
         WideButtonWidget btnPaste = new WideButtonWidget(
@@ -204,7 +213,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 btnW,
                 bH,
                 Text.translatable("button.chestseparators.paste_filters").getString(),
-                ModTextures.ICON_PASTE,
+                ModTextures.ICON_SM_PASTE,
                 () -> {
                     btnPasteClickTime = System.currentTimeMillis();
 
@@ -225,6 +234,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnPaste.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.paste_filters").getString();
         btnPaste.keepNormalTextColor = true;
+        btnPaste.texSize = 128;
         widgets.add(btnPaste);
 
         int halfW = (btnW - 4) / 2;
@@ -234,7 +244,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 halfW,
                 bH,
                 Text.translatable("button.chestseparators.undo").getString(),
-                ModTextures.ICON_UNDO,
+                ModTextures.ICON_SM_UNDO,
                 () -> {
                     btnUndoClickTime = System.currentTimeMillis();
                     editor.applyUndoRedo(ChestConfigManager.getInstance().undo(), false);
@@ -242,6 +252,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnUndo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.undo").getString();
         btnUndo.keepNormalTextColor = true;
+        btnUndo.texSize = 128;
         widgets.add(btnUndo);
 
         WideButtonWidget btnRedo = new WideButtonWidget(
@@ -250,7 +261,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 halfW,
                 bH,
                 Text.translatable("button.chestseparators.redo").getString(),
-                ModTextures.ICON_REDO,
+                ModTextures.ICON_SM_REDO,
                 () -> {
                     btnRedoClickTime = System.currentTimeMillis();
                     editor.applyUndoRedo(ChestConfigManager.getInstance().redo(), true);
@@ -258,6 +269,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         btnRedo.tooltipText =
                 Text.translatable("tooltip.chestseparators.desc.redo").getString();
         btnRedo.keepNormalTextColor = true;
+        btnRedo.texSize = 128;
         widgets.add(btnRedo);
     }
 
@@ -391,30 +403,14 @@ public class ScreenViewGroups extends AbstractEditorScreen {
                 && session.isDraggingLine
                 && (session.currentState == EditorState.VIEW_GROUPS
                         || session.currentState == EditorState.SELECT_SLOTS)) {
-            // Area mode: commit the rectangular selection on mouse release.
+            // Area mode: commit the rectangular selection on mouse release. Membership is by visual box
+            // (see slotsInDragBox) so crossing hotbar↔inventory selects only the cells actually swept, and
+            // the selection stays confined to the namespace the drag started in.
             if (session.wlToolMode == 0 && session.dragStartSlot != null && session.dragCurrentSlot != null) {
-                // The rectangle is confined to the namespace the drag started in, so an inventory
-                // selection never mirrors onto the chest grid (and vice versa).
-                boolean playerNs = ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot);
-                int sRow = session.dragStartSlot.getIndex() / 9;
-                int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9;
-                int cCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(sRow, cRow);
-                int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol);
-                int maxCol = Math.max(sCol, cCol);
-
-                for (Slot s : editor.accessor.getHandler().slots) {
-                    if (!ChestSeparatorsEditor.isEditableSlot(s)) continue;
-                    if (ChestSeparatorsEditor.isPlayerSlot(s) != playerNs) continue;
-                    int r = s.getIndex() / 9;
-                    int c = s.getIndex() % 9;
-                    if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        int k = ChestSeparatorsEditor.slotKey(s);
-                        if (session.isSelecting) session.selectedSlots.add(k);
-                        else session.selectedSlots.remove(k);
-                    }
+                for (Slot s : editor.slotsInDragBox(session.dragStartSlot, session.dragCurrentSlot)) {
+                    int k = ChestSeparatorsEditor.slotKey(s);
+                    if (session.isSelecting) session.selectedSlots.add(k);
+                    else session.selectedSlots.remove(k);
                 }
             }
             session.isDraggingLine = false;
@@ -476,19 +472,9 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0xAA000000);
 
         boolean isDark = GlobalChestConfig.instance.darkMode;
-        context.fill(
-                layout.conflictPopupX,
-                layout.conflictPopupY,
-                layout.conflictPopupX + layout.conflictPopupW,
-                layout.conflictPopupY + layout.conflictPopupH,
-                isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT);
-        drawDarkBevel(
-                context,
-                layout.conflictPopupX,
-                layout.conflictPopupY,
-                layout.conflictPopupW,
-                layout.conflictPopupH,
-                false);
+        // Cristal panel (rounded, glass) — matches the unsaved-changes/expel popups in the filter screen.
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(
+                context, layout.conflictPopupX, layout.conflictPopupY, layout.conflictPopupW, layout.conflictPopupH);
 
         MinecraftClient client = MinecraftClient.getInstance();
         int maxTextWidth = 240; // Max width matching the buttons
@@ -533,7 +519,9 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
-            if (session.selectedSlots.contains(slot.getIndex())) {
+            // selectedSlots is keyed by slotKey (player slots carry PLAYER_KEY_OFFSET), so match on that —
+            // using the raw index would fail to highlight selected inventory slots.
+            if (session.selectedSlots.contains(ChestSeparatorsEditor.slotKey(slot))) {
                 context.fill(guiX + slot.x, guiY + slot.y, guiX + slot.x + 16, guiY + slot.y + 16, 0x7733FF33);
             }
         }
@@ -572,7 +560,6 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         session.originalRuleManual = session.ruleManual;
         session.originalRuleShift = session.ruleShift;
         session.originalRuleHopper = session.ruleHopper;
-        session.originalTargetCount = session.filterTargetCount;
         session.isUnsavedPopupOpen = false;
 
         editor.toggleState(EditorState.EDIT_FILTER);

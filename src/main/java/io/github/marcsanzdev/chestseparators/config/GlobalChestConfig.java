@@ -39,7 +39,7 @@ public class GlobalChestConfig {
         public boolean btnFillFromChest = true;
         public boolean btnInventoryPresets = true;
         public boolean btnChestPresets = true;
-        public boolean closeOnClickOutside = false;
+        public boolean closeOnClickOutside = true;
         // When true, the custom-color column (third palette column) is shared across the Lines,
         // Backgrounds and Combo tabs. When false, each tab keeps its own custom colors.
         public boolean sharedCustomColors = true;
@@ -54,6 +54,11 @@ public class GlobalChestConfig {
         public boolean magnifierTabCombo = false;
         public int bgTransparency = 40;
         public int lineTransparency = 100;
+
+        // When a push/pull auto-organizes the player inventory's filtered groups by priority, keep the
+        // hotbar (slots 0-8) untouched so an item you might be holding never gets moved out from under you.
+        // Turn it off to let the hotbar auto-sort too, accepting that risk.
+        public boolean lockHotbarOnReorder = true;
 
         // --- AUTO-DEPOSIT TO NEARBY CHESTS ---
         // Master switch for the radius auto-deposit feature: stand in your storage area, trigger it,

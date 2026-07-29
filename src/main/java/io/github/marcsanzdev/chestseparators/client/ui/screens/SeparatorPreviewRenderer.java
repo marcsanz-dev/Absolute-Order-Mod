@@ -173,6 +173,10 @@ final class SeparatorPreviewRenderer {
                 int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                    // Chest namespace only: player-inventory drags are handled by renderPlayerDragPreview.
+                    // Without this, raw getIndex() of player slots (0-35) collides with chest indices and the
+                    // chest preview gets mirrored onto the inventory.
+                    if (ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
@@ -206,6 +210,8 @@ final class SeparatorPreviewRenderer {
                 int maxCol = Math.max(startCol, currCol);
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+                    // Chest namespace only; player drags go through renderPlayerDragPreview.
+                    if (ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
                     int slotIdx = slot.getIndex();
                     int r = slotIdx / 9;
                     int c = slotIdx % 9;
@@ -506,44 +512,51 @@ final class SeparatorPreviewRenderer {
             return;
         }
 
-        // Area: rectangle in player-grid space (confined to the player namespace).
-        int sRow = session.dragStartSlot.getIndex() / 9;
-        int sCol = session.dragStartSlot.getIndex() % 9;
-        int cRow = session.dragCurrentSlot.getIndex() / 9;
-        int cCol = session.dragCurrentSlot.getIndex() % 9;
-        int minRow = Math.min(sRow, cRow);
-        int maxRow = Math.max(sRow, cRow);
-        int minCol = Math.min(sCol, cCol);
-        int maxCol = Math.max(sCol, cCol);
-
-        // The line tool's area logic (grid rectangle border + non-grid full box) is intricate enough
-        // that it must mirror SeparatorDragCommitter exactly, so it lives in its own method. Bg/combo
-        // area previews are simple per-slot fills and stay inline.
+        // Pencil line tool keeps its intricate index-based grid geometry (mirrors the committer exactly).
         if (tabMode == 0) {
+            int sRow = session.dragStartSlot.getIndex() / 9;
+            int sCol = session.dragStartSlot.getIndex() % 9;
+            int cRow = session.dragCurrentSlot.getIndex() / 9;
+            int cCol = session.dragCurrentSlot.getIndex() % 9;
+            int minRow = Math.min(sRow, cRow);
+            int maxRow = Math.max(sRow, cRow);
+            int minCol = Math.min(sCol, cCol);
+            int maxCol = Math.max(sCol, cCol);
             boolean erase = explicitEraser || session.isDragModeErasing;
             renderPlayerLineAreaPreview(
                     context, mouseX, mouseY, minRow, maxRow, minCol, maxCol, sRow, sCol, cRow, cCol, colorLine, erase);
             return;
         }
 
-        for (Slot slot : editor.accessor.getHandler().slots) {
-            if (!ChestSeparatorsEditor.isEditableSlot(slot) || !ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
-            int r = slot.getIndex() / 9;
-            int c = slot.getIndex() % 9;
-            if (r < minRow || r > maxRow || c < minCol || c > maxCol) continue;
+        // Bg/combo area: membership + border by VISUAL box (slotsInDragBox), so a drag crossing the hotbar
+        // and the inventory rows covers exactly the swept cells. index/9 rows get this wrong because the
+        // hotbar is drawn below the inventory yet its indices (0-8) come first.
+        java.util.List<Slot> sel = editor.slotsInDragBox(session.dragStartSlot, session.dragCurrentSlot);
+        java.util.Set<Long> selPos = new java.util.HashSet<>();
+        for (Slot s : sel) selPos.add(boxKey(s.x, s.y));
+        for (Slot slot : sel) {
             int x = guiX + slot.x;
             int y = guiY + slot.y;
             if (tabMode == 1) {
                 context.fill(x, y, x + 16, y + 16, colorBg);
-            } else { // tabMode == 2 (combo)
+            } else { // tabMode == 2 (combo): outline the selected region (edge where no selected neighbour)
                 context.fill(x, y, x + 16, y + 16, colorBg);
                 boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(ChestSeparatorsEditor.slotKey(slot));
-                if (nonGrid || r == minRow) context.fill(x - 1, y - 1, x + 17, y, colorLine);
-                if (nonGrid || r == maxRow) context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
-                if (nonGrid || c == minCol) context.fill(x - 1, y - 1, x, y + 17, colorLine);
-                if (nonGrid || c == maxCol) context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
+                if (nonGrid || !selPos.contains(boxKey(slot.x, slot.y - 18)))
+                    context.fill(x - 1, y - 1, x + 17, y, colorLine);
+                if (nonGrid || !selPos.contains(boxKey(slot.x, slot.y + 18)))
+                    context.fill(x - 1, y + 16, x + 17, y + 17, colorLine);
+                if (nonGrid || !selPos.contains(boxKey(slot.x - 18, slot.y)))
+                    context.fill(x - 1, y - 1, x, y + 17, colorLine);
+                if (nonGrid || !selPos.contains(boxKey(slot.x + 18, slot.y)))
+                    context.fill(x + 16, y - 1, x + 17, y + 17, colorLine);
             }
         }
+    }
+
+    /** Position key for a slot's on-screen cell, used to test same-group visual neighbours. */
+    static long boxKey(int x, int y) {
+        return ((long) x << 20) ^ (y & 0xFFFFF);
     }
 
     /**

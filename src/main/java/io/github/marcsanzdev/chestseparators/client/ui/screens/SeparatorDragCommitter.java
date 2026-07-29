@@ -43,42 +43,32 @@ final class SeparatorDragCommitter {
                     | ChestConfigManager.ACTION_RIGHT;
 
             if (session.comboToolMode == 0) { // Combo Area
-                int startRow = session.dragStartSlot.getIndex() / 9;
-                int startCol = session.dragStartSlot.getIndex() % 9;
-                int currRow = session.dragCurrentSlot.getIndex() / 9;
-                int currCol = session.dragCurrentSlot.getIndex() % 9;
-                int minRow = Math.min(startRow, currRow);
-                int maxRow = Math.max(startRow, currRow);
-                int minCol = Math.min(startCol, currCol);
-                int maxCol = Math.max(startCol, currCol);
-
-                for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
-                    if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
-                    int r = slot.getIndex() / 9;
-                    int c = slot.getIndex() % 9;
+                // Membership + border by VISUAL box, so crossing hotbar↔inventory paints only the swept
+                // cells; the border is painted where the selected region has no neighbour (outer outline).
+                java.util.List<Slot> sel = editor.slotsInDragBox(session.dragStartSlot, session.dragCurrentSlot);
+                java.util.Set<Long> selPos = new java.util.HashSet<>();
+                for (Slot s : sel) selPos.add(SeparatorPreviewRenderer.boxKey(s.x, s.y));
+                for (Slot slot : sel) {
                     int key = ChestSeparatorsEditor.slotKey(slot);
-                    if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (explicitEraser || session.isDragModeErasing) {
-                            manager.removeAction(key, ChestConfigManager.ACTION_BG);
-                            manager.removeAction(key, allLinesAction);
-                        } else {
-                            manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
+                    if (explicitEraser || session.isDragModeErasing) {
+                        manager.removeAction(key, ChestConfigManager.ACTION_BG);
+                        manager.removeAction(key, allLinesAction);
+                    } else {
+                        manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
 
-                            // Armor/offhand are isolated cells: always give them their full box; only the
-                            // grid slots use the rectangle border to decide which edges to paint.
-                            boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(key);
-                            if (nonGrid || r == minRow)
-                                manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
-                            if (nonGrid || r == maxRow)
-                                manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
-                            if (nonGrid || c == minCol)
-                                manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
-                            if (nonGrid || c == maxCol)
-                                manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
-                        }
-                        changeMade = true;
+                        // Armor/offhand are isolated cells: always give them their full box; grid slots
+                        // paint an edge only where the selection has no neighbour on that side.
+                        boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(key);
+                        if (nonGrid || !selPos.contains(SeparatorPreviewRenderer.boxKey(slot.x, slot.y - 18)))
+                            manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);
+                        if (nonGrid || !selPos.contains(SeparatorPreviewRenderer.boxKey(slot.x, slot.y + 18)))
+                            manager.paintAction(key, ChestConfigManager.ACTION_BOTTOM, colorToPaint);
+                        if (nonGrid || !selPos.contains(SeparatorPreviewRenderer.boxKey(slot.x - 18, slot.y)))
+                            manager.paintAction(key, ChestConfigManager.ACTION_LEFT, colorToPaint);
+                        if (nonGrid || !selPos.contains(SeparatorPreviewRenderer.boxKey(slot.x + 18, slot.y)))
+                            manager.paintAction(key, ChestConfigManager.ACTION_RIGHT, colorToPaint);
                     }
+                    changeMade = true;
                 }
             } else { // Combo Trace
                 java.util.Set<Integer> traceSlots = new java.util.HashSet<>();
@@ -133,28 +123,13 @@ final class SeparatorDragCommitter {
             if (colorToPaint == 0 && !explicitEraser) return;
 
             if (session.bgToolMode == 0) {
-                int sRow = session.dragStartSlot.getIndex() / 9;
-                int sCol = session.dragStartSlot.getIndex() % 9;
-                int cRow = session.dragCurrentSlot.getIndex() / 9;
-                int cCol = session.dragCurrentSlot.getIndex() % 9;
-
-                int minRow = Math.min(sRow, cRow);
-                int maxRow = Math.max(sRow, cRow);
-                int minCol = Math.min(sCol, cCol);
-                int maxCol = Math.max(sCol, cCol);
-
-                for (Slot slot : editor.accessor.getHandler().slots) {
-                    if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
-                    if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
-                    int r = slot.getIndex() / 9;
-                    int c = slot.getIndex() % 9;
+                // Membership by VISUAL box so crossing hotbar↔inventory fills only the swept cells.
+                boolean erase = explicitEraser || session.isDragModeErasing;
+                for (Slot slot : editor.slotsInDragBox(session.dragStartSlot, session.dragCurrentSlot)) {
                     int key = ChestSeparatorsEditor.slotKey(slot);
-                    if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (explicitEraser || session.isDragModeErasing)
-                            manager.removeAction(key, ChestConfigManager.ACTION_BG);
-                        else manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
-                        changeMade = true;
-                    }
+                    if (erase) manager.removeAction(key, ChestConfigManager.ACTION_BG);
+                    else manager.paintAction(key, ChestConfigManager.ACTION_BG, colorToPaint);
+                    changeMade = true;
                 }
             } else {
                 for (String step : session.tracePath) {

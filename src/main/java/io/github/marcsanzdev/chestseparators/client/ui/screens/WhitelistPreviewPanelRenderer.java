@@ -4,7 +4,6 @@ import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
@@ -228,27 +227,31 @@ final class WhitelistPreviewPanelRenderer {
                 int tabX = listX - 20;
                 int startY = listY + 12;
 
-                drawRuleTab(context, tabX, startY, ModTextures.ICON_CURSOR, activeWl.allowManual());
-                drawRuleTab(context, tabX, startY + 24, ModTextures.ICON_SHIFT, activeWl.allowShift());
-                drawRuleTab(
-                        context,
-                        tabX,
-                        startY + 48,
-                        session.isPlayerInventory ? ModTextures.ICON_PICKUP : ModTextures.ICON_HOPPER,
-                        activeWl.allowHopper());
+                drawRuleTab(context, tabX, startY, ModTextures.ICON_SM_MANUAL, activeWl.allowManual());
+                drawRuleTab(context, tabX, startY + 24, ModTextures.ICON_SM_SHIFT, activeWl.allowShift());
+                // The Hopper rule can never be toggled on an Ender Chest (hoppers cannot reach it), so its
+                // indicator tab would always be meaningless — omit it entirely there.
+                if (!session.isEnderChest) {
+                    drawRuleTab(
+                            context,
+                            tabX,
+                            startY + 48,
+                            session.isPlayerInventory ? ModTextures.ICON_SM_PICKUP : ModTextures.ICON_SM_HOPPER,
+                            activeWl.allowHopper());
+                }
             }
         }
 
         int lsbX = listX + listW - 13;
         int lsbH = listViewH - 1;
-        context.fill(lsbX, listViewY, lsbX + 6, listViewY + lsbH, isDark ? 0xFF000000 : 0xFFAAAAAA);
         int listThumbH = maxListScroll > 0
                 ? Math.max(10, (int) ((listViewH / (float) Math.max(1, totalListHeight)) * lsbH))
                 : lsbH;
         int listThumbY = maxListScroll > 0
                 ? listViewY + (int) ((session.listScrollY / maxListScroll) * (lsbH - listThumbH))
                 : listViewY;
-        context.fill(lsbX + 1, listThumbY + 1, lsbX + 5, listThumbY + listThumbH - 1, isDark ? 0xFF888888 : 0xFF666666);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.scrollbar(
+                context, lsbX, listViewY, 6, lsbH, listThumbY, listThumbH);
 
         for (int i = 0; i < visibleCount; i++) {
             int idx = startIndex + i;
@@ -269,23 +272,23 @@ final class WhitelistPreviewPanelRenderer {
     private void drawRuleTab(DrawContext context, int x, int y, net.minecraft.util.Identifier icon, boolean isActive) {
         int w = 20;
         int h = 20;
-        boolean isDark = GlobalChestConfig.instance.darkMode;
+        // Cristal tab embedded into the preview panel on its RIGHT edge (the panel sits to the right), so
+        // the active indicator merges flush into the panel exactly like the edit-layout tabs.
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
+                context, x, y, w, h, false, isActive,
+                io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_RIGHT);
 
-        int bgColor = isDark
-                ? (isActive ? UiColors.SURFACE_DARK : 0xFF151515)
-                : (isActive ? UiColors.SURFACE_LIGHT : 0xFF8B8B8B);
-        context.fill(x, y, x + w, y + h, bgColor);
-
-        screen.drawDarkBevel(context, x, y, w, h, isActive);
-
-        // Paint over the bevel border on the right edge so the tab appears flush with the panel.
-        if (isActive) {
-            int patchColor = isDark ? UiColors.SURFACE_DARK : UiColors.SURFACE_LIGHT;
-            context.fill(x + 18, y + 1, x + 22, y + 19, patchColor);
-        }
-
-        int color = isActive ? -1 : (isDark ? 0xFF555555 : 0xFF555555);
+        int color = isActive
+                ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ICON_ACTIVE
+                : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.TEXT_MUTED;
         com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-        context.drawTexture(pipeline, icon, x + 2, y + 2, 0.0F, 0.0F, 16, 16, 32, 32, 32, 32, color);
+        // An active tab draws 1px smaller; shrink its icon by the same proportion.
+        if (isActive) {
+            io.github.marcsanzdev.chestseparators.client.ui.UiTheme.pushActiveContent(context, x, y, w, h);
+        }
+        context.drawTexture(pipeline, icon, x + 2, y + 2, 0.0F, 0.0F, 16, 16, 128, 128, 128, 128, color);
+        if (isActive) {
+            context.getMatrices().popMatrix();
+        }
     }
 }

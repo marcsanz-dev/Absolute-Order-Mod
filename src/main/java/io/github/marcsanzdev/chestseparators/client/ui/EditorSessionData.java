@@ -2,8 +2,10 @@ package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.item.Item;
@@ -32,11 +34,47 @@ public class EditorSessionData {
     public boolean ruleManual = true;
     public boolean ruleShift = true;
     public boolean ruleHopper = true;
-    // Desired amount to keep of this filter in the inventory (0 = no target). Drives grab/deposit-junk.
-    public int filterTargetCount = 0;
     public List<Item> allGameItems = new ArrayList<>();
     public List<Item> filteredItems = new ArrayList<>();
     public List<String> visibleLeftListItems = new ArrayList<>();
+
+    // --- Drag-to-reorder in the filter's allowed-items list ---
+    /** Item id currently being dragged to a new position, or null when no drag is in progress. */
+    public String reorderDragItem = null;
+    /** Live cursor position, so the dragged item can be drawn following the mouse. */
+    public int reorderMouseX = 0;
+    public int reorderMouseY = 0;
+    /** True when the drag started in the centre item grid rather than in the filter's list. */
+    public boolean reorderFromGrid = false;
+    /** Where the drag started on screen, so the held row can fly out of it instead of just appearing. */
+    public int reorderOriginX = 0;
+    public int reorderOriginY = 0;
+    public long reorderStartTime = 0L;
+
+    /** Visible index each item held just before the last drop, driving the settle animation. */
+    public Map<String, Integer> dropAnimFrom = new HashMap<>();
+    public long dropAnimStart = 0L;
+
+    // A grid item held down but not yet moved far enough (or long enough) to count as a drag. Until it is
+    // promoted, releasing counts as a plain click, which adds the item at the end of the list.
+    public String pendingDragItem = null;
+    public int pendingDragX = 0;
+    public int pendingDragY = 0;
+    public long pendingDragTime = 0L;
+
+    /** Row dropped onto the item grid, shrinking away to nothing to show it left the filter. */
+    public String deleteAnimItem = null;
+    public int deleteAnimX = 0;
+    public int deleteAnimY = 0;
+    public long deleteAnimStart = 0L;
+
+    /** Row left behind after a drop, animating from the cursor into its final place. */
+    public String dropGhostItem = null;
+    public int dropGhostFromX = 0;
+    public int dropGhostFromY = 0;
+    public int dropGhostToX = 0;
+    public int dropGhostToY = 0;
+    public long dropGhostStart = 0L;
 
     public long lastSlotClickTime = 0;
     public int lastClickedSlotIndex = -1;
@@ -108,6 +146,10 @@ public class EditorSessionData {
     public boolean isInventoryScreenContext = false;
     public boolean isEnderChest = false;
     public boolean isEntityChest = false;
+    // True when the open entity container is a chest/hopper minecart specifically. Unlike other entity
+    // containers (chest boats, animals), hoppers CAN insert into these, so the Hopper Insert rule is
+    // available and its filter is synced to the server for enforcement.
+    public boolean isMinecartChest = false;
     public UUID currentEntityUUID;
     public boolean isShulkerBox = false;
     public UUID currentShulkerUUID;
@@ -155,7 +197,6 @@ public class EditorSessionData {
     public boolean originalRuleManual = true;
     public boolean originalRuleShift = true;
     public boolean originalRuleHopper = true;
-    public int originalTargetCount = 0;
 
     // Inner class to hold tab data cleanly
     public static class CreativeTabInfo {

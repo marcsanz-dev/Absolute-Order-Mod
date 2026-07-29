@@ -27,6 +27,8 @@ public abstract class ArmorSlotFilterMixin {
 
     @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
     public void onCanInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        if (io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.get()) return;
+
         Slot self = (Slot) (Object) this;
         if (!(self.inventory instanceof PlayerInventory pinv)) return;
 

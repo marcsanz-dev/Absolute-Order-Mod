@@ -2,52 +2,112 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
+import io.github.marcsanzdev.chestseparators.client.ui.UiTheme;
+import io.github.marcsanzdev.chestseparators.client.ui.widgets.PressAnim;
+import io.github.marcsanzdev.chestseparators.client.ui.widgets.ToolButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 
 /**
- * The dedicated presets overlay, docked on the left and styled like the mod's other windows (beveled
- * container, icon buttons, an Exit button). Each preset row has a saved/empty indicator and Load/Save
- * buttons; hovering a saved row's Load button previews that preset directly on the real container
- * slots, alternating every couple of seconds between the saved layout colors and the saved filter
- * distribution. Drives the inventory or the chest preset store per {@code session.presetsMenuChestMode}.
+ * The dedicated presets overlay, docked on the left and styled like the mod's other windows. Each preset
+ * row has a saved/empty indicator plus Load / Save / Delete buttons. Hovering a saved row's Load button
+ * previews that preset on the real container slots (alternating layout/filters); hovering Delete previews
+ * the same preset tinted red to signal removal. Saving over an occupied slot opens a confirmation popup.
+ * Presets are paged ({@link #PER_PAGE} per page, {@link #MAX_PAGES} pages) with ‹ › arrows. Drives the
+ * inventory or the chest preset store per {@code session.presetsMenuChestMode}.
  *
- * <p>The render is split into two phases so EditorRenderer can inject the saved-lines layer between
- * the dim overlay ({@link #renderBackground}) and the panel itself ({@link #renderPanel}).
+ * <p>The render is split into two phases so EditorRenderer can inject the saved-lines layer between the
+ * dim overlay ({@link #renderBackground}) and the panel itself ({@link #renderPanel}).
  */
 public final class PresetsMenu {
 
-    private static final int PANEL_X = 8;
-    private static final int PANEL_W = 220;
+    private static final int PANEL_W = 214;
     private static final int HEADER_H = 26;
     private static final int ROW_H = 22;
-    private static final int FOOTER_H = 28;
+    private static final int FOOTER_H = 24;
 
-    private static final int BTN_W = 50;
-    private static final int BTN_H = 18;
+    // Compact icon-only action buttons per row (Load / Save / Delete), each with a tooltip.
+    private static final int ICON = 20;
+
+    /** 9 presets per page across 5 pages = 45 total slots. */
+    private static final int PER_PAGE = 9;
+    private static final int MAX_PAGES = 5;
 
     // Each phase (layout, then filters) lasts this long; a full layout->filters->layout cycle is ~3s.
     private static final long PREVIEW_FLIP_MS = 1500L;
 
-    // Which row's Load button is currently being previewed and when that hover began, so each new
+    // Save-indicator feedback colours.
+    private static final int GREEN_BG = 0x4633C05A;
+    private static final int GREEN_BORDER = 0xFF57E06A;
+    private static final int GREEN_TICK = 0xFF6BF07E;
+    private static final int ORANGE_BG = 0xF0C2721C;
+    private static final int ORANGE_BORDER = 0xFFE59A3C;
+
+    // Which row's Load/Delete button is currently being previewed and when that hover began, so each new
     // hover restarts the cycle from the layout view rather than continuing a global clock.
-    private int lastPreviewRow = -1;
+    private int lastPreviewKey = Integer.MIN_VALUE;
     private long previewStartTime = 0L;
 
     /** Updated by renderBackground(); read by isPreviewActive() and EditorRenderer. */
     private int currentPreviewRow = -1;
+
+    // --- Preset detail panel ---
+    // The on-slot preview shows WHERE each filter sits but not WHAT it accepts, so while a Load button is
+    // hovered a second panel lists every group of that preset with the items it allows. Read straight from
+    // the preset file, so nothing is applied to the container.
+    private static final int DETAIL_W = 158;
+    private static final int DETAIL_LINE_H = 18;
+
+    /** Preset currently hovered over its Load button, or null. Set by renderBackground(). */
+    private ChestConfigManager.PresetPreview hoveredPreview;
+
+    // Gentle auto-scroll for detail lists taller than the panel (same language as the filter preview).
+    private float detailScrollY = 0f;
+    private boolean detailScrollDown = true;
+    private long detailLastTime = 0L;
+    // Once the player scrolls the detail list themselves, the auto-scroll stops (until a new preset is
+    // hovered), same as the item-import preview lets you take over the wheel.
+    private boolean detailUserScrolled = false;
+
+    /** Zero-based page currently shown. */
+    private int currentPage = 0;
+
+    /** 1-based slot awaiting an overwrite confirmation, or -1 when the popup is closed. */
+    private int pendingOverwriteSlot = -1;
+
+    // --- Inline rename ---
+    /** 1-based slot whose name is being edited inline, or -1 when not renaming. */
+    private int renamingSlot = -1;
+    /** The text field shown over a row's name while renaming; null when not renaming. */
+    private TextFieldWidget renameField;
+    private static final int NAME_MAX_LEN = 24;
+
+    // Page-arrow hit rects (updated each render).
+    private int navPrevX, navNextX, navArrowY;
+
+    // Popup buttons, non-null only while the confirmation popup is open.
+    private WideButtonWidget popupConfirmBtn;
+    private WideButtonWidget popupCancelBtn;
 
     private static final int[] GROUP_PALETTE = {
         0xFFE53935, 0xFFF57C00, 0xFFFBC02D, 0xFF7CB342,
@@ -58,33 +118,65 @@ public final class PresetsMenu {
     private final ChestSeparatorsEditor editor;
 
     /** Rebuilt every render; reused by {@link #onClick} so hit-testing matches what was drawn. */
-    private final List<WideButtonWidget> clickables = new ArrayList<>();
+    private final List<ToolButtonWidget> clickables = new ArrayList<>();
 
     public PresetsMenu(ChestSeparatorsEditor editor) {
         this.editor = editor;
     }
 
-    /** True when a Load-button hover preview is currently being painted on the real slots. */
+    /** True when a Load/Delete-button hover preview is currently being painted on the real slots. */
     public boolean isPreviewActive() {
         return currentPreviewRow >= 0;
-    }
-
-    public static int presetCount() {
-        return Math.max(1, Math.min(12, GlobalChestConfig.instance.inventoryPresetCount));
     }
 
     private boolean chestMode() {
         return editor.getSession().presetsMenuChestMode;
     }
 
+    /** The open container's slot count (27 vs 54); picks which chest-preset set the menu shows. */
+    private int chestSize() {
+        return editor.chestPresetSize();
+    }
+
     private boolean exists(int slot) {
         return chestMode()
-                ? ChestConfigManager.getInstance().chestPresetExists(slot)
+                ? ChestConfigManager.getInstance().chestPresetExists(chestSize(), slot)
                 : ChestConfigManager.getInstance().inventoryPresetExists(slot);
     }
 
+    /** The custom name of the current-mode preset {@code slot}, or null when empty/unnamed. */
+    private String presetName(int slot) {
+        return chestMode()
+                ? ChestConfigManager.getInstance().getChestPresetName(chestSize(), slot)
+                : ChestConfigManager.getInstance().getInventoryPresetName(slot);
+    }
+
+    /** True when the slot carries a display name (a default or a user rename); those skip "Preset N". */
+    private boolean hasName(int slot) {
+        String n = presetName(slot);
+        return n != null && !n.isEmpty();
+    }
+
+    /** Resets the menu to page 1 and ends any rename — called when the presets set (mode) changes. */
+    public void resetView() {
+        currentPage = 0;
+        cancelRename();
+    }
+
+    /** 1-based preset slot for visible row {@code i} on the current page. */
+    private int slotOfRow(int i) {
+        return currentPage * PER_PAGE + i + 1;
+    }
+
     private int panelH() {
-        return HEADER_H + presetCount() * ROW_H + FOOTER_H;
+        return HEADER_H + PER_PAGE * ROW_H + FOOTER_H;
+    }
+
+    /**
+     * Docked just left of the container GUI with the mod's standard gap, like every other side panel.
+     */
+    private int panelX() {
+        return Math.max(2, editor.accessor.getX() - PANEL_W - editor.layout.gap);
     }
 
     private int panelY(int screenH) {
@@ -95,107 +187,169 @@ public final class PresetsMenu {
         return panelY(screenH) + HEADER_H + i * ROW_H;
     }
 
+    private int deleteX() {
+        return panelX() + PANEL_W - 8 - ICON;
+    }
+
     private int saveX() {
-        return PANEL_X + PANEL_W - 8 - BTN_W;
+        return deleteX() - 4 - ICON;
     }
 
     private int loadX() {
-        return saveX() - 4 - BTN_W;
+        return saveX() - 4 - ICON;
+    }
+
+    private void doSave(int slot) {
+        if (chestMode()) editor.saveChestPresetSlot(slot);
+        else editor.saveInventoryPresetSlot(slot);
     }
 
     /**
-     * Phase 1: full-screen dim overlay and optional on-slot Load preview.
+     * Phase 1: full-screen dim overlay and optional on-slot Load/Delete preview.
      * Must be called before {@link #renderPanel} so EditorRenderer can paint the saved lines between.
      */
     public void renderBackground(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
         // Light dim so the real container slots stay clearly visible for the on-slot preview.
         context.fill(0, 0, screenW, screenH, 0x55000000);
 
-        // Determine which Load button (if any) is being hovered.
+        // While the confirmation popup is up, freeze the on-slot preview.
+        if (pendingOverwriteSlot >= 0) {
+            currentPreviewRow = -1;
+            lastPreviewKey = Integer.MIN_VALUE;
+            hoveredPreview = null;
+            return;
+        }
+
+        // Load previews onto the real slots; Delete only shows its "will be deleted" badge (its row
+        // feedback — the whole chip fading — is drawn in drawSaveIndicator, not on the container).
         int previewRow = -1;
-        int count = presetCount();
-        for (int i = 0; i < count; i++) {
-            int by = rowY(screenH, i) + (ROW_H - BTN_H) / 2;
-            if (exists(i + 1) && inside(mouseX, mouseY, loadX(), by, BTN_W, BTN_H)) {
+        int deleteRow = -1;
+        for (int i = 0; i < PER_PAGE; i++) {
+            int slot = slotOfRow(i);
+            if (!exists(slot)) continue;
+            int by = rowY(screenH, i) + (ROW_H - ICON) / 2;
+            if (inside(mouseX, mouseY, loadX(), by, ICON, ICON)) {
                 previewRow = i;
+                break;
+            }
+            if (inside(mouseX, mouseY, deleteX(), by, ICON, ICON)) {
+                deleteRow = i;
                 break;
             }
         }
 
         // Restart the layout<->filters cycle from the layout view whenever the hovered Load changes.
         long now = System.currentTimeMillis();
-        if (previewRow != lastPreviewRow) {
-            lastPreviewRow = previewRow;
+        if (previewRow != lastPreviewKey) {
+            lastPreviewKey = previewRow;
             previewStartTime = now;
+            // A different preset is being inspected: start its detail list from the top and resume auto-scroll.
+            detailScrollY = 0f;
+            detailScrollDown = true;
+            detailLastTime = now;
+            detailUserScrolled = false;
         }
         currentPreviewRow = previewRow;
+        hoveredPreview = null;
 
         if (previewRow >= 0) {
+            int slot = slotOfRow(previewRow);
             ChestConfigManager.PresetPreview preview = chestMode()
-                    ? ChestConfigManager.getInstance().readChestPresetPreview(previewRow + 1)
-                    : ChestConfigManager.getInstance().readInventoryPresetPreview(previewRow + 1);
+                    ? ChestConfigManager.getInstance().readChestPresetPreview(chestSize(), slot)
+                    : ChestConfigManager.getInstance().readInventoryPresetPreview(slot);
             if (preview != null) {
+                hoveredPreview = preview;
                 boolean showFilters = ((now - previewStartTime) / PREVIEW_FLIP_MS) % 2 == 1;
                 renderPreviewOnSlots(context, preview, chestMode(), showFilters);
-                drawPreviewBadge(context, screenW, showFilters);
+                drawPreviewBadge(context, showFilters);
             }
+        } else if (deleteRow >= 0) {
+            drawDeleteBadge(context);
         }
     }
 
     /**
-     * Phase 2: beveled panel, rows, and buttons.
+     * Phase 2: beveled panel, rows, buttons, page navigation and (if pending) the overwrite popup.
      * Call after {@link #renderBackground} (and after any lines injected by EditorRenderer).
      */
     public void renderPanel(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
         MinecraftClient client = MinecraftClient.getInstance();
         boolean isDark = GlobalChestConfig.instance.darkMode;
+        int px = panelX();
         int py = panelY(screenH);
         int ph = panelH();
 
-        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.panel(context, PANEL_X, py, PANEL_W, ph);
+        // Detail of the hovered preset first, so the presets panel always wins any overlap.
+        renderDetailPanel(context, screenH);
 
-        Text title = Text.translatable(
-                chestMode() ? "gui.chestseparators.chest_presets_title" : "gui.chestseparators.presets_title");
-        context.drawCenteredTextWithShadow(client.textRenderer, title, PANEL_X + PANEL_W / 2, py + 9, 0xFFFFE066);
+        UiTheme.panel(context, px, py, PANEL_W, ph);
+
+        // Chest presets are split by container size, so the title carries the slot count (e.g. "… (54)")
+        // to make clear which set — single vs double — is currently shown.
+        String title = Text.translatable(
+                        chestMode() ? "gui.chestseparators.chest_presets_title" : "gui.chestseparators.presets_title")
+                .getString();
+        if (chestMode()) title += " (" + chestSize() + " slots)";
+        context.drawCenteredTextWithShadow(
+                client.textRenderer, Text.literal(title), px + PANEL_W / 2, py + 9, 0xFFFFE066);
+
+        // Hover feedback (indicator, popup) is suppressed while the popup owns input.
+        boolean popupOpen = pendingOverwriteSlot >= 0;
+        int hoverX = popupOpen ? -1 : mouseX;
+        int hoverY = popupOpen ? -1 : mouseY;
 
         clickables.clear();
-        int count = presetCount();
-        for (int i = 0; i < count; i++) {
-            int slot = i + 1;
+        // "Preset N" numbering skips the named presets: whatever their slot index, the unnamed slots read
+        // as Preset 1..40 (5 of the 45 are the named defaults). Count how many unnamed slots precede this
+        // page, then run a local counter down the rows.
+        int unnamedCounter = 0;
+        for (int s = 1; s < slotOfRow(0); s++) if (!hasName(s)) unnamedCounter++;
+
+        for (int i = 0; i < PER_PAGE; i++) {
+            int slot = slotOfRow(i);
             int ry = rowY(screenH, i);
             boolean saved = exists(slot);
+            boolean named = hasName(slot);
+            if (!named) unnamedCounter++;
+            int displayNumber = unnamedCounter; // only meaningful for unnamed rows
 
-            int by = ry + (ROW_H - BTN_H) / 2;
-            boolean hoveringSave = inside(mouseX, mouseY, saveX(), by, BTN_W, BTN_H);
+            int by = ry + (ROW_H - ICON) / 2;
+            boolean hoveringSave = inside(hoverX, hoverY, saveX(), by, ICON, ICON);
+            boolean hoveringDelete = saved && inside(hoverX, hoverY, deleteX(), by, ICON, ICON);
 
-            // Saved/empty indicator with ghost-tick preview when hovering Save.
-            int ind = PANEL_X + 8;
-            int indY = ry + (ROW_H - 14) / 2;
-            context.fill(ind, indY, ind + 14, indY + 14, (saved || hoveringSave) ? 0xFF24341F : 0xFF2B2B2B);
-            drawBevel(context, ind, indY, 14, 14, true);
-            if (saved) {
-                // Dim the tick when hovering Save to hint the preset will be overwritten.
-                drawCheckIcon(context, ind + 1, indY + 1, hoveringSave ? 0xAAFFFFFF : -1);
-            } else if (hoveringSave) {
-                // Ghost tick: preview of what pressing Save would produce.
-                drawCheckIcon(context, ind + 1, indY + 1, 0x66FFFFFF);
+            drawSaveIndicator(context, px + 8, ry + (ROW_H - 14) / 2, saved, hoveringSave, hoveringDelete);
+
+            int nameX = px + 28;
+            int nameW = loadX() - 4 - nameX;
+            if (renamingSlot == slot && renameField != null) {
+                // Inline editor: an inset box holding the text field, replacing the label for this row.
+                UiTheme.inset(context, nameX - 2, ry + (ROW_H - 14) / 2, nameW + 2, 14);
+                renameField.setX(nameX + 1);
+                renameField.setY(ry + (ROW_H - 8) / 2);
+                renameField.setWidth(nameW - 2);
+                renameField.render(context, hoverX, hoverY, 0);
+            } else {
+                String custom = saved ? presetName(slot) : null;
+                Text label = custom != null && !custom.isEmpty()
+                        ? Text.literal(custom)
+                        : Text.translatable("gui.chestseparators.preset_slot", displayNumber);
+                // Saved rows are clickable-to-rename: their name reads blue, turning white on hover so the
+                // affordance is clear. Empty rows keep the plain muted label (nothing to edit there).
+                boolean nameHover = saved && inside(hoverX, hoverY, nameX, ry, nameW, ROW_H);
+                int nameColor;
+                if (!saved) {
+                    nameColor = isDark ? 0xFF888888 : 0xFF707070;
+                } else {
+                    nameColor = nameHover ? 0xFFFFFFFF : UiTheme.ACCENT;
+                }
+                context.drawText(client.textRenderer, label, nameX, ry + (ROW_H - 8) / 2, nameColor, isDark);
             }
 
-            context.drawText(
-                    client.textRenderer,
-                    Text.translatable("gui.chestseparators.preset_slot", slot),
-                    PANEL_X + 28,
-                    ry + (ROW_H - 8) / 2,
-                    isDark ? 0xFFFFFFFF : 0xFF202020,
-                    isDark);
-
-            WideButtonWidget load = new WideButtonWidget(
+            ToolButtonWidget load = new ToolButtonWidget(
                     loadX(),
                     by,
-                    BTN_W,
-                    BTN_H,
+                    ModTextures.ICON_SM_IMPORT,
                     Text.translatable("button.chestseparators.preset_load").getString(),
-                    ModTextures.ICON_IMPORT,
                     () -> {
                         if (chestMode()) editor.loadChestPresetSlot(slot);
                         else {
@@ -203,35 +357,55 @@ public final class PresetsMenu {
                             editor.toggleState(io.github.marcsanzdev.chestseparators.client.EditorState.HIDDEN);
                         }
                     });
+            load.texSize = 128;
+            load.tintByState = true;
             load.isDisabled = !saved;
-            WideButtonWidget save = new WideButtonWidget(
+
+            ToolButtonWidget save = new ToolButtonWidget(
                     saveX(),
                     by,
-                    BTN_W,
-                    BTN_H,
+                    ModTextures.ICON_SM_SAVE,
                     Text.translatable("button.chestseparators.preset_save").getString(),
-                    ModTextures.ICON_SAVE,
                     () -> {
-                        if (chestMode()) editor.saveChestPresetSlot(slot);
-                        else editor.saveInventoryPresetSlot(slot);
+                        // Overwriting an occupied slot asks first; a fresh slot saves immediately.
+                        if (exists(slot)) pendingOverwriteSlot = slot;
+                        else doSave(slot);
                     });
-            load.render(context, mouseX, mouseY, 0);
-            save.render(context, mouseX, mouseY, 0);
+            save.texSize = 128;
+            save.tintByState = true;
+
+            ToolButtonWidget delete = new ToolButtonWidget(
+                    deleteX(),
+                    by,
+                    ModTextures.ICON_SM_TRASH,
+                    Text.translatable("button.chestseparators.delete").getString(),
+                    () -> {
+                        if (chestMode()) editor.deleteChestPresetSlot(slot);
+                        else editor.deleteInventoryPresetSlot(slot);
+                    });
+            delete.texSize = 128;
+            delete.tintByState = true;
+            delete.isDisabled = !saved;
+
+            load.render(context, hoverX, hoverY, 0);
+            save.render(context, hoverX, hoverY, 0);
+            delete.render(context, hoverX, hoverY, 0);
             clickables.add(load);
             clickables.add(save);
+            clickables.add(delete);
         }
 
-        int exitW = 70;
-        WideButtonWidget exit = new WideButtonWidget(
-                PANEL_X + (PANEL_W - exitW) / 2,
-                py + ph - FOOTER_H + 5,
-                exitW,
-                BTN_H,
-                Text.translatable("button.chestseparators.exit").getString(),
-                ModTextures.ICON_CANCEL,
-                () -> editor.getSession().isPresetsMenuOpen = false);
-        exit.render(context, mouseX, mouseY, 0);
-        clickables.add(exit);
+        // ---- Footer: page navigation (dots + arrows). The panel is closed via its toolbar toggle or ESC. ----
+        int footerY = py + HEADER_H + PER_PAGE * ROW_H;
+        renderPageNav(context, px, footerY, hoverX, hoverY);
+
+        // ---- Overwrite confirmation popup (on top of everything) ----
+        if (popupOpen) {
+            renderOverwritePopup(context, screenW, screenH, mouseX, mouseY);
+        } else {
+            popupConfirmBtn = null;
+            popupCancelBtn = null;
+        }
     }
 
     /** Convenience: calls both phases in order (used when no line injection is needed). */
@@ -240,66 +414,434 @@ public final class PresetsMenu {
         renderPanel(context, screenW, screenH, mouseX, mouseY);
     }
 
-    private void drawCheckIcon(DrawContext context, int x, int y, int color) {
-        context.drawTexture(
-                net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED,
-                ModTextures.ICON_CHECK,
-                x,
-                y,
-                0.0F,
-                0.0F,
-                12,
-                12,
-                32,
-                32,
-                32,
-                32,
-                color);
+    // ---- Save indicator ----
+
+    /**
+     * The 14×14 chip at the start of each row. Empty vs saved, with a distinct Save-hover preview for each:
+     * a bright green tick when hovering Save on an empty slot (you will add), an orange warning chip when
+     * hovering Save on an occupied slot (you will overwrite).
+     */
+    private void drawSaveIndicator(
+            DrawContext context, int x, int y, boolean saved, boolean hoveringSave, boolean hoveringDelete) {
+        if (saved) {
+            if (hoveringDelete) {
+                // Delete preview: fade the WHOLE chip (blue fill, border and tick) toward transparency,
+                // hinting that all of it — the preset in this slot — is about to be removed.
+                int fade = 0x40 << 24;
+                UiTheme.roundRect(context, x, y, 14, 14, (UiTheme.ACCENT_BG & 0x00FFFFFF) | fade);
+                UiTheme.roundBorder(context, x, y, 14, 14, (UiTheme.ACCENT_BORDER & 0x00FFFFFF) | fade);
+                drawIcon(context, ModTextures.ICON_SM_CHECK, x + 1, y + 1, 0x40FFFFFF);
+            } else if (hoveringSave) {
+                UiTheme.roundRect(context, x, y, 14, 14, ORANGE_BG);
+                UiTheme.roundBorder(context, x, y, 14, 14, ORANGE_BORDER);
+                drawIcon(context, ModTextures.ICON_SM_CONFLICT, x + 1, y + 1, 0xFFFFFFFF);
+            } else {
+                UiTheme.roundRect(context, x, y, 14, 14, UiTheme.ACCENT_BG);
+                UiTheme.roundBorder(context, x, y, 14, 14, UiTheme.ACCENT_BORDER);
+                drawIcon(context, ModTextures.ICON_SM_CHECK, x + 1, y + 1, UiTheme.ON_ACCENT);
+            }
+        } else {
+            if (hoveringSave) {
+                UiTheme.roundRect(context, x, y, 14, 14, GREEN_BG);
+                UiTheme.roundBorder(context, x, y, 14, 14, GREEN_BORDER);
+                drawIcon(context, ModTextures.ICON_SM_CHECK, x + 1, y + 1, GREEN_TICK);
+            } else {
+                UiTheme.inset(context, x, y, 14, 14);
+            }
+        }
     }
 
-    /** Small label near the top telling the player which view the on-slot preview is showing. */
-    private void drawPreviewBadge(DrawContext context, int screenW, boolean showFilters) {
+    private void drawIcon(DrawContext context, net.minecraft.util.Identifier icon, int x, int y, int color) {
+        context.drawTexture(
+                RenderPipelines.GUI_TEXTURED, icon, x, y, 0.0F, 0.0F, 12, 12, 128, 128, 128, 128, color);
+    }
+
+    // ---- Page navigation ----
+
+    private void renderPageNav(DrawContext context, int px, int footerY, int mouseX, int mouseY) {
+        int cx = px + PANEL_W / 2;
+        navArrowY = footerY + 2;
+        navPrevX = cx - 58;
+        navNextX = cx + 42;
+
+        // Pagination wraps around, so both arrows are always active.
+        boolean hoverPrev = inside(mouseX, mouseY, navPrevX, navArrowY, 16, 16);
+        boolean hoverNext = inside(mouseX, mouseY, navNextX, navArrowY, 16, 16);
+
+        drawArrowButton(context, navPrevX, navArrowY, true, true, hoverPrev);
+        drawArrowButton(context, navNextX, navArrowY, false, true, hoverNext);
+
+        // Page-position dots: the current page lit (accent), the rest dimmed. Each is a small rounded chip
+        // with the mod's pixel-bevel border.
+        int dot = 7;
+        int gap = 5;
+        int total = MAX_PAGES * dot + (MAX_PAGES - 1) * gap;
+        int startX = cx - total / 2;
+        int dotY = navArrowY + (16 - dot) / 2;
+        for (int p = 0; p < MAX_PAGES; p++) {
+            int dx = startX + p * (dot + gap);
+            if (p == currentPage) {
+                UiTheme.roundRect(context, dx, dotY, dot, dot, UiTheme.ACCENT_BG);
+                UiTheme.roundBorder(context, dx, dotY, dot, dot, UiTheme.ACCENT_BORDER);
+            } else {
+                UiTheme.roundRect(context, dx, dotY, dot, dot, 0x22FFFFFF);
+                UiTheme.roundBorder(context, dx, dotY, dot, dot, 0x40FFFFFF);
+            }
+        }
+    }
+
+    private void drawArrowButton(DrawContext context, int x, int y, boolean left, boolean enabled, boolean hover) {
+        if (enabled) {
+            UiTheme.button(context, x, y, 16, 16, hover, PressAnim.active(x, y));
+        } else {
+            UiTheme.roundRect(context, x, y, 16, 16, 0x0AFFFFFF);
+            UiTheme.roundBorder(context, x, y, 16, 16, 0x14FFFFFF);
+        }
+        drawArrow(context, x, y, 16, left, enabled ? UiTheme.TEXT : 0xFF6A6A72);
+    }
+
+    /** A small filled triangle pointing left or right, centred in a {@code size}×{@code size} box. */
+    private void drawArrow(DrawContext context, int x, int y, int size, boolean left, int color) {
+        int midY = y + size / 2;
+        int half = 4;
+        int startX = x + size / 2 - half / 2; // leftmost column of the triangle
+        for (int i = 0; i <= half; i++) {
+            int px = startX + i;
+            // Left arrow: tip (short) at the left, base (tall) at the right; right arrow: mirrored.
+            int hh = left ? i : (half - i);
+            context.fill(px, midY - hh, px + 1, midY + hh + 1, color);
+        }
+    }
+
+    // ---- Overwrite confirmation popup ----
+
+    private void renderOverwritePopup(DrawContext context, int screenW, int screenH, int mouseX, int mouseY) {
         MinecraftClient client = MinecraftClient.getInstance();
+        // Darken the whole screen so the popup reads as modal.
+        context.fill(0, 0, screenW, screenH, 0x99000000);
+
+        int pw = 214;
+        int pph = 96;
+        int px = (screenW - pw) / 2;
+        int py = (screenH - pph) / 2;
+        UiTheme.panel(context, px, py, pw, pph);
+
+        drawIcon(context, ModTextures.ICON_SM_CONFLICT, px + pw / 2 - 6, py + 8, ORANGE_BORDER);
+
+        Text title = Text.translatable("gui.chestseparators.preset_overwrite_title", pendingOverwriteSlot);
+        context.drawCenteredTextWithShadow(client.textRenderer, title, px + pw / 2, py + 26, 0xFFFFC24A);
+
+        Text body = Text.translatable("gui.chestseparators.preset_overwrite_body");
+        for (net.minecraft.text.OrderedText line : client.textRenderer.wrapLines(body, pw - 24)) {
+            // Single expected line; wrapLines guards against long translations.
+            context.drawCenteredTextWithShadow(client.textRenderer, line, px + pw / 2, py + 42, 0xFFCFCFD6);
+            break;
+        }
+
+        int bw = 84;
+        int bh = 18;
+        int gap = 8;
+        int startX = px + (pw - (2 * bw + gap)) / 2;
+        int by = py + pph - bh - 10;
+
+        popupConfirmBtn = new WideButtonWidget(
+                startX,
+                by,
+                bw,
+                bh,
+                Text.translatable("button.chestseparators.confirm").getString(),
+                ModTextures.ICON_SM_CHECK,
+                () -> {
+                    doSave(pendingOverwriteSlot);
+                    pendingOverwriteSlot = -1;
+                });
+        popupConfirmBtn.texSize = 128;
+        popupCancelBtn = new WideButtonWidget(
+                startX + bw + gap,
+                by,
+                bw,
+                bh,
+                Text.translatable("button.chestseparators.cancel").getString(),
+                ModTextures.ICON_SM_CANCEL,
+                () -> pendingOverwriteSlot = -1);
+        popupCancelBtn.texSize = 128;
+
+        popupConfirmBtn.render(context, mouseX, mouseY, 0);
+        popupCancelBtn.render(context, mouseX, mouseY, 0);
+    }
+
+    /** Label telling the player which view the on-slot preview is showing. */
+    private void drawPreviewBadge(DrawContext context, boolean showFilters) {
         Text label = Text.translatable(
                 showFilters ? "gui.chestseparators.preview_filters" : "gui.chestseparators.preview_layout");
-        int w = client.textRenderer.getWidth(label) + 10;
-        int x = (screenW - w) / 2;
-        context.fill(x, 4, x + w, 18, 0xCC000000);
-        context.drawCenteredTextWithShadow(
-                client.textRenderer, label, x + w / 2, 7, showFilters ? 0xFF8AD6FF : 0xFFFFE066);
+        drawBadge(context, label, showFilters ? 0xFF8AD6FF : 0xFFFFE066);
+    }
+
+    /** Badge shown while hovering a Delete button, warning that the preset will be removed. */
+    private void drawDeleteBadge(DrawContext context) {
+        drawBadge(context, Text.translatable("gui.chestseparators.preview_delete"), 0xFFFF6060);
+    }
+
+    /**
+     * A badge in the mod's Cristal style (rounded, bordered panel), centred over the chest and tucked just
+     * above the top toolbar so the hint sits near the buttons rather than floating at the very top.
+     */
+    private void drawBadge(DrawContext context, Text label, int textColor) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        int w = client.textRenderer.getWidth(label) + 18;
+        int h = 18;
+        int cx = editor.accessor.getX() + editor.accessor.getBackgroundWidth() / 2;
+        int x = cx - w / 2;
+        int y = Math.max(2, editor.accessor.getY() - 51);
+        UiTheme.panel(context, x, y, w, h);
+        context.drawCenteredTextWithShadow(client.textRenderer, label, x + w / 2, y + (h - 8) / 2, textColor);
+    }
+
+    // ---- Preset detail panel (which items each filter of the preset accepts) ----
+
+    /** One line of the detail list: either a group header (colour chip + slot count) or an item. */
+    private record DetailRow(boolean header, int color, int slotCount, String itemId) {}
+
+    /**
+     * Docked just left of the presets panel so you get preset list → detail → container. When there is no
+     * room left of it (narrow window), it falls back to the free space right of the container.
+     */
+    private int detailX() {
+        int left = panelX() - DETAIL_W - editor.layout.gap;
+        if (left >= 2) return left;
+        return editor.accessor.getX() + editor.accessor.getBackgroundWidth() + editor.layout.gap;
+    }
+
+    /** Flattens the preset's filters into group headers followed by their allowed items. */
+    private List<DetailRow> buildDetailRows(Map<Integer, SlotWhitelist> filters) {
+        // Group the slots, keeping groups ordered by their first slot so the list matches the container.
+        Map<UUID, List<Integer>> groups = new LinkedHashMap<>();
+        List<Integer> slotKeys = new ArrayList<>(filters.keySet());
+        slotKeys.sort(null);
+        for (int key : slotKeys) {
+            groups.computeIfAbsent(filters.get(key).groupId(), g -> new ArrayList<>())
+                    .add(key);
+        }
+
+        Map<UUID, Integer> colors = assignGroupColors(filters);
+        List<DetailRow> rows = new ArrayList<>();
+        for (Map.Entry<UUID, List<Integer>> entry : groups.entrySet()) {
+            SlotWhitelist wl = filters.get(entry.getValue().get(0));
+            rows.add(new DetailRow(
+                    true,
+                    colors.getOrDefault(entry.getKey(), 0xFF888888),
+                    entry.getValue().size(),
+                    null));
+            if (wl.allowedItems().isEmpty()) {
+                rows.add(new DetailRow(false, 0, 0, null)); // "empty filter" line
+            } else {
+                for (String id : wl.allowedItems()) rows.add(new DetailRow(false, 0, 0, id));
+            }
+        }
+        return rows;
+    }
+
+    /** Draws the hovered preset's filters and their items. No-op when nothing is hovered. */
+    private void renderDetailPanel(DrawContext context, int screenH) {
+        ChestConfigManager.PresetPreview preview = hoveredPreview;
+        if (preview == null) return;
+        Map<Integer, SlotWhitelist> filters = preview.filters();
+        if (filters == null || filters.isEmpty()) return;
+
+        List<DetailRow> rows = buildDetailRows(filters);
+        int totalItems = 0;
+        for (DetailRow r : rows) if (!r.header() && r.itemId() != null) totalItems++;
+
+        MinecraftClient mc = MinecraftClient.getInstance();
+        int x = detailX();
+        int y = panelY(screenH);
+        int w = DETAIL_W;
+        int h = panelH();
+
+        UiTheme.panel(context, x, y, w, h);
+
+        // Header: how many items this preset's filters accept in total.
+        context.getMatrices().pushMatrix();
+        float scale = 0.8f;
+        context.getMatrices().scale(scale, scale);
+        context.drawText(
+                mc.textRenderer,
+                Text.translatable("gui.chestseparators.items_count", totalItems),
+                (int) ((x + 8) / scale),
+                (int) ((y + 8) / scale),
+                UiTheme.TEXT,
+                false);
+        context.getMatrices().popMatrix();
+
+        int viewY = y + 22;
+        int viewH = h - 30;
+        UiTheme.inset(context, x + 6, viewY, w - 12, viewH);
+
+        int contentH = rows.size() * DETAIL_LINE_H;
+        float maxScroll = Math.max(0, contentH - (viewH - 4));
+
+        long now = System.currentTimeMillis();
+        if (detailLastTime == 0L) detailLastTime = now;
+        float dt = (now - detailLastTime) / 1000f;
+        detailLastTime = now;
+        if (GlobalChestConfig.instance.enablePreviewAnimation && maxScroll > 0 && !detailUserScrolled) {
+            float speed = 22f;
+            if (detailScrollDown) {
+                detailScrollY += speed * dt;
+                if (detailScrollY >= maxScroll) {
+                    detailScrollY = maxScroll;
+                    detailScrollDown = false;
+                }
+            } else {
+                detailScrollY -= speed * dt;
+                if (detailScrollY <= 0) {
+                    detailScrollY = 0;
+                    detailScrollDown = true;
+                }
+            }
+        }
+        detailScrollY = MathHelper.clamp(detailScrollY, 0, maxScroll);
+
+        context.enableScissor(x + 6, viewY + 1, x + w - 6, viewY + viewH - 1);
+        int first = (int) (detailScrollY / DETAIL_LINE_H);
+        int visible = (viewH / DETAIL_LINE_H) + 2;
+        for (int i = 0; i < visible; i++) {
+            int idx = first + i;
+            if (idx < 0 || idx >= rows.size()) break;
+            DetailRow row = rows.get(idx);
+            int ry = viewY + 2 + (i * DETAIL_LINE_H) - (int) (detailScrollY % DETAIL_LINE_H);
+
+            if (row.header()) {
+                // Colour chip matching the on-slot blob, plus how many slots the group covers.
+                UiTheme.roundRect(context, x + 10, ry + 4, 10, 10, row.color());
+                UiTheme.roundBorder(context, x + 10, ry + 4, 10, 10, 0x66FFFFFF);
+                context.getMatrices().pushMatrix();
+                context.getMatrices().scale(scale, scale);
+                context.drawText(
+                        mc.textRenderer,
+                        "x" + row.slotCount(),
+                        (int) ((x + 24) / scale),
+                        (int) ((ry + 6) / scale),
+                        UiTheme.TEXT,
+                        false);
+                context.getMatrices().popMatrix();
+                continue;
+            }
+
+            if (row.itemId() == null) {
+                context.getMatrices().pushMatrix();
+                float s = 0.75f;
+                context.getMatrices().scale(s, s);
+                context.drawText(
+                        mc.textRenderer,
+                        Text.translatable("gui.chestseparators.empty_whitelist"),
+                        (int) ((x + 24) / s),
+                        (int) ((ry + 6) / s),
+                        UiTheme.TEXT_MUTED,
+                        false);
+                context.getMatrices().popMatrix();
+                continue;
+            }
+
+            Item item = Registries.ITEM.get(Identifier.tryParse(row.itemId()));
+            context.drawItem(item.getDefaultStack(), x + 22, ry);
+
+            String name = item.getName().getString();
+            context.getMatrices().pushMatrix();
+            float s = 0.75f;
+            context.getMatrices().scale(s, s);
+            int maxNameW = (int) ((w - 52) / s);
+            if (mc.textRenderer.getWidth(name) > maxNameW) {
+                name = mc.textRenderer.trimToWidth(name, maxNameW - 6) + "...";
+            }
+            context.drawText(
+                    mc.textRenderer, name, (int) ((x + 42) / s), (int) ((ry + 5) / s), UiTheme.TEXT, false);
+            context.getMatrices().popMatrix();
+        }
+        context.disableScissor();
+
+        if (maxScroll > 0) {
+            int barX = x + w - 12;
+            int barH = viewH - 2;
+            int thumbH = Math.max(10, (int) ((viewH / (float) Math.max(1, contentH)) * barH));
+            int thumbY = viewY + 1 + (int) ((detailScrollY / maxScroll) * (barH - thumbH));
+            UiTheme.scrollbar(context, barX, viewY + 1, 6, barH, thumbY, thumbH);
+        }
     }
 
     // ---- On-slot preview ----
 
     private void renderPreviewOnSlots(
             DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind, boolean showFilters) {
+        if (showFilters) {
+            renderFilterBlobs(context, preview, chestKind);
+            return;
+        }
+
         int guiX = editor.accessor.getX();
         int guiY = editor.accessor.getY();
-        Map<UUID, Integer> groupColors = assignGroupColors(preview.filters());
-
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
             boolean player = ChestSeparatorsEditor.isPlayerSlot(slot);
             if (chestKind == player) continue;
-            int idx = slot.getIndex();
+            int idx = ChestSeparatorsEditor.realIndex(slot);
             int x = guiX + slot.x;
             int y = guiY + slot.y;
 
-            if (showFilters) {
-                SlotWhitelist wl = preview.filters().get(idx);
-                if (wl != null) {
-                    int col = (groupColors.getOrDefault(wl.groupId(), 0xFF888888) & 0x00FFFFFF) | 0xAA000000;
-                    context.fill(x, y, x + 16, y + 16, col);
-                }
-            } else {
-                int[] cc = ChestConfigManager.previewColors(preview.visual().get(idx));
-                if (cc[4] != 0) context.fill(x, y, x + 16, y + 16, (cc[4] & 0x00FFFFFF) | 0x99000000);
-                if (cc[0] != 0) context.fill(x - 1, y - 1, x + 17, y, (cc[0] & 0x00FFFFFF) | 0xFF000000);
-                if (cc[1] != 0) context.fill(x - 1, y + 16, x + 17, y + 17, (cc[1] & 0x00FFFFFF) | 0xFF000000);
-                if (cc[2] != 0) context.fill(x - 1, y - 1, x, y + 17, (cc[2] & 0x00FFFFFF) | 0xFF000000);
-                if (cc[3] != 0) context.fill(x + 16, y - 1, x + 17, y + 17, (cc[3] & 0x00FFFFFF) | 0xFF000000);
-            }
+            int[] cc = ChestConfigManager.previewColors(preview.visual().get(idx));
+            if (cc[4] != 0) context.fill(x, y, x + 16, y + 16, (cc[4] & 0x00FFFFFF) | 0x99000000);
+            if (cc[0] != 0) context.fill(x - 1, y - 1, x + 17, y, (cc[0] & 0x00FFFFFF) | 0xFF000000);
+            if (cc[1] != 0) context.fill(x - 1, y + 16, x + 17, y + 17, (cc[1] & 0x00FFFFFF) | 0xFF000000);
+            if (cc[2] != 0) context.fill(x - 1, y - 1, x, y + 17, (cc[2] & 0x00FFFFFF) | 0xFF000000);
+            if (cc[3] != 0) context.fill(x + 16, y - 1, x + 17, y + 17, (cc[3] & 0x00FFFFFF) | 0xFF000000);
         }
+    }
+
+    /**
+     * Filter view of the preview, drawn to match the Manage Filters screen: a 12×12 inset colour square per
+     * filtered slot (never the whole cell) with 6px connectors bridging same-group neighbours into a blob.
+     * Adjacency is tested by on-screen position (18px slot pitch), which is robust for armor/offhand cells.
+     */
+    private void renderFilterBlobs(
+            DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind) {
+        int guiX = editor.accessor.getX();
+        int guiY = editor.accessor.getY();
+        Map<UUID, Integer> groupColors = assignGroupColors(preview.filters());
+        Map<Integer, SlotWhitelist> filters = preview.filters();
+
+        // Map each filtered slot's on-screen cell position to its group, for neighbour lookups.
+        Map<Integer, UUID> groupAt = new HashMap<>();
+        for (Slot slot : editor.accessor.getHandler().slots) {
+            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+            if (chestKind == ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
+            SlotWhitelist wl = filters.get(ChestSeparatorsEditor.realIndex(slot));
+            if (wl != null) groupAt.put(posKey(slot.x, slot.y), wl.groupId());
+        }
+
+        for (Slot slot : editor.accessor.getHandler().slots) {
+            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
+            if (chestKind == ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
+            SlotWhitelist wl = filters.get(ChestSeparatorsEditor.realIndex(slot));
+            if (wl == null) continue;
+
+            UUID gid = wl.groupId();
+            int col = (groupColors.getOrDefault(gid, 0xFF888888) & 0x00FFFFFF) | 0x99000000;
+            int x = guiX + slot.x;
+            int y = guiY + slot.y;
+
+            context.fill(x + 2, y + 2, x + 14, y + 14, col);
+
+            boolean right = gid.equals(groupAt.get(posKey(slot.x + 18, slot.y)));
+            boolean down = gid.equals(groupAt.get(posKey(slot.x, slot.y + 18)));
+            boolean corner = right && down && gid.equals(groupAt.get(posKey(slot.x + 18, slot.y + 18)));
+            if (right) context.fill(x + 14, y + 2, x + 20, y + 14, col);
+            if (down) context.fill(x + 2, y + 14, x + 14, y + 20, col);
+            if (corner) context.fill(x + 14, y + 14, x + 20, y + 20, col);
+        }
+    }
+
+    private static int posKey(int x, int y) {
+        return (x << 16) | (y & 0xFFFF);
     }
 
     private Map<UUID, Integer> assignGroupColors(Map<Integer, SlotWhitelist> filters) {
@@ -315,41 +857,174 @@ public final class PresetsMenu {
         return colors;
     }
 
-    /** Raised/sunken bevel matching {@code CustomWidget#drawDarkBevel} so the panel fits the mod style. */
-    private void drawBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
-        boolean isDark = GlobalChestConfig.instance.darkMode;
-        int light = isDark ? 0xFF505050 : 0xFFFFFFFF;
-        int dark = isDark ? 0xFF000000 : 0xFF555555;
-        if (sunken) {
-            context.fill(x, y, x + width - 1, y + 1, dark);
-            context.fill(x, y, x + 1, y + height - 1, dark);
-            context.fill(x + width - 1, y, x + width, y + height, light);
-            context.fill(x, y + height - 1, x + width, y + height, light);
-        } else {
-            context.fill(x, y, x + width - 1, y + 1, light);
-            context.fill(x, y, x + 1, y + height - 1, light);
-            context.fill(x + width - 1, y, x + width, y + height, dark);
-            context.fill(x, y + height - 1, x + width, y + height, dark);
-        }
-    }
-
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && mx < x + w && my >= y && my < y + h;
+    }
+
+    // ---- Inline rename ----
+
+    /**
+     * Wheel over the preset menu while a Load preview is showing scrolls its detail list (the items each
+     * filter accepts), and hands control from the auto-scroll to the player — just like the item-import
+     * preview. Returns true when it consumed the scroll.
+     */
+    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+        if (hoveredPreview == null) return false;
+        detailScrollY = Math.max(0, detailScrollY - (float) verticalAmount * 18f);
+        detailUserScrolled = true; // upper bound is clamped while rendering the detail panel
+        return true;
+    }
+
+    /** True while a preset name is being edited, so the parent screen routes typing here. */
+    public boolean isRenaming() {
+        return renamingSlot >= 0;
+    }
+
+    /** Starts editing {@code slot}'s name, seeding the field with its current name. */
+    private void beginRename(int slot, double clickX) {
+        String current = presetName(slot);
+        renamingSlot = slot;
+        // Create the field at its real geometry FIRST: if it were built at a placeholder width, setText
+        // would scroll it so far that only the last letter shows (the reported bug). The row's name box
+        // does not depend on the screen height, so it can be sized here.
+        int nameX = panelX() + 28;
+        int fieldX = nameX + 1;
+        int fieldW = (loadX() - 4 - nameX) - 2;
+        renameField = new TextFieldWidget(
+                MinecraftClient.getInstance().textRenderer, fieldX, 0, fieldW, 12, Text.literal(""));
+        renameField.setDrawsBackground(false);
+        renameField.setMaxLength(NAME_MAX_LEN);
+        renameField.setText(current == null ? "" : current);
+        renameField.setFocused(true);
+
+        // Place the caret at the letter that was clicked, not blindly at the end.
+        String text = renameField.getText();
+        var tr = MinecraftClient.getInstance().textRenderer;
+        int rel = (int) Math.max(0, clickX - fieldX);
+        int caret = tr.trimToWidth(text, rel).length();
+        renameField.setCursor(caret, false);
+        editor.playClickSound(1.0f);
+    }
+
+    /** Saves the edited name (empty clears back to the default label) and leaves rename mode. */
+    private void commitRename() {
+        if (renamingSlot >= 0 && renameField != null) {
+            if (chestMode()) {
+                ChestConfigManager.getInstance().setChestPresetName(chestSize(), renamingSlot, renameField.getText());
+            } else {
+                ChestConfigManager.getInstance().setInventoryPresetName(renamingSlot, renameField.getText());
+            }
+            editor.playClickSound(1.1f);
+        }
+        renamingSlot = -1;
+        renameField = null;
+    }
+
+    /** Ends any active rename without saving (used when the menu closes or its page/mode changes). */
+    public void cancelRename() {
+        renamingSlot = -1;
+        renameField = null;
+    }
+
+    /** Keyboard while renaming: Enter commits, Escape cancels, everything else edits the field. */
+    public boolean keyPressed(KeyInput input) {
+        if (!isRenaming() || renameField == null) return false;
+        int key = input.key();
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+            commitRename();
+            return true;
+        }
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+            cancelRename();
+            return true;
+        }
+        renameField.keyPressed(input);
+        return true;
+    }
+
+    public boolean charTyped(CharInput input) {
+        if (!isRenaming() || renameField == null) return false;
+        renameField.charTyped(input);
+        return true;
     }
 
     /** Routes a click inside the open menu. Returns true when the click was consumed. */
     public boolean onClick(double mouseX, double mouseY, int button, int screenW, int screenH) {
         if (button != 0) return true;
-        int py = panelY(screenH);
-        int ph = panelH();
 
-        for (WideButtonWidget b : clickables) {
-            if (b.mouseClicked(mouseX, mouseY, button)) {
+        // The confirmation popup captures all input until resolved.
+        if (pendingOverwriteSlot >= 0) {
+            if (popupConfirmBtn != null && popupConfirmBtn.mouseClicked(mouseX, mouseY, button)) {
+                editor.playClickSound(1.2f);
+                return true;
+            }
+            if (popupCancelBtn != null && popupCancelBtn.mouseClicked(mouseX, mouseY, button)) {
+                editor.playClickSound(0.9f);
+                return true;
+            }
+            return true;
+        }
+
+        // A rename in progress: a click inside its field just moves the caret; any other click commits it
+        // and then continues as a normal click (so clicking a button or another name works in one go).
+        if (isRenaming()) {
+            if (renameField != null && renameField.isMouseOver(mouseX, mouseY)) {
+                renameField.setFocused(true);
+                // Reposition the caret to the clicked letter. TextFieldWidget.mouseClicked's signature
+                // changed in 1.21.11 and no longer moves the caret from a raw (x,y), so place it manually
+                // from the click X — the same computation beginRename uses when the field first opens.
+                var tr = MinecraftClient.getInstance().textRenderer;
+                int rel = (int) Math.max(0, mouseX - renameField.getX());
+                int caret = tr.trimToWidth(renameField.getText(), rel).length();
+                renameField.setCursor(caret, false);
+                return true;
+            }
+            commitRename();
+        }
+
+        // Page arrows — circular: wrap past either end. Changing page ends any rename (slots shift).
+        if (inside(mouseX, mouseY, navPrevX, navArrowY, 16, 16)) {
+            cancelRename();
+            currentPage = (currentPage - 1 + MAX_PAGES) % MAX_PAGES;
+            PressAnim.press(navPrevX, navArrowY);
+            editor.playClickSound(1.0f);
+            return true;
+        }
+        if (inside(mouseX, mouseY, navNextX, navArrowY, 16, 16)) {
+            cancelRename();
+            currentPage = (currentPage + 1) % MAX_PAGES;
+            PressAnim.press(navNextX, navArrowY);
+            editor.playClickSound(1.0f);
+            return true;
+        }
+
+        for (ToolButtonWidget b : clickables) {
+            if (!b.isDisabled && b.mouseClicked(mouseX, mouseY, button)) {
                 editor.playClickSound(1.1f);
                 return true;
             }
         }
 
-        return inside(mouseX, mouseY, PANEL_X, py, PANEL_W, ph);
+        // Click a saved row's name to edit it inline.
+        for (int i = 0; i < PER_PAGE; i++) {
+            int slot = slotOfRow(i);
+            if (!exists(slot)) continue;
+            int ry = rowY(screenH, i);
+            int nameX = panelX() + 28;
+            int nameW = loadX() - 4 - nameX;
+            if (inside(mouseX, mouseY, nameX, ry, nameW, ROW_H)) {
+                beginRename(slot, mouseX);
+                return true;
+            }
+        }
+
+        boolean insidePanel = inside(mouseX, mouseY, panelX(), panelY(screenH), PANEL_W, panelH());
+        // Click-outside-to-close: when enabled, a click beyond the panel dismisses the presets menu.
+        if (!insidePanel && GlobalChestConfig.instance.closeOnClickOutside) {
+            editor.getSession().isPresetsMenuOpen = false;
+            editor.playClickSound(0.9f);
+            return true;
+        }
+        return insidePanel;
     }
 }

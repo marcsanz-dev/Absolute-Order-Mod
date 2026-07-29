@@ -82,6 +82,7 @@ Any new interface **must look and behave like the rest of the mod**. Before buil
 - **Mutual exclusion of mode toggles:** the top editor icons (layout = `entryButton`, filters = `whitelistButton`, presets = `presetsButton`/`chestPresetsButton`) are radio-like — **only one may be selected/pressed at a time.** Activating one must deselect the others (close the open sub-screen via `toggleState(EditorState.HIDDEN)` / close the presets menu). Apply the same rule to any new set of mode toggles.
 - Modal overlays keep the top mode icons visible and clickable, hide the unrelated sub-panels (e.g. the left whitelist preview panel), and pass `(-1,-1)` to anything that must not react behind them.
 - Hover previews fire from the **specific control** that owns them (e.g. only a row's *Load* button), not from the whole row or from controls whose action wouldn't change anything (e.g. *Save*).
+- **A preview must ALWAYS show the exact result the action produces.** This is non-negotiable: whenever you change what a button does (placement order, group re-sort, keep-limits, hotbar handling, etc.) you must mirror that change in its preview in the same commit. The push/pull previews (`updateDepositPreview` / `updateFillPreview` → `applyPreviewReorder`) are simulations of `executeDeposit` / `requestFillFromOpenChest` + the server's `reorderFilteredGroups`; if the two ever diverge the preview is a bug. Prefer sharing the ordering primitive (`FilterPriority`, the reorder logic) between action and preview so they can't drift.
 - New user-facing strings → add the key to **all 20** `lang/*.json` files (`en_us.json` is the source of truth).
 
 ### Whitelist data flow
@@ -113,6 +114,8 @@ Double chests are handled by merging both halves into a `DoubleInventory` server
 ## Git
 
 Commits follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`) with a descriptive body explaining motivation. Keep unrelated changes in separate commits.
+
+**Authorship (MANDATORY):** all work is authored 100% by the repository owner (`marcsanz-dev`). Never add AI/assistant attribution to commits — no `Co-Authored-By: Claude ...` trailer, no "Generated with Claude Code" line, no assistant name as author or committer. Commits must carry only the owner's identity. This keeps the assistant off the project's GitHub contributor list.
 
 ## Known follow-ups
 

@@ -109,14 +109,20 @@ public final class AutoDepositAnimator {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
 
+        // When a container GUI is open (the Pull button), feedback goes ABOVE the interface via the
+        // editor's status overlay — exactly like the Push button — instead of the action bar behind it.
+        boolean guiOpen = client.currentScreen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen;
+        io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor editor =
+                io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor.getInstance();
+
         if (flights.isEmpty()) {
-            client.player.sendMessage(
-                    Text.translatable(
-                                    reverse
-                                            ? "message.chestseparators.auto_grab_none"
-                                            : "message.chestseparators.auto_deposit_none")
-                            .formatted(Formatting.GRAY),
-                    true);
+            Text noneMsg = Text.translatable(
+                            reverse
+                                    ? "message.chestseparators.auto_grab_none"
+                                    : "message.chestseparators.auto_deposit_none")
+                    .formatted(Formatting.GRAY);
+            if (guiOpen && editor != null) editor.showStatus(noneMsg, Formatting.GRAY);
+            else client.player.sendMessage(noneMsg, true);
             return;
         }
 
@@ -125,14 +131,19 @@ public final class AutoDepositAnimator {
             total += flight.stack().getCount();
 
         client.player.playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.5f, reverse ? 1.0f : 1.4f);
-        client.player.sendMessage(
-                Text.translatable(
-                                reverse
-                                        ? "message.chestseparators.auto_grab_done"
-                                        : "message.chestseparators.auto_deposit_done",
-                                total)
-                        .formatted(Formatting.GREEN),
-                true);
+        Text doneMsg = Text.translatable(
+                        reverse
+                                ? "message.chestseparators.auto_grab_done"
+                                : "message.chestseparators.auto_deposit_done",
+                        total)
+                .formatted(Formatting.GREEN);
+
+        // GUI open: show it above the interface and finish instantly — no world fly-over you can't see.
+        if (guiOpen) {
+            if (editor != null) editor.showStatus(doneMsg, Formatting.GREEN);
+            return;
+        }
+        client.player.sendMessage(doneMsg, true);
 
         // The transfer already happened server-side; the flying items are pure cosmetics.
         if (!GlobalChestConfig.instance.autoDepositAnimation) return;

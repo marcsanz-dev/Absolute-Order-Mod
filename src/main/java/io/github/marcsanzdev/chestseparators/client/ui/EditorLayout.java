@@ -14,8 +14,8 @@ public class EditorLayout {
 
     // Universal Symmetrical Layout metrics
     public int gap = 6;
-    public int mainW = 190;
-    public int mainH = 200;
+    public int mainW = 226;
+    public int mainH = 236;
     public int listW = 120;
     public int btnW = 108;
     public int bH = 22;
@@ -32,7 +32,10 @@ public class EditorLayout {
     // Edit Filter Grid
     public int cols = 9;
     public int rows = 9;
+    /** Row height of the LEFT allowed-items list. */
     public int itemSize = 18;
+    /** Cell size of the item GRID: a 16px item plus a 3px margin per side so it never touches its slot. */
+    public int gridCell = 22;
     public int gridX;
     public int gridViewY;
     public int gridViewH;
@@ -51,6 +54,19 @@ public class EditorLayout {
 
     /** Trailing pixels added below the last list row so it can scroll fully clear of the scissor. */
     public static final int LIST_TRAILING_PADDING = 4;
+
+    /** Size of a category tab (the 8-per-row strips above and below the item grid). */
+    public int tabW = 22;
+
+    /**
+     * X of category tab {@code col} (0..7). Single source of truth shared by the renderer and the click
+     * handler so they can never drift: the 8 tabs spread evenly across the panel, flush to both margins.
+     */
+    public int tabX(int col) {
+        int margin = 4;
+        int stride = (this.mainW - (2 * margin) - this.tabW) / 7;
+        return this.mainX + margin + (col * stride);
+    }
 
     /**
      * Maximum vertical scroll for the left (allowed-items) list. Single source of truth shared by the
@@ -106,10 +122,10 @@ public class EditorLayout {
         // 3. Grid area
         this.gridX = this.mainX + 10;
         this.gridViewY = this.mainY + 25;
-        this.gridViewH = this.rows * this.itemSize;
+        this.gridViewH = this.rows * this.gridCell;
 
         // 4. Main Grid Scrollbar
-        this.msbX = this.gridX + (this.cols * this.itemSize) + 3;
+        this.msbX = this.gridX + (this.cols * this.gridCell) + 3;
         this.msbY = this.gridViewY - 2;
         this.msbH = this.gridViewH + 4;
 

@@ -15,6 +15,9 @@ public class ToolButtonWidget extends CustomWidget {
     // When true the base icon is a single-color (white) glyph that is tinted by the button state
     // (light-gray normally, brighter on hover, accent blue when active). Used by the smooth line icons.
     public boolean tintByState = false;
+    /** When true the BASE icon is drawn in {@link #dynamicColor} (the current paint colour) instead of
+     *  white/state — used by the area/trace paint buttons so the whole mode icon shows the paint colour. */
+    public boolean baseUsesDynamicColor = false;
     private boolean hovered = false;
 
     public Identifier baseIcon;
@@ -47,9 +50,11 @@ public class ToolButtonWidget extends CustomWidget {
         }
 
         this.hovered = isHovering(mouseX, mouseY);
-        boolean active = this.isActive || this.isTempClicked;
+        boolean active = this.isActive || this.isTempClicked || PressAnim.active(x, y);
 
-        if (this.isDisabled) {
+        // A button that disables itself right after acting (e.g. preset Delete → slot now empty) still
+        // plays its press flash, so the click is visible; otherwise draw the normal disabled look.
+        if (this.isDisabled && !PressAnim.active(x, y)) {
             UiTheme.roundRect(context, x, y, width, height, 0x0AFFFFFF);
             UiTheme.roundBorder(context, x, y, width, height, 0x14FFFFFF);
             drawIcon(context, this.baseIcon, this.maskIcon, 0xFFFFFF);
@@ -58,7 +63,14 @@ public class ToolButtonWidget extends CustomWidget {
         }
 
         UiTheme.button(context, x, y, width, height, this.hovered, active);
-        drawIcon(context, this.baseIcon, this.maskIcon, this.dynamicColor);
+        if (active) {
+            // The active button draws 1px smaller; shrink its icon by the same proportion.
+            UiTheme.pushActiveContent(context, x, y, width, height);
+            drawIcon(context, this.baseIcon, this.maskIcon, this.dynamicColor);
+            context.getMatrices().popMatrix();
+        } else {
+            drawIcon(context, this.baseIcon, this.maskIcon, this.dynamicColor);
+        }
 
         if (this.hovered && this.tooltipText != null) {
             java.util.List<Text> tooltipLines = new java.util.ArrayList<>();
@@ -75,8 +87,11 @@ public class ToolButtonWidget extends CustomWidget {
 
         int baseColor = -1;
         if (this.tintByState) {
-            boolean active = this.isActive || this.isTempClicked;
+            boolean active = this.isActive || this.isTempClicked || PressAnim.active(x, y);
             baseColor = active ? UiTheme.ICON_ACTIVE : (this.hovered ? UiTheme.ICON_HOVER : UiTheme.ICON);
+        }
+        if (this.baseUsesDynamicColor) {
+            baseColor = this.dynamicColor | 0xFF000000;
         }
         context.drawTexture(
                 pipeline, base, x + 2 + baseOffsetX, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, baseColor);

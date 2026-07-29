@@ -285,11 +285,21 @@ public class ChestConfigManager {
         String name = "unknown_world";
 
         if (client.isInSingleplayer() && client.getServer() != null) {
-            name = "sp_"
-                    + client.getServer()
-                            .getSavePath(net.minecraft.util.WorldSavePath.ROOT)
-                            .getFileName()
-                            .toString();
+            // WorldSavePath.ROOT resolves to "<saveDir>/." so calling getFileName() on it yields ".", NOT
+            // the world folder — which made EVERY singleplayer world collapse to the same key ("sp__") and
+            // therefore share its separators AND inventory profile. Normalize away the trailing "." so we
+            // recover the real, per-world save folder name.
+            Path saveRoot = client.getServer()
+                    .getSavePath(net.minecraft.util.WorldSavePath.ROOT)
+                    .toAbsolutePath()
+                    .normalize();
+            Path saveFolder = saveRoot.getFileName();
+            String folderName = saveFolder != null ? saveFolder.toString() : "";
+            if (folderName.isEmpty()) {
+                // Extremely defensive fallback (e.g. root path); the level name is still per-world enough.
+                folderName = client.getServer().getSaveProperties().getLevelName();
+            }
+            name = "sp_" + folderName;
         } else if (client.getCurrentServerEntry() != null) {
             name = "mp_" + client.getCurrentServerEntry().address;
         }
@@ -701,6 +711,8 @@ public class ChestConfigManager {
     private static class RawData {
         Map<Integer, int[]> visual = new HashMap<>();
         Map<Integer, SlotWhitelist> filters = new HashMap<>();
+        // Only presets carry a display name; world configs leave this null.
+        String name = null;
     }
 
     private RawData readRawData(Path path) {
@@ -708,6 +720,8 @@ public class ChestConfigManager {
         if (path == null || !Files.exists(path)) return data;
         try {
             NbtCompound root = NbtIo.readCompressed(path, NbtSizeTracker.ofUnlimitedBytes());
+
+            root.getString("Name").ifPresent(n -> data.name = n);
 
             if (root.contains("Separators")) {
                 root.getCompound("Separators").ifPresent(separatorsTag -> {
@@ -773,8 +787,10 @@ public class ChestConfigManager {
                                 boolean manual = wlTag.getBoolean("AllowManual").orElse(true);
                                 boolean shift = wlTag.getBoolean("AllowShift").orElse(true);
                                 boolean hopper = wlTag.getBoolean("AllowHopper").orElse(true);
+                                // Optional so files written before target counts still load (defaulting to 0).
+                                int target = wlTag.getInt("TargetCount").orElse(0);
 
-                                data.filters.put(slot, new SlotWhitelist(groupId, items, manual, shift, hopper));
+                                data.filters.put(slot, new SlotWhitelist(groupId, items, manual, shift, hopper, target));
                             });
                         } catch (Exception ignored) {
                         }
@@ -788,6 +804,11 @@ public class ChestConfigManager {
     }
 
     private void writeRawData(Map<Integer, int[]> visualConfig, Map<Integer, SlotWhitelist> filters, Path path) {
+        writeRawData(visualConfig, filters, null, path);
+    }
+
+    private void writeRawData(
+            Map<Integer, int[]> visualConfig, Map<Integer, SlotWhitelist> filters, String name, Path path) {
         if (path == null) return;
         if (visualConfig.isEmpty() && (filters == null || filters.isEmpty())) {
             try {
@@ -799,6 +820,7 @@ public class ChestConfigManager {
 
         NbtCompound root = new NbtCompound();
         root.putInt("Version", DATA_VERSION);
+        if (name != null && !name.isEmpty()) root.putString("Name", name);
 
         if (!visualConfig.isEmpty()) {
             NbtCompound separatorsTag = new NbtCompound();
@@ -825,6 +847,7 @@ public class ChestConfigManager {
                 wlTag.putBoolean("AllowManual", wl.allowManual());
                 wlTag.putBoolean("AllowShift", wl.allowShift());
                 wlTag.putBoolean("AllowHopper", wl.allowHopper());
+                wlTag.putInt("TargetCount", wl.targetCount());
 
                 wlRoot.put(String.valueOf(entry.getKey()), wlTag);
             }
@@ -1001,6 +1024,106 @@ public class ChestConfigManager {
         return playerInventoryFilters;
     }
 
+    // --- PRESET NAMES ---
+    // Preset display names are stored inside each preset file (the "Name" tag) but cached here, keyed by
+    // file path, so the menu does not decompress a file per row every frame. A cached empty string means
+    // "saved but unnamed"; a missing key means "not read yet". Mutations refresh the entry.
+    private final Map<String, String> presetNameCache = new HashMap<>();
+
+    /** Reads just the "Name" tag of a preset file, or null when absent/unreadable. */
+    private String readPresetName(Path path) {
+        if (path == null || !Files.exists(path)) return null;
+        try {
+            NbtCompound root = NbtIo.readCompressed(path, NbtSizeTracker.ofUnlimitedBytes());
+            return root.getString("Name").orElse(null);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** Custom display name of the preset in this file, or null when empty/unnamed. Cached by path. */
+    private String getPresetNameForFile(Path path) {
+        String key = path.toString();
+        String cached = presetNameCache.get(key);
+        if (cached != null) return cached.isEmpty() ? null : cached;
+        String name = readPresetName(path);
+        presetNameCache.put(key, name == null ? "" : name);
+        return name;
+    }
+
+    /** Renames a preset in place (rewrites its file keeping the layout and filters). No-op if empty. */
+    private void setPresetNameForFile(Path path, String name) {
+        if (!Files.exists(path)) return;
+        RawData data = readRawData(path);
+        String trimmed = name == null ? "" : name.trim();
+        writeRawData(data.visual, data.filters, trimmed, path);
+        presetNameCache.put(path.toString(), trimmed);
+    }
+
+    private void invalidatePresetNameForFile(Path path) {
+        presetNameCache.remove(path.toString());
+    }
+
+    // Typed convenience wrappers. Chest presets are split by the open container's size (27 vs 54), so a
+    // single chest and a double chest each have their own independent set — the menu shows only the set
+    // that matches whatever is open.
+    public String getInventoryPresetName(int index) {
+        return getPresetNameForFile(getInventoryPresetFile(index));
+    }
+
+    public void setInventoryPresetName(int index, String name) {
+        setPresetNameForFile(getInventoryPresetFile(index), name);
+    }
+
+    public String getChestPresetName(int size, int index) {
+        return getPresetNameForFile(getChestPresetFile(size, index));
+    }
+
+    public void setChestPresetName(int size, int index, String name) {
+        setPresetNameForFile(getChestPresetFile(size, index), name);
+    }
+
+    // Written once the pre-made presets have been created, so they are never regenerated — a deleted or
+    // overwritten default stays gone. Bump the suffix to ship a new default set to existing players.
+    private static final String DEFAULTS_MARKER = ".defaults_seeded_v2";
+
+    // The ready-made presets shipped as resources under /chestseparators_presets. Copied verbatim into
+    // the config on first run, so what the player gets is byte-for-byte what was authored in-game.
+    private static final String[] BUNDLED_PRESETS = {
+        "chest_preset_27_1.json", "chest_preset_27_2.json", "chest_preset_27_3.json",
+        "chest_preset_27_4.json", "chest_preset_27_5.json",
+        "chest_preset_54_1.json", "chest_preset_54_2.json", "chest_preset_54_3.json",
+        "chest_preset_54_4.json", "chest_preset_54_5.json",
+        "inventory_preset_1.json", "inventory_preset_2.json", "inventory_preset_3.json",
+        "inventory_preset_4.json", "inventory_preset_5.json",
+    };
+
+    /**
+     * Copies the bundled ready-made presets into the config the first time the mod runs. Guarded by a
+     * marker file so it happens exactly once; an existing slot is never overwritten, so a player who
+     * already saved into that slot keeps their own preset. The files are already valid preset NBT, so
+     * they are copied as raw bytes — no re-serialization.
+     */
+    public void seedDefaultPresetsIfNeeded() {
+        Path marker = getGlobalConfigDir().resolve(DEFAULTS_MARKER);
+        if (Files.exists(marker)) return;
+        for (String name : BUNDLED_PRESETS) {
+            Path target = getGlobalConfigDir().resolve(name);
+            if (Files.exists(target)) continue;
+            try (java.io.InputStream in = ChestConfigManager.class.getResourceAsStream("/chestseparators_presets/" + name)) {
+                if (in == null) continue;
+                Files.write(target, in.readAllBytes());
+                invalidatePresetNameForFile(target);
+            } catch (IOException e) {
+                LOGGER.error("chestseparators: failed to seed preset " + name, e);
+            }
+        }
+        try {
+            Files.createFile(marker);
+        } catch (IOException ignored) {
+        }
+    }
+
     /**
      * Offset added to a player-inventory slot index to namespace it inside the editor's working maps,
      * so chest slots (raw indices) and inventory slots (offset indices) — which would otherwise share
@@ -1079,6 +1202,16 @@ public class ChestConfigManager {
         return Files.exists(getInventoryPresetFile(index));
     }
 
+    /** Deletes inventory preset slot {@code index} from disk. No-op if it does not exist. */
+    public void deleteInventoryPreset(int index) {
+        try {
+            Files.deleteIfExists(getInventoryPresetFile(index));
+        } catch (IOException e) {
+            LOGGER.error("chestseparators: I/O error", e);
+        }
+        invalidatePresetNameForFile(getInventoryPresetFile(index));
+    }
+
     /** Saves the inventory portion currently in the working maps into preset slot {@code index}. */
     public void saveInventoryPreset(int index) {
         Map<Integer, int[]> vis = new HashMap<>();
@@ -1090,7 +1223,11 @@ public class ChestConfigManager {
         for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
             if (isInventoryKey(e.getKey())) fil.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue());
         }
-        writeRawData(vis, fil, getInventoryPresetFile(index));
+        // Overwriting a slot keeps its existing name (see saveChestPreset).
+        Path path = getInventoryPresetFile(index);
+        String name = getPresetNameForFile(path);
+        writeRawData(vis, fil, name, path);
+        invalidatePresetNameForFile(path);
     }
 
     /**
@@ -1118,29 +1255,45 @@ public class ChestConfigManager {
     private static final String CHEST_PRESET_PREFIX = "chest_preset_";
 
     /**
-     * File backing chest preset slot {@code index} (separate from inventory presets). Global reusable
-     * template, like inventory presets — applicable to any chest in any world.
+     * File backing chest preset slot {@code index} for a container of {@code size} slots (27 vs 54).
+     * Presets are split by container size so a single chest and a double chest keep independent sets,
+     * shown only when a container of that size is open. Global reusable template across worlds.
      */
-    private Path getChestPresetFile(int index) {
-        return getGlobalConfigDir().resolve(CHEST_PRESET_PREFIX + index + ".json");
+    private Path getChestPresetFile(int size, int index) {
+        return getGlobalConfigDir().resolve(CHEST_PRESET_PREFIX + size + "_" + index + ".json");
     }
 
-    /** Whether chest preset slot {@code index} has been saved. */
-    public boolean chestPresetExists(int index) {
-        return Files.exists(getChestPresetFile(index));
+    /** Whether chest preset slot {@code index} of the {@code size}-slot set has been saved. */
+    public boolean chestPresetExists(int size, int index) {
+        return Files.exists(getChestPresetFile(size, index));
     }
 
-    /** Saves the open chest's current layout + filters (chest-only keys) into preset slot {@code index}. */
-    public void saveChestPreset(int index) {
-        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), getChestPresetFile(index));
+    /** Deletes chest preset slot {@code index} of the {@code size}-slot set from disk. */
+    public void deleteChestPreset(int size, int index) {
+        Path path = getChestPresetFile(size, index);
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            LOGGER.error("chestseparators: I/O error", e);
+        }
+        invalidatePresetNameForFile(path);
+    }
+
+    /** Saves the open chest's current layout + filters into slot {@code index} of the {@code size}-slot set. */
+    public void saveChestPreset(int size, int index) {
+        Path path = getChestPresetFile(size, index);
+        // Overwriting a slot keeps whatever name it already had, so a re-save does not wipe a rename.
+        String name = getPresetNameForFile(path);
+        writeRawData(chestOnlyVisual(), chestOnlyWhitelists(), name, path);
+        invalidatePresetNameForFile(path);
     }
 
     /**
-     * Loads chest preset slot {@code index} onto the open chest, replacing only the chest-only keys in
-     * the working maps and leaving the mirrored inventory keys untouched. Returns false if empty.
+     * Loads chest preset slot {@code index} of the {@code size}-slot set onto the open chest, replacing
+     * only the chest-only keys in the working maps and leaving the mirrored inventory keys untouched.
      */
-    public boolean loadChestPreset(int index) {
-        Path f = getChestPresetFile(index);
+    public boolean loadChestPreset(int size, int index) {
+        Path f = getChestPresetFile(size, index);
         if (!Files.exists(f)) return false;
         RawData data = readRawData(f);
         currentChestConfig.keySet().removeIf(k -> !isInventoryKey(k));
@@ -1176,8 +1329,8 @@ public class ChestConfigManager {
     }
 
     /** Reads a chest preset's contents for preview (keys are raw container slot indices). */
-    public PresetPreview readChestPresetPreview(int index) {
-        Path f = getChestPresetFile(index);
+    public PresetPreview readChestPresetPreview(int size, int index) {
+        Path f = getChestPresetFile(size, index);
         if (!Files.exists(f)) return null;
         RawData data = readRawData(f);
         return new PresetPreview(data.visual, data.filters);

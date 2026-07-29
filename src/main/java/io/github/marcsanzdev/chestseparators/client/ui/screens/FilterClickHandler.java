@@ -109,6 +109,20 @@ final class FilterClickHandler {
                     editor.playClickSound(1.2f);
                     return true;
                 }
+
+                // Anywhere else on the row picks it up to reorder the filter's list. Not while a preview
+                // is running: the list is then showing the preview's contents, not the filter's own.
+                if (button == 0 && !session.isPreviewing) {
+                    session.reorderDragItem = visibleAllowed.get(clickedIdx);
+                    session.reorderFromGrid = false;
+                    session.reorderMouseX = (int) mouseX;
+                    session.reorderMouseY = (int) mouseY;
+                    // The held row flies out of the row it was picked from.
+                    session.reorderOriginX = layout.listX + 6;
+                    session.reorderOriginY = itemY - 2;
+                    session.reorderStartTime = System.currentTimeMillis();
+                    return true;
+                }
             }
         }
 
@@ -195,10 +209,10 @@ final class FilterClickHandler {
 
                 if (actualGlobalIndex == -1) continue;
 
-                int tabX = layout.mainX + 3 + ((slot % 8) * 23);
+                int tabX = layout.tabX(slot % 8);
                 int tabY = (slot < 8) ? layout.mainY - 20 : layout.mainY + layout.mainH - 2;
 
-                if (editor.isHovering(tabX, tabY, 22, 22, mouseX, mouseY)) {
+                if (editor.isHovering(tabX, tabY, layout.tabW, layout.tabW, mouseX, mouseY)) {
                     editor.switchCreativeTab(actualGlobalIndex);
                     editor.playClickSound(1.0f);
                     return true;
@@ -253,16 +267,16 @@ final class FilterClickHandler {
 
         // Grid Click
         if (mouseX >= layout.gridX
-                && mouseX < layout.gridX + (layout.cols * layout.itemSize)
+                && mouseX < layout.gridX + (layout.cols * layout.gridCell)
                 && mouseY >= layout.gridViewY
                 && mouseY < layout.gridViewY + layout.gridViewH) {
-            int c = (int) (mouseX - layout.gridX) / layout.itemSize;
-            int r = (int) (mouseY - layout.gridViewY + session.gridScrollY) / layout.itemSize;
+            int c = (int) (mouseX - layout.gridX) / layout.gridCell;
+            int r = (int) (mouseY - layout.gridViewY + session.gridScrollY) / layout.gridCell;
             int itemIndex = (r * layout.cols) + c;
             if (itemIndex >= 0 && itemIndex < session.filteredItems.size()) {
                 Item item = session.filteredItems.get(itemIndex);
                 if (button == 2) {
-                    List<String> tags = new ArrayList<>();
+                    List<net.minecraft.registry.tag.TagKey<Item>> candidates = new ArrayList<>();
                     item.getRegistryEntry().streamTags().forEach(tagKey -> {
                         String t = tagKey.id().getPath();
                         if (!t.startsWith("mineable/")
@@ -270,22 +284,29 @@ final class FilterClickHandler {
                                 && !t.contains("tools")
                                 && !t.startsWith("beacon_")
                                 && !t.equals("completes_find_tree_tutorial")
-                                && !tags.contains(t)) tags.add(t);
+                                && hasMoreThanOneItem(tagKey)) candidates.add(tagKey);
                     });
+                    List<String> tags = dropEquivalentTags(candidates);
                     if (!tags.isEmpty()) {
                         if (editor.searchBox != null) editor.searchBox.setText("");
                         for (int i = 0; i < session.availableTabs.size(); i++) {
                             if (session.availableTabs.get(i) != null && session.availableTabs.get(i).isSearchTab) {
                                 editor.switchCreativeTab(i);
                                 int newIndex = session.filteredItems.indexOf(item);
-                                if (newIndex != -1)
-                                    session.gridScrollY = MathHelper.clamp(
-                                            ((float) newIndex / 9 - 4) * 18f,
+                                if (newIndex != -1) {
+                                    // Centre the clicked item's row in the viewport. This has to use the
+                                    // grid's real metrics: the column count and cell size are laid out by
+                                    // EditorLayout and no longer match the 9x18 the old maths assumed, so
+                                    // the view landed at the wrong height.
+                                    int cols = Math.max(1, layout.cols);
+                                    int cell = layout.gridCell;
+                                    float centred = (newIndex / cols) * (float) cell - (layout.gridViewH - cell) / 2f;
+                                    float maxScroll = Math.max(
                                             0,
-                                            Math.max(
-                                                    0,
-                                                    (int) Math.ceil(session.filteredItems.size() / 9.0) * 18
-                                                            - (9 * 18)));
+                                            (int) Math.ceil(session.filteredItems.size() / (double) cols) * cell
+                                                    - layout.gridViewH);
+                                    session.gridScrollY = MathHelper.clamp(centred, 0, maxScroll);
+                                }
                                 break;
                             }
                         }
@@ -296,17 +317,16 @@ final class FilterClickHandler {
                     } else
                         editor.showStatus(
                                 Text.translatable("message.chestseparators.no_valid_groups"), Formatting.GRAY);
-                } else {
-                    String id = Registries.ITEM.getId(item).toString();
-                    if (session.currentAllowedItems.contains(id)) {
-                        session.currentAllowedItems.remove(id);
-                        editor.playClickSound(0.8f);
-                    } else {
-                        session.currentAllowedItems.add(id);
-                        editor.playClickSound(1.0f);
-                    }
-
-                    editor.updateWhitelistSearchCache(); // Update cache after modifying
+                } else if (button == 0) {
+                    // Only remember the press for now. A quick click still just toggles the item (see
+                    // ScreenEditFilter#commitPointerRelease); it only becomes a drag once the button is
+                    // held or the cursor moves, so a simple click never flashes a row on the cursor.
+                    session.pendingDragItem = Registries.ITEM.getId(item).toString();
+                    session.pendingDragX = (int) mouseX;
+                    session.pendingDragY = (int) mouseY;
+                    session.pendingDragTime = System.currentTimeMillis();
+                    session.reorderOriginX = layout.gridX + (c * layout.gridCell);
+                    session.reorderOriginY = layout.gridViewY + (r * layout.gridCell) - (int) session.gridScrollY;
                 }
                 return true;
             }
@@ -340,5 +360,51 @@ final class FilterClickHandler {
         }
 
         return false;
+    }
+
+    /**
+     * True when a tag covers more than one item. Single-item tags (say {@code #ore_bearing_ground/deepslate})
+     * are useless as a filter shortcut: picking one gives exactly the item you already middle-clicked, so
+     * they only pad the list.
+     */
+    private static boolean hasMoreThanOneItem(net.minecraft.registry.tag.TagKey<Item> tagKey) {
+        int found = 0;
+        for (var entry : Registries.ITEM.iterateEntries(tagKey)) {
+            if (++found > 1) return true; // no need to walk the whole tag
+        }
+        return false;
+    }
+
+    /**
+     * Collapses tags that select exactly the same items down to one entry. Vanilla ships several such
+     * pairs — {@code #flowers/small} and {@code #small_flowers} resolve to an identical list — and showing
+     * both only asks the player to choose between two filters that behave the same.
+     *
+     * <p>The flat name wins over the {@code group/variant} form: it is what the search box will display,
+     * and it reads as a name rather than a path. Ties fall back to the shorter, then alphabetical, name so
+     * the choice is stable between openings.
+     */
+    private static List<String> dropEquivalentTags(List<net.minecraft.registry.tag.TagKey<Item>> candidates) {
+        java.util.Map<List<String>, String> byContents = new java.util.LinkedHashMap<>();
+        for (net.minecraft.registry.tag.TagKey<Item> tagKey : candidates) {
+            List<String> contents = new ArrayList<>();
+            for (var entry : Registries.ITEM.iterateEntries(tagKey)) {
+                contents.add(Registries.ITEM.getId(entry.value()).toString());
+            }
+            java.util.Collections.sort(contents);
+
+            String path = tagKey.id().getPath();
+            String kept = byContents.get(contents);
+            if (kept == null || isBetterTagName(path, kept)) byContents.put(contents, path);
+        }
+        return new ArrayList<>(byContents.values());
+    }
+
+    private static boolean isBetterTagName(String candidate, String current) {
+        boolean candidateFlat = !candidate.contains("/");
+        boolean currentFlat = !current.contains("/");
+        if (candidateFlat != currentFlat) return candidateFlat;
+        if (candidate.length() != current.length()) return candidate.length() < current.length();
+        return candidate.compareTo(current) < 0;
     }
 }

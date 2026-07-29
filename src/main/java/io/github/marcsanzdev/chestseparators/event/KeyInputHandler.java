@@ -37,9 +37,7 @@ public class KeyInputHandler {
             }
 
             if (client.player == null) return;
-            while (ModKeyBindings.toggleButtonKey.wasPressed()) actionBar(client, toggleEditButtons());
             while (ModKeyBindings.openEditorKey.wasPressed()) actionBar(client, togglePreviewPanel());
-            while (ModKeyBindings.toggleDepositButtonKey.wasPressed()) actionBar(client, toggleDepositButton());
             while (ModKeyBindings.toggleMagnifierKey.wasPressed()) actionBar(client, toggleMagnifier());
 
             handleAutoDepositTriggers(client);
@@ -59,13 +57,6 @@ public class KeyInputHandler {
         while (ModKeyBindings.autoDepositKey.wasPressed())
             triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_DEPOSIT_ALL);
 
-        // "Drop" / "Grab" only fire while Shift is held (matching the Shift+C / Shift+V binding intent);
-        // plain presses are drained without acting so they don't queue up for later.
-        while (ModKeyBindings.depositJunkKey.wasPressed())
-            if (isShiftHeld()) triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_DEPOSIT_JUNK);
-        while (ModKeyBindings.grabKey.wasPressed())
-            if (isShiftHeld()) triggerAutoDeposit(client, AutoDepositRequestPayload.ACTION_GRAB);
-
         if (GlobalChestConfig.instance.autoDepositDoubleSneak && sneakDown && !wasSneakDown) {
             long now = System.currentTimeMillis();
             if (now - lastSneakTapTime <= DOUBLE_TAP_WINDOW_MS) {
@@ -76,13 +67,6 @@ public class KeyInputHandler {
             }
         }
         wasSneakDown = sneakDown;
-    }
-
-    private static boolean isShiftHeld() {
-        if (MinecraftClient.getInstance().getWindow() == null) return false;
-        long window = MinecraftClient.getInstance().getWindow().getHandle();
-        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
     }
 
     private static void triggerAutoDeposit(MinecraftClient client, int action) {

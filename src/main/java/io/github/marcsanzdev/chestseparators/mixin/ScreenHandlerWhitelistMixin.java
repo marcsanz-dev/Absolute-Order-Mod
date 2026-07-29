@@ -57,6 +57,17 @@ public abstract class ScreenHandlerWhitelistMixin {
             }
         }
 
+        // Ordering rule: while a slot dedicated to this item still has room, ordinary slots decline it
+        // so vanilla keeps scanning and drops the item into its dedicated slot. Vanilla performs the
+        // move itself, so the client's prediction and the server's result match and the item visibly
+        // lands in the right slot straight away.
+        int[] range = io.github.marcsanzdev.chestseparators.util.ClickTracker.INSERT_RANGE.get();
+        if (range != null
+                && io.github.marcsanzdev.chestseparators.util.FilterPriority.shouldDefer(
+                        this.slots, range[0], range[1], slot, stack)) {
+            return false;
+        }
+
         return true;
     }
 }

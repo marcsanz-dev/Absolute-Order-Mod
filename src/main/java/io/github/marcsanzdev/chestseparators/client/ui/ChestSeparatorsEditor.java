@@ -78,6 +78,7 @@ public class ChestSeparatorsEditor {
     public TextFieldWidget whitelistSearchBox;
 
     public boolean isHoveringDeposit = false;
+    public boolean isHoveringFill = false;
     public boolean depositPreviewShift = false;
     public boolean suspendDepositPreview = false;
     public long depositClickTime = 0;
@@ -104,8 +105,9 @@ public class ChestSeparatorsEditor {
     public void init() {
 
         // Determine the editor target up-front so geometry/layout (which count the editable slots) are
-        // computed for the right slot set.
-        session.isPlayerInventory = this.screen instanceof InventoryScreen;
+        // computed for the right slot set. The creative screen counts as a player-inventory context too
+        // (its inventory tab shows the real player inventory).
+        session.isPlayerInventory = isInventoryContextScreen(this.screen);
 
         this.layout = new EditorLayout();
         this.geometry = new EditorGeometry(session, accessor);
@@ -126,7 +128,7 @@ public class ChestSeparatorsEditor {
         this.screenEditFilter = new ScreenEditFilter(this);
         this.screenEditFilter.init();
 
-        session.isInventoryScreenContext = this.screen instanceof InventoryScreen;
+        session.isInventoryScreenContext = isInventoryContextScreen(this.screen);
         session.isPlayerInventory = session.isInventoryScreenContext;
 
         // The survival inventory screen has no container context: clear any stale chest data left in
@@ -134,6 +136,7 @@ public class ChestSeparatorsEditor {
         session.currentChestPos = session.isInventoryScreenContext ? null : ChestPosStorage.lastClickedPos;
         session.currentDimension = ChestPosStorage.lastClickedDimension;
         session.isEntityChest = !session.isInventoryScreenContext && ChestPosStorage.isEntityOpened;
+        session.isMinecartChest = session.isEntityChest && ChestPosStorage.isMinecartEntity;
         session.currentEntityUUID = session.isInventoryScreenContext ? null : ChestPosStorage.lastClickedEntityUUID;
         session.isEnderChest = false;
 
@@ -149,6 +152,7 @@ public class ChestSeparatorsEditor {
         ChestPosStorage.lastClickedEntityUUID = null;
         ChestPosStorage.lastOpenedShulkerUUID = null;
         ChestPosStorage.isEntityOpened = false;
+        ChestPosStorage.isMinecartEntity = false;
 
         ChestConfigManager.getInstance().loadWorldPalette();
         loadConfigForCurrentTarget();
@@ -199,9 +203,8 @@ public class ChestSeparatorsEditor {
                     }
                 });
 
+        // PUSH items into the chest. Works from every editor screen (not just the closed editor).
         this.depositButton = new ToolButtonWidget(0, 0, ModTextures.BTN_DEPOSIT, "", () -> {
-            if (this.isEditMode()) return;
-
             this.depositClickTime = System.currentTimeMillis();
 
             long window = MinecraftClient.getInstance().getWindow().getHandle();
@@ -211,13 +214,18 @@ public class ChestSeparatorsEditor {
             playClickSound(1.2f);
         });
 
-        // "Fill inventory from this chest": one of the top icons, only when a real container is open.
+        // PULL items from the chest. Shift also pulls unfiltered items into free inventory space.
         this.fillButton = new ToolButtonWidget(
                 0,
                 0,
                 ModTextures.ICON_BACKPACK_FULL,
-                Text.translatable("tooltip.chestseparators.desc.fill_inventory").getString(),
-                this::requestFillFromOpenChest);
+                Text.translatable("tooltip.chestseparators.pull_from_chest").getString(),
+                () -> {
+                    long window = MinecraftClient.getInstance().getWindow().getHandle();
+                    boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                            || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+                    requestFillFromOpenChest(shift);
+                });
 
         // "Inventory presets" menu opener: a top icon available in any editor context.
         this.presetsButton = new ToolButtonWidget(
@@ -226,6 +234,7 @@ public class ChestSeparatorsEditor {
                 ModTextures.ICON_SAVE,
                 Text.translatable("tooltip.chestseparators.desc.presets").getString(),
                 () -> {
+                    presetsMenu.resetView();
                     boolean openingSame = session.isPresetsMenuOpen && !session.presetsMenuChestMode;
                     session.presetsMenuChestMode = false;
                     session.isPresetsMenuOpen = !openingSame;
@@ -244,6 +253,7 @@ public class ChestSeparatorsEditor {
                 ModTextures.ICON_COPY,
                 Text.translatable("tooltip.chestseparators.desc.chest_presets").getString(),
                 () -> {
+                    presetsMenu.resetView();
                     boolean openingSame = session.isPresetsMenuOpen && session.presetsMenuChestMode;
                     session.presetsMenuChestMode = true;
                     session.isPresetsMenuOpen = !openingSame;
@@ -260,8 +270,12 @@ public class ChestSeparatorsEditor {
             this.fillButton, this.presetsButton, this.chestPresetsButton
         };
         net.minecraft.util.Identifier[] toolbarIcons = {
-            ModTextures.ICON_SM_EDIT, ModTextures.ICON_SM_FILTER, ModTextures.ICON_SM_DEPOSIT,
-            ModTextures.ICON_SM_FILL, ModTextures.ICON_SM_INV_PRESETS, ModTextures.ICON_SM_CHEST_PRESETS
+            // Edit-layout reuses the combo icon (crossed pincel + brocha) — same meaning, same glyph.
+            // Deposit = PUSH items into the chest = UP arrow (ICON_SM_FILL); fill = PULL items out of the
+            // chest into your inventory = DOWN arrow (ICON_SM_DEPOSIT). Matches the chest-above/inventory-
+            // below mental model.
+            ModTextures.ICON_SM_COMBO, ModTextures.ICON_SM_FILTER, ModTextures.ICON_SM_FILL,
+            ModTextures.ICON_SM_DEPOSIT, ModTextures.ICON_SM_INV_PRESETS, ModTextures.ICON_SM_CHEST_PRESETS
         };
         for (int i = 0; i < toolbarBtns.length; i++) {
             toolbarBtns[i].baseIcon = toolbarIcons[i];
@@ -278,14 +292,15 @@ public class ChestSeparatorsEditor {
         MinecraftClient client = MinecraftClient.getInstance();
 
         if (client.world != null) {
-            net.minecraft.resource.featuretoggle.FeatureSet features = client.world.getEnabledFeatures();
-
-            // Force a full rebuild of every creative tab for a NON-operator context. This fixes two things:
-            //  - completeness: the search group is otherwise built lazily and can be partial on first open;
-            //  - correctness: operator-only items (bedrock, spawners, command blocks, ...) stay excluded,
-            //    so "Allow All" only adds the same items the list actually shows.
-            ItemGroups.updateDisplayContext(features, false, client.world.getRegistryManager());
-
+            // Read the survival item set from the already-built creative search group.
+            //
+            // We must NOT call ItemGroups.updateDisplayContext here. That rebuilds the GLOBAL creative
+            // display context, and because we do not also reload the vanilla creative SearchManager index,
+            // it corrupts that index so the creative-inventory search returns zero results for every query.
+            // The display context is shared across all screens, so calling it when opening ANY container
+            // (a chest, a barrel, the inventory...) would break creative search for the rest of the session.
+            // Reading getDisplayStacks() below does not rebuild anything; the context is already populated by
+            // vanilla on world join / resource reload.
             ItemGroup searchGroup = ItemGroups.getSearchGroup();
             if (searchGroup != null) {
                 for (ItemStack stack : searchGroup.getDisplayStacks()) {
@@ -293,6 +308,15 @@ public class ChestSeparatorsEditor {
                     if (item != Items.AIR && !isNonSurvivalItem(item) && !session.allGameItems.contains(item)) {
                         session.allGameItems.add(item);
                     }
+                }
+            }
+
+            // Fallback: if the creative display context has not been built yet (rare — e.g. first open before
+            // vanilla populated it), derive the set straight from the item registry so the filter editor is
+            // never empty.
+            if (session.allGameItems.isEmpty()) {
+                for (Item item : net.minecraft.registry.Registries.ITEM) {
+                    if (item != Items.AIR && !isNonSurvivalItem(item)) session.allGameItems.add(item);
                 }
             }
         }
@@ -496,18 +520,67 @@ public class ChestSeparatorsEditor {
     }
 
     /**
+     * The real inventory index of a slot. In the creative inventory the visible slots are
+     * {@code CreativeSlot} wrappers whose {@code getIndex()} is the creative handler's slot ID (armor 5-8,
+     * hotbar 36-44, offhand 45), not the inventory index the server enforces by. Unwrapping to the
+     * underlying slot yields the same index the survival inventory and chests report, so editing from
+     * creative lands filters/layouts on the correct slot.
+     */
+    public static int realIndex(Slot slot) {
+        if (slot instanceof io.github.marcsanzdev.chestseparators.mixin.client.CreativeSlotAccessor wrapper) {
+            Slot inner = wrapper.chestseparators$getWrappedSlot();
+            if (inner != null) return inner.getIndex();
+        }
+        return slot.getIndex();
+    }
+
+    /**
      * The working-map key for a slot. Player-inventory slots are offset into their own namespace so
      * chest and inventory data (which share raw slot indices) coexist while both are edited at once.
      */
     public static int slotKey(Slot slot) {
         return slot.inventory instanceof net.minecraft.entity.player.PlayerInventory
-                ? slot.getIndex() + ChestConfigManager.PLAYER_KEY_OFFSET
-                : slot.getIndex();
+                ? realIndex(slot) + ChestConfigManager.PLAYER_KEY_OFFSET
+                : realIndex(slot);
     }
 
     /** True if a slot belongs to the player inventory namespace (used for the mutual-exclusion dimming). */
     public static boolean isPlayerSlot(Slot slot) {
         return slot.inventory instanceof net.minecraft.entity.player.PlayerInventory;
+    }
+
+    /** Screens the editor treats as the player-inventory context: survival inventory and creative. */
+    private static boolean isInventoryContextScreen(
+            net.minecraft.client.gui.screen.ingame.HandledScreen<?> s) {
+        return s instanceof InventoryScreen
+                || s instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+    }
+
+    // While the editor is active, the creative screen's own tab switching is blocked (the tab bar must not
+    // react to clicks). This flag lets the mod's OWN switch below through that block.
+    public static boolean allowCreativeTabSwitch = false;
+
+    /**
+     * When a toolbar button is used on the creative screen while it is NOT on the inventory tab, jump to
+     * that tab so the player's real inventory is present to interact with. No-op otherwise.
+     */
+    public void ensureCreativeInventoryTab() {
+        if (this.screen instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen cis
+                && !cis.isInventoryTabSelected()) {
+            net.minecraft.item.ItemGroup inv = net.minecraft.registry.Registries.ITEM_GROUP.stream()
+                    .filter(g -> g.getType() == net.minecraft.item.ItemGroup.Type.INVENTORY)
+                    .findFirst()
+                    .orElse(null);
+            if (inv != null) {
+                allowCreativeTabSwitch = true;
+                try {
+                    ((io.github.marcsanzdev.chestseparators.mixin.client.CreativeInventoryScreenAccessor) cis)
+                            .chestseparators$setSelectedTab(inv);
+                } finally {
+                    allowCreativeTabSwitch = false;
+                }
+            }
+        }
     }
 
     /** Finds the slot for a working-map key (the inverse of {@link #slotKey}); null if none matches. */
@@ -516,6 +589,34 @@ public class ChestSeparatorsEditor {
             if (slotKey(s) == key) return s;
         }
         return null;
+    }
+
+    /**
+     * The slots whose on-screen 16×16 box intersects the rectangle dragged from {@code start} to
+     * {@code current}, restricted to the namespace (chest vs. player inventory) that {@code start} belongs
+     * to. Uses real slot positions ({@code slot.x}/{@code slot.y}), NOT raw indices: the hotbar is drawn
+     * BELOW the inventory rows even though its indices (0-8) come first, so {@code index / 9} row math
+     * wrongly treats the hotbar as the top row and over-selects the intervening rows when a drag crosses
+     * between them. Visual-box intersection selects exactly the cells the cursor swept over.
+     */
+    public java.util.List<Slot> slotsInDragBox(Slot start, Slot current) {
+        java.util.List<Slot> out = new java.util.ArrayList<>();
+        if (start == null || current == null) return out;
+        boolean playerNs = isPlayerSlot(start);
+
+        // Every slot the rectangle touches is selected, armor and offhand included: they are ordinary
+        // targets for a filter, and skipping them meant a drag reaching one simply did nothing there.
+        // Membership is decided purely by whether the slot's cell overlaps the swept rectangle.
+        int minX = Math.min(start.x, current.x);
+        int maxX = Math.max(start.x, current.x) + 16;
+        int minY = Math.min(start.y, current.y);
+        int maxY = Math.max(start.y, current.y) + 16;
+        for (Slot s : accessor.getHandler().slots) {
+            if (!isEditableSlot(s)) continue;
+            if (isPlayerSlot(s) != playerNs) continue;
+            if (s.x < maxX && s.x + 16 > minX && s.y < maxY && s.y + 16 > minY) out.add(s);
+        }
+        return out;
     }
 
     /**
@@ -533,11 +634,19 @@ public class ChestSeparatorsEditor {
         filterConstraintSlots.clear();
         filterHasUnrestrictedSlot = false;
         ItemStack sentinel = new ItemStack(Items.STONE);
-        for (int key : session.selectedSlots) {
-            Slot s = slotForKey(key);
-            if (s == null) continue;
-            if (s.canInsert(sentinel)) filterHasUnrestrictedSlot = true;
-            else filterConstraintSlots.add(s);
+        // Measure each slot's VANILLA restriction (armor checks), not our own whitelist enforcement —
+        // otherwise, when editing an existing filter, its saved whitelist blocks the sentinel and the
+        // slot is wrongly flagged as restricted, hiding all game items from the picker.
+        io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.set(true);
+        try {
+            for (int key : session.selectedSlots) {
+                Slot s = slotForKey(key);
+                if (s == null) continue;
+                if (s.canInsert(sentinel)) filterHasUnrestrictedSlot = true;
+                else filterConstraintSlots.add(s);
+            }
+        } finally {
+            io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.set(false);
         }
         if (filterConstraintSlots.isEmpty()) filterHasUnrestrictedSlot = true;
     }
@@ -550,8 +659,13 @@ public class ChestSeparatorsEditor {
     public boolean isItemAllowedForFilter(Item item) {
         if (filterHasUnrestrictedSlot) return true;
         ItemStack stack = new ItemStack(item);
-        for (Slot s : filterConstraintSlots) {
-            if (s.canInsert(stack)) return true;
+        io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.set(true);
+        try {
+            for (Slot s : filterConstraintSlots) {
+                if (s.canInsert(stack)) return true;
+            }
+        } finally {
+            io.github.marcsanzdev.chestseparators.util.ClickTracker.BYPASS_ENFORCEMENT.set(false);
         }
         return false;
     }
@@ -620,7 +734,6 @@ public class ChestSeparatorsEditor {
         session.ruleManual = GlobalChestConfig.instance.defaultRuleManual;
         session.ruleShift = GlobalChestConfig.instance.defaultRuleShift;
         session.ruleHopper = GlobalChestConfig.instance.defaultRuleHopper;
-        session.filterTargetCount = 0;
         session.gridScrollY = 0f;
         session.listScrollY = 0f;
 
@@ -647,7 +760,6 @@ public class ChestSeparatorsEditor {
                             session.ruleManual = entry.getValue().allowManual();
                             session.ruleShift = entry.getValue().allowShift();
                             session.ruleHopper = entry.getValue().allowHopper();
-                            session.filterTargetCount = entry.getValue().targetCount();
                             loadedRules = true;
                         }
                     }
@@ -657,6 +769,12 @@ public class ChestSeparatorsEditor {
         recomputeFilterConstraints();
         resetToDefaultCreativeTab();
         updateWhitelistSearchCache();
+
+        // Rebuild the filter screen's widgets now that the container type is fully known. The initial
+        // build happens during the editor's init(), BEFORE loadConfigForCurrentTarget() determines
+        // isEnderChest — so without this the Ender Chest would keep its Hopper Insert button (which must be
+        // dropped) and the rule buttons would not be re-centred.
+        this.screenEditFilter.init();
     }
 
     public void saveCurrentGroup() {
@@ -671,17 +789,16 @@ public class ChestSeparatorsEditor {
                             session.ruleManual,
                             session.ruleShift,
                             session.ruleHopper,
-                            session.filterTargetCount);
+                            0);
             whitelists.put(slotIndex, wl);
         }
         ChestConfigManager.getInstance().setCurrentWhitelists(whitelists);
 
         saveSmart();
         syncClientInventoryWhitelists(whitelists);
-        // Ender Chest and entity chests store filters locally only; only real block chests/shulkers sync to server.
-        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
-            sendWhitelistToServer();
-        }
+        // sendWhitelistToServer() self-guards: it forwards block chests/shulkers and chest minecarts, and
+        // skips ender chests, the player inventory, and other entity containers (all local-only).
+        sendWhitelistToServer();
     }
 
     public void deleteCurrentGroup() {
@@ -696,13 +813,35 @@ public class ChestSeparatorsEditor {
 
             saveSmart();
             syncClientInventoryWhitelists(whitelists);
-            if (!session.isEnderChest && !session.isEntityChest) {
-                sendWhitelistToServer();
-            }
+            sendWhitelistToServer();
         }
     }
 
+    /**
+     * Pushes the container's own filters to the server. Self-guarding: it only sends for targets the
+     * server can actually enforce and persist — real block chests/shulkers, and chest/hopper minecarts
+     * (synced by entity UUID). Ender chests, the player inventory, and other entity containers (chest
+     * boats, animals) stay local-only and are skipped here.
+     */
     public void sendWhitelistToServer() {
+        if (session.isEnderChest || session.isPlayerInventory) return;
+
+        var chestOnly = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
+                .chestOnlyWhitelists();
+
+        if (session.isMinecartChest && session.currentEntityUUID != null) {
+            if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
+                    io.github.marcsanzdev.chestseparators.network.EntityWhitelistPayload.ID)) {
+                net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                        new io.github.marcsanzdev.chestseparators.network.EntityWhitelistPayload(
+                                session.currentEntityUUID, chestOnly));
+            }
+            return;
+        }
+
+        // Any other entity container (chest boat, animals) is local-only.
+        if (session.isEntityChest) return;
+
         if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
                 io.github.marcsanzdev.chestseparators.network.WhitelistPayload.ID)) {
             BlockPos posToSend = session.currentChestPos != null ? session.currentChestPos : BlockPos.ORIGIN;
@@ -710,8 +849,7 @@ public class ChestSeparatorsEditor {
                     new io.github.marcsanzdev.chestseparators.network.WhitelistPayload(
                             posToSend,
                             // Only the chest's own filters; inventory filters (offset keys) are local.
-                            io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
-                                    .chestOnlyWhitelists()));
+                            chestOnly));
         }
     }
 
@@ -743,7 +881,12 @@ public class ChestSeparatorsEditor {
     }
 
     /** Asks the server to fill the inventory from the container currently open (the top fill icon). */
-    public void requestFillFromOpenChest() {
+    /**
+     * Pulls items from the open container into the inventory. Normally only items the inventory filters
+     * want (up to each target). With {@code includeEmpty} (Shift), also pulls the rest of the container's
+     * items into any free inventory space — the slots that have no filter.
+     */
+    public void requestFillFromOpenChest(boolean includeEmpty) {
         playClickSound(1.0f);
         net.minecraft.util.math.BlockPos pos = session.currentChestPos != null
                 ? session.currentChestPos
@@ -752,8 +895,11 @@ public class ChestSeparatorsEditor {
                         : net.minecraft.util.math.BlockPos.ORIGIN);
         if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
                 io.github.marcsanzdev.chestseparators.network.FillFromChestPayload.ID)) {
+            boolean lockHotbar = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance == null
+                    || io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.lockHotbarOnReorder;
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                    new io.github.marcsanzdev.chestseparators.network.FillFromChestPayload(pos));
+                    new io.github.marcsanzdev.chestseparators.network.FillFromChestPayload(
+                            pos, includeEmpty, lockHotbar));
         }
     }
 
@@ -778,28 +924,45 @@ public class ChestSeparatorsEditor {
         playClickSound(1.2f);
     }
 
-    /** Loads chest preset {@code index} (1-based) onto the open chest, or reports it is empty. */
+    /** The open container's slot count (27 vs 54), used to pick the matching chest-preset set. */
+    public int chestPresetSize() {
+        return geometry.getNamespaceSlotCount(false);
+    }
+
+    /** Loads chest preset {@code index} (1-based) of the open container's size, or reports it is empty. */
     public void loadChestPresetSlot(int index) {
         ChestConfigManager manager = ChestConfigManager.getInstance();
-        if (!manager.loadChestPreset(index)) {
+        if (!manager.loadChestPreset(chestPresetSize(), index)) {
             showStatus(Text.translatable("message.chestseparators.preset_empty", index), Formatting.RED);
             playClickSound(0.6f);
             return;
         }
         saveSmart();
-        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
-            sendWhitelistToServer();
-        }
+        sendWhitelistToServer();
         syncClientInventoryWhitelists(manager.getCurrentWhitelists());
         showStatus(Text.translatable("message.chestseparators.preset_loaded", index), Formatting.GREEN);
         playClickSound(1.1f);
     }
 
-    /** Saves the open chest's current layout + filters into chest preset {@code index} (1-based). */
+    /** Saves the open chest's current layout + filters into its size's chest preset {@code index}. */
     public void saveChestPresetSlot(int index) {
-        ChestConfigManager.getInstance().saveChestPreset(index);
+        ChestConfigManager.getInstance().saveChestPreset(chestPresetSize(), index);
         showStatus(Text.translatable("message.chestseparators.preset_saved", index), Formatting.GREEN);
         playClickSound(1.2f);
+    }
+
+    /** Deletes inventory preset {@code index} (1-based). */
+    public void deleteInventoryPresetSlot(int index) {
+        ChestConfigManager.getInstance().deleteInventoryPreset(index);
+        showStatus(Text.translatable("message.chestseparators.preset_deleted", index), Formatting.RED);
+        playClickSound(0.8f);
+    }
+
+    /** Deletes chest preset {@code index} (1-based) of the open container's size. */
+    public void deleteChestPresetSlot(int index) {
+        ChestConfigManager.getInstance().deleteChestPreset(chestPresetSize(), index);
+        showStatus(Text.translatable("message.chestseparators.preset_deleted", index), Formatting.RED);
+        playClickSound(0.8f);
     }
 
     public void triggerActionAnimation(int actionId) {
@@ -819,9 +982,7 @@ public class ChestSeparatorsEditor {
             return;
         }
         saveSmart();
-        if (!session.isEnderChest && !session.isEntityChest && !session.isPlayerInventory) {
-            sendWhitelistToServer();
-        }
+        sendWhitelistToServer();
         syncClientInventoryWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
 
         // Blink the slots that changed, colored by the kind of change.
@@ -967,6 +1128,11 @@ public class ChestSeparatorsEditor {
         if (session.isColorPickerOpen && screenColorPicker.charTyped(input)) return true;
         if (this.inputHandler != null) return this.inputHandler.charTyped(input);
         return false;
+    }
+
+    /** Runs the editor's click handling directly (used by the creative-inventory mixin to block tabs). */
+    public void handleEditorClick(double mouseX, double mouseY, int button) {
+        if (this.inputHandler != null) this.inputHandler.handleClick(mouseX, mouseY, button);
     }
 
     public List<String> extractItemsFromSelection() {
@@ -1276,6 +1442,15 @@ public class ChestSeparatorsEditor {
             this.suspendDepositPreview = true;
             this.previewSourceRemaining.clear();
             this.previewTargetIncoming.clear();
+
+            // Ask the server to re-sort the container's filtered groups by priority order, so a
+            // just-deposited higher-priority item ends up ahead of lower-priority ones already stored
+            // (the deposit above only fills slots; it never relocates existing stacks).
+            if (net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.canSend(
+                    io.github.marcsanzdev.chestseparators.network.SortOpenFiltersPayload.ID)) {
+                net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                        new io.github.marcsanzdev.chestseparators.network.SortOpenFiltersPayload());
+            }
         } else {
             showStatus(
                     net.minecraft.text.Text.translatable("message.chestseparators.deposit_failed"),
@@ -1290,6 +1465,7 @@ public class ChestSeparatorsEditor {
             net.minecraft.item.ItemStack stack,
             boolean checkExisting,
             boolean unfilteredOnly) {
+        List<net.minecraft.screen.slot.Slot> collected = new ArrayList<>();
         for (net.minecraft.screen.slot.Slot chestSlot : accessor.getHandler().slots) {
             if (chestSlot.inventory instanceof net.minecraft.entity.player.PlayerInventory) continue;
             if (list.contains(chestSlot)) continue;
@@ -1313,8 +1489,176 @@ public class ChestSeparatorsEditor {
             } else {
                 if (chestSlot.hasStack()) continue;
             }
-            list.add(chestSlot);
+            collected.add(chestSlot);
         }
+
+        // Empty filtered slots are filled in the filter's own order: the item first in the list heads for
+        // the group's first slot, and so on. Ties (and every other pass) keep the handler's slot order.
+        if (!checkExisting && !unfilteredOnly) {
+            collected.sort(java.util.Comparator.comparingInt(s ->
+                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                            whitelists, s.getIndex(), itemId)));
+        }
+        list.addAll(collected);
+    }
+
+    /**
+     * Client-side simulation of the Pull button for its hover preview: marks each container slot whose
+     * item would be pulled into the inventory (via the inventory filters' keep-limits, or — with Shift —
+     * any unfiltered item), storing the amount that would remain afterwards in {@link #previewSourceRemaining}.
+     * Mirrors {@code performFillFromOpenContainer} on the server.
+     */
+    public void updateFillPreview(boolean shift) {
+        previewSourceRemaining.clear();
+        previewTargetIncoming.clear();
+        if (accessor.getHandler() == null || net.minecraft.client.MinecraftClient.getInstance().player == null) return;
+
+        java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters =
+                ChestConfigManager.getInstance().getPlayerInventoryFilters();
+
+        // Player MAIN inventory slots, in handler order, so we can simulate where each pulled item lands.
+        java.util.List<net.minecraft.screen.slot.Slot> playerSlots = new java.util.ArrayList<>();
+        for (net.minecraft.screen.slot.Slot s : accessor.getHandler().slots) {
+            if (s.inventory instanceof net.minecraft.entity.player.PlayerInventory) playerSlots.add(s);
+        }
+
+        for (net.minecraft.screen.slot.Slot chestSlot : accessor.getHandler().slots) {
+            if (chestSlot.inventory instanceof net.minecraft.entity.player.PlayerInventory || !chestSlot.hasStack())
+                continue;
+            net.minecraft.item.ItemStack stack = chestSlot.getStack();
+            String itemId = net.minecraft.registry.Registries.ITEM.getId(stack.getItem()).toString();
+
+            // Mirrors performFillFromOpenContainer: pull items the inventory filters list; with Shift, pull
+            // everything into free space.
+            if (!shift && !inventoryListsItemClient(invFilters, itemId)) continue;
+
+            int placed = placeIntoPlayerPreview(playerSlots, invFilters, stack, itemId, stack.getCount());
+            if (placed <= 0) continue; // inventory full — nothing actually moves from this slot
+            previewSourceRemaining.put(chestSlot.id, stack.getCount() - placed);
+        }
+
+        // Mirror the server's post-pull inventory group re-sort (honouring the hotbar lock) so the preview
+        // shows the same final layout the real pull will produce.
+        boolean lockHotbar = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance == null
+                || io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.lockHotbarOnReorder;
+        int firstSortable = lockHotbar ? 9 : 0;
+        java.util.List<net.minecraft.screen.slot.Slot> mainSlots = new java.util.ArrayList<>();
+        for (net.minecraft.screen.slot.Slot s : playerSlots) {
+            int idx = realIndex(s);
+            if (idx >= firstSortable && idx < net.minecraft.entity.player.PlayerInventory.MAIN_SIZE) {
+                mainSlots.add(s);
+            }
+        }
+        applyPreviewReorder(mainSlots, invFilters, ChestSeparatorsEditor::realIndex);
+    }
+
+    /**
+     * Simulates PlayerInventory#insertStack (with the mod's inventory-filter routing) for the pull
+     * preview: tops up matching partial stacks first, then places into empty slots honouring the filters —
+     * an item prefers an empty slot whose active filter lists it, and never lands in a slot reserved for a
+     * different item — exactly as {@code PlayerInventoryFilterMixin#getEmptySlot} does at pull time.
+     * Accumulates the projected incoming amount per player slot in {@link #previewTargetIncoming}.
+     * Returns how many of {@code amount} actually fit.
+     */
+    private int placeIntoPlayerPreview(
+            java.util.List<net.minecraft.screen.slot.Slot> playerSlots,
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
+            net.minecraft.item.ItemStack stack,
+            String itemId,
+            int amount) {
+        int maxC = stack.getMaxCount();
+        int left = amount;
+
+        // Pass 1: top up existing matching stacks (real contents or already-projected incoming).
+        for (net.minecraft.screen.slot.Slot ps : playerSlots) {
+            if (left <= 0) break;
+            net.minecraft.item.ItemStack real = ps.getStack();
+            net.minecraft.item.ItemStack proj = previewTargetIncoming.get(ps.id);
+            int current;
+            if (!real.isEmpty()) {
+                if (!net.minecraft.item.ItemStack.areItemsAndComponentsEqual(stack, real)) continue;
+                current = real.getCount() + (proj != null ? proj.getCount() : 0);
+            } else if (proj != null) {
+                if (!net.minecraft.item.ItemStack.areItemsAndComponentsEqual(stack, proj)) continue;
+                current = proj.getCount();
+            } else {
+                continue; // empty slot handled below
+            }
+            int canAdd = maxC - current;
+            if (canAdd <= 0) continue;
+            int add = Math.min(left, canAdd);
+            if (proj == null) previewTargetIncoming.put(ps.id, stack.copyWithCount(add));
+            else proj.setCount(proj.getCount() + add);
+            left -= add;
+        }
+
+        // Pass 2: empty slots, one at a time via the filter-aware getEmptySlot equivalent.
+        while (left > 0) {
+            net.minecraft.screen.slot.Slot target = findPreviewEmptySlot(playerSlots, invFilters, itemId);
+            if (target == null) break;
+            int add = Math.min(left, maxC);
+            previewTargetIncoming.put(target.id, stack.copyWithCount(add));
+            left -= add;
+        }
+        return amount - left;
+    }
+
+    /** Mirror of PlayerInventoryFilterMixin#getEmptySlot: preferred filtered empty slot, else first unreserved. */
+    private net.minecraft.screen.slot.Slot findPreviewEmptySlot(
+            java.util.List<net.minecraft.screen.slot.Slot> playerSlots,
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
+            String itemId) {
+        // Preferred: the empty slot whose active filter lists this item and whose place in the filter's
+        // order best fits it (item first in the list -> group's first slot, and so on; ties keep the
+        // lowest index). Mirrors the same slotPreference choice getEmptySlot makes at pull time.
+        net.minecraft.screen.slot.Slot best = null;
+        int bestPreference = Integer.MAX_VALUE;
+        for (net.minecraft.screen.slot.Slot ps : playerSlots) {
+            if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.id)) continue;
+            io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
+                    invFilters != null ? invFilters.get(ps.getIndex()) : null;
+            if (wl == null || !isSlotFilterActive(wl) || !wl.allowedItems().contains(itemId)) continue;
+            int preference = io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                    invFilters, ps.getIndex(), itemId);
+            if (preference < bestPreference) {
+                bestPreference = preference;
+                best = ps;
+            }
+        }
+        if (best != null) return best;
+        // Otherwise the first empty slot not reserved for a DIFFERENT item.
+        for (net.minecraft.screen.slot.Slot ps : playerSlots) {
+            if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.id)) continue;
+            io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
+                    invFilters != null ? invFilters.get(ps.getIndex()) : null;
+            boolean reservedForOther = wl != null && isSlotFilterActive(wl) && !wl.allowedItems().contains(itemId);
+            if (!reservedForOther) return ps;
+        }
+        return null;
+    }
+
+    private static boolean isSlotFilterActive(io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl) {
+        return wl.allowHopper() || wl.allowManual() || wl.allowShift();
+    }
+
+    /** Client mirror of the server's inventoryListsItem: does any inventory filter list this item? */
+    private boolean inventoryListsItemClient(
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters, String itemId) {
+        if (invFilters == null) return false;
+        for (io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl : invFilters.values()) {
+            if (wl.allowedItems().contains(itemId)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * True when a push/pull preview is active and this slot is part of it — the vanilla item render is
+     * then suppressed for that slot so the preview draws a clean ghost with no real item (and its count)
+     * bleeding through underneath.
+     */
+    public boolean isPreviewSlot(net.minecraft.screen.slot.Slot slot) {
+        if (!isHoveringDeposit && !isHoveringFill) return false;
+        return previewSourceRemaining.containsKey(slot.id) || previewTargetIncoming.containsKey(slot.id);
     }
 
     public void updateDepositPreview(boolean shift) {
@@ -1352,6 +1696,14 @@ public class ChestSeparatorsEditor {
                 }
             }
         }
+
+        // Mirror the server's post-push per-group priority re-sort so the ghost preview lands items in the
+        // exact slots the real deposit will after it re-organizes the chest.
+        java.util.List<net.minecraft.screen.slot.Slot> chestSlots = new java.util.ArrayList<>();
+        for (net.minecraft.screen.slot.Slot s : accessor.getHandler().slots) {
+            if (!(s.inventory instanceof net.minecraft.entity.player.PlayerInventory)) chestSlots.add(s);
+        }
+        applyPreviewReorder(chestSlots, whitelists, net.minecraft.screen.slot.Slot::getIndex);
     }
 
     private int simulateDepositPass(
@@ -1361,8 +1713,21 @@ public class ChestSeparatorsEditor {
             int count,
             boolean checkExisting,
             boolean unfilteredOnly) {
+        // Empty filtered slots are visited in the filter's order, exactly as executeDeposit fills them, so
+        // the ghost preview lands items in the same slots the real deposit will.
+        List<net.minecraft.screen.slot.Slot> orderedSlots = new ArrayList<>();
         for (net.minecraft.screen.slot.Slot chestSlot : accessor.getHandler().slots) {
-            if (chestSlot.inventory instanceof net.minecraft.entity.player.PlayerInventory || count <= 0) continue;
+            if (chestSlot.inventory instanceof net.minecraft.entity.player.PlayerInventory) continue;
+            orderedSlots.add(chestSlot);
+        }
+        if (!checkExisting && !unfilteredOnly) {
+            orderedSlots.sort(java.util.Comparator.comparingInt(s ->
+                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                            whitelists, s.getIndex(), itemId)));
+        }
+
+        for (net.minecraft.screen.slot.Slot chestSlot : orderedSlots) {
+            if (count <= 0) break;
 
             boolean hasFilter = whitelists != null && whitelists.containsKey(chestSlot.getIndex());
             boolean matchesFilter = hasFilter
@@ -1412,5 +1777,78 @@ public class ChestSeparatorsEditor {
             }
         }
         return count;
+    }
+
+    /**
+     * Rewrites {@link #previewTargetIncoming} so the preview shows the SAME final arrangement the real
+     * push/pull produces — including the server's per-group priority re-sort. Programming rule of this mod:
+     * a preview must ALWAYS render exactly what the action will do, so any change to the placement/sort
+     * logic must be mirrored here. Two steps: (1) turn every projected entry from an "incoming delta" into
+     * the slot's FINAL full stack, then (2) for each filtered group among {@code destSlots}, re-lay the
+     * group's final stacks in priority order packed to the first slot — mirroring
+     * {@code ChestSeparatorsMain#reorderFilteredGroups}. Slots that end unchanged are dropped from the map
+     * (so they render normally); slots emptied by the sort are stored as an empty stack.
+     *
+     * @param destSlots  the slots the action re-sorts (chest slots for push; player MAIN slots, minus the
+     *                   hotbar when locked, for pull)
+     * @param whitelists filters keyed the way {@code indexOf} keys the slots
+     * @param indexOf    maps a slot to its whitelist key (raw index for a chest, realIndex for the inventory)
+     */
+    private void applyPreviewReorder(
+            java.util.List<net.minecraft.screen.slot.Slot> destSlots,
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists,
+            java.util.function.ToIntFunction<net.minecraft.screen.slot.Slot> indexOf) {
+        if (whitelists == null || whitelists.isEmpty() || previewTargetIncoming.isEmpty()) return;
+
+        // Step 1: incoming delta -> final full stack, for every currently projected slot.
+        for (Integer slotId : new java.util.ArrayList<>(previewTargetIncoming.keySet())) {
+            net.minecraft.screen.slot.Slot s = accessor.getHandler().getSlot(slotId);
+            net.minecraft.item.ItemStack inc = previewTargetIncoming.get(slotId);
+            net.minecraft.item.ItemStack fin = inc.copy();
+            if (!s.getStack().isEmpty()
+                    && net.minecraft.item.ItemStack.areItemsAndComponentsEqual(s.getStack(), inc)) {
+                fin.setCount(s.getStack().getCount() + inc.getCount());
+            }
+            previewTargetIncoming.put(slotId, fin);
+        }
+
+        // Step 2: re-sort each filtered group by priority order, packed to its first slot.
+        java.util.Map<java.util.UUID, java.util.List<net.minecraft.screen.slot.Slot>> groups =
+                new java.util.LinkedHashMap<>();
+        for (net.minecraft.screen.slot.Slot s : destSlots) {
+            io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = whitelists.get(indexOf.applyAsInt(s));
+            if (wl == null || wl.groupId() == null) continue;
+            groups.computeIfAbsent(wl.groupId(), g -> new java.util.ArrayList<>()).add(s);
+        }
+        for (java.util.List<net.minecraft.screen.slot.Slot> gslots : groups.values()) {
+            if (gslots.size() < 2) continue;
+            gslots.sort(java.util.Comparator.comparingInt(indexOf));
+            java.util.List<String> order =
+                    whitelists.get(indexOf.applyAsInt(gslots.get(0))).allowedItems();
+
+            // Final content of each group slot: the projected override if present, else its real stack.
+            java.util.List<net.minecraft.item.ItemStack> finals = new java.util.ArrayList<>();
+            for (net.minecraft.screen.slot.Slot s : gslots) {
+                net.minecraft.item.ItemStack fin =
+                        previewTargetIncoming.containsKey(s.id) ? previewTargetIncoming.get(s.id) : s.getStack();
+                if (!fin.isEmpty()) finals.add(fin);
+            }
+            finals.sort(java.util.Comparator.comparingInt(st -> {
+                int r = order.indexOf(
+                        net.minecraft.registry.Registries.ITEM.getId(st.getItem()).toString());
+                return r < 0 ? Integer.MAX_VALUE : r;
+            }));
+
+            for (int i = 0; i < gslots.size(); i++) {
+                net.minecraft.screen.slot.Slot s = gslots.get(i);
+                net.minecraft.item.ItemStack fin =
+                        i < finals.size() ? finals.get(i) : net.minecraft.item.ItemStack.EMPTY;
+                net.minecraft.item.ItemStack real = s.getStack();
+                boolean unchanged = net.minecraft.item.ItemStack.areItemsAndComponentsEqual(fin, real)
+                        && fin.getCount() == real.getCount();
+                if (unchanged) previewTargetIncoming.remove(s.id);
+                else previewTargetIncoming.put(s.id, fin);
+            }
+        }
     }
 }
