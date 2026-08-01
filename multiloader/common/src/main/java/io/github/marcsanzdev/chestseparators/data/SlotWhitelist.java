@@ -2,7 +2,9 @@ package io.github.marcsanzdev.chestseparators.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
@@ -53,4 +55,25 @@ public record SlotWhitelist(
             ByteBufCodecs.VAR_INT,
             SlotWhitelist::targetCount,
             SlotWhitelist::new);
+
+    // Codec for a whole slot->filter map. The map is keyed by int slot index, but NBT/JSON map keys must
+    // be strings, so this stores string keys and converts back on load. Reused by the data component and
+    // by the block-entity NBT persistence so both share one on-disk shape.
+    public static final Codec<Map<Integer, SlotWhitelist>> MAP_CODEC = Codec.unboundedMap(Codec.STRING, CODEC)
+            .xmap(
+                    stringMap -> {
+                        Map<Integer, SlotWhitelist> intMap = new HashMap<>();
+                        stringMap.forEach((k, v) -> {
+                            try {
+                                intMap.put(Integer.parseInt(k), v);
+                            } catch (NumberFormatException ignored) {
+                            }
+                        });
+                        return intMap;
+                    },
+                    intMap -> {
+                        Map<String, SlotWhitelist> stringMap = new HashMap<>();
+                        intMap.forEach((k, v) -> stringMap.put(String.valueOf(k), v));
+                        return stringMap;
+                    });
 }

@@ -11,6 +11,9 @@
       "io.github.marcsanzdev.chestseparators.fabric.AbsoluteOrderFabric"
     ]
   },
+  "mixins": [
+    "absoluteorder.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.15.0",
     "minecraft": "*",

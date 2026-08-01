@@ -29,23 +29,7 @@ public final class ChestSeparatorsComponents {
     // preserves the filters when containers are broken or moved.
     public static final RegistrySupplier<DataComponentType<Map<Integer, SlotWhitelist>>> SLOT_WHITELISTS =
             COMPONENTS.register("slot_whitelists", () -> DataComponentType.<Map<Integer, SlotWhitelist>>builder()
-                    .persistent(Codec.unboundedMap(Codec.STRING, SlotWhitelist.CODEC)
-                            .xmap(
-                                    stringMap -> {
-                                        Map<Integer, SlotWhitelist> intMap = new java.util.HashMap<>();
-                                        stringMap.forEach((k, v) -> {
-                                            try {
-                                                intMap.put(Integer.parseInt(k), v);
-                                            } catch (NumberFormatException ignored) {
-                                            }
-                                        });
-                                        return intMap;
-                                    },
-                                    intMap -> {
-                                        Map<String, SlotWhitelist> stringMap = new java.util.HashMap<>();
-                                        intMap.forEach((k, v) -> stringMap.put(String.valueOf(k), v));
-                                        return stringMap;
-                                    }))
+                    .persistent(SlotWhitelist.MAP_CODEC)
                     .build());
 
     /** Flushes the deferred registrations. Called once from the common bootstrap. */
