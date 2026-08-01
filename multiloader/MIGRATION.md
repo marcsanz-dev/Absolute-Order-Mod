@@ -19,10 +19,24 @@ Validate behaviour against `../MOD_SPEC.md`; never change behaviour during the m
    auto-deposit, fill-from-open, whitelist persist/broadcast/expel, editor locks, reorder). Compiles.
    **Still TODO on the client side:** the S2C receivers (old `ModClientNetworking`) — they touch the
    editor/animator GUI classes, so they move with step 8.
-7. ⬜ Enforcement mixins (`ScreenHandlerWhitelistMixin`, `HopperBlockEntityMixin`, slot mixins…) — go in
-   the platform modules' mixins, targeting Mojmap classes; audit intermediary/SRG names per the guide.
-8. ⬜ Persistence (block data component / entity NBT) + presets/undo (client-local parts stay client).
-9. ⬜ GUI/overlay (era E5), then config screen + REI/EMI/JEI, plus the client S2C receivers.
+7. ✅ Persistence + component registration: `ChestSeparatorsComponents` (Architectury `DeferredRegister`),
+   and BE/entity NBT via the snapshot's ValueInput/ValueOutput + Codec (`SlotWhitelist.MAP_CODEC`). Done.
+8. ✅ ALL server-side mixins (22) migrated to `common/mixin`, in `absoluteorder.mixins.json`, wired into
+   fabric.mod.json + neoforge.mods.toml. Both jars build AND runtime-apply clean on NeoForge (0 failures).
+   Architectury transformer remaps common mixins to intermediary/SRG (no refmap needed). NO accesswidener
+   needed — used public accessors (`getSelectedSlot()`, `getNonEquipmentItems()`) and an `@Invoker`
+   (`AbstractContainerMenuAccessor`) for the one protected method (`moveItemStackTo`).
+   Persistence: BlockEntityComponentMixin, BlockEntityMixin, LootableContainerBlockEntityMixin,
+   ShulkerBoxBlockEntityMixin, BlockDropMixin, StorageMinecartEntityMixin, ChestBoatEntityMixin.
+   Enforcement: SlotWhitelistMixin, ScreenHandlerClickMixin, ScreenHandlerWhitelistMixin (@Redirect),
+   HopperBlockEntityMixin, DoubleInventoryMixin, SimpleInventoryMixin, ArmorSlotFilterMixin,
+   ArmorEquipFilterMixin, ScreenHandlerSwapFilterMixin, ServerPlayNetworkHandlerSwapFilterMixin,
+   PlayerInventoryFilterMixin, ShulkerBoxSlotMixin, ShulkerBoxBlockMixin, PlayerScreenHandlerFallbackMixin.
+   **Deferred to the GUI phase:** `WorldMixin` (client-only, depends on the not-yet-migrated
+   `ChestConfigManager`), and the two dropped S2C pushes (chest/minecart/shulker open) — re-add once the
+   client S2C receivers register the payload types.
+9. ⬜ GUI/overlay (era E5) + `ChestConfigManager`/presets/undo + client S2C receivers (`ModClientNetworking`)
+   + `WorldMixin` + config screen (ModMenu/Cloth integration) + REI/EMI/JEI.
 
 ## Architectury networking model (used by `ModNetworking`)
 - **C2S**: `NetworkManager.registerReceiver(Side.C2S, TYPE, CODEC, (payload, ctx) -> ctx.queue(...))` in
