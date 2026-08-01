@@ -6,7 +6,13 @@
   "mixins": [
     "BlockEntityComponentMixin",
     "BlockEntityMixin",
-    "LootableContainerBlockEntityMixin"
+    "DoubleInventoryMixin",
+    "HopperBlockEntityMixin",
+    "LootableContainerBlockEntityMixin",
+    "ScreenHandlerClickMixin",
+    "ScreenHandlerWhitelistMixin",
+    "SimpleInventoryMixin",
+    "SlotWhitelistMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -36,6 +36,13 @@ Validate behaviour against `../MOD_SPEC.md`; never change behaviour during the m
   main thread (replaces Fabric `context.server().execute`).
 - `PlayerLookup.tracking(world, pos)` → `serverLevel.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false)`.
 - Disconnect cleanup → `dev.architectury.event.events.common.PlayerEvent.PLAYER_QUIT.register(player -> ...)`.
+- **⚠ S2C send safety:** an S2C payload can only be sent once its TYPE is registered on the sending
+  physical side. On a client/integrated-server that means the client S2C RECEIVER must be registered
+  (that registration also registers the send-type). Until the client receivers are migrated, do NOT send
+  ANY S2C payload from the integrated server — `NetworkManager.canPlayerReceive` is unreliable on NeoForge
+  (returns true for a C2S-only-registered type) and `sendToPlayer` then NPEs with "codec is null". This is
+  why the `createMenu` whitelist-push was dropped; re-add it (or rely on WhitelistRequestPayload) only after
+  the client S2C receivers register `WhitelistPayload`/`EntityWhitelistPayload`/etc.
 
 ## ⚠ This 1.21.11 mapping is NOT stable Mojmap
 The mappings layer (`loom.mappings.1_21_11.layered+hash.40359`) reflects late-2025 Mojang snapshot renames.
