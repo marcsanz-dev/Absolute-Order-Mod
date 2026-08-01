@@ -9,6 +9,7 @@
     "BlockDropMixin",
     "BlockEntityComponentMixin",
     "BlockEntityMixin",
+    "ChestBoatEntityMixin",
     "DoubleInventoryMixin",
     "HopperBlockEntityMixin",
     "LootableContainerBlockEntityMixin",
@@ -17,8 +18,12 @@
     "ScreenHandlerSwapFilterMixin",
     "ScreenHandlerWhitelistMixin",
     "ServerPlayNetworkHandlerSwapFilterMixin",
+    "ShulkerBoxBlockEntityMixin",
+    "ShulkerBoxBlockMixin",
+    "ShulkerBoxSlotMixin",
     "SimpleInventoryMixin",
-    "SlotWhitelistMixin"
+    "SlotWhitelistMixin",
+    "StorageMinecartEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
