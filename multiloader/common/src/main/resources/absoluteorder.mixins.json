@@ -4,6 +4,7 @@
   "package": "io.github.marcsanzdev.chestseparators.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "AbstractContainerMenuAccessor",
     "ArmorEquipFilterMixin",
     "ArmorSlotFilterMixin",
     "BlockDropMixin",
@@ -14,6 +15,7 @@
     "HopperBlockEntityMixin",
     "LootableContainerBlockEntityMixin",
     "PlayerInventoryFilterMixin",
+    "PlayerScreenHandlerFallbackMixin",
     "ScreenHandlerClickMixin",
     "ScreenHandlerSwapFilterMixin",
     "ScreenHandlerWhitelistMixin",
