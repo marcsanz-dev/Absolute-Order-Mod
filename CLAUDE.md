@@ -155,7 +155,8 @@ new architectury config style (`shadowBundle` + `transformProduction<Platform>`,
 **Critical:** the NeoForge module needs a `neoforge/gradle.properties` with `loom.platform = neoforge`
 (without it, loom never registers the `neoForge` dependency method). Base config generated from
 `generate.architectury.dev` (max 1.21.10), loom bumped to 1.13-SNAPSHOT + versions to 1.21.11.
-**Follow-up:** Architectury API is commented out until its 1.21.11 version is pinned.
+**Architectury API** wired at `19.0.1` (the 1.21.11 build). Skeleton is closed; next is migrating the
+real mod code into `common` with Mojmap names.
 
 ## Known follow-ups
 
