@@ -82,10 +82,20 @@ public final class UiTheme {
         int bg = active ? 0xFF2C6BAE : (hover ? 0xFF2E2E3A : 0xFF23232C);
         int border = active ? ACCENT_BORDER : 0xFF3A3A45;
         if (active) {
-            if (attach != ATTACH_TOP) { y += 1; h -= 1; }
-            if (attach != ATTACH_BOTTOM) { h -= 1; }
-            if (attach != ATTACH_LEFT) { x += 1; w -= 1; }
-            if (attach != ATTACH_RIGHT) { w -= 1; }
+            if (attach != ATTACH_TOP) {
+                y += 1;
+                h -= 1;
+            }
+            if (attach != ATTACH_BOTTOM) {
+                h -= 1;
+            }
+            if (attach != ATTACH_LEFT) {
+                x += 1;
+                w -= 1;
+            }
+            if (attach != ATTACH_RIGHT) {
+                w -= 1;
+            }
         }
         // Corners are rounded only on the two OUTER corners (away from the attached edge); the two corners
         // touching the panel stay square so the tab meets it flush.
@@ -108,13 +118,23 @@ public final class UiTheme {
             c.fill((attach == ATTACH_LEFT) ? x : x + 2, y, (attach == ATTACH_RIGHT) ? x + w : x + w - 2, y + 1, border);
         }
         if (attach != ATTACH_BOTTOM) {
-            c.fill((attach == ATTACH_LEFT) ? x : x + 2, y + h - 1, (attach == ATTACH_RIGHT) ? x + w : x + w - 2, y + h, border);
+            c.fill(
+                    (attach == ATTACH_LEFT) ? x : x + 2,
+                    y + h - 1,
+                    (attach == ATTACH_RIGHT) ? x + w : x + w - 2,
+                    y + h,
+                    border);
         }
         if (attach != ATTACH_LEFT) {
             c.fill(x, (attach == ATTACH_TOP) ? y : y + 2, x + 1, (attach == ATTACH_BOTTOM) ? y + h : y + h - 2, border);
         }
         if (attach != ATTACH_RIGHT) {
-            c.fill(x + w - 1, (attach == ATTACH_TOP) ? y : y + 2, x + w, (attach == ATTACH_BOTTOM) ? y + h : y + h - 2, border);
+            c.fill(
+                    x + w - 1,
+                    (attach == ATTACH_TOP) ? y : y + 2,
+                    x + w,
+                    (attach == ATTACH_BOTTOM) ? y + h : y + h - 2,
+                    border);
         }
         // rounded outer-corner pixels
         if (rTL) c.fill(x + 1, y + 1, x + 2, y + 2, border);

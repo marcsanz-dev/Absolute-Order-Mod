@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importar extrets",
   "message.chestseparators.items_already_in_filter": "Els objectes ja són al filtre.",
   "message.chestseparators.no_new_items_found": "No s'han trobat objectes nous.",
-  "tooltip.chestseparators.desc.import_extracted": "Importar extrets",
+  "tooltip.chestseparators.desc.import_extracted": "Afegeix al filtre els objectes que hi ha a les caselles seleccionades.",
   "tooltip.chestseparators.desc.import_search": "Importar cerca",
   "button.chestseparators.allow_all": "Permetre-ho tot",
   "tooltip.chestseparators.desc.allow_all": "Afegeix tots els objectes del joc a la llista blanca",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Porta els objectes del cofre als filtres del teu inventari.\n§8Mantén [Shift] per portar també objectes sense filtre",
   "config.chestseparators.lock_hotbar_on_reorder": "Bloqueja la barra ràpida en autoordenar",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Quan un push o pull reordena el teu inventari, la barra ràpida es deixa intacta.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protegeix un objecte que puguis tenir a la mà. Desactivat: la barra ràpida també s'ordena."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protegeix un objecte que puguis tenir a la mà. Desactivat: la barra ràpida també s'ordena.",
+  "message.chestseparators.push_no_filters": "Aquest cofre encara no té filtres.",
+  "message.chestseparators.push_no_slot": "No hi ha lloc lliure als filtres.",
+  "message.chestseparators.pull_no_filters": "El teu inventari encara no té filtres.",
+  "message.chestseparators.pull_no_match": "Res d'aquí coincideix amb els teus filtres."
 }

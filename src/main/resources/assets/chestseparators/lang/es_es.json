@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importar extraídos",
   "message.chestseparators.items_already_in_filter": "Los objetos ya están en el filtro.",
   "message.chestseparators.no_new_items_found": "No se encontraron objetos nuevos.",
-  "tooltip.chestseparators.desc.import_extracted": "Importar extraídos",
+  "tooltip.chestseparators.desc.import_extracted": "Añade al filtro los objetos que hay en los slots seleccionados.",
   "tooltip.chestseparators.desc.import_search": "Importar búsqueda",
   "button.chestseparators.allow_all": "Permitir todos",
   "tooltip.chestseparators.desc.allow_all": "Añade todos los objetos a la lista blanca",
@@ -265,5 +265,9 @@
   "config.chestseparators.pull.tooltip": "Trae los objetos del cofre a los filtros de tu inventario.\n§8Mantén [Shift] para traer también objetos sin filtro",
   "config.chestseparators.lock_hotbar_on_reorder": "Bloquear hotbar al autoordenar",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Cuando un push o pull reordena tu inventario, la hotbar se deja intacta.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protege un objeto que puedas tener en la mano. Desactivado: la hotbar también se ordena."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protege un objeto que puedas tener en la mano. Desactivado: la hotbar también se ordena.",
+  "message.chestseparators.push_no_filters": "Este cofre aún no tiene filtros.",
+  "message.chestseparators.push_no_slot": "No hay hueco libre en los filtros.",
+  "message.chestseparators.pull_no_filters": "Tu inventario aún no tiene filtros.",
+  "message.chestseparators.pull_no_match": "Nada aquí coincide con tus filtros."
 }

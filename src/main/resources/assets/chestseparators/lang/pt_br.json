@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importar Extraídos",
   "message.chestseparators.items_already_in_filter": "Itens já estão no filtro.",
   "message.chestseparators.no_new_items_found": "Nenhum item novo encontrado.",
-  "tooltip.chestseparators.desc.import_extracted": "Importar Extraídos",
+  "tooltip.chestseparators.desc.import_extracted": "Adiciona ao filtro os itens presentes nos slots selecionados.",
   "tooltip.chestseparators.desc.import_search": "Importar Pesquisa",
   "button.chestseparators.allow_all": "Permitir Todos",
   "tooltip.chestseparators.desc.allow_all": "Coloca todos os itens do jogo na lista branca",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Traz os itens do baú para os filtros do seu inventário.\n§8Segure [Shift] para trazer também itens sem filtro",
   "config.chestseparators.lock_hotbar_on_reorder": "Travar a hotbar ao auto-ordenar",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Quando um push ou pull reordena seu inventário, a hotbar fica intacta.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protege um item que você esteja segurando. Off: a hotbar também é ordenada."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protege um item que você esteja segurando. Off: a hotbar também é ordenada.",
+  "message.chestseparators.push_no_filters": "Este baú ainda não tem filtros.",
+  "message.chestseparators.push_no_slot": "Sem espaço livre nos filtros.",
+  "message.chestseparators.pull_no_filters": "Seu inventário ainda não tem filtros.",
+  "message.chestseparators.pull_no_match": "Nada aqui combina com seus filtros."
 }

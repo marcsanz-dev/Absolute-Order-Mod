@@ -145,12 +145,12 @@ final class ViewGroupsClickHandler {
                 }
             }
         }
-        // --- CLICK OUTSIDE TO CLOSE ---
+        // --- CLICK OUTSIDE / ON DEAD SPACE TO CLOSE ---
         if (button == 0 && !session.hasSelectionConflict && GlobalChestConfig.instance.closeOnClickOutside) {
-            boolean isInsideMain = mouseX >= layout.guiX
-                    && mouseX <= layout.guiX + layout.bgWidth
-                    && mouseY >= layout.guiY
-                    && mouseY <= layout.guiY + layout.bgHeight;
+            // Close on any click that is not over an editable slot and not on the side panels — including
+            // dead space inside the container, which selects nothing and so should dismiss the panel.
+            boolean overSlot = editor.accessor.getFocusedSlot() != null
+                    && ChestSeparatorsEditor.isEditableSlot(editor.accessor.getFocusedSlot());
             boolean isInsideRight = mouseX >= layout.rightX
                     && mouseX <= layout.rightX + layout.btnW
                     && mouseY >= layout.mainY
@@ -165,13 +165,13 @@ final class ViewGroupsClickHandler {
                         && mouseY <= layout.listY + layout.listH;
             }
 
-            if (!isInsideMain && !isInsideRight && !isInsideLeft) {
+            if (!overSlot && !isInsideRight && !isInsideLeft) {
                 if (session.currentState == EditorState.SELECT_SLOTS) {
                     editor.toggleState(EditorState.VIEW_GROUPS);
                 } else {
                     editor.toggleState(EditorState.HIDDEN);
                 }
-                editor.playClickSound(1.0f);
+                editor.playCloseSound();
                 return true;
             }
         }

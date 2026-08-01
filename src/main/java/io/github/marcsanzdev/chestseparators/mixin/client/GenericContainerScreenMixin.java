@@ -82,6 +82,75 @@ public abstract class GenericContainerScreenMixin extends Screen {
         }
     }
 
+    // While a mod sub-screen (layout / filters / presets) is open on a recipe-book screen, keep the book
+    // closed AND recenter the container. Opening the book shifts the whole GUI sideways; if we only closed
+    // the book the container would stay shifted and everything the mod draws (panels, slot decorations)
+    // would sit out of place. Doing it at renderMain HEAD — before the GUI is drawn — makes the container
+    // render centered this very frame, as if the book had never been open.
+    // Remembers that we force-closed a recipe book the player had open, so it can be restored when the mod
+    // sub-screen is dismissed and the normal inventory returns.
+    @Unique
+    private boolean chestseparators$bookWasOpen = false;
+
+    // The horizontal shift we applied to recenter the container while editing. Kept so it can be undone
+    // exactly on exit, returning the container (and its GUI-anchored widgets) to the book-open position.
+    @Unique
+    private int chestseparators$appliedShift = 0;
+
+    @Inject(method = "renderMain", at = @At("HEAD"))
+    public void normalizeRecipeBookWhileEditing(
+            DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (this.editor == null) return;
+        if (!((Object) this instanceof net.minecraft.client.gui.screen.ingame.RecipeBookScreen<?> rbs)) return;
+
+        net.minecraft.client.gui.screen.recipebook.RecipeBookWidget<?> book =
+                ((RecipeBookScreenAccessor) rbs).chestseparators$getRecipeBook();
+        if (book == null) return;
+
+        boolean editing = this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen;
+        if (!editing) {
+            // Back in the normal inventory: reopen the book the player had left open, and UNDO our recentering
+            // shift so the container, its widgets and the effect panel all slide back to the book-open layout.
+            if (chestseparators$bookWasOpen && !book.isOpen()) {
+                ((RecipeBookWidgetInvoker) book).chestseparators$setOpen(true);
+            }
+            if (chestseparators$appliedShift != 0) {
+                chestseparators$shiftGui((HandledScreenAccessor) this, -chestseparators$appliedShift);
+                chestseparators$appliedShift = 0;
+            }
+            chestseparators$bookWasOpen = false;
+            return;
+        }
+
+        // A mod sub-screen is open: force the book closed (remembering it was open) so it stops covering the
+        // editor, then recenter the container as if the book were closed.
+        if (book.isOpen()) {
+            chestseparators$bookWasOpen = true;
+            ((RecipeBookWidgetInvoker) book).chestseparators$setOpen(false);
+        }
+
+        HandledScreenAccessor acc = (HandledScreenAccessor) this;
+        int centeredX = (this.width - acc.getBackgroundWidth()) / 2;
+        int dx = centeredX - acc.getX();
+        if (dx != 0) {
+            chestseparators$shiftGui(acc, dx);
+            chestseparators$appliedShift += dx;
+        }
+    }
+
+    // Slides the container's x and every GUI-anchored vanilla widget (the recipe book toggle button) by dx.
+    // Those widgets are positioned once at init and do not follow a live x change on their own, so shifting
+    // them by the same delta keeps the whole GUI moving as one piece.
+    @Unique
+    private void chestseparators$shiftGui(HandledScreenAccessor acc, int dx) {
+        acc.setX(acc.getX() + dx);
+        for (net.minecraft.client.gui.Element el : this.children()) {
+            if (el instanceof net.minecraft.client.gui.widget.ClickableWidget widget) {
+                widget.setX(widget.getX() + dx);
+            }
+        }
+    }
+
     // Renders the previously saved separator lines underneath the item slots, plus the player's own
     // inventory decorations on the player slots (visible in every screen, including chests).
     @Inject(method = "drawSlots", at = @At("HEAD"))
@@ -192,8 +261,9 @@ public abstract class GenericContainerScreenMixin extends Screen {
                         return;
                     }
                     if (currentKey == boundKeyCode(ModKeyBindings.pullKey)) {
+                        this.editor.fillClickTime = System.currentTimeMillis();
+                        // requestFillFromOpenChest already plays the click sound; don't play a second one.
                         this.editor.requestFillFromOpenChest(shift);
-                        this.editor.playClickSound(1.2f);
                         cir.setReturnValue(true);
                         return;
                     }

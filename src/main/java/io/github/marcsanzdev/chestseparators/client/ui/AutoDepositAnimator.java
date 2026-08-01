@@ -1,7 +1,7 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
+import io.github.marcsanzdev.chestseparators.access.LidAnimatorAccess;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
-import io.github.marcsanzdev.chestseparators.mixin.client.ChestLidAccessor;
 import io.github.marcsanzdev.chestseparators.mixin.client.ShulkerAnimationAccessor;
 import io.github.marcsanzdev.chestseparators.network.AutoDepositResultPayload;
 import java.util.ArrayList;
@@ -116,11 +116,20 @@ public final class AutoDepositAnimator {
                 io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor.getInstance();
 
         if (flights.isEmpty()) {
-            Text noneMsg = Text.translatable(
-                            reverse
-                                    ? "message.chestseparators.auto_grab_none"
-                                    : "message.chestseparators.auto_deposit_none")
-                    .formatted(Formatting.GRAY);
+            // Reverse = pull from the open chest. Be specific about WHY nothing moved: no inventory filters
+            // at all vs. filters exist but nothing in the chest matched. Non-reverse = radius auto-deposit.
+            String key;
+            if (reverse) {
+                boolean invHasFilters = !io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
+                        .getPlayerInventoryFilters()
+                        .isEmpty();
+                key = invHasFilters
+                        ? "message.chestseparators.pull_no_match"
+                        : "message.chestseparators.pull_no_filters";
+            } else {
+                key = "message.chestseparators.auto_deposit_none";
+            }
+            Text noneMsg = Text.translatable(key).formatted(Formatting.GRAY);
             if (guiOpen && editor != null) editor.showStatus(noneMsg, Formatting.GRAY);
             else client.player.sendMessage(noneMsg, true);
             return;
@@ -180,7 +189,7 @@ public final class AutoDepositAnimator {
     private static void openContainer(ClientWorld world, BlockPos pos, long closeAt) {
         BlockEntity be = world.getBlockEntity(pos);
 
-        if (be instanceof ChestLidAccessor lid) {
+        if (be instanceof LidAnimatorAccess lid) {
             boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
             lid.getLidAnimator().setOpen(true);
             markOpen(pos, closeAt, true);
@@ -188,7 +197,7 @@ public final class AutoDepositAnimator {
 
             // Open the other half of a double chest in sync (silently, so the sound plays once).
             BlockPos neighbor = doubleNeighbor(world, pos);
-            if (neighbor != null && world.getBlockEntity(neighbor) instanceof ChestLidAccessor neighborLid) {
+            if (neighbor != null && world.getBlockEntity(neighbor) instanceof LidAnimatorAccess neighborLid) {
                 neighborLid.getLidAnimator().setOpen(true);
                 markOpen(neighbor, closeAt, false);
             }
@@ -225,7 +234,7 @@ public final class AutoDepositAnimator {
 
     private static void closeContainer(ClientWorld world, BlockPos pos, boolean playSound) {
         BlockEntity be = world.getBlockEntity(pos);
-        if (be instanceof ChestLidAccessor lid) {
+        if (be instanceof LidAnimatorAccess lid) {
             lid.getLidAnimator().setOpen(false);
             if (playSound) playContainerSound(world, pos, closeSoundFor(be));
         } else if (be instanceof ShulkerAnimationAccessor shulker) {

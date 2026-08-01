@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Import Extracted",
   "message.chestseparators.items_already_in_filter": "Items already in filter.",
   "message.chestseparators.no_new_items_found": "No new items found.",
-  "tooltip.chestseparators.desc.import_extracted": "Import Extracted",
+  "tooltip.chestseparators.desc.import_extracted": "Adds the items found in the selected slots to the filter.",
   "tooltip.chestseparators.desc.import_search": "Import Search",
   "button.chestseparators.allow_all": "Allow All",
   "tooltip.chestseparators.desc.allow_all": "Whitelists all game items",
@@ -268,5 +268,9 @@
   "config.chestseparators.pull.tooltip": "Pull the chest's items into your inventory filters.\n§8Hold [Shift] to also pull unfiltered items",
   "config.chestseparators.lock_hotbar_on_reorder": "Lock Hotbar on Auto-Sort",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "When a push or pull re-sorts your inventory, the hotbar is left untouched.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protects an item you might be holding. Off: the hotbar sorts too."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protects an item you might be holding. Off: the hotbar sorts too.",
+  "message.chestseparators.push_no_filters": "This chest has no filters yet.",
+  "message.chestseparators.push_no_slot": "No free filter slot for these items.",
+  "message.chestseparators.pull_no_filters": "Your inventory has no filters yet.",
+  "message.chestseparators.pull_no_match": "Nothing here matches your filters."
 }

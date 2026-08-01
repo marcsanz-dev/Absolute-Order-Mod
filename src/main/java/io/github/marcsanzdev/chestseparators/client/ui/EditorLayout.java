@@ -12,6 +12,11 @@ public class EditorLayout {
     public int bgWidth;
     public int bgHeight;
 
+    // Approximate on-screen width of the vanilla recipe book PANEL PLUS its left category tabs, used to
+    // park the preview clear to the left of the whole book (tabs included) when the book and a potion-effect
+    // panel are both open. Generous so the preview never overlaps the book's protruding tabs.
+    private static final int RECIPE_BOOK_WIDTH = 200;
+
     // Universal Symmetrical Layout metrics
     public int gap = 6;
     public int mainW = 226;
@@ -28,6 +33,8 @@ public class EditorLayout {
     public int listY;
     public int listH;
     public int rightX;
+    /** True when the preview/list panel is docked to the RIGHT of the container (recipe book open). */
+    public boolean listOnRight;
 
     // Edit Filter Grid
     public int cols = 9;
@@ -36,6 +43,7 @@ public class EditorLayout {
     public int itemSize = 18;
     /** Cell size of the item GRID: a 16px item plus a 3px margin per side so it never touches its slot. */
     public int gridCell = 22;
+
     public int gridX;
     public int gridViewY;
     public int gridViewH;
@@ -113,8 +121,37 @@ public class EditorLayout {
         this.mainY = this.guiY + (this.bgHeight - this.mainH) / 2;
         this.mainX = this.guiX + (this.bgWidth - this.mainW) / 2;
 
-        // 2. Side panels
-        this.listX = this.mainX - this.listW - this.gap;
+        // 2. Side panels. The preview/list normally docks to the LEFT of the container. When the vanilla
+        // recipe book is open it covers that dock, so the panel flips to the RIGHT of the container. But if
+        // a potion effect is ALSO shown, the effect panel pushes the whole GUI far to the right and leaves
+        // no room there — so in that combined case the panel goes to the FAR LEFT, to the left of the book.
+        // The book state is read from its own widget (not from the GUI's shift) so it is never confused with
+        // the effect panel's shift.
+        boolean bookOpen = false;
+        if (screen instanceof net.minecraft.client.gui.screen.ingame.RecipeBookScreen<?> rbs) {
+            net.minecraft.client.gui.screen.recipebook.RecipeBookWidget<?> book =
+                    ((io.github.marcsanzdev.chestseparators.mixin.client.RecipeBookScreenAccessor) rbs)
+                            .chestseparators$getRecipeBook();
+            bookOpen = book != null && book.isOpen();
+        }
+        boolean hasPotion = net.minecraft.client.MinecraftClient.getInstance().player != null
+                && !net.minecraft.client.MinecraftClient.getInstance()
+                        .player
+                        .getStatusEffects()
+                        .isEmpty();
+
+        // Mirror the exact separation the left dock leaves, so the right dock is not visually tighter.
+        int dockGap = this.guiX - this.mainX + this.gap;
+        if (!bookOpen) {
+            this.listOnRight = false;
+            this.listX = this.mainX - this.listW - this.gap;
+        } else if (hasPotion) {
+            this.listOnRight = false;
+            this.listX = Math.max(22, this.guiX - RECIPE_BOOK_WIDTH - this.listW - this.gap);
+        } else {
+            this.listOnRight = true;
+            this.listX = this.guiX + this.bgWidth + dockGap;
+        }
         this.listY = this.mainY;
         this.listH = this.mainH;
         this.rightX = this.mainX + this.mainW + this.gap;

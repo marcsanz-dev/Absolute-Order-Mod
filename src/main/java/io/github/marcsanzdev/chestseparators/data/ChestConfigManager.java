@@ -373,20 +373,8 @@ public class ChestConfigManager {
         return colors;
     }
 
-    public int getColor(int slotIndex, int actionFlag) {
-        if (!currentChestConfig.containsKey(slotIndex)) return 0;
-        int[] colors = currentChestConfig.get(slotIndex);
-        if (actionFlag == ACTION_TOP) return colors[IDX_TOP];
-        if (actionFlag == ACTION_BOTTOM) return colors[IDX_BOTTOM];
-        if (actionFlag == ACTION_LEFT) return colors[IDX_LEFT];
-        if (actionFlag == ACTION_RIGHT) return colors[IDX_RIGHT];
-        if (actionFlag == ACTION_BG) return colors[IDX_BG];
-        return 0;
-    }
-
-    /** Like {@link #getColor}, but reads the player inventory render cache (for the all-screens overlay). */
-    public int getInventoryColor(int slotIndex, int actionFlag) {
-        int[] colors = playerInventoryVisual.get(slotIndex);
+    // Shared edge/bg colour lookup: null array (absent slot) reads as 0, matching both callers' guards.
+    private static int colorForFlag(int[] colors, int actionFlag) {
         if (colors == null) return 0;
         if (actionFlag == ACTION_TOP) return colors[IDX_TOP];
         if (actionFlag == ACTION_BOTTOM) return colors[IDX_BOTTOM];
@@ -396,9 +384,17 @@ public class ChestConfigManager {
         return 0;
     }
 
-    /** Like {@link #getPaintSeq}, but reads the player inventory render cache. */
-    public int getInventoryPaintSeq(int slotIndex, int actionFlag) {
-        int[] colors = playerInventoryVisual.get(slotIndex);
+    public int getColor(int slotIndex, int actionFlag) {
+        return colorForFlag(currentChestConfig.get(slotIndex), actionFlag);
+    }
+
+    /** Like {@link #getColor}, but reads the player inventory render cache (for the all-screens overlay). */
+    public int getInventoryColor(int slotIndex, int actionFlag) {
+        return colorForFlag(playerInventoryVisual.get(slotIndex), actionFlag);
+    }
+
+    // Shared paint-order lookup: null array reads as 0, legacy arrays without a seq slot read as 0.
+    private static int seqForFlag(int[] colors, int actionFlag) {
         if (colors == null) return 0;
         int idx;
         if (actionFlag == ACTION_TOP) idx = IDX_SEQ_TOP;
@@ -407,6 +403,11 @@ public class ChestConfigManager {
         else if (actionFlag == ACTION_RIGHT) idx = IDX_SEQ_RIGHT;
         else return 0;
         return idx < colors.length ? colors[idx] : 0;
+    }
+
+    /** Like {@link #getPaintSeq}, but reads the player inventory render cache. */
+    public int getInventoryPaintSeq(int slotIndex, int actionFlag) {
+        return seqForFlag(playerInventoryVisual.get(slotIndex), actionFlag);
     }
 
     /**
@@ -414,15 +415,7 @@ public class ChestConfigManager {
      * for backgrounds, unpainted edges, or legacy arrays without sequence data.
      */
     public int getPaintSeq(int slotIndex, int actionFlag) {
-        int[] colors = currentChestConfig.get(slotIndex);
-        if (colors == null) return 0;
-        int idx;
-        if (actionFlag == ACTION_TOP) idx = IDX_SEQ_TOP;
-        else if (actionFlag == ACTION_BOTTOM) idx = IDX_SEQ_BOTTOM;
-        else if (actionFlag == ACTION_LEFT) idx = IDX_SEQ_LEFT;
-        else if (actionFlag == ACTION_RIGHT) idx = IDX_SEQ_RIGHT;
-        else return 0;
-        return idx < colors.length ? colors[idx] : 0;
+        return seqForFlag(currentChestConfig.get(slotIndex), actionFlag);
     }
 
     public void paintAction(int slotIndex, int actionFlags, int argbColor) {
@@ -456,6 +449,15 @@ public class ChestConfigManager {
         }
     }
 
+    /** Raises paintSequence above any stored sequence in the given colour arrays (loaded profiles/presets). */
+    private void bumpPaintSequence(java.util.Collection<int[]> arrays) {
+        for (int[] colors : arrays) {
+            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
+                if (colors[si] > paintSequence) paintSequence = colors[si];
+            }
+        }
+    }
+
     public void removeAction(int slotIndex, int actionFlags) {
         if (!currentChestConfig.containsKey(slotIndex)) return;
         int[] colors = currentChestConfig.get(slotIndex);
@@ -465,17 +467,19 @@ public class ChestConfigManager {
         if ((actionFlags & ACTION_RIGHT) != 0) colors[IDX_RIGHT] = 0;
         if ((actionFlags & ACTION_BG) != 0) colors[IDX_BG] = 0;
 
-        if (colors[0] == 0 && colors[1] == 0 && colors[2] == 0 && colors[3] == 0 && colors[4] == 0) {
+        if (isBlank(colors)) {
             currentChestConfig.remove(slotIndex);
         }
     }
 
+    /** True when a slot's first five channels (4 edges + bg) are all clear, i.e. the slot is empty. */
+    private static boolean isBlank(int[] c) {
+        return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
+    }
+
     public void clearAllBackgrounds() {
         for (Map.Entry<Integer, int[]> entry : currentChestConfig.entrySet()) entry.getValue()[IDX_BG] = 0;
-        currentChestConfig.entrySet().removeIf(entry -> {
-            int[] c = entry.getValue();
-            return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
-        });
+        currentChestConfig.entrySet().removeIf(entry -> isBlank(entry.getValue()));
     }
 
     public void clearAllLines() {
@@ -485,25 +489,16 @@ public class ChestConfigManager {
             entry.getValue()[IDX_LEFT] = 0;
             entry.getValue()[IDX_RIGHT] = 0;
         }
-        currentChestConfig.entrySet().removeIf(entry -> {
-            int[] c = entry.getValue();
-            return c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0;
-        });
+        currentChestConfig.entrySet().removeIf(entry -> isBlank(entry.getValue()));
     }
 
     public void copyToClipboard() {
-        this.clipboardConfig = new HashMap<>();
-        for (Map.Entry<Integer, int[]> entry : this.currentChestConfig.entrySet()) {
-            this.clipboardConfig.put(entry.getKey(), entry.getValue().clone());
-        }
+        this.clipboardConfig = copyVisualConfig(this.currentChestConfig);
     }
 
     public void pasteFromClipboard() {
         if (this.clipboardConfig != null && !this.clipboardConfig.isEmpty()) {
-            this.currentChestConfig.clear();
-            for (Map.Entry<Integer, int[]> entry : this.clipboardConfig.entrySet()) {
-                this.currentChestConfig.put(entry.getKey(), entry.getValue().clone());
-            }
+            applyVisualConfig(this.clipboardConfig);
             bumpPaintSequenceToMax();
         }
     }
@@ -790,7 +785,8 @@ public class ChestConfigManager {
                                 // Optional so files written before target counts still load (defaulting to 0).
                                 int target = wlTag.getInt("TargetCount").orElse(0);
 
-                                data.filters.put(slot, new SlotWhitelist(groupId, items, manual, shift, hopper, target));
+                                data.filters.put(
+                                        slot, new SlotWhitelist(groupId, items, manual, shift, hopper, target));
                             });
                         } catch (Exception ignored) {
                         }
@@ -1090,12 +1086,21 @@ public class ChestConfigManager {
     // The ready-made presets shipped as resources under /chestseparators_presets. Copied verbatim into
     // the config on first run, so what the player gets is byte-for-byte what was authored in-game.
     private static final String[] BUNDLED_PRESETS = {
-        "chest_preset_27_1.json", "chest_preset_27_2.json", "chest_preset_27_3.json",
-        "chest_preset_27_4.json", "chest_preset_27_5.json",
-        "chest_preset_54_1.json", "chest_preset_54_2.json", "chest_preset_54_3.json",
-        "chest_preset_54_4.json", "chest_preset_54_5.json",
-        "inventory_preset_1.json", "inventory_preset_2.json", "inventory_preset_3.json",
-        "inventory_preset_4.json", "inventory_preset_5.json",
+        "chest_preset_27_1.json",
+        "chest_preset_27_2.json",
+        "chest_preset_27_3.json",
+        "chest_preset_27_4.json",
+        "chest_preset_27_5.json",
+        "chest_preset_54_1.json",
+        "chest_preset_54_2.json",
+        "chest_preset_54_3.json",
+        "chest_preset_54_4.json",
+        "chest_preset_54_5.json",
+        "inventory_preset_1.json",
+        "inventory_preset_2.json",
+        "inventory_preset_3.json",
+        "inventory_preset_4.json",
+        "inventory_preset_5.json",
     };
 
     /**
@@ -1110,7 +1115,8 @@ public class ChestConfigManager {
         for (String name : BUNDLED_PRESETS) {
             Path target = getGlobalConfigDir().resolve(name);
             if (Files.exists(target)) continue;
-            try (java.io.InputStream in = ChestConfigManager.class.getResourceAsStream("/chestseparators_presets/" + name)) {
+            try (java.io.InputStream in =
+                    ChestConfigManager.class.getResourceAsStream("/chestseparators_presets/" + name)) {
                 if (in == null) continue;
                 Files.write(target, in.readAllBytes());
                 invalidatePresetNameForFile(target);
@@ -1150,11 +1156,7 @@ public class ChestConfigManager {
         RawData data = readRawData(getInventoryFile());
         playerInventoryVisual = data.visual;
         playerInventoryFilters = data.filters;
-        for (int[] colors : playerInventoryVisual.values()) {
-            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
-                if (colors[si] > paintSequence) paintSequence = colors[si];
-            }
-        }
+        bumpPaintSequence(playerInventoryVisual.values());
     }
 
     /**
@@ -1170,17 +1172,29 @@ public class ChestConfigManager {
         }
     }
 
-    /** Extracts the inventory portion (offset keys) from the working maps back into the profile and saves it. */
-    public void saveInventoryFromCurrent() {
+    /** Inventory-slot visuals from the working map, re-keyed back to profile (non-offset) keys, cloned. */
+    private Map<Integer, int[]> extractInventoryVisual() {
         Map<Integer, int[]> vis = new HashMap<>();
         for (Map.Entry<Integer, int[]> e : currentChestConfig.entrySet()) {
             if (isInventoryKey(e.getKey()))
                 vis.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue().clone());
         }
+        return vis;
+    }
+
+    /** Inventory-slot filters from the working map, re-keyed back to profile (non-offset) keys. */
+    private Map<Integer, SlotWhitelist> extractInventoryFilters() {
         Map<Integer, SlotWhitelist> fil = new HashMap<>();
         for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
             if (isInventoryKey(e.getKey())) fil.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue());
         }
+        return fil;
+    }
+
+    /** Extracts the inventory portion (offset keys) from the working maps back into the profile and saves it. */
+    public void saveInventoryFromCurrent() {
+        Map<Integer, int[]> vis = extractInventoryVisual();
+        Map<Integer, SlotWhitelist> fil = extractInventoryFilters();
         playerInventoryVisual = vis;
         playerInventoryFilters = fil;
         writeRawData(vis, fil, getInventoryFile());
@@ -1214,15 +1228,8 @@ public class ChestConfigManager {
 
     /** Saves the inventory portion currently in the working maps into preset slot {@code index}. */
     public void saveInventoryPreset(int index) {
-        Map<Integer, int[]> vis = new HashMap<>();
-        for (Map.Entry<Integer, int[]> e : currentChestConfig.entrySet()) {
-            if (isInventoryKey(e.getKey()))
-                vis.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue().clone());
-        }
-        Map<Integer, SlotWhitelist> fil = new HashMap<>();
-        for (Map.Entry<Integer, SlotWhitelist> e : currentWhitelists.entrySet()) {
-            if (isInventoryKey(e.getKey())) fil.put(e.getKey() - PLAYER_KEY_OFFSET, e.getValue());
-        }
+        Map<Integer, int[]> vis = extractInventoryVisual();
+        Map<Integer, SlotWhitelist> fil = extractInventoryFilters();
         // Overwriting a slot keeps its existing name (see saveChestPreset).
         Path path = getInventoryPresetFile(index);
         String name = getPresetNameForFile(path);
@@ -1240,11 +1247,7 @@ public class ChestConfigManager {
         RawData data = readRawData(f);
         playerInventoryVisual = data.visual;
         playerInventoryFilters = data.filters;
-        for (int[] colors : playerInventoryVisual.values()) {
-            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
-                if (colors[si] > paintSequence) paintSequence = colors[si];
-            }
-        }
+        bumpPaintSequence(playerInventoryVisual.values());
         currentChestConfig.keySet().removeIf(ChestConfigManager::isInventoryKey);
         currentWhitelists.keySet().removeIf(ChestConfigManager::isInventoryKey);
         mirrorInventoryIntoCurrent();
@@ -1300,11 +1303,7 @@ public class ChestConfigManager {
         currentWhitelists.keySet().removeIf(k -> !isInventoryKey(k));
         currentChestConfig.putAll(data.visual);
         currentWhitelists.putAll(data.filters);
-        for (int[] colors : data.visual.values()) {
-            for (int si = IDX_SEQ_TOP; si <= IDX_SEQ_RIGHT && si < colors.length; si++) {
-                if (colors[si] > paintSequence) paintSequence = colors[si];
-            }
-        }
+        bumpPaintSequence(data.visual.values());
         return true;
     }
 

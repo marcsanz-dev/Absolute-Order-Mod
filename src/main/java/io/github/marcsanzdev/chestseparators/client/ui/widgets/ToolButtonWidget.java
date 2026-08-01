@@ -1,6 +1,5 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
-import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.UiTheme;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -18,15 +17,12 @@ public class ToolButtonWidget extends CustomWidget {
     /** When true the BASE icon is drawn in {@link #dynamicColor} (the current paint colour) instead of
      *  white/state — used by the area/trace paint buttons so the whole mode icon shows the paint colour. */
     public boolean baseUsesDynamicColor = false;
+
     private boolean hovered = false;
 
     public Identifier baseIcon;
     public Identifier maskIcon;
-    public Identifier disabledIconFallback;
     public int dynamicColor = 0xFFFFFF;
-
-    public boolean isTempClicked = false;
-    private long clickedTime = 0;
 
     public int baseOffsetX = 0;
     public int maskOffsetX = 0;
@@ -34,23 +30,13 @@ public class ToolButtonWidget extends CustomWidget {
     public ToolButtonWidget(int x, int y, Identifier baseIcon, String tooltip, Runnable onClickAction) {
         super(x, y, 20, 20, onClickAction);
         this.baseIcon = baseIcon;
-        this.disabledIconFallback = ModTextures.ICON_PASTE;
         this.tooltipText = tooltip;
-    }
-
-    public void triggerClickAnimation() {
-        this.isTempClicked = true;
-        this.clickedTime = System.currentTimeMillis();
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (this.isTempClicked && System.currentTimeMillis() - this.clickedTime > 200) {
-            this.isTempClicked = false;
-        }
-
         this.hovered = isHovering(mouseX, mouseY);
-        boolean active = this.isActive || this.isTempClicked || PressAnim.active(x, y);
+        boolean active = this.isActive || PressAnim.active(x, y);
 
         // A button that disables itself right after acting (e.g. preset Delete → slot now empty) still
         // plays its press flash, so the click is visible; otherwise draw the normal disabled look.
@@ -87,20 +73,43 @@ public class ToolButtonWidget extends CustomWidget {
 
         int baseColor = -1;
         if (this.tintByState) {
-            boolean active = this.isActive || this.isTempClicked || PressAnim.active(x, y);
+            boolean active = this.isActive || PressAnim.active(x, y);
             baseColor = active ? UiTheme.ICON_ACTIVE : (this.hovered ? UiTheme.ICON_HOVER : UiTheme.ICON);
         }
         if (this.baseUsesDynamicColor) {
             baseColor = this.dynamicColor | 0xFF000000;
         }
         context.drawTexture(
-                pipeline, base, x + 2 + baseOffsetX, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, baseColor);
+                pipeline,
+                base,
+                x + 2 + baseOffsetX,
+                y + 2,
+                0.0F,
+                0.0F,
+                16,
+                16,
+                texSize,
+                texSize,
+                texSize,
+                texSize,
+                baseColor);
 
         if (mask != null) {
             int colorARGB = color | 0xFF000000;
             context.drawTexture(
-                    pipeline, mask, x + 2 + maskOffsetX, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, colorARGB);
+                    pipeline,
+                    mask,
+                    x + 2 + maskOffsetX,
+                    y + 2,
+                    0.0F,
+                    0.0F,
+                    16,
+                    16,
+                    texSize,
+                    texSize,
+                    texSize,
+                    texSize,
+                    colorARGB);
         }
     }
-
 }

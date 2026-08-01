@@ -178,8 +178,7 @@ public class EditorInputHandler {
                 .register((_screen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
                     // The presets menu (when open, over a Load preview) grabs the wheel to scroll its
                     // detail list, before the group view below it can react.
-                    if (session.isPresetsMenuOpen
-                            && editor.presetsMenu.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+                    if (session.isPresetsMenuOpen && editor.presetsMenu.mouseScrolled(mouseX, mouseY, verticalAmount)) {
                         return false;
                     }
                     if (session.currentState == EditorState.VIEW_GROUPS
@@ -383,17 +382,16 @@ public class EditorInputHandler {
         }
 
         if (session.currentState == EditorState.VIEW_GROUPS || session.currentState == EditorState.SELECT_SLOTS) {
-            if (editor.screenViewGroups.mouseClicked(mouseX, mouseY, button)) return false;
+            editor.screenViewGroups.mouseClicked(mouseX, mouseY, button);
             return false;
         }
 
         if (session.currentState == EditorState.EDIT_FILTER) {
-            if (editor.screenEditFilter.mouseClicked(mouseX, mouseY, button)) return false;
+            editor.screenEditFilter.mouseClicked(mouseX, mouseY, button);
             return false;
         }
 
-        if (editor.screenDrawLines.mouseClicked(mouseX, mouseY, button)) return false;
-
+        editor.screenDrawLines.mouseClicked(mouseX, mouseY, button);
         return false;
     }
 }

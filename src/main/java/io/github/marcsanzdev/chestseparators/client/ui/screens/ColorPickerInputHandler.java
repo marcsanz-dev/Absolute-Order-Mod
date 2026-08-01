@@ -28,6 +28,28 @@ final class ColorPickerInputHandler {
         this.layout = screen.layout;
     }
 
+    /** Focuses {@code field} and places the caret at the click if the click lands inside it; otherwise blurs
+     *  it. Returns whether the click hit this field. No-op (returns false) for a null field. */
+    private boolean focusFieldIfHovered(
+            net.minecraft.client.gui.widget.TextFieldWidget field,
+            double mouseX,
+            double mouseY,
+            MinecraftClient client) {
+        if (field == null) return false;
+        if (editor.isHovering(field.getX(), field.getY(), field.getWidth(), field.getHeight(), mouseX, mouseY)) {
+            field.setFocused(true);
+            int localX = (int) (mouseX - field.getX());
+            field.setCursor(
+                    client.textRenderer
+                            .trimToWidth(field.getText(), Math.max(0, localX))
+                            .length(),
+                    false);
+            return true;
+        }
+        field.setFocused(false);
+        return false;
+    }
+
     boolean onMouseClicked(double mouseX, double mouseY, int button) {
         if (!session.isColorPickerOpen) return false;
 
@@ -117,84 +139,11 @@ final class ColorPickerInputHandler {
 
         if (inPopup) {
             if (button == 0) {
-                boolean clickedText = false;
                 MinecraftClient client = MinecraftClient.getInstance();
-
-                if (screen.hexField != null) {
-                    if (editor.isHovering(
-                            screen.hexField.getX(),
-                            screen.hexField.getY(),
-                            screen.hexField.getWidth(),
-                            screen.hexField.getHeight(),
-                            mouseX,
-                            mouseY)) {
-                        screen.hexField.setFocused(true);
-                        int localX = (int) (mouseX - screen.hexField.getX());
-                        screen.hexField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(screen.hexField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else screen.hexField.setFocused(false);
-                }
-
-                if (screen.rField != null) {
-                    if (editor.isHovering(
-                            screen.rField.getX(),
-                            screen.rField.getY(),
-                            screen.rField.getWidth(),
-                            screen.rField.getHeight(),
-                            mouseX,
-                            mouseY)) {
-                        screen.rField.setFocused(true);
-                        int localX = (int) (mouseX - screen.rField.getX());
-                        screen.rField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(screen.rField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else screen.rField.setFocused(false);
-                }
-
-                if (screen.gField != null) {
-                    if (editor.isHovering(
-                            screen.gField.getX(),
-                            screen.gField.getY(),
-                            screen.gField.getWidth(),
-                            screen.gField.getHeight(),
-                            mouseX,
-                            mouseY)) {
-                        screen.gField.setFocused(true);
-                        int localX = (int) (mouseX - screen.gField.getX());
-                        screen.gField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(screen.gField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else screen.gField.setFocused(false);
-                }
-
-                if (screen.bField != null) {
-                    if (editor.isHovering(
-                            screen.bField.getX(),
-                            screen.bField.getY(),
-                            screen.bField.getWidth(),
-                            screen.bField.getHeight(),
-                            mouseX,
-                            mouseY)) {
-                        screen.bField.setFocused(true);
-                        int localX = (int) (mouseX - screen.bField.getX());
-                        screen.bField.setCursor(
-                                client.textRenderer
-                                        .trimToWidth(screen.bField.getText(), Math.max(0, localX))
-                                        .length(),
-                                false);
-                        clickedText = true;
-                    } else screen.bField.setFocused(false);
-                }
+                boolean clickedText = focusFieldIfHovered(screen.hexField, mouseX, mouseY, client);
+                clickedText |= focusFieldIfHovered(screen.rField, mouseX, mouseY, client);
+                clickedText |= focusFieldIfHovered(screen.gField, mouseX, mouseY, client);
+                clickedText |= focusFieldIfHovered(screen.bField, mouseX, mouseY, client);
 
                 if (clickedText) {
                     editor.playClickSound(1.0f);

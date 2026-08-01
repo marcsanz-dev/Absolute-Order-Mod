@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import net.minecraft.util.Identifier;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
@@ -20,6 +19,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 @Environment(EnvType.CLIENT)
 public class ModMenuIntegration implements ModMenuApi {
@@ -115,8 +115,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.showEditButtons = newValue)
                     .build());
             interfaceEntries.add(entryBuilder
-                    .startSubCategory(
-                            Text.translatable("config.chestseparators.group.toolbar_buttons"), toolbarEntries)
+                    .startSubCategory(Text.translatable("config.chestseparators.group.toolbar_buttons"), toolbarEntries)
                     .setExpanded(false)
                     .build());
             interfaceEntries.add(entryBuilder
@@ -305,8 +304,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> GlobalChestConfig.instance.autoDepositTrail = newValue)
                     .build());
             clientCategory.addEntry(entryBuilder
-                    .startSubCategory(
-                            Text.translatable("config.chestseparators.group.autodeposit"), autoDepositEntries)
+                    .startSubCategory(Text.translatable("config.chestseparators.group.autodeposit"), autoDepositEntries)
                     .setExpanded(false)
                     .build());
 

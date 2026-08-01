@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "추출된 아이템 가져오기",
   "message.chestseparators.items_already_in_filter": "아이템이 이미 필터에 있습니다.",
   "message.chestseparators.no_new_items_found": "새로운 아이템을 찾을 수 없습니다.",
-  "tooltip.chestseparators.desc.import_extracted": "추출된 아이템 가져오기",
+  "tooltip.chestseparators.desc.import_extracted": "선택한 슬롯에 있는 아이템을 필터에 추가합니다.",
   "tooltip.chestseparators.desc.import_search": "검색 가져오기",
   "button.chestseparators.allow_all": "모두 허용",
   "tooltip.chestseparators.desc.allow_all": "모든 게임 아이템을 화이트리스트에 추가합니다",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "상자의 아이템을 인벤토리 필터로 가져옵니다.\n§8[Shift]를 누르면 필터 없는 아이템도 가져옵니다",
   "config.chestseparators.lock_hotbar_on_reorder": "정렬 시 단축바 잠금",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "푸시나 풀이 인벤토리를 정렬할 때 단축바는 건드리지 않습니다.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "들고 있는 아이템을 보호합니다. 끔: 단축바도 정렬됩니다."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "들고 있는 아이템을 보호합니다. 끔: 단축바도 정렬됩니다.",
+  "message.chestseparators.push_no_filters": "이 상자에는 아직 필터가 없습니다.",
+  "message.chestseparators.push_no_slot": "빈 필터 칸이 없습니다.",
+  "message.chestseparators.pull_no_filters": "인벤토리에 아직 필터가 없습니다.",
+  "message.chestseparators.pull_no_match": "여기에 필터와 맞는 것이 없습니다."
 }

@@ -83,6 +83,7 @@ Any new interface **must look and behave like the rest of the mod**. Before buil
 - Modal overlays keep the top mode icons visible and clickable, hide the unrelated sub-panels (e.g. the left whitelist preview panel), and pass `(-1,-1)` to anything that must not react behind them.
 - Hover previews fire from the **specific control** that owns them (e.g. only a row's *Load* button), not from the whole row or from controls whose action wouldn't change anything (e.g. *Save*).
 - **A preview must ALWAYS show the exact result the action produces.** This is non-negotiable: whenever you change what a button does (placement order, group re-sort, keep-limits, hotbar handling, etc.) you must mirror that change in its preview in the same commit. The push/pull previews (`updateDepositPreview` / `updateFillPreview` → `applyPreviewReorder`) are simulations of `executeDeposit` / `requestFillFromOpenChest` + the server's `reorderFilteredGroups`; if the two ever diverge the preview is a bug. Prefer sharing the ordering primitive (`FilterPriority`, the reorder logic) between action and preview so they can't drift.
+- **One concept, one look — everywhere.** Any element that represents the same thing must be rendered identically in every part of the mod. A filter blob is rounded (`UiTheme.roundRect`) with a marked border (`UiTheme.roundBorder`) and same-group connectors; it must never appear as a flat, square, borderless fill in some other screen (e.g. the preset Load preview). The same holds for buttons, badges, panels, messages, colours. When you add or change a shared visual, hunt down every place it's drawn and keep them in lock-step; never let one screen keep an older style. Reuse the shared renderer (e.g. the filter-blob draw in `GroupBlobRenderer`) instead of re-implementing a look.
 - New user-facing strings → add the key to **all 20** `lang/*.json` files (`en_us.json` is the source of truth).
 
 ### Whitelist data flow
@@ -110,6 +111,10 @@ Double chests are handled by merging both halves into a `DoubleInventory` server
 - Duck interfaces in `access/` are the sanctioned way to attach state to vanilla classes — prefer them over reflection.
 - User-facing strings are translation keys resolved through `Text.translatable`; add new keys to **every** `lang/*.json`, with `en_us.json` as the source of truth.
 - `ChestConfigManager` and `GlobalChestConfig` are client-only singletons (`@Environment(EnvType.CLIENT)`). Never reference them from common/server code in `ChestSeparatorsMain` or the non-client Mixins.
+
+### Ponytail — minimal code (MANDATORY)
+
+Write the minimum code that works. Before adding anything, climb the decision ladder (stop at the first rung that holds, *after* understanding the problem): **1)** does it need to exist? (YAGNI) **2)** already in this codebase? reuse it **3)** stdlib does it? **4)** native platform feature? **5)** installed dependency? **6)** can it be one line? **7)** only then the minimum that works. Prefer deletion over addition; boring over clever; fewest files; shortest working diff. Fix root causes at the source, not per-caller symptoms. Never cut corners on understanding, validation at trust boundaries, error handling, security, accessibility, or anything explicitly requested. Mark an intentional simplification with a `// ponytail:` comment noting its ceiling and upgrade path.
 
 ## Git
 

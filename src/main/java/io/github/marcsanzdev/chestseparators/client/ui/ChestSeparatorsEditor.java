@@ -37,7 +37,6 @@ import org.lwjgl.glfw.GLFW;
 public class ChestSeparatorsEditor {
 
     private static ChestSeparatorsEditor activeInstance;
-    private static boolean networkLockRegistered = false;
 
     public static ChestSeparatorsEditor getInstance() {
         return activeInstance;
@@ -45,10 +44,6 @@ public class ChestSeparatorsEditor {
 
     public EditorSessionData getSession() {
         return this.session;
-    }
-
-    public EditorLayout getLayout() {
-        return this.layout;
     }
 
     public final HandledScreen<?> screen;
@@ -82,6 +77,7 @@ public class ChestSeparatorsEditor {
     public boolean depositPreviewShift = false;
     public boolean suspendDepositPreview = false;
     public long depositClickTime = 0;
+    public long fillClickTime = 0;
     public final Map<Integer, Integer> previewSourceRemaining = new HashMap<>();
     public final Map<Integer, ItemStack> previewTargetIncoming = new HashMap<>();
 
@@ -207,10 +203,7 @@ public class ChestSeparatorsEditor {
         this.depositButton = new ToolButtonWidget(0, 0, ModTextures.BTN_DEPOSIT, "", () -> {
             this.depositClickTime = System.currentTimeMillis();
 
-            long window = MinecraftClient.getInstance().getWindow().getHandle();
-            boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                    || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-            executeDeposit(shift);
+            executeDeposit(isShiftDown());
             playClickSound(1.2f);
         });
 
@@ -221,10 +214,8 @@ public class ChestSeparatorsEditor {
                 ModTextures.ICON_BACKPACK_FULL,
                 Text.translatable("tooltip.chestseparators.pull_from_chest").getString(),
                 () -> {
-                    long window = MinecraftClient.getInstance().getWindow().getHandle();
-                    boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                            || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-                    requestFillFromOpenChest(shift);
+                    this.fillClickTime = System.currentTimeMillis();
+                    requestFillFromOpenChest(isShiftDown());
                 });
 
         // "Inventory presets" menu opener: a top icon available in any editor context.
@@ -550,8 +541,7 @@ public class ChestSeparatorsEditor {
     }
 
     /** Screens the editor treats as the player-inventory context: survival inventory and creative. */
-    private static boolean isInventoryContextScreen(
-            net.minecraft.client.gui.screen.ingame.HandledScreen<?> s) {
+    private static boolean isInventoryContextScreen(net.minecraft.client.gui.screen.ingame.HandledScreen<?> s) {
         return s instanceof InventoryScreen
                 || s instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
     }
@@ -854,9 +844,24 @@ public class ChestSeparatorsEditor {
     }
 
     public void playClickSound(float pitch) {
+        playUiSound(SoundEvents.UI_BUTTON_CLICK.value(), pitch);
+    }
+
+    /** Plays any UI sound event on the master track at the given pitch (non-positional, like the click). */
+    public void playUiSound(net.minecraft.sound.SoundEvent sound, float pitch) {
         MinecraftClient.getInstance()
                 .getSoundManager()
-                .play(net.minecraft.client.sound.PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, pitch));
+                .play(net.minecraft.client.sound.PositionedSoundInstance.master(
+                        net.minecraft.registry.entry.RegistryEntry.of(sound), pitch));
+    }
+
+    /**
+     * The single "a panel was dismissed" sound. Every screen that can be closed by clicking outside it (or on
+     * dead space) must play THIS, so exiting layout, filters, the item picker, presets and the palette all
+     * sound identical instead of each using its own pitch.
+     */
+    public void playCloseSound() {
+        playClickSound(1.0f);
     }
 
     public void saveSmart() {
@@ -1011,12 +1016,11 @@ public class ChestSeparatorsEditor {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
 
-    public boolean isInsidePickerWindow(double mx, double my) {
-        int w = 220;
-        int h = 185;
-        int x = (screen.width - w) / 2;
-        int y = (screen.height - h) / 2;
-        return mx >= x && mx <= x + w && my >= y && my <= y + h;
+    /** Whether either Shift key is held right now (polled from GLFW at call time). */
+    private static boolean isShiftDown() {
+        long window = MinecraftClient.getInstance().getWindow().getHandle();
+        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
     }
 
     public int shiftColor(int color, int amount) {
@@ -1138,15 +1142,19 @@ public class ChestSeparatorsEditor {
     public List<String> extractItemsFromSelection() {
         Set<String> extracted = new LinkedHashSet<>();
         if (accessor.getHandler() != null && accessor.getHandler().slots != null) {
-            for (int slotIdx : session.selectedSlots) {
-                if (slotIdx >= 0 && slotIdx < accessor.getHandler().slots.size()) {
-                    ItemStack stack = accessor.getHandler().getSlot(slotIdx).getStack();
-                    if (!stack.isEmpty()) {
-                        String id = net.minecraft.registry.Registries.ITEM
-                                .getId(stack.getItem())
-                                .toString();
-                        if (!session.currentAllowedItems.contains(id)) extracted.add(id);
-                    }
+            // selectedSlots holds slot KEYS, not raw handler indices: player-inventory keys carry the
+            // PLAYER_KEY_OFFSET, so indexing the handler directly missed every inventory slot (the offset
+            // key is out of range) and the import button did nothing for inventory filters. Resolve each
+            // key back to its Slot, which works for both the chest (offset 0) and the inventory.
+            for (int key : session.selectedSlots) {
+                Slot slot = slotForKey(key);
+                if (slot == null) continue;
+                ItemStack stack = slot.getStack();
+                if (!stack.isEmpty()) {
+                    String id = net.minecraft.registry.Registries.ITEM
+                            .getId(stack.getItem())
+                            .toString();
+                    if (!session.currentAllowedItems.contains(id)) extracted.add(id);
                 }
             }
         }
@@ -1452,9 +1460,24 @@ public class ChestSeparatorsEditor {
                         new io.github.marcsanzdev.chestseparators.network.SortOpenFiltersPayload());
             }
         } else {
+            // Be specific: "no filters at all" is a different situation from "filters exist but none has
+            // room / matches", and reads far clearer to the player. Both use the same muted grey as the
+            // pull/grab empty notices so every "nothing happened" message looks the same across the mod.
+            boolean anyContainerFilter = false;
+            for (net.minecraft.screen.slot.Slot s : accessor.getHandler().slots) {
+                if (!(s.inventory instanceof net.minecraft.entity.player.PlayerInventory)
+                        && whitelists != null
+                        && whitelists.containsKey(s.getIndex())) {
+                    anyContainerFilter = true;
+                    break;
+                }
+            }
             showStatus(
-                    net.minecraft.text.Text.translatable("message.chestseparators.deposit_failed"),
-                    net.minecraft.util.Formatting.RED);
+                    net.minecraft.text.Text.translatable(
+                            anyContainerFilter
+                                    ? "message.chestseparators.push_no_slot"
+                                    : "message.chestseparators.push_no_filters"),
+                    net.minecraft.util.Formatting.GRAY);
         }
     }
 
@@ -1495,8 +1518,8 @@ public class ChestSeparatorsEditor {
         // Empty filtered slots are filled in the filter's own order: the item first in the list heads for
         // the group's first slot, and so on. Ties (and every other pass) keep the handler's slot order.
         if (!checkExisting && !unfilteredOnly) {
-            collected.sort(java.util.Comparator.comparingInt(s ->
-                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+            collected.sort(java.util.Comparator.comparingInt(
+                    s -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
                             whitelists, s.getIndex(), itemId)));
         }
         list.addAll(collected);
@@ -1526,7 +1549,9 @@ public class ChestSeparatorsEditor {
             if (chestSlot.inventory instanceof net.minecraft.entity.player.PlayerInventory || !chestSlot.hasStack())
                 continue;
             net.minecraft.item.ItemStack stack = chestSlot.getStack();
-            String itemId = net.minecraft.registry.Registries.ITEM.getId(stack.getItem()).toString();
+            String itemId = net.minecraft.registry.Registries.ITEM
+                    .getId(stack.getItem())
+                    .toString();
 
             // Mirrors performFillFromOpenContainer: pull items the inventory filters list; with Shift, pull
             // everything into free space.
@@ -1631,7 +1656,8 @@ public class ChestSeparatorsEditor {
             if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.id)) continue;
             io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
                     invFilters != null ? invFilters.get(ps.getIndex()) : null;
-            boolean reservedForOther = wl != null && isSlotFilterActive(wl) && !wl.allowedItems().contains(itemId);
+            boolean reservedForOther =
+                    wl != null && isSlotFilterActive(wl) && !wl.allowedItems().contains(itemId);
             if (!reservedForOther) return ps;
         }
         return null;
@@ -1643,7 +1669,8 @@ public class ChestSeparatorsEditor {
 
     /** Client mirror of the server's inventoryListsItem: does any inventory filter list this item? */
     private boolean inventoryListsItemClient(
-            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters, String itemId) {
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
+            String itemId) {
         if (invFilters == null) return false;
         for (io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl : invFilters.values()) {
             if (wl.allowedItems().contains(itemId)) return true;
@@ -1721,8 +1748,8 @@ public class ChestSeparatorsEditor {
             orderedSlots.add(chestSlot);
         }
         if (!checkExisting && !unfilteredOnly) {
-            orderedSlots.sort(java.util.Comparator.comparingInt(s ->
-                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+            orderedSlots.sort(java.util.Comparator.comparingInt(
+                    s -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
                             whitelists, s.getIndex(), itemId)));
         }
 
@@ -1805,8 +1832,7 @@ public class ChestSeparatorsEditor {
             net.minecraft.screen.slot.Slot s = accessor.getHandler().getSlot(slotId);
             net.minecraft.item.ItemStack inc = previewTargetIncoming.get(slotId);
             net.minecraft.item.ItemStack fin = inc.copy();
-            if (!s.getStack().isEmpty()
-                    && net.minecraft.item.ItemStack.areItemsAndComponentsEqual(s.getStack(), inc)) {
+            if (!s.getStack().isEmpty() && net.minecraft.item.ItemStack.areItemsAndComponentsEqual(s.getStack(), inc)) {
                 fin.setCount(s.getStack().getCount() + inc.getCount());
             }
             previewTargetIncoming.put(slotId, fin);
@@ -1818,7 +1844,8 @@ public class ChestSeparatorsEditor {
         for (net.minecraft.screen.slot.Slot s : destSlots) {
             io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = whitelists.get(indexOf.applyAsInt(s));
             if (wl == null || wl.groupId() == null) continue;
-            groups.computeIfAbsent(wl.groupId(), g -> new java.util.ArrayList<>()).add(s);
+            groups.computeIfAbsent(wl.groupId(), g -> new java.util.ArrayList<>())
+                    .add(s);
         }
         for (java.util.List<net.minecraft.screen.slot.Slot> gslots : groups.values()) {
             if (gslots.size() < 2) continue;
@@ -1834,8 +1861,9 @@ public class ChestSeparatorsEditor {
                 if (!fin.isEmpty()) finals.add(fin);
             }
             finals.sort(java.util.Comparator.comparingInt(st -> {
-                int r = order.indexOf(
-                        net.minecraft.registry.Registries.ITEM.getId(st.getItem()).toString());
+                int r = order.indexOf(net.minecraft.registry.Registries.ITEM
+                        .getId(st.getItem())
+                        .toString());
                 return r < 0 ? Integer.MAX_VALUE : r;
             }));
 

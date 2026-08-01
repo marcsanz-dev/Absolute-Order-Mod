@@ -26,10 +26,6 @@
     "PlayerScreenHandlerFallbackMixin"
   ],
   "client": [
-    "client.GenericContainerScreenMixin",
-    "client.HandledScreenAccessor",
-    "client.ScreenAccessor",
-    "ChestInteractionMixin",
     "WorldMixin"
   ],
   "injectors": {

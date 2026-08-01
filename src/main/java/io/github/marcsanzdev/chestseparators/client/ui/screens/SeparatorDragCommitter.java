@@ -167,6 +167,12 @@ final class SeparatorDragCommitter {
                         | ChestConfigManager.ACTION_BOTTOM
                         | ChestConfigManager.ACTION_LEFT
                         | ChestConfigManager.ACTION_RIGHT;
+                // A single click on a non-grid cell paints only the clicked edge, exactly like the hover
+                // preview shows. The full box is drawn only when the gesture forms a rectangle — either a
+                // real multi-cell area sweep, or a corner-to-corner drag that crosses the cell's midpoint
+                // (isDraggingRectangle), matching how a single grid slot fills its whole box.
+                boolean isRect = editor.geometry.isDraggingRectangle(mouseX, mouseY);
+                int startKey = ChestSeparatorsEditor.slotKey(session.dragStartSlot);
                 for (Slot slot : editor.accessor.getHandler().slots) {
                     if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
                     if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
@@ -175,7 +181,10 @@ final class SeparatorDragCommitter {
                     int r = slot.getIndex() / 9;
                     int c = slot.getIndex() % 9;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
-                        if (erase) {
+                        if (!isRect && key == startKey) {
+                            if (erase) manager.removeAction(key, session.currentDragAction);
+                            else manager.paintAction(key, session.currentDragAction, colorToPaint);
+                        } else if (erase) {
                             manager.removeAction(key, allLines);
                         } else {
                             manager.paintAction(key, ChestConfigManager.ACTION_TOP, colorToPaint);

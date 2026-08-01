@@ -15,8 +15,7 @@ import net.minecraft.util.Identifier;
 // Used bidirectionally: C2S when the client saves a minecart filter (so the server can enforce the Hopper
 // rule and persist it in the entity's NBT), and S2C when the container GUI opens (so the client shows the
 // server-authoritative filter).
-public record EntityWhitelistPayload(UUID entityUuid, Map<Integer, SlotWhitelist> whitelists)
-        implements CustomPayload {
+public record EntityWhitelistPayload(UUID entityUuid, Map<Integer, SlotWhitelist> whitelists) implements CustomPayload {
 
     public static final CustomPayload.Id<EntityWhitelistPayload> ID =
             new CustomPayload.Id<>(Identifier.of("chestseparators", "entity_whitelist_sync"));

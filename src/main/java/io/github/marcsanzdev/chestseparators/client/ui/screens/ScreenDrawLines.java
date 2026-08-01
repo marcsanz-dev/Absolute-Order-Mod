@@ -2,10 +2,8 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.ToolButtonWidget;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -522,7 +520,13 @@ public class ScreenDrawLines extends AbstractEditorScreen {
             // right edge has no border/gap so it merges into the panel, and a selected tab shrinks anchored
             // to that right edge so it never pulls away from the sidebar.
             io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
-                    context, tabX, tabY, 20, 20, hover, isSelected,
+                    context,
+                    tabX,
+                    tabY,
+                    20,
+                    20,
+                    hover,
+                    isSelected,
                     io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_RIGHT);
 
             Identifier icon = (i == 0)

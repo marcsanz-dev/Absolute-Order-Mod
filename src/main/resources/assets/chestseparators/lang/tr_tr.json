@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Çıkarılanları İçe Aktar",
   "message.chestseparators.items_already_in_filter": "Öğeler zaten filtrede.",
   "message.chestseparators.no_new_items_found": "Yeni öğe bulunamadı.",
-  "tooltip.chestseparators.desc.import_extracted": "Çıkarılanları İçe Aktar",
+  "tooltip.chestseparators.desc.import_extracted": "Seçili yuvalardaki eşyaları filtreye ekler.",
   "tooltip.chestseparators.desc.import_search": "Aramayı İçe Aktar",
   "button.chestseparators.allow_all": "Tümüne İzin Ver",
   "tooltip.chestseparators.desc.allow_all": "Tüm oyun öğelerini beyaz listeye ekler",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Sandığın eşyalarını envanter filtrelerine getirir.\n§8Filtresiz eşyaları da getirmek için [Shift] tuşunu basılı tut",
   "config.chestseparators.lock_hotbar_on_reorder": "Sıralarken hotbar'ı kilitle",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Bir push veya pull envanterini sıraladığında hotbar'a dokunulmaz.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Elindeki eşyayı korur. Kapalı: hotbar da sıralanır."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Elindeki eşyayı korur. Kapalı: hotbar da sıralanır.",
+  "message.chestseparators.push_no_filters": "Bu sandıkta henüz filtre yok.",
+  "message.chestseparators.push_no_slot": "Boş filtre yuvası yok.",
+  "message.chestseparators.pull_no_filters": "Envanterinde henüz filtre yok.",
+  "message.chestseparators.pull_no_match": "Buradaki hiçbir şey filtrelerine uymuyor."
 }

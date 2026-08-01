@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "抽出アイテムをインポート",
   "message.chestseparators.items_already_in_filter": "アイテムはすでにフィルターにあります。",
   "message.chestseparators.no_new_items_found": "新しいアイテムは見つかりませんでした。",
-  "tooltip.chestseparators.desc.import_extracted": "抽出アイテムをインポート",
+  "tooltip.chestseparators.desc.import_extracted": "選択したスロットにあるアイテムをフィルターに追加します。",
   "tooltip.chestseparators.desc.import_search": "検索をインポート",
   "button.chestseparators.allow_all": "すべて許可",
   "tooltip.chestseparators.desc.allow_all": "すべてのアイテムをホワイトリストに登録します",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "チェストのアイテムをインベントリのフィルターへ取り込みます。\n§8[Shift]を押しながらでフィルター外のアイテムも取り込みます",
   "config.chestseparators.lock_hotbar_on_reorder": "並べ替え時にホットバーを固定",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "プッシュやプルがインベントリを並べ替えても、ホットバーはそのままです。",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "手に持っているアイテムを保護します。オフ：ホットバーも並べ替えます。"
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "手に持っているアイテムを保護します。オフ：ホットバーも並べ替えます。",
+  "message.chestseparators.push_no_filters": "このチェストにはまだフィルターがありません。",
+  "message.chestseparators.push_no_slot": "空きのフィルタースロットがありません。",
+  "message.chestseparators.pull_no_filters": "インベントリにまだフィルターがありません。",
+  "message.chestseparators.pull_no_match": "フィルターに合うものがここにありません。"
 }

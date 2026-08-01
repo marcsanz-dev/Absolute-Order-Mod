@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "استيراد المستخرج",
   "message.chestseparators.items_already_in_filter": "العناصر موجودة بالفعل في الفلتر.",
   "message.chestseparators.no_new_items_found": "لم يتم العثور على عناصر جديدة.",
-  "tooltip.chestseparators.desc.import_extracted": "استيراد المستخرج",
+  "tooltip.chestseparators.desc.import_extracted": "يضيف العناصر الموجودة في الخانات المحددة إلى المرشح.",
   "tooltip.chestseparators.desc.import_search": "استيراد البحث",
   "button.chestseparators.allow_all": "السماح للكل",
   "tooltip.chestseparators.desc.allow_all": "يضيف جميع عناصر اللعبة إلى القائمة البيضاء",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "يجلب عناصر الصندوق إلى مرشحات حقيبتك.\n§8اضغط [Shift] لجلب العناصر غير المرشحة أيضًا",
   "config.chestseparators.lock_hotbar_on_reorder": "قفل شريط الأدوات عند الفرز",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "عند قيام الإرسال أو الجلب بفرز حقيبتك، يبقى شريط الأدوات دون تغيير.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "يحمي عنصرًا تمسكه. إيقاف: يُفرز شريط الأدوات أيضًا."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "يحمي عنصرًا تمسكه. إيقاف: يُفرز شريط الأدوات أيضًا.",
+  "message.chestseparators.push_no_filters": "لا توجد مرشحات في هذا الصندوق بعد.",
+  "message.chestseparators.push_no_slot": "لا توجد خانة مرشح فارغة.",
+  "message.chestseparators.pull_no_filters": "لا توجد مرشحات في حقيبتك بعد.",
+  "message.chestseparators.pull_no_match": "لا شيء هنا يطابق مرشحاتك."
 }

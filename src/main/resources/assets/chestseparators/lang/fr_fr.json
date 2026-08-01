@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importer extraits",
   "message.chestseparators.items_already_in_filter": "Objets déjà dans le filtre.",
   "message.chestseparators.no_new_items_found": "Aucun nouvel objet trouvé.",
-  "tooltip.chestseparators.desc.import_extracted": "Importer extraits",
+  "tooltip.chestseparators.desc.import_extracted": "Ajoute au filtre les objets présents dans les emplacements sélectionnés.",
   "tooltip.chestseparators.desc.import_search": "Importer recherche",
   "button.chestseparators.allow_all": "Tout autoriser",
   "tooltip.chestseparators.desc.allow_all": "Autorise tous les objets du jeu",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Récupère les objets du coffre dans les filtres de votre inventaire.\n§8Maintenez [Maj] pour aussi récupérer les objets sans filtre",
   "config.chestseparators.lock_hotbar_on_reorder": "Verrouiller la barre d'accès lors du tri",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Quand un envoi ou une récupération trie votre inventaire, la barre d'accès reste intacte.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protège un objet que vous tenez. Désactivé : la barre d'accès est triée aussi."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protège un objet que vous tenez. Désactivé : la barre d'accès est triée aussi.",
+  "message.chestseparators.push_no_filters": "Ce coffre n'a pas encore de filtres.",
+  "message.chestseparators.push_no_slot": "Aucun emplacement de filtre libre.",
+  "message.chestseparators.pull_no_filters": "Ton inventaire n'a pas encore de filtres.",
+  "message.chestseparators.pull_no_match": "Rien ici ne correspond à tes filtres."
 }

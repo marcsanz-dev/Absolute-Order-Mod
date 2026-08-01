@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Impor yang Diekstrak",
   "message.chestseparators.items_already_in_filter": "Barang sudah ada di filter.",
   "message.chestseparators.no_new_items_found": "Tidak ada barang baru yang ditemukan.",
-  "tooltip.chestseparators.desc.import_extracted": "Impor yang Diekstrak",
+  "tooltip.chestseparators.desc.import_extracted": "Menambahkan item pada slot terpilih ke filter.",
   "tooltip.chestseparators.desc.import_search": "Impor Pencarian",
   "button.chestseparators.allow_all": "Izinkan Semua",
   "tooltip.chestseparators.desc.allow_all": "Memasukkan semua barang game ke daftar putih",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Ambil item peti ke filter inventarismu.\n§8Tahan [Shift] untuk mengambil item tanpa filter juga",
   "config.chestseparators.lock_hotbar_on_reorder": "Kunci hotbar saat menyortir",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Saat push atau pull menyortir inventarismu, hotbar dibiarkan.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Melindungi item yang kamu pegang. Mati: hotbar ikut disortir."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Melindungi item yang kamu pegang. Mati: hotbar ikut disortir.",
+  "message.chestseparators.push_no_filters": "Peti ini belum punya filter.",
+  "message.chestseparators.push_no_slot": "Tak ada slot filter kosong.",
+  "message.chestseparators.pull_no_filters": "Inventarismu belum punya filter.",
+  "message.chestseparators.pull_no_match": "Tak ada yang cocok dengan filtermu."
 }

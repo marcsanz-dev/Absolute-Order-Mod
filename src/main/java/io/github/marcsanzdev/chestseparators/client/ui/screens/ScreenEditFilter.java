@@ -10,9 +10,7 @@ import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.Item;
@@ -205,7 +203,13 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         }
         float eased = 1f - (1f - t) * (1f - t) * (1f - t);
         drawGhostRow(
-                context, session.deleteAnimItem, session.deleteAnimX, session.deleteAnimY, 1f - eased, 1f - eased, true);
+                context,
+                session.deleteAnimItem,
+                session.deleteAnimX,
+                session.deleteAnimY,
+                1f - eased,
+                1f - eased,
+                true);
     }
 
     /**
@@ -239,7 +243,12 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundRect(
                 context, 0, 0, rowW, rowH, ((barAlpha * 0xC8 / 0xFF) << 24) | (danger ? 0x2A1214 : 0x121218));
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
-                context, 0, 0, rowW, rowH, danger ? (barAlpha << 24) | 0xFF5555 : ((barAlpha * 0x55 / 0xFF) << 24) | 0xFFFFFF);
+                context,
+                0,
+                0,
+                rowW,
+                rowH,
+                danger ? (barAlpha << 24) | 0xFF5555 : ((barAlpha * 0x55 / 0xFF) << 24) | 0xFFFFFF);
 
         context.drawItem(item.getDefaultStack(), 3, 1);
 
@@ -372,7 +381,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             session.deleteAnimX = releaseX - (int) (rowW * 0.9f) / 2;
             session.deleteAnimY = releaseY - (int) (18 * 0.9f) / 2;
             session.deleteAnimStart = System.currentTimeMillis();
-            editor.playClickSound(0.8f);
+            // "Item removed from the filter" — the vanilla item-frame remove sound reads as taking an item out.
+            editor.playUiSound(net.minecraft.sound.SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM, 1.0f);
             return;
         }
 
@@ -416,7 +426,10 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             session.dropGhostToY = layout.listViewY + (landed * 18) - (int) session.listScrollY;
             session.dropGhostStart = System.currentTimeMillis();
         }
-        editor.playClickSound(1.1f);
+        // A grid item newly dropped into the filter (from < 0) gets the item-frame "add" sound; a pure
+        // reorder of a row already in the filter keeps the neutral UI click.
+        if (from < 0) editor.playUiSound(net.minecraft.sound.SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM, 1.0f);
+        else editor.playClickSound(1.1f);
     }
 
     /** Scrolls the list while an item is held against its top or bottom edge. */

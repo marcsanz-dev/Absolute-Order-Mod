@@ -51,8 +51,7 @@ public class IconBooleanListEntry extends BooleanListEntry {
             int mouseY,
             boolean isHovered,
             float delta) {
-        super.render(
-                graphics, index, y, x + SHIFT, entryWidth - SHIFT, entryHeight, mouseX, mouseY, isHovered, delta);
+        super.render(graphics, index, y, x + SHIFT, entryWidth - SHIFT, entryHeight, mouseX, mouseY, isHovered, delta);
         int iconY = y + (entryHeight - ICON_SIZE) / 2;
         graphics.drawTexture(
                 RenderPipelines.GUI_TEXTURED, icon, x, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, TEX, TEX, TEX, TEX, -1);

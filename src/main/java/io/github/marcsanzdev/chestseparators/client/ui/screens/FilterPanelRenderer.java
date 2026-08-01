@@ -223,13 +223,24 @@ final class FilterPanelRenderer {
         // for the very first position fell entirely outside it and never showed up.
         // Only while the cursor is actually over the list: outside it a drop changes nothing, so promising
         // a landing spot there would be a lie.
-        if (session.reorderDragItem != null
-                && screen.isOverList(session.reorderMouseX, session.reorderMouseY)) {
+        if (session.reorderDragItem != null && screen.isOverList(session.reorderMouseX, session.reorderMouseY)) {
             int row = screen.reorderTargetRow(session.reorderMouseY);
             int caretY = listViewY + (row * 18) - (int) session.listScrollY;
             caretY = MathHelper.clamp(caretY, listViewY + 1, listViewY + listViewH - 1);
             context.fill(listX + 6, caretY - 1, listX + listW - 14, caretY + 1, 0xFF4A9EFF);
         }
+    }
+
+    /** Maps a 16-slot tab-grid position to an index into the normal-tabs list for {@code currentTabPage},
+     *  or -1 if that slot holds no normal tab. Shared verbatim by the panel renderer and click handler. */
+    static int normalListIndexForSlot(int slot, int currentTabPage, int normalTabsPerPage) {
+        if (currentTabPage == 0) {
+            if (slot >= 0 && slot <= 4) return slot;
+            if (slot >= 8 && slot <= 12) return 5 + (slot - 8);
+            return -1;
+        }
+        int offsetOnPage = (slot > 7) ? slot - 1 : slot;
+        return 10 + ((currentTabPage - 1) * normalTabsPerPage) + offsetOnPage;
     }
 
     void drawMainPanel(DrawContext context, int mouseX, int mouseY) {
@@ -281,17 +292,7 @@ final class FilterPanelRenderer {
                 info = searchTab;
                 actualGlobalIndex = searchTabIndexGlobal;
             } else {
-                int normalListIndex = -1;
-
-                if (session.currentTabPage == 0) {
-                    // Custom Layout for Page 0
-                    if (slot >= 0 && slot <= 4) normalListIndex = slot;
-                    else if (slot >= 8 && slot <= 12) normalListIndex = 5 + (slot - 8);
-                } else {
-                    // Packed Layout for Page 1+
-                    int offsetOnPage = (slot > 7) ? slot - 1 : slot;
-                    normalListIndex = 10 + ((session.currentTabPage - 1) * normalTabsPerPage) + offsetOnPage;
-                }
+                int normalListIndex = normalListIndexForSlot(slot, session.currentTabPage, normalTabsPerPage);
 
                 if (normalListIndex >= 0 && normalListIndex < normalTabs.size()) {
                     info = normalTabs.get(normalListIndex);
@@ -545,9 +546,8 @@ final class FilterPanelRenderer {
                 context.getMatrices().translate((float) (dX + 6), (itemY + (14 - 8 * scale) / 2));
                 context.getMatrices().scale(scale, scale);
 
-                int textColor = isHoveringTag
-                        ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT
-                        : 0xFFFFFFFF;
+                int textColor =
+                        isHoveringTag ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ACCENT : 0xFFFFFFFF;
                 context.drawText(MinecraftClient.getInstance().textRenderer, "#" + tag, 0, 0, textColor, false);
                 context.getMatrices().popMatrix();
             }

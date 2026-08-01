@@ -58,6 +58,10 @@ public class EditorRenderer {
             // Hold the pressed state for 150 ms after the click for visual feedback.
             editor.depositButton.isActive = (System.currentTimeMillis() - editor.depositClickTime < 150);
         }
+        if (editor.fillButton != null) {
+            // Same press-pulse for the pull button, so the 'D' hotkey feels like clicking it (matches push).
+            editor.fillButton.isActive = (System.currentTimeMillis() - editor.fillClickTime < 150);
+        }
         // The presets icons are pressed only while their menu is open (radio-like with layout/filters).
         if (editor.presetsButton != null) {
             editor.presetsButton.isActive = session.isPresetsMenuOpen && !session.presetsMenuChestMode;
@@ -421,14 +425,13 @@ public class EditorRenderer {
                 && !session.isPlayerInventory
                 && editor.depositButton != null) {
             editor.depositButton.tooltipText = shift
-                    ? Text.translatable("tooltip.chestseparators.push_to_chest.shift").getString()
+                    ? Text.translatable("tooltip.chestseparators.push_to_chest.shift")
+                            .getString()
                     : Text.translatable("tooltip.chestseparators.push_to_chest").getString();
             hoverDeposit = editor.isHovering(editor.depositButton.x, editor.depositButton.y, 20, 20, mouseX, mouseY);
         }
         boolean hoverFill = false;
-        if (GlobalChestConfig.instance.btnFillFromChest
-                && !session.isPlayerInventory
-                && editor.fillButton != null) {
+        if (GlobalChestConfig.instance.btnFillFromChest && !session.isPlayerInventory && editor.fillButton != null) {
             hoverFill = editor.isHovering(editor.fillButton.x, editor.fillButton.y, 20, 20, mouseX, mouseY);
         }
 
@@ -464,7 +467,6 @@ public class EditorRenderer {
             editor.previewTargetIncoming.clear();
         }
     }
-
 
     private void renderDepositPreview(DrawContext context) {
         if ((!editor.isHoveringDeposit && !editor.isHoveringFill) || editor.previewTargetIncoming.isEmpty()) return;

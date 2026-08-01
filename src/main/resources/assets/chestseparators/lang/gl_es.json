@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importar extraídos",
   "message.chestseparators.items_already_in_filter": "Os elementos xa están no filtro.",
   "message.chestseparators.no_new_items_found": "Non se atoparon elementos novos.",
-  "tooltip.chestseparators.desc.import_extracted": "Importar extraídos",
+  "tooltip.chestseparators.desc.import_extracted": "Engade ao filtro os obxectos que hai nas rañuras seleccionadas.",
   "tooltip.chestseparators.desc.import_search": "Importar busca",
   "button.chestseparators.allow_all": "Permitir todo",
   "tooltip.chestseparators.desc.allow_all": "Engade todos os elementos do xogo á lista branca",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Trae os obxectos do cofre aos filtros do teu inventario.\n§8Mantén [Shift] para traer tamén obxectos sen filtro",
   "config.chestseparators.lock_hotbar_on_reorder": "Bloquear a barra rápida ao autoordenar",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Cando un push ou pull reordena o teu inventario, a barra rápida déixase intacta.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protexe un obxecto que poidas ter na man. Desactivado: a barra rápida tamén se ordena."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protexe un obxecto que poidas ter na man. Desactivado: a barra rápida tamén se ordena.",
+  "message.chestseparators.push_no_filters": "Este cofre aínda non ten filtros.",
+  "message.chestseparators.push_no_slot": "Non hai oco libre nos filtros.",
+  "message.chestseparators.pull_no_filters": "O teu inventario aínda non ten filtros.",
+  "message.chestseparators.pull_no_match": "Nada de aquí coincide cos teus filtros."
 }

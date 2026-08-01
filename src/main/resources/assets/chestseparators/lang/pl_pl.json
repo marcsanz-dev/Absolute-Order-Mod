@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importuj wyodrębnione",
   "message.chestseparators.items_already_in_filter": "Przedmioty są już w filtrze.",
   "message.chestseparators.no_new_items_found": "Nie znaleziono nowych przedmiotów.",
-  "tooltip.chestseparators.desc.import_extracted": "Importuj wyodrębnione",
+  "tooltip.chestseparators.desc.import_extracted": "Dodaje do filtra przedmioty znajdujące się w zaznaczonych slotach.",
   "tooltip.chestseparators.desc.import_search": "Importuj wyszukiwanie",
   "button.chestseparators.allow_all": "Zezwól na wszystkie",
   "tooltip.chestseparators.desc.allow_all": "Dodaje wszystkie przedmioty do białej listy",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Pobiera przedmioty ze skrzyni do filtrów twojego ekwipunku.\n§8Przytrzymaj [Shift], aby pobrać też przedmioty bez filtra",
   "config.chestseparators.lock_hotbar_on_reorder": "Zablokuj pasek szybkiego dostępu przy sortowaniu",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Gdy push lub pull sortuje ekwipunek, pasek szybkiego dostępu pozostaje nietknięty.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Chroni trzymany przedmiot. Wył.: pasek też jest sortowany."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Chroni trzymany przedmiot. Wył.: pasek też jest sortowany.",
+  "message.chestseparators.push_no_filters": "Ta skrzynia nie ma jeszcze filtrów.",
+  "message.chestseparators.push_no_slot": "Brak wolnego miejsca w filtrach.",
+  "message.chestseparators.pull_no_filters": "Twój ekwipunek nie ma jeszcze filtrów.",
+  "message.chestseparators.pull_no_match": "Nic tu nie pasuje do twoich filtrów."
 }

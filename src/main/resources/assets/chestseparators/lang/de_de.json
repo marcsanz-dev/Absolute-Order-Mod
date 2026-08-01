@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Extrahierte importieren",
   "message.chestseparators.items_already_in_filter": "Gegenstände bereits im Filter.",
   "message.chestseparators.no_new_items_found": "Keine neuen Gegenstände gefunden.",
-  "tooltip.chestseparators.desc.import_extracted": "Extrahierte importieren",
+  "tooltip.chestseparators.desc.import_extracted": "Fügt die Gegenstände aus den ausgewählten Slots zum Filter hinzu.",
   "tooltip.chestseparators.desc.import_search": "Suche importieren",
   "button.chestseparators.allow_all": "Alle zulassen",
   "tooltip.chestseparators.desc.allow_all": "Setzt alle Spiel-Gegenstände auf die Whitelist",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Holt die Gegenstände der Truhe in deine Inventarfilter.\n§8[Umschalt] halten, um auch ungefilterte Gegenstände zu holen",
   "config.chestseparators.lock_hotbar_on_reorder": "Hotbar beim Sortieren sperren",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Wenn ein Einlagern oder Herausholen dein Inventar sortiert, bleibt die Hotbar unberührt.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Schützt ein gehaltenes Objekt. Aus: Die Hotbar wird mitsortiert."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Schützt ein gehaltenes Objekt. Aus: Die Hotbar wird mitsortiert.",
+  "message.chestseparators.push_no_filters": "Diese Truhe hat noch keine Filter.",
+  "message.chestseparators.push_no_slot": "Kein freier Filter-Slot dafür.",
+  "message.chestseparators.pull_no_filters": "Dein Inventar hat noch keine Filter.",
+  "message.chestseparators.pull_no_match": "Nichts hier passt zu deinen Filtern."
 }

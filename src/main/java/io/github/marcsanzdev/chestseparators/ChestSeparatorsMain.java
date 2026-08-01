@@ -6,7 +6,6 @@ import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.network.*;
 import io.github.marcsanzdev.chestseparators.registry.ChestSeparatorsComponents;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -158,15 +157,10 @@ public class ChestSeparatorsMain implements ModInitializer {
                             for (BlockPos p : associatedPositions) {
                                 LOCKED_CHESTS.put(p, playerUuid);
                             }
-                            if (ServerPlayNetworking.canSend(context.player(), EditorLockResponsePayload.ID)) {
-                                ServerPlayNetworking.send(
-                                        context.player(), new EditorLockResponsePayload(targetPos, true));
-                            }
-                        } else {
-                            if (ServerPlayNetworking.canSend(context.player(), EditorLockResponsePayload.ID)) {
-                                ServerPlayNetworking.send(
-                                        context.player(), new EditorLockResponsePayload(targetPos, false));
-                            }
+                        }
+                        if (ServerPlayNetworking.canSend(context.player(), EditorLockResponsePayload.ID)) {
+                            ServerPlayNetworking.send(
+                                    context.player(), new EditorLockResponsePayload(targetPos, canLock));
                         }
                     } else {
                         // Release all associated positions when the player exits the editor.
@@ -724,10 +718,7 @@ public class ChestSeparatorsMain implements ModInitializer {
             }
         }
         // Single chest, Shulker Box, or Barrel — return directly.
-        if (be instanceof Inventory) {
-            return (Inventory) be;
-        }
-        return null;
+        return be instanceof Inventory inv ? inv : null;
     }
 
     /**

@@ -582,7 +582,11 @@ final class SeparatorPreviewRenderer {
         ChestConfigManager m = ChestConfigManager.getInstance();
         int off = ChestConfigManager.PLAYER_KEY_OFFSET;
 
-        // Non-grid armor/offhand cells: full box (erase gated on existing color).
+        // Non-grid armor/offhand cells: full box when the gesture forms a rectangle (area sweep or a
+        // corner-to-corner drag crossing the midpoint), but only the clicked edge on a single click —
+        // mirrors the committer so the preview always matches what lands.
+        boolean isRect = editor.geometry.isDraggingRectangle(mouseX, mouseY);
+        int startKey = ChestSeparatorsEditor.slotKey(session.dragStartSlot);
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot) || !ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
             int key = ChestSeparatorsEditor.slotKey(slot);
@@ -590,6 +594,11 @@ final class SeparatorPreviewRenderer {
             int r = slot.getIndex() / 9;
             int c = slot.getIndex() % 9;
             if (r < minRow || r > maxRow || c < minCol || c > maxCol) continue;
+            if (!isRect && key == startKey) {
+                int single = session.currentDragAction;
+                if (!erase || m.getColor(key, single) != 0) drawPreviewEdge(context, key, single, colorLine);
+                continue;
+            }
             int mask = 0;
             if (!erase || m.getColor(key, ChestConfigManager.ACTION_TOP) != 0) mask |= ChestConfigManager.ACTION_TOP;
             if (!erase || m.getColor(key, ChestConfigManager.ACTION_BOTTOM) != 0)

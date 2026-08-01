@@ -193,14 +193,8 @@ final class FilterClickHandler {
                 if (slot == 7 && searchTab != null) {
                     actualGlobalIndex = searchTabIndexGlobal;
                 } else {
-                    int normalListIndex = -1;
-                    if (session.currentTabPage == 0) {
-                        if (slot >= 0 && slot <= 4) normalListIndex = slot;
-                        else if (slot >= 8 && slot <= 12) normalListIndex = 5 + (slot - 8);
-                    } else {
-                        int offsetOnPage = (slot > 7) ? slot - 1 : slot;
-                        normalListIndex = 10 + ((session.currentTabPage - 1) * normalTabsPerPage) + offsetOnPage;
-                    }
+                    int normalListIndex =
+                            FilterPanelRenderer.normalListIndexForSlot(slot, session.currentTabPage, normalTabsPerPage);
 
                     if (normalListIndex >= 0 && normalListIndex < normalIndices.size()) {
                         actualGlobalIndex = normalIndices.get(normalListIndex);
@@ -354,7 +348,7 @@ final class FilterClickHandler {
                     session.selectedSlots.clear();
                     editor.toggleState(EditorState.VIEW_GROUPS);
                 }
-                editor.playClickSound(1.0f);
+                editor.playCloseSound();
                 return true;
             }
         }

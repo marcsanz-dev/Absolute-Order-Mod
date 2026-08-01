@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Импорт извлеченных",
   "message.chestseparators.items_already_in_filter": "Предметы уже в фильтре.",
   "message.chestseparators.no_new_items_found": "Новые предметы не найдены.",
-  "tooltip.chestseparators.desc.import_extracted": "Импорт извлеченных",
+  "tooltip.chestseparators.desc.import_extracted": "Добавляет в фильтр предметы из выбранных ячеек.",
   "tooltip.chestseparators.desc.import_search": "Импорт поиска",
   "button.chestseparators.allow_all": "Разрешить все",
   "tooltip.chestseparators.desc.allow_all": "Добавляет все предметы в белый список",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Забирает предметы сундука в фильтры вашего инвентаря.\n§8Удерживайте [Shift], чтобы забрать и нефильтрованные предметы",
   "config.chestseparators.lock_hotbar_on_reorder": "Блокировать хотбар при сортировке",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Когда push или pull сортирует инвентарь, хотбар остаётся нетронутым.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Защищает предмет в руке. Выкл.: хотбар тоже сортируется."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Защищает предмет в руке. Выкл.: хотбар тоже сортируется.",
+  "message.chestseparators.push_no_filters": "У этого сундука ещё нет фильтров.",
+  "message.chestseparators.push_no_slot": "Нет свободного слота фильтра.",
+  "message.chestseparators.pull_no_filters": "В инвентаре ещё нет фильтров.",
+  "message.chestseparators.pull_no_match": "Здесь ничего не подходит под фильтры."
 }

@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importera extraherade",
   "message.chestseparators.items_already_in_filter": "Föremålen är redan i filtret.",
   "message.chestseparators.no_new_items_found": "Inga nya föremål hittades.",
-  "tooltip.chestseparators.desc.import_extracted": "Importera extraherade",
+  "tooltip.chestseparators.desc.import_extracted": "Lägger till föremålen i de valda platserna i filtret.",
   "tooltip.chestseparators.desc.import_search": "Importera sökning",
   "button.chestseparators.allow_all": "Tillåt alla",
   "tooltip.chestseparators.desc.allow_all": "Vitlistar alla spelföremål",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Hämtar kistans föremål till dina inventariefilter.\n§8Håll [Shift] för att även hämta ofiltrerade föremål",
   "config.chestseparators.lock_hotbar_on_reorder": "Lås snabbfältet vid sortering",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "När en push eller pull sorterar ditt inventarium lämnas snabbfältet orört.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Skyddar ett föremål du håller. Av: snabbfältet sorteras också."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Skyddar ett föremål du håller. Av: snabbfältet sorteras också.",
+  "message.chestseparators.push_no_filters": "Denna kista har inga filter än.",
+  "message.chestseparators.push_no_slot": "Ingen ledig filterplats.",
+  "message.chestseparators.pull_no_filters": "Ditt inventarium har inga filter än.",
+  "message.chestseparators.pull_no_match": "Inget här matchar dina filter."
 }

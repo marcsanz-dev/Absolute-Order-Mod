@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "导入提取的物品",
   "message.chestseparators.items_already_in_filter": "物品已在过滤器中。",
   "message.chestseparators.no_new_items_found": "未找到新物品。",
-  "tooltip.chestseparators.desc.import_extracted": "导入提取的物品",
+  "tooltip.chestseparators.desc.import_extracted": "将选定槽位中的物品添加到筛选器。",
   "tooltip.chestseparators.desc.import_search": "导入搜索",
   "button.chestseparators.allow_all": "允许所有",
   "tooltip.chestseparators.desc.allow_all": "将所有游戏物品加入白名单",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "将箱子的物品取入你的背包筛选槽。\n§8按住 [Shift] 也取出未筛选的物品",
   "config.chestseparators.lock_hotbar_on_reorder": "整理时锁定快捷栏",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "推入或拉取整理背包时，保持快捷栏不动。",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "保护你手持的物品。关闭：快捷栏也会一起整理。"
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "保护你手持的物品。关闭：快捷栏也会一起整理。",
+  "message.chestseparators.push_no_filters": "这个箱子还没有筛选。",
+  "message.chestseparators.push_no_slot": "没有空闲的筛选槽。",
+  "message.chestseparators.pull_no_filters": "你的背包还没有筛选。",
+  "message.chestseparators.pull_no_match": "这里没有符合筛选的物品。"
 }

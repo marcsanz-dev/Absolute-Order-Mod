@@ -130,10 +130,18 @@ public class EditorGeometry {
     }
 
     public boolean isDraggingRectangle(double mouseX, double mouseY) {
-        int minRow = Math.min(ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
-        int maxRow = Math.max(ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
-        int minCol = Math.min(ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
-        int maxCol = Math.max(ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9, ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
+        int minRow = Math.min(
+                ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9,
+                ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
+        int maxRow = Math.max(
+                ChestSeparatorsEditor.realIndex(session.dragStartSlot) / 9,
+                ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) / 9);
+        int minCol = Math.min(
+                ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9,
+                ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
+        int maxCol = Math.max(
+                ChestSeparatorsEditor.realIndex(session.dragStartSlot) % 9,
+                ChestSeparatorsEditor.realIndex(session.dragCurrentSlot) % 9);
 
         // Spanning multiple rows AND columns is always a 2-D rectangle.
         if (minRow != maxRow && minCol != maxCol) return true;

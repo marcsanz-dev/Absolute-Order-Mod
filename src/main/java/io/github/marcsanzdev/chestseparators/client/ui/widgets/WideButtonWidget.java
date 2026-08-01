@@ -50,7 +50,8 @@ public class WideButtonWidget extends CustomWidget {
 
         if (this.icon != null) {
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-            context.drawTexture(pipeline, this.icon, x + 2, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, -1);
+            context.drawTexture(
+                    pipeline, this.icon, x + 2, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, -1);
         }
 
         float scale = 0.85f;
@@ -94,7 +95,20 @@ public class WideButtonWidget extends CustomWidget {
 
         if (iconToDraw != null) {
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-            context.drawTexture(pipeline, iconToDraw, x + 2, y + 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, disabledColor);
+            context.drawTexture(
+                    pipeline,
+                    iconToDraw,
+                    x + 2,
+                    y + 2,
+                    0.0F,
+                    0.0F,
+                    16,
+                    16,
+                    texSize,
+                    texSize,
+                    texSize,
+                    texSize,
+                    disabledColor);
         }
 
         float scale = 0.85f;

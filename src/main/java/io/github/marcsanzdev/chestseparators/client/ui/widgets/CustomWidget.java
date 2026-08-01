@@ -1,6 +1,5 @@
 package io.github.marcsanzdev.chestseparators.client.ui.widgets;
 
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import net.minecraft.client.gui.DrawContext;
 
 public abstract class CustomWidget {
@@ -49,25 +48,5 @@ public abstract class CustomWidget {
             return true; // Click consumed
         }
         return false;
-    }
-
-    protected void drawDarkBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
-        boolean isDark = GlobalChestConfig.instance.darkMode;
-
-        // Si es oscuro, usa tus colores actuales. Si es claro, usa los Vanilla.
-        int light = isDark ? 0xFF505050 : 0xFFFFFFFF;
-        int dark = isDark ? 0xFF000000 : 0xFF555555;
-
-        if (sunken) {
-            context.fill(x, y, x + width - 1, y + 1, dark);
-            context.fill(x, y, x + 1, y + height - 1, dark);
-            context.fill(x + width - 1, y, x + width, y + height, light);
-            context.fill(x, y + height - 1, x + width, y + height, light);
-        } else {
-            context.fill(x, y, x + width - 1, y + 1, light);
-            context.fill(x, y, x + 1, y + height - 1, light);
-            context.fill(x + width - 1, y, x + width, y + height, dark);
-            context.fill(x, y + height - 1, x + width, y + height, dark);
-        }
     }
 }

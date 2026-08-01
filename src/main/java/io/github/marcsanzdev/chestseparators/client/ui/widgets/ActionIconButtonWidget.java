@@ -27,8 +27,7 @@ public class ActionIconButtonWidget extends CustomWidget {
 
         boolean hover = isHovering(mouseX, mouseY);
         boolean active = this.isActive || PressAnim.active(x, y);
-        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(
-                context, x, y, width, height, hover, active);
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.button(context, x, y, width, height, hover, active);
 
         // The active/pressed button draws 1px smaller; shrink its icon+label by the same proportion.
         if (active) {
@@ -57,7 +56,20 @@ public class ActionIconButtonWidget extends CustomWidget {
 
         if (icon != null) {
             com.mojang.blaze3d.pipeline.RenderPipeline pipeline = net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED;
-            context.drawTexture(pipeline, icon, startX, y + (height - 16) / 2, 0.0F, 0.0F, 16, 16, texSize, texSize, texSize, texSize, -1);
+            context.drawTexture(
+                    pipeline,
+                    icon,
+                    startX,
+                    y + (height - 16) / 2,
+                    0.0F,
+                    0.0F,
+                    16,
+                    16,
+                    texSize,
+                    texSize,
+                    texSize,
+                    texSize,
+                    -1);
             startX += 20;
         }
 

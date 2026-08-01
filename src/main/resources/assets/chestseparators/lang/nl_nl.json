@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Geëxtraheerde importeren",
   "message.chestseparators.items_already_in_filter": "Items staan al in het filter.",
   "message.chestseparators.no_new_items_found": "Geen nieuwe items gevonden.",
-  "tooltip.chestseparators.desc.import_extracted": "Geëxtraheerde importeren",
+  "tooltip.chestseparators.desc.import_extracted": "Voegt de items in de geselecteerde vakjes toe aan het filter.",
   "tooltip.chestseparators.desc.import_search": "Zoekopdracht importeren",
   "button.chestseparators.allow_all": "Alles toestaan",
   "tooltip.chestseparators.desc.allow_all": "Zet alle game-items op de witte lijst",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Haalt de items van de kist naar je inventarisfilters.\n§8Houd [Shift] ingedrukt om ook ongefilterde items te halen",
   "config.chestseparators.lock_hotbar_on_reorder": "Hotbar vergrendelen bij sorteren",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Wanneer een push of pull je inventaris sorteert, blijft de hotbar ongemoeid.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Beschermt een item dat je vasthoudt. Uit: de hotbar wordt ook gesorteerd."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Beschermt een item dat je vasthoudt. Uit: de hotbar wordt ook gesorteerd.",
+  "message.chestseparators.push_no_filters": "Deze kist heeft nog geen filters.",
+  "message.chestseparators.push_no_slot": "Geen vrij filtervak hiervoor.",
+  "message.chestseparators.pull_no_filters": "Je inventaris heeft nog geen filters.",
+  "message.chestseparators.pull_no_match": "Niets hier past bij je filters."
 }

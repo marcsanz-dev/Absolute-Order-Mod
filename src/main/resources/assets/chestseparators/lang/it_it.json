@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "Importa Estratti",
   "message.chestseparators.items_already_in_filter": "Oggetti già nel filtro.",
   "message.chestseparators.no_new_items_found": "Nessun nuovo oggetto trovato.",
-  "tooltip.chestseparators.desc.import_extracted": "Importa Estratti",
+  "tooltip.chestseparators.desc.import_extracted": "Aggiunge al filtro gli oggetti presenti negli slot selezionati.",
   "tooltip.chestseparators.desc.import_search": "Importa Ricerca",
   "button.chestseparators.allow_all": "Consenti Tutti",
   "tooltip.chestseparators.desc.allow_all": "Inserisce tutti gli oggetti nella whitelist",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "Preleva gli oggetti del baule nei filtri del tuo inventario.\n§8Tieni premuto [Shift] per prelevare anche oggetti non filtrati",
   "config.chestseparators.lock_hotbar_on_reorder": "Blocca la barra rapida durante l'ordinamento",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "Quando un push o pull riordina il tuo inventario, la barra rapida resta intatta.",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protegge un oggetto che tieni in mano. Off: anche la barra rapida viene ordinata."
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "Protegge un oggetto che tieni in mano. Off: anche la barra rapida viene ordinata.",
+  "message.chestseparators.push_no_filters": "Questo baule non ha ancora filtri.",
+  "message.chestseparators.push_no_slot": "Nessuno slot filtro libero.",
+  "message.chestseparators.pull_no_filters": "Il tuo inventario non ha ancora filtri.",
+  "message.chestseparators.pull_no_match": "Niente qui corrisponde ai tuoi filtri."
 }

@@ -103,8 +103,8 @@ public abstract class StorageMinecartEntityMixin implements IWhitelistProvider {
                 try {
                     int slot = Integer.parseInt(key);
                     whitelistsTag.getCompound(key).ifPresent(wlTag -> {
-                        UUID groupId = UUID.fromString(
-                                wlTag.getString("GroupId").orElse(UUID.randomUUID().toString()));
+                        UUID groupId = UUID.fromString(wlTag.getString("GroupId")
+                                .orElse(UUID.randomUUID().toString()));
                         boolean ruleManual = wlTag.getBoolean("RuleManual").orElse(true);
                         boolean ruleShift = wlTag.getBoolean("RuleShift").orElse(true);
                         boolean ruleHopper = wlTag.getBoolean("RuleHopper").orElse(true);

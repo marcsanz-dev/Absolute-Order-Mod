@@ -224,7 +224,9 @@ final class WhitelistPreviewPanelRenderer {
             }
 
             if (activeWl != null) {
-                int tabX = listX - 20;
+                // Tabs sit on the OUTER side of the panel: to its left on the normal left dock, to its right
+                // when the panel is flipped right (recipe book open), so they never point back into the GUI.
+                int tabX = layout.listOnRight ? (listX + listW) : (listX - 20);
                 int startY = listY + 12;
 
                 drawRuleTab(context, tabX, startY, ModTextures.ICON_SM_MANUAL, activeWl.allowManual());
@@ -272,11 +274,12 @@ final class WhitelistPreviewPanelRenderer {
     private void drawRuleTab(DrawContext context, int x, int y, net.minecraft.util.Identifier icon, boolean isActive) {
         int w = 20;
         int h = 20;
-        // Cristal tab embedded into the preview panel on its RIGHT edge (the panel sits to the right), so
-        // the active indicator merges flush into the panel exactly like the edit-layout tabs.
-        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(
-                context, x, y, w, h, false, isActive,
-                io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_RIGHT);
+        // Cristal tab embedded flush into the preview panel: it attaches on the edge that faces the panel —
+        // its right edge on the normal left dock, its left edge when the panel is flipped to the right.
+        int attach = layout.listOnRight
+                ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_LEFT
+                : io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ATTACH_RIGHT;
+        io.github.marcsanzdev.chestseparators.client.ui.UiTheme.tab(context, x, y, w, h, false, isActive, attach);
 
         int color = isActive
                 ? io.github.marcsanzdev.chestseparators.client.ui.UiTheme.ICON_ACTIVE

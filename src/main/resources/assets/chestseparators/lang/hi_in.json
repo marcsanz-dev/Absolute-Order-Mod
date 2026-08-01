@@ -97,7 +97,7 @@
   "button.chestseparators.import_extracted": "निकाले गए आयात करें",
   "message.chestseparators.items_already_in_filter": "आइटम पहले से ही फ़िल्टर में हैं।",
   "message.chestseparators.no_new_items_found": "कोई नया आइटम नहीं मिला।",
-  "tooltip.chestseparators.desc.import_extracted": "निकाले गए आयात करें",
+  "tooltip.chestseparators.desc.import_extracted": "चयनित स्लॉट में मौजूद आइटम को फ़िल्टर में जोड़ता है।",
   "tooltip.chestseparators.desc.import_search": "खोज आयात करें",
   "button.chestseparators.allow_all": "सभी को अनुमति दें",
   "tooltip.chestseparators.desc.allow_all": "सभी गेम आइटम को श्वेतसूची में डालता है",
@@ -244,5 +244,9 @@
   "config.chestseparators.pull.tooltip": "संदूक की वस्तुओं को अपनी इन्वेंटरी फ़िल्टर में लाएँ।\n§8बिना फ़िल्टर वाली वस्तुएँ भी लाने के लिए [Shift] दबाए रखें",
   "config.chestseparators.lock_hotbar_on_reorder": "ऑटो-सॉर्ट पर हॉटबार लॉक करें",
   "config.chestseparators.lock_hotbar_on_reorder.tooltip": "जब कोई पुश या पुल आपकी इन्वेंटरी क्रमबद्ध करता है, तो हॉटबार अछूता रहता है।",
-  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "आपके हाथ की वस्तु की रक्षा करता है। बंद: हॉटबार भी क्रमबद्ध होता है।"
+  "config.chestseparators.lock_hotbar_on_reorder.tooltip2": "आपके हाथ की वस्तु की रक्षा करता है। बंद: हॉटबार भी क्रमबद्ध होता है।",
+  "message.chestseparators.push_no_filters": "इस संदूक में अभी कोई फ़िल्टर नहीं है।",
+  "message.chestseparators.push_no_slot": "कोई खाली फ़िल्टर स्लॉट नहीं है।",
+  "message.chestseparators.pull_no_filters": "आपकी इन्वेंटरी में अभी कोई फ़िल्टर नहीं है।",
+  "message.chestseparators.pull_no_match": "यहाँ कुछ भी आपके फ़िल्टर से मेल नहीं खाता।"
 }

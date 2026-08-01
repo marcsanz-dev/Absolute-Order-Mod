@@ -45,10 +45,6 @@ final class DrawLinesClickHandler {
                 int action = geometry.calculateAction(slot, mouseX, mouseY);
 
                 if (session.currentTab == 1 || session.currentTab == 2) {
-                    action = ChestConfigManager.ACTION_BG;
-                }
-
-                if (session.currentTab == 1 || session.currentTab == 2) {
                     ChestConfigManager.getInstance().saveSnapshot();
                     session.isDraggingLine = true;
                     session.currentDragAction = ChestConfigManager.ACTION_BG;
@@ -115,11 +111,12 @@ final class DrawLinesClickHandler {
             }
         }
 
-        // --- CLICK OUTSIDE TO CLOSE ---
-        boolean isInsideMain = mouseX >= layout.guiX
-                && mouseX <= layout.guiX + layout.bgWidth
-                && mouseY >= layout.guiY
-                && mouseY <= layout.guiY + layout.bgHeight;
+        // --- CLICK OUTSIDE / ON DEAD SPACE TO CLOSE ---
+        // Close not only when clicking fully outside, but also when clicking a spot that changes nothing:
+        // anything that is not an editable slot (or its paintable border) and not the tool sidebar or the
+        // right-hand buttons. A no-op click inside the container should dismiss the panel like any other.
+        boolean overSlot = editor.accessor.getFocusedSlot() != null
+                && ChestSeparatorsEditor.isEditableSlot(editor.accessor.getFocusedSlot());
         boolean isInsideLeft = mouseX >= layout.sidebarX
                 && mouseX <= layout.sidebarX + layout.sidebarWidth
                 && mouseY >= layout.guiY + editor.getSidebarYOffset() - 4
@@ -129,10 +126,10 @@ final class DrawLinesClickHandler {
                 && mouseY >= layout.mainY
                 && mouseY <= layout.mainY + (layout.bH * 4) + (4 * 3);
 
-        if (!isInsideMain && !isInsideLeft && !isInsideRight && !session.isEyedropperActive) {
+        if (!overSlot && !isInsideLeft && !isInsideRight && !session.isEyedropperActive) {
             if (GlobalChestConfig.instance.closeOnClickOutside) {
                 editor.toggleState(EditorState.HIDDEN);
-                editor.playClickSound(1.0f);
+                editor.playCloseSound();
                 return true;
             }
         }

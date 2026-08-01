@@ -2,7 +2,6 @@ package io.github.marcsanzdev.chestseparators.client.ui.screens;
 
 import io.github.marcsanzdev.chestseparators.client.ModTextures;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
-import io.github.marcsanzdev.chestseparators.client.ui.UiColors;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
@@ -23,6 +22,9 @@ public class ScreenColorPicker extends AbstractEditorScreen {
 
     private boolean isUpdatingFields = false;
     int hoveredPixelColor = 0xFFFFFF;
+    // Consecutive frames the eyedropper has sampled a near-white pixel — used to reject the one-frame white
+    // flash caused by the (white) dropper icon of the previous frame landing on the sample point on fast moves.
+    private int whiteSampleStreak = 0;
 
     private final ColorPickerInputHandler inputHandler;
 
@@ -260,7 +262,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
             }
         }
 
-        editor.playClickSound(0.8f);
+        editor.playCloseSound();
         session.isColorPickerOpen = false;
     }
 
@@ -291,7 +293,16 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         if (!session.isColorPickerOpen) return;
 
         if (session.isEyedropperActive) {
-            hoveredPixelColor = ColorPickerGradients.readHoveredPixelColor(mouseX, mouseY);
+            int sampled = ColorPickerGradients.readHoveredPixelColor(mouseX, mouseY);
+            // Trust a near-white reading only after it has held for a second frame: a real white target
+            // stays put, but the previous frame's white dropper icon flashing onto the sample point during
+            // a fast move lasts a single frame. Every other colour updates live and instantly.
+            boolean nearWhite =
+                    ((sampled >> 16) & 0xFF) >= 0xF0 && ((sampled >> 8) & 0xFF) >= 0xF0 && (sampled & 0xFF) >= 0xF0;
+            if (!nearWhite || whiteSampleStreak >= 1) {
+                hoveredPixelColor = sampled;
+            }
+            whiteSampleStreak = nearWhite ? whiteSampleStreak + 1 : 0;
             // Whole-screen zoom loupe for precise color picking, drawn before the eyedropper cursor so
             // the cursor stays visible and is not captured into the loupe.
             if (GlobalChestConfig.instance.magnifierEnabled) {

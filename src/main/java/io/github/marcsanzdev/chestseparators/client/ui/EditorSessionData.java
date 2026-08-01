@@ -43,16 +43,19 @@ public class EditorSessionData {
     public String reorderDragItem = null;
     /** Live cursor position, so the dragged item can be drawn following the mouse. */
     public int reorderMouseX = 0;
+
     public int reorderMouseY = 0;
     /** True when the drag started in the centre item grid rather than in the filter's list. */
     public boolean reorderFromGrid = false;
     /** Where the drag started on screen, so the held row can fly out of it instead of just appearing. */
     public int reorderOriginX = 0;
+
     public int reorderOriginY = 0;
     public long reorderStartTime = 0L;
 
     /** Visible index each item held just before the last drop, driving the settle animation. */
     public Map<String, Integer> dropAnimFrom = new HashMap<>();
+
     public long dropAnimStart = 0L;
 
     // A grid item held down but not yet moved far enough (or long enough) to count as a drag. Until it is
@@ -64,12 +67,14 @@ public class EditorSessionData {
 
     /** Row dropped onto the item grid, shrinking away to nothing to show it left the filter. */
     public String deleteAnimItem = null;
+
     public int deleteAnimX = 0;
     public int deleteAnimY = 0;
     public long deleteAnimStart = 0L;
 
     /** Row left behind after a drop, animating from the cursor into its final place. */
     public String dropGhostItem = null;
+
     public int dropGhostFromX = 0;
     public int dropGhostFromY = 0;
     public int dropGhostToX = 0;

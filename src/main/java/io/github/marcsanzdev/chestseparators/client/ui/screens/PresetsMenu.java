@@ -11,9 +11,11 @@ import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
@@ -51,10 +53,8 @@ public final class PresetsMenu {
 
     /** 9 presets per page across 5 pages = 45 total slots. */
     private static final int PER_PAGE = 9;
-    private static final int MAX_PAGES = 5;
 
-    // Each phase (layout, then filters) lasts this long; a full layout->filters->layout cycle is ~3s.
-    private static final long PREVIEW_FLIP_MS = 1500L;
+    private static final int MAX_PAGES = 5;
 
     // Save-indicator feedback colours.
     private static final int GREEN_BG = 0x4633C05A;
@@ -63,10 +63,9 @@ public final class PresetsMenu {
     private static final int ORANGE_BG = 0xF0C2721C;
     private static final int ORANGE_BORDER = 0xFFE59A3C;
 
-    // Which row's Load/Delete button is currently being previewed and when that hover began, so each new
-    // hover restarts the cycle from the layout view rather than continuing a global clock.
+    // Which row's Load/Delete button is currently being previewed, so each new hover restarts its detail
+    // list from the top rather than continuing where the previous preset left off.
     private int lastPreviewKey = Integer.MIN_VALUE;
-    private long previewStartTime = 0L;
 
     /** Updated by renderBackground(); read by isPreviewActive() and EditorRenderer. */
     private int currentPreviewRow = -1;
@@ -100,6 +99,7 @@ public final class PresetsMenu {
     private int renamingSlot = -1;
     /** The text field shown over a row's name while renaming; null when not renaming. */
     private TextFieldWidget renameField;
+
     private static final int NAME_MAX_LEN = 24;
 
     // Page-arrow hit rects (updated each render).
@@ -108,12 +108,6 @@ public final class PresetsMenu {
     // Popup buttons, non-null only while the confirmation popup is open.
     private WideButtonWidget popupConfirmBtn;
     private WideButtonWidget popupCancelBtn;
-
-    private static final int[] GROUP_PALETTE = {
-        0xFFE53935, 0xFFF57C00, 0xFFFBC02D, 0xFF7CB342,
-        0xFF388E3C, 0xFF00897B, 0xFF00ACC1, 0xFF1E88E5,
-        0xFF3949AB, 0xFF8E24AA, 0xFFD81B60, 0xFF795548
-    };
 
     private final ChestSeparatorsEditor editor;
 
@@ -242,7 +236,6 @@ public final class PresetsMenu {
         long now = System.currentTimeMillis();
         if (previewRow != lastPreviewKey) {
             lastPreviewKey = previewRow;
-            previewStartTime = now;
             // A different preset is being inspected: start its detail list from the top and resume auto-scroll.
             detailScrollY = 0f;
             detailScrollDown = true;
@@ -259,9 +252,11 @@ public final class PresetsMenu {
                     : ChestConfigManager.getInstance().readInventoryPresetPreview(slot);
             if (preview != null) {
                 hoveredPreview = preview;
-                boolean showFilters = ((now - previewStartTime) / PREVIEW_FLIP_MS) % 2 == 1;
-                renderPreviewOnSlots(context, preview, chestMode(), showFilters);
-                drawPreviewBadge(context, showFilters);
+                // Show BOTH layers at once: the layout (backgrounds + separator lines) underneath, and the
+                // colour filter-group blobs on top — no more alternating between the two. The right-side
+                // detail panel keeps listing each group's items.
+                renderPreviewLayout(context, preview, chestMode());
+                renderFilterBlobs(context, preview, chestMode());
             }
         } else if (deleteRow >= 0) {
             drawDeleteBadge(context);
@@ -452,8 +447,7 @@ public final class PresetsMenu {
     }
 
     private void drawIcon(DrawContext context, net.minecraft.util.Identifier icon, int x, int y, int color) {
-        context.drawTexture(
-                RenderPipelines.GUI_TEXTURED, icon, x, y, 0.0F, 0.0F, 12, 12, 128, 128, 128, 128, color);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, icon, x, y, 0.0F, 0.0F, 12, 12, 128, 128, 128, 128, color);
     }
 
     // ---- Page navigation ----
@@ -570,13 +564,6 @@ public final class PresetsMenu {
         popupCancelBtn.render(context, mouseX, mouseY, 0);
     }
 
-    /** Label telling the player which view the on-slot preview is showing. */
-    private void drawPreviewBadge(DrawContext context, boolean showFilters) {
-        Text label = Text.translatable(
-                showFilters ? "gui.chestseparators.preview_filters" : "gui.chestseparators.preview_layout");
-        drawBadge(context, label, showFilters ? 0xFF8AD6FF : 0xFFFFE066);
-    }
-
     /** Badge shown while hovering a Delete button, warning that the preset will be removed. */
     private void drawDeleteBadge(DrawContext context) {
         drawBadge(context, Text.translatable("gui.chestseparators.preview_delete"), 0xFFFF6060);
@@ -613,23 +600,32 @@ public final class PresetsMenu {
     }
 
     /** Flattens the preset's filters into group headers followed by their allowed items. */
-    private List<DetailRow> buildDetailRows(Map<Integer, SlotWhitelist> filters) {
+    private List<DetailRow> buildDetailRows(ChestConfigManager.PresetPreview preview) {
+        Map<Integer, SlotWhitelist> filters = preview.filters();
         // Group the slots, keeping groups ordered by their first slot so the list matches the container.
         Map<UUID, List<Integer>> groups = new LinkedHashMap<>();
         List<Integer> slotKeys = new ArrayList<>(filters.keySet());
-        slotKeys.sort(null);
+        if (chestMode()) {
+            slotKeys.sort(null);
+        } else {
+            // Inventory presets list groups by TRUE importance: armor + offhand first, then the hotbar,
+            // then the main grid (top-left → bottom-right). Inventory keys are realIndex values:
+            // 0-8 hotbar, 9-35 main, 36-39 armor, 40 offhand.
+            slotKeys.sort(java.util.Comparator.comparingInt((Integer k) -> k >= 36 ? 0 : (k <= 8 ? 1 : 2))
+                    .thenComparingInt(k -> k));
+        }
         for (int key : slotKeys) {
             groups.computeIfAbsent(filters.get(key).groupId(), g -> new ArrayList<>())
                     .add(key);
         }
 
-        Map<UUID, Integer> colors = assignGroupColors(filters);
+        Map<UUID, Integer> colors = assignPreviewGroupColors(preview);
         List<DetailRow> rows = new ArrayList<>();
         for (Map.Entry<UUID, List<Integer>> entry : groups.entrySet()) {
             SlotWhitelist wl = filters.get(entry.getValue().get(0));
             rows.add(new DetailRow(
                     true,
-                    colors.getOrDefault(entry.getKey(), 0xFF888888),
+                    colors.getOrDefault(entry.getKey(), 0x99888888),
                     entry.getValue().size(),
                     null));
             if (wl.allowedItems().isEmpty()) {
@@ -648,7 +644,7 @@ public final class PresetsMenu {
         Map<Integer, SlotWhitelist> filters = preview.filters();
         if (filters == null || filters.isEmpty()) return;
 
-        List<DetailRow> rows = buildDetailRows(filters);
+        List<DetailRow> rows = buildDetailRows(preview);
         int totalItems = 0;
         for (DetailRow r : rows) if (!r.header() && r.itemId() != null) totalItems++;
 
@@ -713,7 +709,8 @@ public final class PresetsMenu {
 
             if (row.header()) {
                 // Colour chip matching the on-slot blob, plus how many slots the group covers.
-                UiTheme.roundRect(context, x + 10, ry + 4, 10, 10, row.color());
+                // The group palette is translucent (for the on-slot blobs); the detail chip wants it solid.
+                UiTheme.roundRect(context, x + 10, ry + 4, 10, 10, row.color() | 0xFF000000);
                 UiTheme.roundBorder(context, x + 10, ry + 4, 10, 10, 0x66FFFFFF);
                 context.getMatrices().pushMatrix();
                 context.getMatrices().scale(scale, scale);
@@ -754,8 +751,7 @@ public final class PresetsMenu {
             if (mc.textRenderer.getWidth(name) > maxNameW) {
                 name = mc.textRenderer.trimToWidth(name, maxNameW - 6) + "...";
             }
-            context.drawText(
-                    mc.textRenderer, name, (int) ((x + 42) / s), (int) ((ry + 5) / s), UiTheme.TEXT, false);
+            context.drawText(mc.textRenderer, name, (int) ((x + 42) / s), (int) ((ry + 5) / s), UiTheme.TEXT, false);
             context.getMatrices().popMatrix();
         }
         context.disableScissor();
@@ -771,13 +767,7 @@ public final class PresetsMenu {
 
     // ---- On-slot preview ----
 
-    private void renderPreviewOnSlots(
-            DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind, boolean showFilters) {
-        if (showFilters) {
-            renderFilterBlobs(context, preview, chestKind);
-            return;
-        }
-
+    private void renderPreviewLayout(DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind) {
         int guiX = editor.accessor.getX();
         int guiY = editor.accessor.getY();
         for (Slot slot : editor.accessor.getHandler().slots) {
@@ -798,63 +788,94 @@ public final class PresetsMenu {
     }
 
     /**
-     * Filter view of the preview, drawn to match the Manage Filters screen: a 12×12 inset colour square per
-     * filtered slot (never the whole cell) with 6px connectors bridging same-group neighbours into a blob.
-     * Adjacency is tested by on-screen position (18px slot pitch), which is robust for armor/offhand cells.
+     * Filter view of the preview. Draws each group through the SAME blob passes the live filter editor uses
+     * (GroupBlobRenderer.drawBlobGroupStatic), so a filter looks pixel-identical everywhere in the mod. The
+     * translucent group palette lets the layout drawn underneath still show through.
      */
-    private void renderFilterBlobs(
-            DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind) {
+    private void renderFilterBlobs(DrawContext context, ChestConfigManager.PresetPreview preview, boolean chestKind) {
         int guiX = editor.accessor.getX();
         int guiY = editor.accessor.getY();
-        Map<UUID, Integer> groupColors = assignGroupColors(preview.filters());
         Map<Integer, SlotWhitelist> filters = preview.filters();
+        Map<UUID, Integer> groupColors = assignPreviewGroupColors(preview);
 
-        // Map each filtered slot's on-screen cell position to its group, for neighbour lookups.
-        Map<Integer, UUID> groupAt = new HashMap<>();
+        // Group the filtered cells, and build a realIndex -> Slot resolver (the exact realIndex mapping the
+        // live editor uses) so the shared blob renderer can locate each cell on screen.
+        Map<UUID, Set<Integer>> groupKeys = new LinkedHashMap<>();
+        Map<Integer, Slot> keyToSlot = new HashMap<>();
         for (Slot slot : editor.accessor.getHandler().slots) {
             if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
             if (chestKind == ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
-            SlotWhitelist wl = filters.get(ChestSeparatorsEditor.realIndex(slot));
-            if (wl != null) groupAt.put(posKey(slot.x, slot.y), wl.groupId());
-        }
-
-        for (Slot slot : editor.accessor.getHandler().slots) {
-            if (!ChestSeparatorsEditor.isEditableSlot(slot)) continue;
-            if (chestKind == ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
-            SlotWhitelist wl = filters.get(ChestSeparatorsEditor.realIndex(slot));
+            int key = ChestSeparatorsEditor.realIndex(slot);
+            SlotWhitelist wl = filters.get(key);
             if (wl == null) continue;
+            keyToSlot.put(key, slot);
+            groupKeys.computeIfAbsent(wl.groupId(), g -> new HashSet<>()).add(key);
+        }
 
-            UUID gid = wl.groupId();
-            int col = (groupColors.getOrDefault(gid, 0xFF888888) & 0x00FFFFFF) | 0x99000000;
-            int x = guiX + slot.x;
-            int y = guiY + slot.y;
-
-            context.fill(x + 2, y + 2, x + 14, y + 14, col);
-
-            boolean right = gid.equals(groupAt.get(posKey(slot.x + 18, slot.y)));
-            boolean down = gid.equals(groupAt.get(posKey(slot.x, slot.y + 18)));
-            boolean corner = right && down && gid.equals(groupAt.get(posKey(slot.x + 18, slot.y + 18)));
-            if (right) context.fill(x + 14, y + 2, x + 20, y + 14, col);
-            if (down) context.fill(x + 2, y + 14, x + 14, y + 20, col);
-            if (corner) context.fill(x + 14, y + 14, x + 20, y + 20, col);
+        for (Map.Entry<UUID, Set<Integer>> entry : groupKeys.entrySet()) {
+            int color = groupColors.getOrDefault(entry.getKey(), 0x99888888);
+            GroupBlobRenderer.drawBlobGroupStatic(context, entry.getValue(), color, guiX, guiY, keyToSlot::get);
         }
     }
 
-    private static int posKey(int x, int y) {
-        return (x << 16) | (y & 0xFFFF);
-    }
-
-    private Map<UUID, Integer> assignGroupColors(Map<Integer, SlotWhitelist> filters) {
-        Map<UUID, Integer> colors = new HashMap<>();
-        List<UUID> order = new ArrayList<>();
-        for (SlotWhitelist wl : filters.values()) {
-            if (!order.contains(wl.groupId())) order.add(wl.groupId());
+    /**
+     * Group colours for a preset preview, mirroring the live editor exactly: a group painted with a colour
+     * unanimous across all its slots (in the PRESET's own layout) keeps that colour; the rest fall back to
+     * the shared palette, skipping colours already taken. So a preset's blobs match the layout it stored.
+     */
+    private Map<UUID, Integer> assignPreviewGroupColors(ChestConfigManager.PresetPreview preview) {
+        Map<UUID, Set<Integer>> groupKeys = new LinkedHashMap<>();
+        for (Map.Entry<Integer, SlotWhitelist> e : preview.filters().entrySet()) {
+            groupKeys
+                    .computeIfAbsent(e.getValue().groupId(), g -> new HashSet<>())
+                    .add(e.getKey());
         }
+        List<UUID> order = new ArrayList<>(groupKeys.keySet());
         order.sort(UUID::compareTo);
-        for (int i = 0; i < order.size(); i++) {
-            colors.put(order.get(i), GROUP_PALETTE[i % GROUP_PALETTE.length]);
+
+        Map<UUID, Integer> assigned = new HashMap<>();
+        Set<Integer> used = new HashSet<>();
+        // 1. Explicit layout colours first (matches GroupBlobRenderer#getExplicitGroupColor).
+        for (UUID g : order) {
+            int explicit = presetExplicitGroupColor(groupKeys.get(g), preview);
+            if (explicit != 0) {
+                assigned.put(g, explicit);
+                used.add(explicit);
+            }
         }
-        return colors;
+        // 2. Palette for the rest, skipping colours already used.
+        int idx = 0;
+        int[] palette = GroupBlobRenderer.GROUP_PALETTE;
+        for (UUID g : order) {
+            if (assigned.containsKey(g)) continue;
+            while (idx < palette.length && used.contains(palette[idx])) idx++;
+            int color = idx < palette.length ? palette[idx++] : palette[Math.abs(g.hashCode()) % palette.length];
+            used.add(color);
+            assigned.put(g, color);
+        }
+        return assigned;
+    }
+
+    /**
+     * The colour a group is painted with in a preset's stored layout, if unanimous across all its slots —
+     * the preview equivalent of the live editor's getExplicitGroupColor, reading the preset's visual data.
+     * Returns 0 when the group has no single shared layout colour.
+     */
+    private static int presetExplicitGroupColor(Set<Integer> groupKeys, ChestConfigManager.PresetPreview preview) {
+        Set<Integer> common = null;
+        for (int key : groupKeys) {
+            int[] cc = ChestConfigManager.previewColors(preview.visual().get(key));
+            Set<Integer> slotColors = new HashSet<>();
+            for (int i = 0; i < 5 && i < cc.length; i++) {
+                int c = cc[i] & 0x00FFFFFF;
+                if (c != 0) slotColors.add(c);
+            }
+            if (slotColors.isEmpty()) return 0; // a slot with no colour means the group has no unanimous one
+            if (common == null) common = slotColors;
+            else common.retainAll(slotColors);
+            if (common.isEmpty()) return 0;
+        }
+        return (common != null && !common.isEmpty()) ? (common.iterator().next() | 0x99000000) : 0;
     }
 
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
@@ -1022,7 +1043,7 @@ public final class PresetsMenu {
         // Click-outside-to-close: when enabled, a click beyond the panel dismisses the presets menu.
         if (!insidePanel && GlobalChestConfig.instance.closeOnClickOutside) {
             editor.getSession().isPresetsMenuOpen = false;
-            editor.playClickSound(0.9f);
+            editor.playCloseSound();
             return true;
         }
         return insidePanel;

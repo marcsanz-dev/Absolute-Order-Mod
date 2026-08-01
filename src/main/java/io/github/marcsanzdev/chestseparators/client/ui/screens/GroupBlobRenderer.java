@@ -23,7 +23,7 @@ import net.minecraft.screen.slot.Slot;
  */
 final class GroupBlobRenderer {
 
-    private static final int[] GROUP_PALETTE = {
+    static final int[] GROUP_PALETTE = {
         0x99E53935, 0x99F57C00, 0x99FBC02D, 0x997CB342,
         0x99388E3C, 0x9900897B, 0x9900ACC1, 0x991E88E5,
         0x993949AB, 0x998E24AA, 0x99D81B60, 0x99795548,
@@ -290,33 +290,36 @@ final class GroupBlobRenderer {
                     cx /= count;
                     cy /= count;
 
-                    // Prefer a junction slot — one flanked by two or more other marked slots — and centre
-                    // the badge on it. The average point is no good on its own: on an L-shaped run it
-                    // lands in the empty corner, and even when it does fall on green it tends to sit on
-                    // the seam between two slots, leaving the badge half outside. Runs of one or two
-                    // slots have no junction, and there the average is already well inside the green.
-                    Slot host = null;
-                    int bestNeighbours = 1; // needs at least two to beat the average point
-                    float bestDistance = Float.MAX_VALUE;
-                    for (int slotIdx : run) {
-                        Slot slot = editor.slotForKey(slotIdx);
-                        if (slot == null) continue;
-                        int neighbours = neighboursInRun(run, slotIdx);
-                        if (neighbours < 2) continue;
-
-                        float dx = (guiX + slot.x + 8f) - cx;
-                        float dy = (guiY + slot.y + 8f) - cy;
-                        float distance = dx * dx + dy * dy;
-                        if (neighbours > bestNeighbours
-                                || (neighbours == bestNeighbours && distance < bestDistance)) {
-                            bestNeighbours = neighbours;
-                            bestDistance = distance;
-                            host = slot;
+                    // Keep the badge at the run's centroid whenever the icon there sits fully on selected
+                    // (green) cells: that centres it truly, including on the seam BETWEEN the rows of a
+                    // filled block — e.g. a 2×3 selection, where the middle of both rows is green so the
+                    // glyph sits between them instead of floating on the top row. Only when the centroid
+                    // lands in a gap — an L corner, the hollow of a U — snap it onto the selected slot
+                    // nearest the centroid, so the glyph is always as central as possible yet never left
+                    // half outside the green.
+                    float half = icon / 2f;
+                    boolean iconOnGreen = pointOnRun(run, guiX, guiY, cx - half, cy - half)
+                            && pointOnRun(run, guiX, guiY, cx + half, cy - half)
+                            && pointOnRun(run, guiX, guiY, cx - half, cy + half)
+                            && pointOnRun(run, guiX, guiY, cx + half, cy + half);
+                    if (!iconOnGreen) {
+                        Slot nearest = null;
+                        float bestDistance = Float.MAX_VALUE;
+                        for (int slotIdx : run) {
+                            Slot slot = editor.slotForKey(slotIdx);
+                            if (slot == null) continue;
+                            float dx = (guiX + slot.x + 8f) - cx;
+                            float dy = (guiY + slot.y + 8f) - cy;
+                            float distance = dx * dx + dy * dy;
+                            if (distance < bestDistance) {
+                                bestDistance = distance;
+                                nearest = slot;
+                            }
                         }
-                    }
-                    if (host != null) {
-                        cx = guiX + host.x + 8f;
-                        cy = guiY + host.y + 8f;
+                        if (nearest != null) {
+                            cx = guiX + nearest.x + 8f;
+                            cy = guiY + nearest.y + 8f;
+                        }
                     }
 
                     int ix = Math.round(cx) - icon / 2;
@@ -340,17 +343,16 @@ final class GroupBlobRenderer {
         }
     }
 
-    /** How many of a slot's on-screen neighbours belong to the same run. */
-    private int neighboursInRun(Set<Integer> run, int slotIdx) {
-        Slot slot = editor.slotForKey(slotIdx);
-        if (slot == null) return 0;
-        Set<Long> positions = occupiedPositions(run);
-        int count = 0;
-        if (positions.contains(posKey(slot.x + 18, slot.y))) count++;
-        if (positions.contains(posKey(slot.x - 18, slot.y))) count++;
-        if (positions.contains(posKey(slot.x, slot.y + 18))) count++;
-        if (positions.contains(posKey(slot.x, slot.y - 18))) count++;
-        return count;
+    /** True when the point lies within the 16×16 cell of any slot in the run (i.e. over green). */
+    private boolean pointOnRun(Set<Integer> run, int guiX, int guiY, float px, float py) {
+        for (int slotIdx : run) {
+            Slot slot = editor.slotForKey(slotIdx);
+            if (slot == null) continue;
+            float x0 = guiX + slot.x;
+            float y0 = guiY + slot.y;
+            if (px >= x0 && px <= x0 + 16f && py >= y0 && py <= y0 + 16f) return true;
+        }
+        return false;
     }
 
     /**
@@ -524,9 +526,16 @@ final class GroupBlobRenderer {
 
     /** Positions occupied by a group, for adjacency tests. */
     private Set<Long> occupiedPositions(Set<Integer> groupSlots) {
+        return occupiedPositions(groupSlots, editor::slotForKey);
+    }
+
+    /** As above but resolving keys with an external mapper, so the same blob draw serves callers (like the
+     * preset preview) that don't have the live editor's key→slot map. */
+    private static Set<Long> occupiedPositions(
+            Set<Integer> groupSlots, java.util.function.IntFunction<Slot> keyToSlot) {
         Set<Long> occupied = new HashSet<>();
         for (int slotIdx : groupSlots) {
-            Slot slot = editor.slotForKey(slotIdx);
+            Slot slot = keyToSlot.apply(slotIdx);
             if (slot != null && ChestSeparatorsEditor.isEditableSlot(slot)) {
                 occupied.add(posKey(slot.x, slot.y));
             }
@@ -585,16 +594,26 @@ final class GroupBlobRenderer {
             List<int[]> tintSquares,
             int guiX,
             int guiY) {
+        Painter p = (x0, y0, x1, y1) -> fillRegion(context, x0, y0, x1, y1, color, tintColor, tintSquares);
+        blobFillPass(p, groupSlots, guiX, guiY, editor::slotForKey, occupiedPositions(groupSlots));
+    }
+
+    /** The blob body loop, shared verbatim by the live editor and any static caller (the preset preview). */
+    private static void blobFillPass(
+            Painter p,
+            Set<Integer> groupSlots,
+            int guiX,
+            int guiY,
+            java.util.function.IntFunction<Slot> keyToSlot,
+            Set<Long> occupied) {
         final int a = CELL_INSET;
         final int b = CELL_FAR;
         final int n = NEXT_CELL;
         final int far = MID_FAR;
         final int near = MID_NEAR;
-        Painter p = (x0, y0, x1, y1) -> fillRegion(context, x0, y0, x1, y1, color, tintColor, tintSquares);
-        Set<Long> occupied = occupiedPositions(groupSlots);
 
         for (int slotIdx : groupSlots) {
-            Slot slot = editor.slotForKey(slotIdx);
+            Slot slot = keyToSlot.apply(slotIdx);
             if (slot == null || !ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
             int x = guiX + slot.x;
@@ -663,14 +682,24 @@ final class GroupBlobRenderer {
             List<int[]> tintSquares,
             int guiX,
             int guiY) {
+        Painter p = (x0, y0, x1, y1) -> fillRegion(context, x0, y0, x1, y1, rimColor, tintRim, tintSquares);
+        blobRimPass(p, groupSlots, guiX, guiY, editor::slotForKey, occupiedPositions(groupSlots));
+    }
+
+    /** The blob outline loop, shared verbatim by the live editor and any static caller (the preset preview). */
+    private static void blobRimPass(
+            Painter p,
+            Set<Integer> groupSlots,
+            int guiX,
+            int guiY,
+            java.util.function.IntFunction<Slot> keyToSlot,
+            Set<Long> occupied) {
         final int a = CELL_INSET;
         final int b = CELL_FAR;
         final int n = NEXT_CELL;
-        Painter p = (x0, y0, x1, y1) -> fillRegion(context, x0, y0, x1, y1, rimColor, tintRim, tintSquares);
-        Set<Long> occupied = occupiedPositions(groupSlots);
 
         for (int slotIdx : groupSlots) {
-            Slot slot = editor.slotForKey(slotIdx);
+            Slot slot = keyToSlot.apply(slotIdx);
             if (slot == null || !ChestSeparatorsEditor.isEditableSlot(slot)) continue;
 
             int x = guiX + slot.x;
@@ -777,6 +806,36 @@ final class GroupBlobRenderer {
     private void drawBlobGroup(DrawContext context, Set<Integer> groupSlots, int colorARGB, int guiX, int guiY) {
         drawBlobFill(context, groupSlots, colorARGB, 0, null, guiX, guiY);
         drawBlobRim(context, groupSlots, outlineFor(colorARGB, false, false), 0, null, guiX, guiY);
+    }
+
+    /**
+     * Draws one group's blob (body + rim) through the exact same passes the live editor uses, but resolving
+     * slot keys with an external mapper. This is the single entry point other screens (the preset Load
+     * preview) must use so a filter group looks pixel-identical everywhere in the mod.
+     */
+    static void drawBlobGroupStatic(
+            DrawContext context,
+            Set<Integer> groupSlots,
+            int colorARGB,
+            int guiX,
+            int guiY,
+            java.util.function.IntFunction<Slot> keyToSlot) {
+        Set<Long> occupied = occupiedPositions(groupSlots, keyToSlot);
+        blobFillPass(
+                (x0, y0, x1, y1) -> context.fill(x0, y0, x1, y1, colorARGB),
+                groupSlots,
+                guiX,
+                guiY,
+                keyToSlot,
+                occupied);
+        int rimColor = outlineFor(colorARGB, false, false);
+        blobRimPass(
+                (x0, y0, x1, y1) -> context.fill(x0, y0, x1, y1, rimColor),
+                groupSlots,
+                guiX,
+                guiY,
+                keyToSlot,
+                occupied);
     }
 
     private int getExplicitGroupColor(Set<Integer> groupSlots) {

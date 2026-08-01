@@ -59,7 +59,8 @@ public final class FilterPriority {
         if (whitelists == null || whitelist.groupId() == null) return 0;
         int position = 0;
         for (Map.Entry<Integer, SlotWhitelist> entry : whitelists.entrySet()) {
-            if (entry.getKey() < slotIndex && whitelist.groupId().equals(entry.getValue().groupId())) position++;
+            if (entry.getKey() < slotIndex
+                    && whitelist.groupId().equals(entry.getValue().groupId())) position++;
         }
         return position;
     }
@@ -117,8 +118,8 @@ public final class FilterPriority {
             if (idx < 0 || idx >= inv.size()) continue;
             ItemStack existing = inv.getStack(idx);
             if (existing.isEmpty()) continue;
-            int occRank =
-                    other.allowedItems().indexOf(Registries.ITEM.getId(existing.getItem()).toString());
+            int occRank = other.allowedItems()
+                    .indexOf(Registries.ITEM.getId(existing.getItem()).toString());
             if (occRank >= 0 && occRank < itemRank) higherPresent++;
         }
         return Math.abs(position - higherPresent);
@@ -153,8 +154,7 @@ public final class FilterPriority {
      * inside the target range [{@code start}, {@code end}) is a better home for it — dedicated where the
      * candidate is not, or ranked ahead of it by the filter's order — and still has room.
      */
-    public static boolean shouldDefer(
-            DefaultedList<Slot> slots, int start, int end, Slot candidate, ItemStack stack) {
+    public static boolean shouldDefer(DefaultedList<Slot> slots, int start, int end, Slot candidate, ItemStack stack) {
         if (stack.isEmpty()) return false;
         String itemId = Registries.ITEM.getId(stack.getItem()).toString();
 
@@ -200,8 +200,8 @@ public final class FilterPriority {
             if (!isDedicatedTo(inventory, i, itemId)) continue;
             // Same rule as the shift-click path: a dedicated slot yields only to one the filter's order
             // ranks above it.
-            if (candidateIsDedicated
-                    && !isBetterFor(inventory, i, inventory, candidateSlot, itemId, i < candidateSlot)) continue;
+            if (candidateIsDedicated && !isBetterFor(inventory, i, inventory, candidateSlot, itemId, i < candidateSlot))
+                continue;
             if (hasRoom(inventory.getStack(i), stack, maxCount) && inventory.isValid(i, stack)) {
                 return true;
             }
