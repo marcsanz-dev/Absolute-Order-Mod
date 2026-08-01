@@ -8,8 +8,6 @@ dropping it**, never silently.
 Verification method for visuals: run the reference build and the ported build side by side, screenshot
 the same screens, and compare. Any visual difference must be fixed in the port, not accepted.
 
-Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
-
 ---
 
 ## 1. Two features and their trust boundary (sacred on every loader)
@@ -65,7 +63,7 @@ Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
 - **Palette:** 16 standard colors + 8 custom slots per tab. Middle‑click a color to copy; left‑click a
   custom slot to paste. "Shared Custom Colors" setting makes the custom column shared across
   Lines/Backgrounds/Combo or kept per‑tab.
-- **Magnifier / loupe** ⚠: optional zoom loupe at the cursor while painting or using the eyedropper;
+- **Magnifier / loupe:** optional zoom loupe at the cursor while painting or using the eyedropper;
   shape **circle or square**; can independently show lines / backgrounds / combo; toggled by a keybind;
   a hint message advertises it.
 - Toolbar actions: Copy Layout, Paste Layout, Undo, Redo, Clear Lines, Clear Backgrounds, Clear Both,
@@ -98,7 +96,7 @@ Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
     leave the old group (losing its filter); options: overwrite / deselect conflicts & continue / cancel.
   - **Unsaved changes** — leaving the filter screen with unsaved edits asks: Save & Exit / Discard
     Changes / keep editing.
-  - **Expel invalid items** ⚠ — when a new filter is applied and existing items no longer match, an
+  - **Expel invalid items** — when a new filter is applied and existing items no longer match, an
     optional prompt ejects them to the player's inventory or drops them (setting "Expel Invalid Items").
 
 ## 6. Filters (whitelist editor)
@@ -114,7 +112,7 @@ Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
   **reorder** (raise/lower priority), drag out to the central panel to **remove**, drag in from the
   central panel to **add**. New sounds: add → item_frame.add_item, remove → item_frame.remove_item;
   a pure reorder keeps the neutral UI click.
-- **Tag browsing** ⚠: middle‑click an item to browse its tags (hint message advertises it).
+- **Tag browsing:** middle‑click an item to browse its tags (hint message advertises it).
 - **Previews are exact:** every preview (insertion preview, Load preview, push/pull preview) must show
   precisely what the committed action produces — preview and result are always identical.
 
@@ -138,7 +136,7 @@ Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
   filters, **reordered to the filter's order**. **+Shift** also fills the chest's empty slots.
 - **Pull to Inventory Filters** (hotkey + toolbar) — moves the chest's matching items into your
   inventory filters, reordered. **+Shift** also pulls unfiltered items into empty inventory slots.
-- **Auto‑Deposit to Nearby Chests** ⚠ — one trigger sorts your whole inventory into nearby filtered
+- **Auto‑Deposit to Nearby Chests** — one trigger sorts your whole inventory into nearby filtered
   chests. Trigger = **Double‑Sneak** (or keybind); configurable **radius**, **through‑walls**,
   **animation**, and **particle trail**. Reports count deposited / none in reach. A complementary
   **auto‑grab** reports "Grabbed N" / "Nothing nearby to grab".
@@ -159,9 +157,13 @@ Legend: ⚠ = documented from code/lang strings, author to confirm exact intent.
   warning "Someone is already editing this chest!". **Layout editing is personal and never locks.**
 - Locks cover **double chests atomically** (both halves acquired/released together); grant/deny/release
   is server‑driven.
-- **Sync:** block‑container filters are persisted server‑side and enforced server‑authoritatively. Entity
-  filters/layout are client‑local. (Minecart‑type entities sync their filters to the server so the
-  **hopper** rule can be enforced; old filters need one re‑save to sync.) ⚠ author to confirm wording.
+- **Sync:** block‑container filters are persisted server‑side (block data component / chunk NBT) and
+  enforced server‑authoritatively. **Minecart‑type chest entities** (chest/hopper minecarts) sync their
+  filters to the server via `EntityWhitelistPayload` — **C2S** when the client saves a minecart filter
+  (so the server can enforce the **hopper** rule and persist it in the entity's NBT, keyed by entity
+  UUID) and **S2C** when the container opens (so the client shows the server‑authoritative filter). Old
+  minecart filters need one re‑save to sync. Separators/layout stay client‑local everywhere; the Ender
+  Chest filter is client‑local and personal per player.
 
 ## 10. Special inventories
 
@@ -211,7 +213,7 @@ Grouped as in the config screen; exact wording/behavior per the English tooltips
 - **Magnifier:** Show Magnifier, Magnifier Shape (Circle/Square), Magnifier tabs Lines/Backgrounds/Combo.
 - **Auto‑deposit:** Auto‑Deposit to Nearby Chests, Trigger Double‑Sneak, Radius, Deposit Through Walls,
   Deposit Animation, Deposit Trail Effect, Lock Hotbar on Auto‑Sort (+ its dimmed second tooltip line).
-- **Global presets** toggle ⚠ (the opt‑in that makes presets shared across worlds).
+- **Global presets** toggle (the opt‑in that makes presets shared across worlds).
 
 ## 15. Keybinds (category "Absolute Order" — keep identical across all ports)
 
@@ -238,4 +240,4 @@ translated into all of them. Keybinds and translations are preserved **identical
 
 **Everything above is mandatory.** There is no "nice‑to‑have" tier. When porting, if any feature or
 visual cannot be reproduced on a target loader/version, **stop and ask the author** before shipping the
-port without it. Confirm the ⚠ items with the author when first encountered.
+port without it.
