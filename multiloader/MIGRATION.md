@@ -111,3 +111,18 @@ Members:
 - World/Level: `getOtherEntities(e,box,pred)`→`getEntities(e,box,pred)` ; `getEntity(uuid)` (same, on Level) ; `raycast(ctx)`→`clip(ctx)` ; `spawnEntity(e)`→`addFreshEntity(e)`
 - BlockState `state.get(prop)`→`getValue(prop)` ; `BlockPos.offset(dir)`→`relative(dir)` ; `Direction.Type.HORIZONTAL`→`Direction.Plane.HORIZONTAL` ; `rotateYClockwise()`→`getClockWise()` ; `rotateYCounterclockwise()`→`getCounterClockWise()`
 - `ChestBlock.CHEST_TYPE`→`ChestBlock.TYPE` ; `ChestBlock.FACING` (same) ; `ScreenHandler.sendContentUpdates()`→`broadcastChanges()`
+
+## Client / render cheat-sheet (GUI phase — verified)
+The source is already written for **render era E5**, so the drawing API mostly matches (it uses `pushMatrix`,
+not the old `push`). Core renames:
+- `net.minecraft.client.gui.DrawContext` → `net.minecraft.client.gui.GuiGraphics` (`fill(x,y,x2,y2,argb)` is the same)
+- `context.getMatrices()` → `context.pose()` — returns `org.joml.Matrix3x2fStack`; `pushMatrix()/translate(x,y)/scale(x,y)/popMatrix()` are JOML, unchanged
+- `net.minecraft.util.Identifier` (client refs) → `net.minecraft.resources.Identifier`; `Identifier.of(ns,path)` → `Identifier.fromNamespaceAndPath(ns,path)`
+- `net.minecraft.client.MinecraftClient` → `net.minecraft.client.Minecraft` (`getInstance()`, field `level`/`player`, field `gameDirectory`, `hasSingleplayerServer()`, `getSingleplayerServer()`, `getCurrentServer()`)
+- NBT file I/O: `NbtCompound`→`CompoundTag` ; `NbtList`→`ListTag` ; `NbtString.of(s)`→`StringTag.valueOf(s)` ; `NbtElement`→`Tag` ; `NbtSizeTracker`→`NbtAccounter` (`unlimitedHeap()`) ; `NbtIo` (same). CompoundTag getters return Optional: `getString/getBoolean/getInt/getCompound/getList(k).ifPresent/orElse` ; `getKeys()`→`keySet()`
+- `MinecraftServer.getSavePath(WorldSavePath.X)` → `getWorldPath(LevelResource.X)` ; `getSaveProperties()`→`getWorldData()` ; `ServerData.address`→`ip`
+- `@Environment(EnvType.CLIENT)` stays as the Fabric annotation in `common` (Architectury remaps it to NeoForge's `@OnlyIn`).
+Migrated so far (GUI foundation): EditorState, ModTextures, ChestConfigManager, UndoRedoHistory, UiColors, UiTheme.
+Still to do: keybinds (Architectury `KeyMappingRegistry`; `KeyBinding`→`KeyMapping`, `InputUtil`→`InputConstants`),
+client S2C receivers (`ModClientNetworking` + re-add pushes), the editor/renderers/screens/widgets (~12k lines,
+mostly GuiGraphics+item/text draw), client mixins, `WorldMixin`, config screen, REI/EMI/JEI, client entrypoints.
