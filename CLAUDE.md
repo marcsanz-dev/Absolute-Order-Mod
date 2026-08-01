@@ -148,12 +148,14 @@ Order (▶ = next):
 filename must state the **loader** and the **Minecraft version(s) it covers**. Scheme:
 `AbsoluteOrder-2.0.0-<loader>-mc<version-or-range>.jar` (e.g. `AbsoluteOrder-2.0.0-fabric-mc1.21.11.jar`,
 `AbsoluteOrder-2.0.0-neoforge-mc1.21.11.jar`). The mod display name is "Absolute Order", version `2.0.0`.
-When one jar covers a range, encode the range (e.g. `mc1.21.x`). Multiloader toolchain for 1.21.11 is
-aligned to the authoritative `architectury/architectury-api` `1.21.11` branch: **Gradle `8.11`**,
-architectury-loom `1.13-SNAPSHOT`, architectury-plugin `3.4-SNAPSHOT`, shadow `8.3.6`, Mojmap. Fabric
-builds green (`AbsoluteOrder-2.0.0-fabric-mc1.21.11.jar`). NeoForge is WIP — pending the exact **pinned**
-(non-snapshot) versions from `generate.architectury.dev`, because the moving `-SNAPSHOT` loom/plugin were
-not registering the `neoForge` dependency method.
+When one jar covers a range, encode the range (e.g. `mc1.21.x`). **Multiloader skeleton is GREEN for
+1.21.11 (Fabric + NeoForge)** in `multiloader/`. Working toolchain: **Gradle `8.14`**, architectury-loom
+`1.13-SNAPSHOT`, architectury-plugin `3.4-SNAPSHOT`, shadow (`com.gradleup.shadow`) `8.3.6`, Mojmap; the
+new architectury config style (`shadowBundle` + `transformProduction<Platform>`, `remapJar.inputFile`).
+**Critical:** the NeoForge module needs a `neoforge/gradle.properties` with `loom.platform = neoforge`
+(without it, loom never registers the `neoForge` dependency method). Base config generated from
+`generate.architectury.dev` (max 1.21.10), loom bumped to 1.13-SNAPSHOT + versions to 1.21.11.
+**Follow-up:** Architectury API is commented out until its 1.21.11 version is pinned.
 
 ## Known follow-ups
 

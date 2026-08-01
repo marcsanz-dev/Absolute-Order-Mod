@@ -1,14 +1,14 @@
 pluginManagement {
     repositories {
-        maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.architectury.dev/" }
-        maven { url "https://maven.neoforged.net/releases/" }
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.architectury.dev/' }
+        maven { url = 'https://files.minecraftforge.net/maven/' }
         gradlePluginPortal()
     }
 }
 
-include("common")
-include("fabric")
-// include("neoforge")  // WIP: needs the exact pinned toolchain from generate.architectury.dev
+rootProject.name = 'absolute-order'
 
-rootProject.name = "absolute-order"
+include 'common'
+include 'fabric'
+include 'neoforge'
