@@ -157,6 +157,27 @@ The old client used Fabric `ScreenMouseEvents.allowMouseClick/Release/Drag/Scrol
 - `net.minecraft.util.math.Vec3d`→`net.minecraft.world.phys.Vec3` ; `RotationAxis`→`com.mojang.math.Axis` ; `Direction`→`net.minecraft.core.Direction` ; `BlockPos` (`.offset`→`.relative`)
 - Blocks/entities: `net.minecraft.block.*`→`net.minecraft.world.level.block.*` ; `net.minecraft.block.entity.*`→`net.minecraft.world.level.block.entity.*` ; `net.minecraft.block.enums.ChestType`→`net.minecraft.world.level.block.state.properties.ChestType` ; `ChestBlock.getDoubleBlockType`/`ChestType` connect helpers verify per use
 
-Migrated so far (GUI foundation): EditorState, ModTextures, ChestConfigManager, UndoRedoHistory, UiColors, UiTheme.
-Still to do: keybinds (Architectury `KeyMappingRegistry`), client S2C receivers (`ModClientNetworking` + re-add pushes),
-the editor/renderers/screens/widgets (~12k lines), client mixins (hook layer per above), `WorldMixin`, config screen, REI/EMI/JEI, client entrypoints.
+## GUI phase — progress & remaining (as of this session)
+
+**Committed & GREEN in `common`:**
+- Foundation: EditorState, ModTextures, ChestConfigManager, UndoRedoHistory, UiColors, UiTheme.
+- Client accessor/invoker mixins (`mixin/client/`): HandledScreenAccessor, ChestLidAccessor, EnderChestLidAccessor, ShulkerAnimationAccessor, CreativeInventoryScreenAccessor, CreativeSlotAccessor, RecipeBookScreenAccessor, RecipeBookWidgetInvoker + `access/LidAnimatorAccess`.
+- Widgets: PressAnim, CustomWidget, ToolButtonWidget, ActionIconButtonWidget, WideButtonWidget.
+- ModKeyBindings (Architectury `KeyMappingRegistry.register` + `KeyMapping.Category.register(Identifier)`), util/ChestPosStorage.
+
+**Mechanical migration DONE but STAGED (not committed — needs the Fabric refactor below to compile):**
+The 26-file editor cluster was bulk-migrated with `tools/client-mechanical-rename.sed`. Result: **22/26 files compile clean**; the mechanical work is fully reproducible — copy the OLD `src/.../client/ui/*` + `screens/*` into `common`, run the sed script, and only 4 files remain, failing ONLY on Fabric-API usage:
+- `ChestSeparatorsEditor` (hub) — Fabric `ClientPlayNetworking` calls (`.canSend(X.ID)`, `.send(payload)`); refs missing `ModClientNetworking`, `KeyInputHandler`. Payload id: yarn `Payload.ID` → Mojmap `Payload.TYPE`.
+- `AutoDepositAnimator` — Fabric `ClientTickEvents` + `WorldRenderEvents`/`WorldRenderContext`; plus E5 in-world item render (`ItemModelResolver`, `ItemStackRenderState`, `OrderedSubmitNodeCollector`, `PoseStack.pushPose/popPose`, `state.getValue(prop)`, `Vec3.atCenterOf`, `Direction.getClockWise/getCounterClockWise`, `Axis.YP`). Hardest file.
+- `EditorInputHandler` — Fabric `ScreenMouseEvents.allow*` → move to a `mouseClicked/mouseReleased/mouseDragged` inject in the common `GenericContainerScreenMixin` (see hook decision above); bare `Click` param → `MouseButtonEvent`.
+- `EditorRenderer` — only fails on `import ...event.KeyInputHandler` (resolves once KeyInputHandler is migrated).
+
+**Still to do (all Fabric→Architectury refactor + the big client mixins):**
+1. `network/ModClientNetworking` — client S2C receivers via `NetworkManager.registerReceiver(Side.S2C, TYPE, CODEC, ...)`; **re-add the 3 dropped S2C open-pushes** (chest/shulker/minecart) once these types register client-side (see the S2C-send rule).
+2. `event/KeyInputHandler` — Architectury `ClientTickEvent.CLIENT_POST` (replaces Fabric `ClientTickEvents`); `key.isDown()`/`consumeClick()`; C2S send via `NetworkManager.sendToServer`.
+3. Fix the 4 staged files' Fabric usage per above.
+4. Big client mixins (`mixin/client/`): GenericContainerScreenMixin (init/renderContents/renderSlot/keyPressed/mouseScrolled + NEW mouse click/release/drag injects), CreativeInventoryScreenMixin (selectTab/isClickInTab→? /checkTabHovering/keyPressed/charTyped), InGameHudHotbarLinesMixin, StatusEffectsDisplayMixin, ArmorEquipClientMixin. Register them in the `client` section of `absoluteorder.mixins.json`.
+5. `mixin/WorldMixin` (depends on ChestConfigManager).
+6. Client entrypoints: Fabric `ClientModInitializer` + NeoForge client init → a common `AbsoluteOrderClient.init()` (register keybinds, client networking, editor hooks). Config screen (ModMenu/Cloth), REI/EMI/JEI.
+
+Verified E5 names for the remaining work: SoundEvents fields drop `BLOCK_`/`ENTITY_` prefix (`CHEST_OPEN`, `SHULKER_BOX_OPEN`, `ENDER_CHEST_OPEN`, `ITEM_PICKUP`); `EditBox.setBordered/setResponder/getValue/setValue`; `Slot.getContainerSlot()`; `Block.byItem`; `Minecraft.level`/`.screen`; `BuiltInRegistries.CREATIVE_MODE_TAB` (`.getKey`); `TextFieldWidget`→`EditBox`; `MutableText`→`MutableComponent`; `net.minecraft.registry.tag`→`net.minecraft.tags`.
