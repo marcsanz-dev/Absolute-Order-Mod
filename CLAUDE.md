@@ -122,6 +122,28 @@ Commits follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`) with
 
 **Authorship (MANDATORY):** all work is authored 100% by the repository owner (`marcsanz-dev`). Never add AI/assistant attribution to commits — no `Co-Authored-By: Claude ...` trailer, no "Generated with Claude Code" line, no assistant name as author or committer. Commits must carry only the owner's identity. This keeps the assistant off the project's GitHub contributor list.
 
+## Multiloader port (roadmap)
+
+Porting the mod to multiple loaders (Fabric + NeoForge + Forge; Quilt via the Fabric jar) and versions,
+using **Architectury API** and **Mojmap + Parchment** mappings. Follow **`PORTING_GUIDE.md`** for the
+per-version checklist and **`MOD_SPEC.md`** for the feature/visual parity target. Every port ships
+complete (config screen + REI/EMI/JEI). Work one version at a time, top of the list down.
+
+Order (▶ = next):
+
+- **Phase 0 — Consolidate.** ✅ Session work committed on `refactor/professional-overhaul`; branch
+  `multiloader` created; `PORTING_GUIDE.md` + `MOD_SPEC.md` authored.
+- **Phase 1 — Reference port ▶ 1.21.x → Architectury** (Fabric + NeoForge). The one-off migration
+  (layout, mappings, networking, E5 overlay template). Pattern for everything else.
+- **Phase 2 — Current (2026), forward from the reference** — render era E5, Fabric + NeoForge:
+  `26.1` → `26.1.1` → `26.1.2` → `26.2`. (26.1 "Tiny Takeover" replaced 1.22; 26.2 "Chaos Cubed".
+  Newest player base, smallest deltas from the reference.)
+- **Phase 3 — Backport by render era** — one era down at a time:
+  `1.20.1` (Fabric+Forge+NeoForge, E4) → `1.19.2` (Fabric+Forge, E3) → `1.18.2` (Fabric+Forge, E2) →
+  `1.16.5` (Fabric+Forge, E2).
+- **Phase 4 — Mythic (separate track, hand-written, Forge legacy, E1):** `1.12.2` → `1.9.x`. Shares no
+  code with the modern base; planned but never blocks modern work.
+
 ## Known follow-ups
 
 - `gradle.properties` and `build.gradle` still contain a few Spanish comments (the English cleanup covered `.java` sources only).
