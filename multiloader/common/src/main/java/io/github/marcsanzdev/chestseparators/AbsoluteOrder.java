@@ -1,6 +1,9 @@
 package io.github.marcsanzdev.chestseparators;
 
-/** Common (loader-agnostic) entry point. Skeleton placeholder — real logic is migrated in later steps. */
+import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.network.ModNetworking;
+
+/** Common (loader-agnostic) entry point, run on every loader from each platform initializer. */
 public final class AbsoluteOrder {
 
     public static final String MOD_ID = "chestseparators";
@@ -8,6 +11,8 @@ public final class AbsoluteOrder {
     private AbsoluteOrder() {}
 
     public static void init() {
-        // Common bootstrap runs on every loader.
+        // Common bootstrap runs on every loader (both physical sides).
+        GlobalChestConfig.loadConfig();
+        ModNetworking.init();
     }
 }
