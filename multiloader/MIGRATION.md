@@ -122,7 +122,41 @@ not the old `push`). Core renames:
 - NBT file I/O: `NbtCompound`→`CompoundTag` ; `NbtList`→`ListTag` ; `NbtString.of(s)`→`StringTag.valueOf(s)` ; `NbtElement`→`Tag` ; `NbtSizeTracker`→`NbtAccounter` (`unlimitedHeap()`) ; `NbtIo` (same). CompoundTag getters return Optional: `getString/getBoolean/getInt/getCompound/getList(k).ifPresent/orElse` ; `getKeys()`→`keySet()`
 - `MinecraftServer.getSavePath(WorldSavePath.X)` → `getWorldPath(LevelResource.X)` ; `getSaveProperties()`→`getWorldData()` ; `ServerData.address`→`ip`
 - `@Environment(EnvType.CLIENT)` stays as the Fabric annotation in `common` (Architectury remaps it to NeoForge's `@OnlyIn`).
+### E5 input model (verified via javap on the Mojmap merged jar)
+The E5 yarn source uses record-based input events. Mojmap uses the SAME model with different names:
+- `net.minecraft.client.gui.Click` → `net.minecraft.client.input.MouseButtonEvent` (record: `.x()` double, `.y()` double, `.button()` int)
+- `net.minecraft.client.input.KeyInput` → `net.minecraft.client.input.KeyEvent` (record: `.key()`, `.scancode()`, `.modifiers()`)
+- `net.minecraft.client.input.CharInput` → `net.minecraft.client.input.CharacterEvent` (record: `.codepoint()`, `.modifiers()`, `.codepointAsString()`)
+- `GuiEventListener`/`Screen` sigs: `mouseClicked(MouseButtonEvent, boolean doubled)`, `mouseReleased(MouseButtonEvent)`, `mouseDragged(MouseButtonEvent, double dx, double dy)`, `mouseScrolled(double,double,double,double)` (unchanged), `keyPressed(KeyEvent)`, `charTyped(CharacterEvent)`.
+
+### `AbstractContainerScreen` (yarn `HandledScreen`) — E5 members (verified)
+- fields: `x`→`leftPos`, `y`→`topPos`, `backgroundWidth`→`imageWidth`, `backgroundHeight`→`imageHeight`, `handler`→`menu`, `focusedSlot`→`hoveredSlot`, `titleX/Y`→`titleLabelX/Y`, `playerInventoryTitleX/Y`→`inventoryLabelX/Y`
+- render methods: `drawSlot`→`renderSlot(GuiGraphics, Slot, int, int)` ; `drawSlots`→`renderSlots(GuiGraphics, int, int)` ; `renderMain`→`renderContents(GuiGraphics, int, int, float)` ; `drawMouseoverTooltip`→`renderTooltip(GuiGraphics, int, int)` ; `drawBackground`→`renderBg(GuiGraphics, float, int, int)` ; `drawForeground`→`renderLabels(GuiGraphics, int, int)`
+- `HandledScreenAccessor`: keep invoker names `getHandler()/getX()/getY()`, retarget `@Accessor` to `menu`/`leftPos`/`topPos`.
+
+### Screen-input hook = COMMON MIXIN (no Fabric API cross-loader)
+The old client used Fabric `ScreenMouseEvents.allowMouseClick/Release/Drag/Scroll`. **Cross-loader decision: inject into `AbstractContainerScreen.mouseClicked/mouseReleased/mouseDragged/mouseScrolled` in the common `GenericContainerScreenMixin`** (return-cancellable via `CallbackInfoReturnable<Boolean>`), dropping the Fabric event bus entirely. Identical behavior on both loaders. keyPressed/mouseScrolled were already mixin-injected.
+
+### Other verified client renames
+- `net.minecraft.client.render.item.ItemRenderState` → `net.minecraft.client.renderer.item.ItemStackRenderState`
+- `net.minecraft.client.item.ItemModelManager` → `net.minecraft.client.renderer.item.ItemModelResolver`
+- `net.minecraft.client.gl.RenderPipelines` → `net.minecraft.client.renderer.RenderPipelines`
+- `net.minecraft.client.render.command.OrderedRenderCommandQueue` → `net.minecraft.client.renderer.OrderedSubmitNodeCollector`
+- `GuiGraphics` item/text (all present, standard): `renderItem(ItemStack,x,y[,seed])`, `renderFakeItem(ItemStack,x,y)`, `renderItemDecorations(Font, ItemStack, x, y[, String])`, `drawString(Font, str/Component, x, y, color[, shadow])`, `drawCenteredString(Font, ..., x, y, color)`, `drawWordWrap(Font, FormattedText, x, y, w, color)`. `drawStrokedRectangle(x,y,w,h,color)`→`renderOutline(x,y,w,h,color)`.
+- `MinecraftClient.textRenderer` → `Minecraft.font` (field, type `net.minecraft.client.gui.Font`). Field `Minecraft.screen`, `setScreen(Screen)`.
+- `Window` (from `client.getWindow()`, `com.mojang.blaze3d.platform.Window`): `getScaleFactor()`→`getGuiScale()` ; `getFramebufferWidth()`→`getWidth()` ; `getFramebufferHeight()`→`getHeight()` ; `getScaledWidth()`→`getGuiScaledWidth()` ; `getScaledHeight()`→`getGuiScaledHeight()` ; `getHandle()` unchanged
+- `net.minecraft.text.Text` → `net.minecraft.network.chat.Component` (`Text.translatable`→`Component.translatable`, `Text.literal`→`Component.literal`)
+- `net.minecraft.util.Formatting` → `net.minecraft.ChatFormatting`
+- `net.minecraft.screen.slot.Slot` → `net.minecraft.world.inventory.Slot` (fields `x`,`y` unchanged)
+- `net.minecraft.util.math.MathHelper` → `net.minecraft.util.Mth`
+- `net.minecraft.item.Item`/`ItemStack` → `net.minecraft.world.item.Item`/`ItemStack` ; `net.minecraft.registry.Registries.ITEM` → `net.minecraft.core.registries.BuiltInRegistries.ITEM` (`.get(Identifier)`, `Identifier.tryParse`→`Identifier.tryParse` same)
+- `net.minecraft.screen.ScreenHandler` → `net.minecraft.world.inventory.AbstractContainerMenu` ; `GenericContainerScreenHandler` → `net.minecraft.world.inventory.ChestMenu` ; `player.currentScreenHandler` → `player.containerMenu` ; `handler.getInventory()`→`ChestMenu.getContainer()`
+- `net.minecraft.client.gui.widget.TextFieldWidget` → `net.minecraft.client.gui.components.EditBox` ; `net.minecraft.client.gui.screen.Screen` → `net.minecraft.client.gui.screens.Screen`
+- `net.minecraft.client.option.KeyBinding` → `net.minecraft.client.KeyMapping` ; `net.minecraft.client.util.InputUtil` → `com.mojang.blaze3d.platform.InputConstants`
+- `net.minecraft.sound.SoundEvents/SoundEvent` → `net.minecraft.sounds.SoundEvents/SoundEvent` ; `SoundCategory` → `net.minecraft.sounds.SoundSource`
+- `net.minecraft.util.math.Vec3d`→`net.minecraft.world.phys.Vec3` ; `RotationAxis`→`com.mojang.math.Axis` ; `Direction`→`net.minecraft.core.Direction` ; `BlockPos` (`.offset`→`.relative`)
+- Blocks/entities: `net.minecraft.block.*`→`net.minecraft.world.level.block.*` ; `net.minecraft.block.entity.*`→`net.minecraft.world.level.block.entity.*` ; `net.minecraft.block.enums.ChestType`→`net.minecraft.world.level.block.state.properties.ChestType` ; `ChestBlock.getDoubleBlockType`/`ChestType` connect helpers verify per use
+
 Migrated so far (GUI foundation): EditorState, ModTextures, ChestConfigManager, UndoRedoHistory, UiColors, UiTheme.
-Still to do: keybinds (Architectury `KeyMappingRegistry`; `KeyBinding`→`KeyMapping`, `InputUtil`→`InputConstants`),
-client S2C receivers (`ModClientNetworking` + re-add pushes), the editor/renderers/screens/widgets (~12k lines,
-mostly GuiGraphics+item/text draw), client mixins, `WorldMixin`, config screen, REI/EMI/JEI, client entrypoints.
+Still to do: keybinds (Architectury `KeyMappingRegistry`), client S2C receivers (`ModClientNetworking` + re-add pushes),
+the editor/renderers/screens/widgets (~12k lines), client mixins (hook layer per above), `WorldMixin`, config screen, REI/EMI/JEI, client entrypoints.
