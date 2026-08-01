@@ -2,6 +2,10 @@ architectury {
     common(rootProject.enabled_platforms.split(","))
 }
 
+loom {
+    accessWidenerPath = file("src/main/resources/absoluteorder.accesswidener")
+}
+
 dependencies {
     // Fabric Loader is used here only for the @Environment annotations and mixin dependencies; it is
     // remapped to the correct annotations on each platform. Do NOT use other Fabric Loader classes here.

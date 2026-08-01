@@ -144,6 +144,17 @@ Order (▶ = next):
 - **Phase 4 — Mythic (separate track, hand-written, Forge legacy, E1):** `1.12.2` → `1.9.x`. Shares no
   code with the modern base; planned but never blocks modern work.
 
+**Release artifact naming (MANDATORY).** Every publishable jar is **Absolute Order 2.0.0** and its
+filename must state the **loader** and the **Minecraft version(s) it covers**. Scheme:
+`AbsoluteOrder-2.0.0-<loader>-mc<version-or-range>.jar` (e.g. `AbsoluteOrder-2.0.0-fabric-mc1.21.11.jar`,
+`AbsoluteOrder-2.0.0-neoforge-mc1.21.11.jar`). The mod display name is "Absolute Order", version `2.0.0`.
+When one jar covers a range, encode the range (e.g. `mc1.21.x`). Multiloader toolchain for 1.21.11 is
+aligned to the authoritative `architectury/architectury-api` `1.21.11` branch: **Gradle `8.11`**,
+architectury-loom `1.13-SNAPSHOT`, architectury-plugin `3.4-SNAPSHOT`, shadow `8.3.6`, Mojmap. Fabric
+builds green (`AbsoluteOrder-2.0.0-fabric-mc1.21.11.jar`). NeoForge is WIP — pending the exact **pinned**
+(non-snapshot) versions from `generate.architectury.dev`, because the moving `-SNAPSHOT` loom/plugin were
+not registering the `neoForge` dependency method.
+
 ## Known follow-ups
 
 - `gradle.properties` and `build.gradle` still contain a few Spanish comments (the English cleanup covered `.java` sources only).

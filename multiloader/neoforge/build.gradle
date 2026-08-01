@@ -2,9 +2,15 @@ plugins {
     id "com.gradleup.shadow" version "8.3.6"
 }
 
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+}
+
 architectury {
     platformSetupLoomIde()
-    fabric()
+    neoForge {
+        platformPackage = "forge"
+    }
 }
 
 configurations {
@@ -12,38 +18,40 @@ configurations {
     shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
-    developmentFabric.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+repositories {
+    maven { url "https://maven.neoforged.net/releases/" }
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
 }
 
 processResources {
     inputs.property "version", project.version
 
-    filesMatching("fabric.mod.json") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
     }
 }
 
 shadowJar {
-    exclude "architectury.common.json"
+    exclude "fabric.mod.json"
 
     configurations = [project.configurations.shadowCommon]
     archiveClassifier = "dev-shadow"
 }
 
 remapJar {
-    injectAccessWidener = true
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    // Publishable name: AbsoluteOrder-2.0.0-fabric-mc<version>.jar
-    archiveClassifier = "fabric-mc${rootProject.minecraft_version}"
+    // Publishable name: AbsoluteOrder-2.0.0-neoforge-mc<version>.jar
+    archiveClassifier = "neoforge-mc${rootProject.minecraft_version}"
 }
 
 sourcesJar {
