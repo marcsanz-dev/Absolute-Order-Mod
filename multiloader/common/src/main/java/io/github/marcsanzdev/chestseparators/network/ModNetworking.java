@@ -191,9 +191,9 @@ public final class ModNetworking {
                         Container targetInventory = getChestInventorySafe(world, payload.pos());
 
                         if (targetInventory instanceof IWhitelistProvider provider) {
-                            if (NetworkManager.canPlayerReceive(player, WhitelistPayload.TYPE)) {
+                            if (NetworkManager.canPlayerReceive(player, WhitelistS2CPayload.TYPE)) {
                                 NetworkManager.sendToPlayer(
-                                        player, new WhitelistPayload(payload.pos(), provider.getWhitelists()));
+                                        player, new WhitelistS2CPayload(payload.pos(), provider.getWhitelists()));
                             }
                         }
                     });
@@ -224,8 +224,11 @@ public final class ModNetworking {
                                         .chunkMap
                                         .getPlayers(new ChunkPos(payload.pos()), false)) {
                                     if (trackingPlayer != player
-                                            && NetworkManager.canPlayerReceive(trackingPlayer, WhitelistPayload.TYPE)) {
-                                        NetworkManager.sendToPlayer(trackingPlayer, payload);
+                                            && NetworkManager.canPlayerReceive(
+                                                    trackingPlayer, WhitelistS2CPayload.TYPE)) {
+                                        NetworkManager.sendToPlayer(
+                                                trackingPlayer,
+                                                new WhitelistS2CPayload(payload.pos(), payload.whitelists()));
                                     }
                                 }
                             }
@@ -303,8 +306,8 @@ public final class ModNetworking {
             NetworkManager.registerS2CPayloadType(ShulkerUUIDPayload.TYPE, ShulkerUUIDPayload.CODEC);
             NetworkManager.registerS2CPayloadType(EditorLockResponsePayload.TYPE, EditorLockResponsePayload.CODEC);
             NetworkManager.registerS2CPayloadType(AutoDepositResultPayload.TYPE, AutoDepositResultPayload.CODEC);
-            NetworkManager.registerS2CPayloadType(WhitelistPayload.TYPE, WhitelistPayload.CODEC);
-            NetworkManager.registerS2CPayloadType(EntityWhitelistPayload.TYPE, EntityWhitelistPayload.CODEC);
+            NetworkManager.registerS2CPayloadType(WhitelistS2CPayload.TYPE, WhitelistS2CPayload.CODEC);
+            NetworkManager.registerS2CPayloadType(EntityWhitelistS2CPayload.TYPE, EntityWhitelistS2CPayload.CODEC);
         }
     }
 

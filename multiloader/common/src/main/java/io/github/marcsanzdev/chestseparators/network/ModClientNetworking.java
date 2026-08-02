@@ -89,7 +89,7 @@ public class ModClientNetworking {
         // Server-authoritative whitelist for a BLOCK container (chest/barrel/…): applied to the client's
         // physical block entity AND the open dummy GUI inventory to kill the one-tick filter flicker.
         NetworkManager.registerReceiver(
-                NetworkManager.Side.S2C, WhitelistPayload.TYPE, WhitelistPayload.CODEC, (payload, context) -> {
+                NetworkManager.Side.S2C, WhitelistS2CPayload.TYPE, WhitelistS2CPayload.CODEC, (payload, context) -> {
                     context.queue(() -> {
                         Player player = context.getPlayer();
                         if (player == null || player.level() == null) return;
@@ -135,8 +135,8 @@ public class ModClientNetworking {
         // and after a save. Mirrors the block-chest handler above but keyed by entity UUID.
         NetworkManager.registerReceiver(
                 NetworkManager.Side.S2C,
-                EntityWhitelistPayload.TYPE,
-                EntityWhitelistPayload.CODEC,
+                EntityWhitelistS2CPayload.TYPE,
+                EntityWhitelistS2CPayload.CODEC,
                 (payload, context) -> {
                     context.queue(() -> {
                         Player player = context.getPlayer();
