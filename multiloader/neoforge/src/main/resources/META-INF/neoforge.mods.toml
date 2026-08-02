@@ -7,6 +7,7 @@ modId = "chestseparators"
 version = "${version}"
 displayName = "Absolute Order"
 authors = "marcsanz-dev"
+logoFile = "assets/chestseparators/icon.png"
 description = '''
 Custom chest auto-sorter with visual separators and per-slot filters.
 '''

@@ -5,6 +5,7 @@
   "name": "Absolute Order",
   "description": "Custom chest auto-sorter with visual separators and per-slot filters.",
   "authors": ["marcsanz-dev"],
+  "icon": "assets/chestseparators/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

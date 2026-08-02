@@ -1860,12 +1860,17 @@ public class ChestSeparatorsEditor {
                         previewTargetIncoming.containsKey(s.id) ? previewTargetIncoming.get(s.id) : s.getStack();
                 if (!fin.isEmpty()) finals.add(fin);
             }
-            finals.sort(java.util.Comparator.comparingInt(st -> {
-                int r = order.indexOf(net.minecraft.registry.Registries.ITEM
-                        .getId(st.getItem())
-                        .toString());
-                return r < 0 ? Integer.MAX_VALUE : r;
-            }));
+            finals.sort(java.util.Comparator.<net.minecraft.item.ItemStack>comparingInt(st -> {
+                        int r = order.indexOf(net.minecraft.registry.Registries.ITEM
+                                .getId(st.getItem())
+                                .toString());
+                        return r < 0 ? Integer.MAX_VALUE : r;
+                    })
+                    // Match reorderFilteredGroups: same-item overflow packs the fuller stack first, so the
+                    // preview shows exactly what the deposit + server re-sort will produce ([64,1] not [1,64]).
+                    .thenComparing(java.util.Comparator.comparingInt(
+                                    net.minecraft.item.ItemStack::getCount)
+                            .reversed()));
 
             for (int i = 0; i < gslots.size(); i++) {
                 net.minecraft.screen.slot.Slot s = gslots.get(i);
