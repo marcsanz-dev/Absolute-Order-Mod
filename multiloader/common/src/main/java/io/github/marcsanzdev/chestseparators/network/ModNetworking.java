@@ -637,11 +637,14 @@ public final class ModNetworking {
                 if (!st.isEmpty()) stacks.add(st);
             }
             if (stacks.isEmpty()) continue;
-            stacks.sort(java.util.Comparator.comparingInt(st -> {
-                int rank = order.indexOf(
-                        BuiltInRegistries.ITEM.getKey(st.getItem()).toString());
-                return rank < 0 ? Integer.MAX_VALUE : rank;
-            }));
+            stacks.sort(java.util.Comparator.<ItemStack>comparingInt(st -> {
+                        int rank = order.indexOf(
+                                BuiltInRegistries.ITEM.getKey(st.getItem()).toString());
+                        return rank < 0 ? Integer.MAX_VALUE : rank;
+                    })
+                    // Tie-break equal-ranked stacks (the same item overflowing several of the group's slots)
+                    // by count, fuller first — so a 65-item deposit ends as [64, 1] and not [1, 64].
+                    .thenComparing(java.util.Comparator.comparingInt(ItemStack::getCount).reversed()));
 
             // Re-lay packed from the first slot; any trailing slots become empty.
             for (int i = 0; i < slots.size(); i++) {

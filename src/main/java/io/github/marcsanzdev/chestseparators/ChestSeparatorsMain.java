@@ -625,10 +625,13 @@ public class ChestSeparatorsMain implements ModInitializer {
                 if (!st.isEmpty()) stacks.add(st);
             }
             if (stacks.isEmpty()) continue;
-            stacks.sort(java.util.Comparator.comparingInt(st -> {
-                int rank = order.indexOf(Registries.ITEM.getId(st.getItem()).toString());
-                return rank < 0 ? Integer.MAX_VALUE : rank;
-            }));
+            stacks.sort(java.util.Comparator.<ItemStack>comparingInt(st -> {
+                        int rank = order.indexOf(Registries.ITEM.getId(st.getItem()).toString());
+                        return rank < 0 ? Integer.MAX_VALUE : rank;
+                    })
+                    // Tie-break equal-ranked stacks (the same item overflowing several of the group's slots)
+                    // by count, fuller first — so a 65-item deposit ends as [64, 1] and not [1, 64].
+                    .thenComparing(java.util.Comparator.comparingInt(ItemStack::getCount).reversed()));
 
             // Re-lay packed from the first slot; any trailing slots become empty. Every stack came from this
             // same group, so nothing can be lost (stacks.size() <= slots.size()).
