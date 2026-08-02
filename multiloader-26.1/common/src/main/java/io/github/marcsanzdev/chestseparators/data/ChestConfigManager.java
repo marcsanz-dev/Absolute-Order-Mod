@@ -587,8 +587,13 @@ public class ChestConfigManager {
                         type == ChestType.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
                 BlockPos neighborPos = pos.relative(neighborDir);
 
-                BlockPos primaryPos = pos.compareTo(neighborPos) < 0 ? pos : neighborPos;
-                BlockPos secondaryPos = pos.compareTo(neighborPos) < 0 ? neighborPos : pos;
+                // Key the layout by ChestType, the same way the container (and thus filters, via DoubleInventoryMixin)
+                // is combined: vanilla puts the RIGHT chest first (GUI slots 0-26), LEFT second (27-53). Keying by
+                // min/max BlockPos instead disagreed with that order, so breaking + replacing one half (which can flip
+                // the block's LEFT/RIGHT role while its position stays) moved the layout to the wrong half while the
+                // filters stayed. Same key keeps layout and filters on the same half.
+                BlockPos primaryPos = type == ChestType.RIGHT ? pos : neighborPos;
+                BlockPos secondaryPos = type == ChestType.RIGHT ? neighborPos : pos;
 
                 RawData firstData = readRawData(getFileForPos(primaryPos, dimensionId));
                 currentChestConfig.putAll(firstData.visual);
@@ -663,8 +668,13 @@ public class ChestConfigManager {
                         type == ChestType.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
                 BlockPos neighborPos = pos.relative(neighborDir);
 
-                BlockPos primaryPos = pos.compareTo(neighborPos) < 0 ? pos : neighborPos;
-                BlockPos secondaryPos = pos.compareTo(neighborPos) < 0 ? neighborPos : pos;
+                // Key the layout by ChestType, the same way the container (and thus filters, via DoubleInventoryMixin)
+                // is combined: vanilla puts the RIGHT chest first (GUI slots 0-26), LEFT second (27-53). Keying by
+                // min/max BlockPos instead disagreed with that order, so breaking + replacing one half (which can flip
+                // the block's LEFT/RIGHT role while its position stays) moved the layout to the wrong half while the
+                // filters stayed. Same key keeps layout and filters on the same half.
+                BlockPos primaryPos = type == ChestType.RIGHT ? pos : neighborPos;
+                BlockPos secondaryPos = type == ChestType.RIGHT ? neighborPos : pos;
 
                 Map<Integer, int[]> firstVis = new HashMap<>();
                 Map<Integer, int[]> secondVis = new HashMap<>();
