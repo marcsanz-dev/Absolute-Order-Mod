@@ -1,0 +1,78 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+
+    // Files in this configuration will be bundled into your mod using the Shadow plugin.
+    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+repositories {
+    maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+    maven { url "https://maven.shedaniel.me/" } // Cloth Config
+}
+
+dependencies {
+    implementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    implementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+
+    // Architectury API (Fabric).
+    implementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+
+    // Cloth Config (Fabric) — the real config-screen impl; a required dependency of the config screen.
+    implementation("me.shedaniel.cloth:cloth-config-fabric:$rootProject.cloth_config_version") {
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    // ModMenu hosts the config button. Compile the ModMenuApi entrypoint against it; it stays optional at
+    // runtime (declared "suggests" in fabric.mod.json), and is loaded in dev so the config screen is testable.
+    compileOnly("com.terraformersmc:modmenu:$rootProject.modmenu_version") { exclude group: "net.fabricmc" }
+    localRuntime("com.terraformersmc:modmenu:$rootProject.modmenu_version") { exclude group: "net.fabricmc" }
+
+    common(project(path: ':common')) { transitive = false }
+    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('fabric.mod.json') {
+        expand version: inputs.properties.version
+    }
+}
+
+// No-remap era (MC 26.x, unobfuscated): there is no remapJar. Loom processes the base `jar` (classifier
+// 'raw'); shadowJar then unpacks it and bundles the transformed common classes into the publishable jar
+// AbsoluteOrder-2.0.0-fabric-mc<version>.jar.
+jar {
+    archiveClassifier = "raw"
+}
+
+shadowJar {
+    dependsOn jar
+    mainSpec.sourcePaths.clear()
+    from zipTree(jar.archiveFile)
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = "fabric-mc${rootProject.minecraft_version}"
+}
+
+// The publishable jar is the shadowJar (bundles common); make `build`/`assemble` produce it.
+tasks.named('assemble') { dependsOn tasks.named('shadowJar') }
