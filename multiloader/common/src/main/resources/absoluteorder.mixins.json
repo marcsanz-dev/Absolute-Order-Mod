@@ -29,6 +29,7 @@
   ],
   "client": [
     "client.ArmorEquipClientMixin",
+    "client.ChestInteractionMixin",
     "client.ChestLidAccessor",
     "client.CreativeInventoryScreenAccessor",
     "client.CreativeInventoryScreenMixin",
