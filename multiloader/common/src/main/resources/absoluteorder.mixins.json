@@ -40,7 +40,8 @@
     "client.RecipeBookScreenAccessor",
     "client.RecipeBookWidgetInvoker",
     "client.ShulkerAnimationAccessor",
-    "client.StatusEffectsDisplayMixin"
+    "client.StatusEffectsDisplayMixin",
+    "WorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1
