@@ -38,6 +38,7 @@
     "client.GenericContainerScreenMixin",
     "client.HandledScreenAccessor",
     "client.InGameHudHotbarLinesMixin",
+    "client.LevelRendererMixin",
     "client.RecipeBookScreenAccessor",
     "client.RecipeBookWidgetInvoker",
     "client.ShulkerAnimationAccessor",
