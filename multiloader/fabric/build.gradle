@@ -38,12 +38,14 @@ dependencies {
     // Architectury API (Fabric).
     modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
-    // Dev-only runtime mods (NOT bundled into the published jar) so the in-game mod list and a config
-    // screen host are available while testing. Their real integration is migrated later.
-    modLocalRuntime("com.terraformersmc:modmenu:17.0.1-beta.1") { exclude group: "net.fabricmc" }
-    modLocalRuntime("me.shedaniel.cloth:cloth-config-fabric:21.11.153") {
+    // Cloth Config (Fabric) — the real config-screen impl; a required dependency of the config screen.
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:$rootProject.cloth_config_version") {
         exclude group: "net.fabricmc.fabric-api"
     }
+    // ModMenu hosts the config button. Compile the ModMenuApi entrypoint against it; it stays optional at
+    // runtime (declared "suggests" in fabric.mod.json), and is loaded in dev so the config screen is testable.
+    modCompileOnly("com.terraformersmc:modmenu:$rootProject.modmenu_version") { exclude group: "net.fabricmc" }
+    modLocalRuntime("com.terraformersmc:modmenu:$rootProject.modmenu_version") { exclude group: "net.fabricmc" }
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
