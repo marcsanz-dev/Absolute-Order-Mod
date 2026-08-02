@@ -16,6 +16,9 @@
     ],
     "modmenu": [
       "io.github.marcsanzdev.chestseparators.fabric.ModMenuIntegration"
+    ],
+    "rei_client": [
+      "io.github.marcsanzdev.chestseparators.compat.ChestSeparatorsReiPlugin"
     ]
   },
   "mixins": [
