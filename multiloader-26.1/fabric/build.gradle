@@ -71,7 +71,7 @@ shadowJar {
     mainSpec.sourcePaths.clear()
     from zipTree(jar.archiveFile)
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = "fabric-mc${rootProject.minecraft_version}"
+    archiveClassifier = "fabric-mc26.1"
 }
 
 // The publishable jar is the shadowJar (bundles common); make `build`/`assemble` produce it.
