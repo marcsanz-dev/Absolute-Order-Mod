@@ -1108,6 +1108,14 @@ public class ChestConfigManager {
     public void seedDefaultPresetsIfNeeded() {
         Path marker = getGlobalConfigDir().resolve(DEFAULTS_MARKER);
         if (Files.exists(marker)) return;
+
+        // Guard: if the bundled presets are not on the classpath (a broken/dev build with the resources
+        // missing), do NOT write the marker — otherwise the "seeded once" flag would be set with nothing
+        // copied, permanently suppressing the defaults even after the resources are added back.
+        if (ChestConfigManager.class.getResource("/chestseparators_presets/" + BUNDLED_PRESETS[0]) == null) {
+            return;
+        }
+
         for (String name : BUNDLED_PRESETS) {
             Path target = getGlobalConfigDir().resolve(name);
             if (Files.exists(target)) continue;
