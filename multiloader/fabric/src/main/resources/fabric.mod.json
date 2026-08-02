@@ -9,6 +9,9 @@
   "entrypoints": {
     "main": [
       "io.github.marcsanzdev.chestseparators.fabric.AbsoluteOrderFabric"
+    ],
+    "client": [
+      "io.github.marcsanzdev.chestseparators.fabric.AbsoluteOrderClientFabric"
     ]
   },
   "mixins": [

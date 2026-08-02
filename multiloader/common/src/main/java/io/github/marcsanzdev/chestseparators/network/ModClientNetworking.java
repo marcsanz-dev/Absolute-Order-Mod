@@ -1,6 +1,7 @@
 package io.github.marcsanzdev.chestseparators.network;
 
 import dev.architectury.networking.NetworkManager;
+import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.client.EditorState;
 import io.github.marcsanzdev.chestseparators.client.ui.AutoDepositAnimator;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
@@ -10,6 +11,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * Registers all client-side S2C packet handlers for the mod. Each handler runs on the main client thread
@@ -79,5 +85,86 @@ public class ModClientNetworking {
                 AutoDepositResultPayload.CODEC,
                 (payload, context) -> context.queue(
                         () -> AutoDepositAnimator.addFlights(payload.flights(), payload.reverse())));
+
+        // Server-authoritative whitelist for a BLOCK container (chest/barrel/…): applied to the client's
+        // physical block entity AND the open dummy GUI inventory to kill the one-tick filter flicker.
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C, WhitelistPayload.TYPE, WhitelistPayload.CODEC, (payload, context) -> {
+                    context.queue(() -> {
+                        Player player = context.getPlayer();
+                        if (player == null || player.level() == null) return;
+
+                        // Detect Ender Chest by inspecting the open menu's inventory slots, not the block
+                        // position — the payload's pos points to the block the server used, which may differ
+                        // from the Ender Chest position in edge cases.
+                        boolean isEnderChest = false;
+                        if (player.containerMenu != null) {
+                            for (Slot slot : player.containerMenu.slots) {
+                                if (slot.container instanceof PlayerEnderChestContainer) {
+                                    isEnderChest = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isEnderChest) return;
+
+                        // 1. Store data for UI rendering. setCurrentWhitelists replaces the whole working map
+                        // with only the container's filters; re-mirror the player-inventory filters so the
+                        // preview panel can still show an inventory group's filter while a chest is open.
+                        ChestConfigManager.getInstance().setCurrentWhitelists(payload.whitelists());
+                        ChestSeparatorsEditor editorForMirror = ChestSeparatorsEditor.getInstance();
+                        if (editorForMirror != null && !editorForMirror.session.isInventoryScreenContext) {
+                            ChestConfigManager.getInstance().mirrorInventoryIntoCurrent();
+                        }
+
+                        // 2. Inject into the client-side physical block entity.
+                        BlockEntity be = player.level().getBlockEntity(payload.pos());
+                        if (be instanceof IWhitelistProvider provider) {
+                            provider.setWhitelists(payload.whitelists());
+                        }
+
+                        // 3. THE FLICKER KILLER: inject into the client's dummy GUI inventory.
+                        if (player.containerMenu instanceof ChestMenu genericHandler
+                                && genericHandler.getContainer() instanceof IWhitelistProvider provider) {
+                            provider.setWhitelists(payload.whitelists());
+                        }
+                    });
+                });
+
+        // Server-authoritative whitelist for ENTITY containers (chest minecarts), pushed when the GUI opens
+        // and after a save. Mirrors the block-chest handler above but keyed by entity UUID.
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C,
+                EntityWhitelistPayload.TYPE,
+                EntityWhitelistPayload.CODEC,
+                (payload, context) -> {
+                    context.queue(() -> {
+                        Player player = context.getPlayer();
+                        if (player == null) return;
+
+                        // An empty payload means the server entity has no stored filter yet — the migration
+                        // case for minecarts filtered before this version (their filter lives only in the
+                        // local .dat, never synced): ignore it so the local filter is preserved and displayed,
+                        // and it will sync up to the server on the next save.
+                        if (payload.whitelists().isEmpty()) return;
+
+                        // Inject into the client's open container inventory (the minecart) to keep client-side
+                        // prediction consistent and avoid a flicker.
+                        if (player.containerMenu instanceof ChestMenu genericHandler
+                                && genericHandler.getContainer() instanceof IWhitelistProvider provider) {
+                            provider.setWhitelists(payload.whitelists());
+                        }
+
+                        // If the editor is open on exactly this minecart, make its displayed filters match the
+                        // server, then re-mirror the player inventory (offset keys) so they are not dropped.
+                        ChestSeparatorsEditor editor = ChestSeparatorsEditor.getInstance();
+                        if (editor != null
+                                && editor.session.isMinecartChest
+                                && payload.entityUuid().equals(editor.session.currentEntityUUID)) {
+                            ChestConfigManager.getInstance().setCurrentWhitelists(payload.whitelists());
+                            ChestConfigManager.getInstance().mirrorInventoryIntoCurrent();
+                        }
+                    });
+                });
     }
 }
