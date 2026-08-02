@@ -1451,6 +1451,12 @@ public class ChestSeparatorsEditor {
             this.previewSourceRemaining.clear();
             this.previewTargetIncoming.clear();
 
+            // Apply the server's post-deposit re-sort to the CLIENT's predicted container right now, so the
+            // items show their final packed order ([64,1]) from the first frame. Without this the client
+            // briefly renders its raw deposit prediction ([1,64]) and then jumps when the server's re-sort
+            // syncs back — a visible flicker. Mirrors reorderFilteredGroups exactly.
+            applyClientDepositReorder(whitelists);
+
             // Ask the server to re-sort the container's filtered groups by priority order, so a
             // just-deposited higher-priority item ends up ahead of lower-priority ones already stored
             // (the deposit above only fills slots; it never relocates existing stacks).
@@ -1478,6 +1484,48 @@ public class ChestSeparatorsEditor {
                                     ? "message.chestseparators.push_no_slot"
                                     : "message.chestseparators.push_no_filters"),
                     net.minecraft.util.Formatting.GRAY);
+        }
+    }
+
+    /**
+     * Client-side mirror of {@code ChestSeparatorsMain.reorderFilteredGroups}: packs each filtered group's
+     * stacks by the filter's priority order (fuller stack first for a same-item tie) into its lowest slots,
+     * applied to the open container's predicted slots so the deposit's final layout is shown with no flicker.
+     */
+    private void applyClientDepositReorder(
+            Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists) {
+        if (whitelists == null || whitelists.isEmpty()) return;
+
+        java.util.Map<java.util.UUID, List<net.minecraft.screen.slot.Slot>> groups = new java.util.LinkedHashMap<>();
+        for (net.minecraft.screen.slot.Slot s : accessor.getHandler().slots) {
+            if (s.inventory instanceof net.minecraft.entity.player.PlayerInventory) continue;
+            io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = whitelists.get(s.getIndex());
+            if (wl == null || wl.groupId() == null) continue;
+            groups.computeIfAbsent(wl.groupId(), g -> new ArrayList<>()).add(s);
+        }
+
+        for (List<net.minecraft.screen.slot.Slot> gslots : groups.values()) {
+            if (gslots.size() < 2) continue;
+            gslots.sort(java.util.Comparator.comparingInt(net.minecraft.screen.slot.Slot::getIndex));
+            List<String> order = whitelists.get(gslots.get(0).getIndex()).allowedItems();
+
+            List<net.minecraft.item.ItemStack> stacks = new ArrayList<>();
+            for (net.minecraft.screen.slot.Slot s : gslots) {
+                if (!s.getStack().isEmpty()) stacks.add(s.getStack());
+            }
+            if (stacks.isEmpty()) continue;
+            stacks.sort(java.util.Comparator.<net.minecraft.item.ItemStack>comparingInt(st -> {
+                        int r = order.indexOf(net.minecraft.registry.Registries.ITEM
+                                .getId(st.getItem())
+                                .toString());
+                        return r < 0 ? Integer.MAX_VALUE : r;
+                    })
+                    .thenComparing(java.util.Comparator.comparingInt(net.minecraft.item.ItemStack::getCount)
+                            .reversed()));
+
+            for (int i = 0; i < gslots.size(); i++) {
+                gslots.get(i).setStack(i < stacks.size() ? stacks.get(i) : net.minecraft.item.ItemStack.EMPTY);
+            }
         }
     }
 
