@@ -11,8 +11,6 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -24,7 +22,6 @@ import net.minecraft.resources.Identifier;
  * Builds the mod's Cloth Config screen. Loader-agnostic: the Fabric ModMenu integration and the NeoForge
  * {@code IConfigScreenFactory} both delegate here so the whole config UI lives in one place.
  */
-@Environment(EnvType.CLIENT)
 public final class AbsoluteOrderConfigScreen {
 
     private AbsoluteOrderConfigScreen() {}

@@ -6,8 +6,6 @@ import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.event.KeyInputHandler;
 import io.github.marcsanzdev.chestseparators.network.ModClientNetworking;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
 /**
  * Common (loader-agnostic) client bootstrap, run from each platform's client entry point. Registers the
@@ -15,7 +13,6 @@ import net.fabricmc.api.Environment;
  * wires the world-join handler that primes the local config and syncs the inventory filters up to the
  * server so the Pick Up rule works before the editor is ever opened.
  */
-@Environment(EnvType.CLIENT)
 public final class AbsoluteOrderClient {
 
     private AbsoluteOrderClient() {}

@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * when a position-keyed container (chest, trapped chest, or barrel) is destroyed on the client side.
  *
  * <p>Registered in the mixin config's {@code client} section so it only ever applies on the physical
- * client — the dedicated-server JVM never loads {@code ChestConfigManager}, which is a client-only class
- * ({@code @Environment(EnvType.CLIENT)}). The {@code isClientSide()} guard then restricts it to the
- * logical client side of the world (the integrated server shares the client JVM).
+ * client — the dedicated-server JVM never loads {@code ChestConfigManager} (a client-only class, kept off
+ * the server by that client-section registration + the client entrypoint). The {@code isClientSide()} guard
+ * then restricts it to the logical client side of the world (the integrated server shares the client JVM).
  */
 @Mixin(Level.class)
 public abstract class WorldMixin {

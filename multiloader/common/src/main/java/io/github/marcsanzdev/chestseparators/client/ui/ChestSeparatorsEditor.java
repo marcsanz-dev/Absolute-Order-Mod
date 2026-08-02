@@ -14,8 +14,6 @@ import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.mixin.client.HandledScreenAccessor;
 import io.github.marcsanzdev.chestseparators.util.ChestPosStorage;
 import java.util.*;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,7 +31,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
-@Environment(EnvType.CLIENT)
 public class ChestSeparatorsEditor {
 
     private static ChestSeparatorsEditor activeInstance;

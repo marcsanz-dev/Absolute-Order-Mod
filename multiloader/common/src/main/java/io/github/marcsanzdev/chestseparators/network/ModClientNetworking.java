@@ -7,8 +7,6 @@ import io.github.marcsanzdev.chestseparators.client.ui.AutoDepositAnimator;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import io.github.marcsanzdev.chestseparators.util.ChestPosStorage;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -22,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * via {@code context.queue(...)}. The matching S2C payload types are registered on the dedicated server in
  * {@link ModNetworking#init()} (so {@code canPlayerReceive} is accurate before any send).
  */
-@Environment(EnvType.CLIENT)
 public class ModClientNetworking {
 
     /** Sends the player's current inventory filters to the server (for the Pick Up rule enforcement). */
