@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Neue Gruppen erlauben standardmäßig Shift-Klicks.",
   "config.chestseparators.default_rule_hopper": "Standardregel: Trichter",
   "config.chestseparators.default_rule_hopper.tooltip": "Neue Gruppen erlauben standardmäßig Trichter-Einfügen.",
+  "config.chestseparators.default_rule_pickup": "Standardregel: Aufheben",
+  "config.chestseparators.default_rule_pickup.tooltip": "Neue Inventargruppen filtern standardmäßig aufgehobene Gegenstände.",
   "config.chestseparators.category.server": "Server / Mechanik",
   "config.chestseparators.expel_invalid_items": "Ungültige Gegenstände auswerfen",
   "config.chestseparators.expel_invalid_items.tooltip": "Beim Anwenden eines Filters werden ungültige Gegenstände ins Inventar verschoben oder fallengelassen.",

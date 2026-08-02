@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Nieuwe groepen staan standaard Shift-klikken toe.",
   "config.chestseparators.default_rule_hopper": "Standaardregel: Trechter",
   "config.chestseparators.default_rule_hopper.tooltip": "Nieuwe groepen staan standaard trechterinvoer toe.",
+  "config.chestseparators.default_rule_pickup": "Standaardregel: Oprapen",
+  "config.chestseparators.default_rule_pickup.tooltip": "Nieuwe inventarisgroepen filteren standaard opgeraapte voorwerpen.",
   "config.chestseparators.category.server": "Server / Mechanica",
   "config.chestseparators.expel_invalid_items": "Ongeldige items verdrijven",
   "config.chestseparators.expel_invalid_items.tooltip": "Ongeldige items worden naar de inventaris verplaatst of laten vallen.",

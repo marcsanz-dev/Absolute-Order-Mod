@@ -721,9 +721,21 @@ public class ChestSeparatorsEditor {
 
     public void prepareFilterMenu() {
         session.currentAllowedItems.clear();
+        // The third rule is context-dependent: "Hopper" for a chest filter, "Pick Up" for an inventory
+        // filter (they share the ruleHopper flag). Seed its default from the matching config option so an
+        // inventory group defaults to the Pick Up default and a chest group to the Hopper default.
+        boolean invFilter = false;
+        for (int key : session.selectedSlots) {
+            if (io.github.marcsanzdev.chestseparators.data.ChestConfigManager.isInventoryKey(key)) {
+                invFilter = true;
+                break;
+            }
+        }
         session.ruleManual = GlobalChestConfig.instance.defaultRuleManual;
         session.ruleShift = GlobalChestConfig.instance.defaultRuleShift;
-        session.ruleHopper = GlobalChestConfig.instance.defaultRuleHopper;
+        session.ruleHopper = invFilter
+                ? GlobalChestConfig.instance.defaultRulePickup
+                : GlobalChestConfig.instance.defaultRuleHopper;
         session.gridScrollY = 0f;
         session.listScrollY = 0f;
 

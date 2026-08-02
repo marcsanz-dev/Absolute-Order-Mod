@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Les nouveaux groupes autorisent les clics avec Maj par défaut.",
   "config.chestseparators.default_rule_hopper": "Règle par défaut : Entonnoir",
   "config.chestseparators.default_rule_hopper.tooltip": "Les nouveaux groupes autorisent l'insertion par entonnoir par défaut.",
+  "config.chestseparators.default_rule_pickup": "Règle par défaut : Ramasser",
+  "config.chestseparators.default_rule_pickup.tooltip": "Les nouveaux groupes d'inventaire filtrent les objets ramassés par défaut.",
   "config.chestseparators.category.server": "Serveur / Mécaniques",
   "config.chestseparators.expel_invalid_items": "Expulser les objets non valides",
   "config.chestseparators.expel_invalid_items.tooltip": "Les objets non valides seront expulsés vers l'inventaire ou jetés.",

@@ -157,6 +157,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Newly created groups will allow shift-clicks by default.",
   "config.chestseparators.default_rule_hopper": "Default Rule: Hopper",
   "config.chestseparators.default_rule_hopper.tooltip": "Newly created groups will allow hopper insertion by default.",
+  "config.chestseparators.default_rule_pickup": "Default Rule: Pick Up",
+  "config.chestseparators.default_rule_pickup.tooltip": "Newly created inventory groups will filter picked-up items by default.",
   "config.chestseparators.category.server": "Server / Mechanics",
   "config.chestseparators.expel_invalid_items": "Expel Invalid Items",
   "config.chestseparators.expel_invalid_items.tooltip": "When applying a new filter, existing invalid items will be pushed to the player's inventory or dropped.",

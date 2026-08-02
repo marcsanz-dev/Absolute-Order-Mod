@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Yeni oluşturulan gruplar varsayılan olarak Shift tıklamalarına izin verir.",
   "config.chestseparators.default_rule_hopper": "Varsayılan Kural: Huni",
   "config.chestseparators.default_rule_hopper.tooltip": "Yeni oluşturulan gruplar varsayılan olarak huni eklemesine izin verir.",
+  "config.chestseparators.default_rule_pickup": "Varsayılan Kural: Yerden Al",
+  "config.chestseparators.default_rule_pickup.tooltip": "Yeni oluşturulan envanter grupları varsayılan olarak yerden alınan eşyaları filtreler.",
   "config.chestseparators.category.server": "Sunucu / Mekanikler",
   "config.chestseparators.expel_invalid_items": "Geçersiz Öğeleri Dışarı At",
   "config.chestseparators.expel_invalid_items.tooltip": "Yeni filtre uygulandığında geçersiz öğeler oyuncunun envanterine itilir.",

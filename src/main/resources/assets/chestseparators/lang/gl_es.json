@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Os grupos creados recentemente permitirán clics con Shift por defecto.",
   "config.chestseparators.default_rule_hopper": "Regra por defecto: Funil",
   "config.chestseparators.default_rule_hopper.tooltip": "Os grupos creados recentemente permitirán a inserción por funil por defecto.",
+  "config.chestseparators.default_rule_pickup": "Regra por defecto: Recoller",
+  "config.chestseparators.default_rule_pickup.tooltip": "Os grupos de inventario novos filtrarán os obxectos recollidos do chan por defecto.",
   "config.chestseparators.category.server": "Servidor / Mecánicas",
   "config.chestseparators.expel_invalid_items": "Expulsar elementos non válidos",
   "config.chestseparators.expel_invalid_items.tooltip": "Ao aplicar un novo filtro, os elementos non válidos moveranse ao inventario ou caerán ao chan.",

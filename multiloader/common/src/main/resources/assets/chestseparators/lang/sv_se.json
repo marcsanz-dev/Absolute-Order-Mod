@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Nyskapade grupper tillåter Shift-klick som standard.",
   "config.chestseparators.default_rule_hopper": "Standardregel: Tratt",
   "config.chestseparators.default_rule_hopper.tooltip": "Nyskapade grupper tillåter trattinsättning som standard.",
+  "config.chestseparators.default_rule_pickup": "Standardregel: Plocka upp",
+  "config.chestseparators.default_rule_pickup.tooltip": "Nyskapade inventariegrupper filtrerar upplockade föremål som standard.",
   "config.chestseparators.category.server": "Server / Mekanik",
   "config.chestseparators.expel_invalid_items": "Kasta ut ogiltiga föremål",
   "config.chestseparators.expel_invalid_items.tooltip": "När ett nytt filter appliceras skjuts befintliga ogiltiga föremål till spelarens inventarie eller tappas.",

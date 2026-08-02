@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Nowe grupy będą domyślnie zezwalać na kliknięcia z Shiftem.",
   "config.chestseparators.default_rule_hopper": "Domyślna zasada: Lej",
   "config.chestseparators.default_rule_hopper.tooltip": "Nowe grupy będą domyślnie zezwalać na wkładanie lejem.",
+  "config.chestseparators.default_rule_pickup": "Domyślna zasada: Podnoszenie",
+  "config.chestseparators.default_rule_pickup.tooltip": "Nowe grupy ekwipunku będą domyślnie filtrować podniesione przedmioty.",
   "config.chestseparators.category.server": "Serwer / Mechanika",
   "config.chestseparators.expel_invalid_items": "Wyrzuć nieprawidłowe przedmioty",
   "config.chestseparators.expel_invalid_items.tooltip": "Podczas nakładania nowego filtra nieprawidłowe przedmioty zostaną przeniesione do ekwipunku lub wyrzucone.",

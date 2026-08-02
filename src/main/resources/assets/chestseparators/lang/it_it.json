@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "I nuovi gruppi consentiranno i clic con Maiusc per impostazione predefinita.",
   "config.chestseparators.default_rule_hopper": "Regola Predefinita: Tramoggia",
   "config.chestseparators.default_rule_hopper.tooltip": "I nuovi gruppi consentiranno l'inserimento tramite tramoggia per impostazione predefinita.",
+  "config.chestseparators.default_rule_pickup": "Regola Predefinita: Raccogli",
+  "config.chestseparators.default_rule_pickup.tooltip": "I nuovi gruppi dell'inventario filtreranno gli oggetti raccolti da terra per impostazione predefinita.",
   "config.chestseparators.category.server": "Server / Meccaniche",
   "config.chestseparators.expel_invalid_items": "Espelli Oggetti Non Validi",
   "config.chestseparators.expel_invalid_items.tooltip": "Quando applichi un nuovo filtro, gli oggetti non validi verranno spostati nell'inventario o gettati.",

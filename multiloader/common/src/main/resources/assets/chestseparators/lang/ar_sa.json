@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "المجموعات الجديدة ستسمح بنقرات Shift بشكل افتراضي.",
   "config.chestseparators.default_rule_hopper": "القاعدة الافتراضية: القمع",
   "config.chestseparators.default_rule_hopper.tooltip": "المجموعات الجديدة ستسمح بإدخال القمع بشكل افتراضي.",
+  "config.chestseparators.default_rule_pickup": "القاعدة الافتراضية: الالتقاط",
+  "config.chestseparators.default_rule_pickup.tooltip": "المجموعات الجديدة في الحقيبة ستصفّي العناصر المُلتقطة من الأرض بشكل افتراضي.",
   "config.chestseparators.category.server": "الخادم / الميكانيكا",
   "config.chestseparators.expel_invalid_items": "طرد العناصر غير الصالحة",
   "config.chestseparators.expel_invalid_items.tooltip": "سيتم دفع العناصر غير الصالحة إلى مخزون اللاعب أو إسقاطها.",

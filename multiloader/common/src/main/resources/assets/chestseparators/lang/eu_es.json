@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Sortu berri diren taldeek Shift klikak baimenduko dituzte lehenespenez.",
   "config.chestseparators.default_rule_hopper": "Araua lehenespenez: Inbutua",
   "config.chestseparators.default_rule_hopper.tooltip": "Sortu berri diren taldeek inbutu bidezko txertaketa baimenduko dute lehenespenez.",
+  "config.chestseparators.default_rule_pickup": "Araua lehenespenez: Jaso",
+  "config.chestseparators.default_rule_pickup.tooltip": "Sortu berri diren inbentario-taldeek lurretik jasotako objektuak iragaziko dituzte lehenespenez.",
   "config.chestseparators.category.server": "Zerbitzaria / Mekanikak",
   "config.chestseparators.expel_invalid_items": "Egotzi baliogabeko elementuak",
   "config.chestseparators.expel_invalid_items.tooltip": "Iragazki berri bat aplikatzean, baliogabeko elementuak inbentariora joango dira edo lurrera eroriko dira.",

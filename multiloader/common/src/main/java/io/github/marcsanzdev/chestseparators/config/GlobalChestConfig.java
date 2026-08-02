@@ -91,6 +91,10 @@ public class GlobalChestConfig {
         public boolean defaultRuleManual = true;
         public boolean defaultRuleShift = true;
         public boolean defaultRuleHopper = true;
+        // The third insertion rule is context-dependent: "Hopper" on a chest filter, "Pick Up" on an
+        // inventory filter (both share SlotWhitelist#allowHopper). This holds the default for the Pick Up
+        // side so inventory groups can default independently from chest groups.
+        public boolean defaultRulePickup = true;
         public boolean expelInvalidItems = false;
     }
 

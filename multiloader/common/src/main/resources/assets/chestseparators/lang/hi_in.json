@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "नए बनाए गए समूह डिफ़ॉल्ट रूप से शिफ्ट-क्लिक की अनुमति देंगे।",
   "config.chestseparators.default_rule_hopper": "डिफ़ॉल्ट नियम: हॉपर",
   "config.chestseparators.default_rule_hopper.tooltip": "नए बनाए गए समूह डिफ़ॉल्ट रूप से हॉपर प्रविष्टि की अनुमति देंगे।",
+  "config.chestseparators.default_rule_pickup": "डिफ़ॉल्ट नियम: उठाना",
+  "config.chestseparators.default_rule_pickup.tooltip": "नए बनाए गए इन्वेंटरी समूह डिफ़ॉल्ट रूप से ज़मीन से उठाए गए आइटम फ़िल्टर करेंगे।",
   "config.chestseparators.category.server": "सर्वर / यांत्रिकी",
   "config.chestseparators.expel_invalid_items": "अमान्य आइटम निकालें",
   "config.chestseparators.expel_invalid_items.tooltip": "नया फ़िल्टर लागू करते समय, अमान्य आइटम इन्वेंट्री में धकेल दिए जाएंगे।",

@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Новые группы будут разрешать клики с Shift по умолчанию.",
   "config.chestseparators.default_rule_hopper": "Правило по ум.: Воронка",
   "config.chestseparators.default_rule_hopper.tooltip": "Новые группы будут разрешать воронки по умолчанию.",
+  "config.chestseparators.default_rule_pickup": "Правило по ум.: Подбор",
+  "config.chestseparators.default_rule_pickup.tooltip": "Новые группы инвентаря будут фильтровать подобранные предметы по умолчанию.",
   "config.chestseparators.category.server": "Сервер / Механики",
   "config.chestseparators.expel_invalid_items": "Выбрасывать неверные предметы",
   "config.chestseparators.expel_invalid_items.tooltip": "При применении фильтра неверные предметы переместятся в инвентарь или выпадут.",

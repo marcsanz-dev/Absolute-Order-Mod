@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "新しいグループはデフォルトでShiftクリックを許可します。",
   "config.chestseparators.default_rule_hopper": "デフォルトルール: ホッパー",
   "config.chestseparators.default_rule_hopper.tooltip": "新しいグループはデフォルトでホッパーの搬入を許可します。",
+  "config.chestseparators.default_rule_pickup": "デフォルトルール: 拾う",
+  "config.chestseparators.default_rule_pickup.tooltip": "新しいインベントリグループはデフォルトで拾ったアイテムをフィルタリングします。",
   "config.chestseparators.category.server": "サーバー / システム",
   "config.chestseparators.expel_invalid_items": "無効なアイテムを排出",
   "config.chestseparators.expel_invalid_items.tooltip": "新しいフィルターを適用した時、無効なアイテムはインベントリに移動されるかドロップされます。",

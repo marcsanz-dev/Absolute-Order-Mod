@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Grupos novos permitirão cliques com Shift por padrão.",
   "config.chestseparators.default_rule_hopper": "Regra Padrão: Funil",
   "config.chestseparators.default_rule_hopper.tooltip": "Grupos novos permitirão a inserção por funil por padrão.",
+  "config.chestseparators.default_rule_pickup": "Regra Padrão: Pegar",
+  "config.chestseparators.default_rule_pickup.tooltip": "Grupos de inventário novos filtrarão itens pegos do chão por padrão.",
   "config.chestseparators.category.server": "Servidor / Mecânicas",
   "config.chestseparators.expel_invalid_items": "Expulsar Itens Inválidos",
   "config.chestseparators.expel_invalid_items.tooltip": "Ao aplicar um novo filtro, itens inválidos serão movidos para o inventário ou soltos.",

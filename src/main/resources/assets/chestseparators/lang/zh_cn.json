@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "新创建的组默认允许Shift点击放入。",
   "config.chestseparators.default_rule_hopper": "默认规则：漏斗",
   "config.chestseparators.default_rule_hopper.tooltip": "新创建的组默认允许漏斗传输放入。",
+  "config.chestseparators.default_rule_pickup": "默认规则：拾取",
+  "config.chestseparators.default_rule_pickup.tooltip": "新创建的物品栏分组默认会过滤拾取的物品。",
   "config.chestseparators.category.server": "服务器 / 机制",
   "config.chestseparators.expel_invalid_items": "排出无效物品",
   "config.chestseparators.expel_invalid_items.tooltip": "应用新过滤器时，现有的无效物品将被推入玩家背包或掉落。",

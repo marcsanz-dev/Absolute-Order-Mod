@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "새로 생성된 그룹은 기본적으로 Shift 클릭을 허용합니다.",
   "config.chestseparators.default_rule_hopper": "기본 규칙: 깔때기",
   "config.chestseparators.default_rule_hopper.tooltip": "새로 생성된 그룹은 기본적으로 깔때기 삽입을 허용합니다.",
+  "config.chestseparators.default_rule_pickup": "기본 규칙: 줍기",
+  "config.chestseparators.default_rule_pickup.tooltip": "새로 생성된 인벤토리 그룹은 기본적으로 주운 아이템을 필터링합니다.",
   "config.chestseparators.category.server": "서버 / 메커니즘",
   "config.chestseparators.expel_invalid_items": "유효하지 않은 아이템 배출",
   "config.chestseparators.expel_invalid_items.tooltip": "새 필터를 적용할 때 기존의 유효하지 않은 아이템은 플레이어의 인벤토리로 밀려나거나 버려집니다.",

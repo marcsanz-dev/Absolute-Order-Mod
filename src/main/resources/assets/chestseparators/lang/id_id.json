@@ -159,6 +159,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Grup baru akan mengizinkan klik Shift secara default.",
   "config.chestseparators.default_rule_hopper": "Aturan Default: Corong",
   "config.chestseparators.default_rule_hopper.tooltip": "Grup baru akan mengizinkan penyisipan corong secara default.",
+  "config.chestseparators.default_rule_pickup": "Aturan Default: Ambil",
+  "config.chestseparators.default_rule_pickup.tooltip": "Grup inventaris baru akan memfilter item yang dipungut dari tanah secara default.",
   "config.chestseparators.category.server": "Server / Mekanisme",
   "config.chestseparators.expel_invalid_items": "Keluarkan Barang Tidak Valid",
   "config.chestseparators.expel_invalid_items.tooltip": "Barang tidak valid yang ada akan didorong ke inventaris pemain atau dijatuhkan.",

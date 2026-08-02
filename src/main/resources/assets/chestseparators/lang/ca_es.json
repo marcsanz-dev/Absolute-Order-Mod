@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Els grups creats recentment permetran clics amb Maj per defecte.",
   "config.chestseparators.default_rule_hopper": "Regla per defecte: Tremuja",
   "config.chestseparators.default_rule_hopper.tooltip": "Els grups creats recentment permetran la inserció per tremuja per defecte.",
+  "config.chestseparators.default_rule_pickup": "Regla per defecte: Recollir",
+  "config.chestseparators.default_rule_pickup.tooltip": "Els grups d'inventari nous filtraran els ítems recollits de terra per defecte.",
   "config.chestseparators.category.server": "Servidor / Mecàniques",
   "config.chestseparators.expel_invalid_items": "Expulsar objectes no vàlids",
   "config.chestseparators.expel_invalid_items.tooltip": "En aplicar un filtre nou, els objectes no vàlids s'enviaran a l'inventari del jugador o cauran a terra.",

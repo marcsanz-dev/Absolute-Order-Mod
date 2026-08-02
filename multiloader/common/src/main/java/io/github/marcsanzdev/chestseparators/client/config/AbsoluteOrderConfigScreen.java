@@ -173,31 +173,34 @@ public final class AbsoluteOrderConfigScreen {
                 .build());
 
         // ================= FILTERS =================
+        // Each default-rule toggle carries the same icon its rule button uses in the filter editor. The third
+        // rule is shown twice — Hopper (chest filters) and Pick Up (inventory filters) — since they default
+        // independently even though they share one stored flag.
         List<AbstractConfigListEntry> filterEntries = new ArrayList<>();
-        filterEntries.add(entryBuilder
-                .startBooleanToggle(
-                        Component.translatable("config.chestseparators.default_rule_manual"),
-                        GlobalChestConfig.instance.defaultRuleManual)
-                .setDefaultValue(true)
-                .setTooltip(Component.translatable("config.chestseparators.default_rule_manual.tooltip"))
-                .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleManual = newValue)
-                .build());
-        filterEntries.add(entryBuilder
-                .startBooleanToggle(
-                        Component.translatable("config.chestseparators.default_rule_shift"),
-                        GlobalChestConfig.instance.defaultRuleShift)
-                .setDefaultValue(true)
-                .setTooltip(Component.translatable("config.chestseparators.default_rule_shift.tooltip"))
-                .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleShift = newValue)
-                .build());
-        filterEntries.add(entryBuilder
-                .startBooleanToggle(
-                        Component.translatable("config.chestseparators.default_rule_hopper"),
-                        GlobalChestConfig.instance.defaultRuleHopper)
-                .setDefaultValue(true)
-                .setTooltip(Component.translatable("config.chestseparators.default_rule_hopper.tooltip"))
-                .setSaveConsumer(newValue -> GlobalChestConfig.instance.defaultRuleHopper = newValue)
-                .build());
+        filterEntries.add(iconToggle(
+                "default_rule_manual",
+                GlobalChestConfig.instance.defaultRuleManual,
+                true,
+                v -> GlobalChestConfig.instance.defaultRuleManual = v,
+                ModTextures.ICON_SM_MANUAL));
+        filterEntries.add(iconToggle(
+                "default_rule_shift",
+                GlobalChestConfig.instance.defaultRuleShift,
+                true,
+                v -> GlobalChestConfig.instance.defaultRuleShift = v,
+                ModTextures.ICON_SM_SHIFT));
+        filterEntries.add(iconToggle(
+                "default_rule_hopper",
+                GlobalChestConfig.instance.defaultRuleHopper,
+                true,
+                v -> GlobalChestConfig.instance.defaultRuleHopper = v,
+                ModTextures.ICON_SM_HOPPER));
+        filterEntries.add(iconToggle(
+                "default_rule_pickup",
+                GlobalChestConfig.instance.defaultRulePickup,
+                true,
+                v -> GlobalChestConfig.instance.defaultRulePickup = v,
+                ModTextures.ICON_SM_PICKUP));
         clientCategory.addEntry(entryBuilder
                 .startSubCategory(Component.translatable("config.chestseparators.group.filters"), filterEntries)
                 .setExpanded(false)

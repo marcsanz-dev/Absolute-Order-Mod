@@ -158,6 +158,8 @@
   "config.chestseparators.default_rule_shift.tooltip": "Los grupos nuevos permitirán clics con Shift por defecto.",
   "config.chestseparators.default_rule_hopper": "Regla por defecto: Tolva",
   "config.chestseparators.default_rule_hopper.tooltip": "Los grupos nuevos permitirán la inserción por tolva por defecto.",
+  "config.chestseparators.default_rule_pickup": "Regla por defecto: Recoger",
+  "config.chestseparators.default_rule_pickup.tooltip": "Los grupos de inventario nuevos filtrarán los objetos recogidos del suelo por defecto.",
   "config.chestseparators.category.server": "Servidor / Mecánicas",
   "config.chestseparators.expel_invalid_items": "Expulsar objetos no válidos",
   "config.chestseparators.expel_invalid_items.tooltip": "Al aplicar un nuevo filtro, los objetos no válidos se moverán al inventario o se soltarán.",
