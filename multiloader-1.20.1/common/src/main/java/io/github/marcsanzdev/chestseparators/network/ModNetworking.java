@@ -149,7 +149,7 @@ public final class ModNetworking {
                             ChestSeparatorsState.LOCKED_CHESTS.put(p, playerUuid);
                         }
                     }
-                    if (NetworkManager.canPlayerReceive(player, EditorLockResponsePayload.ID)) {
+                    if (ModNet.playerCanReceive(player, EditorLockResponsePayload.ID)) {
                         ModNet.sendToPlayer(player, new EditorLockResponsePayload(targetPos, canLock));
                     }
                 } else {
@@ -173,7 +173,7 @@ public final class ModNetworking {
                 Container targetInventory = getChestInventorySafe(world, payload.pos());
 
                 if (targetInventory instanceof IWhitelistProvider provider) {
-                    if (NetworkManager.canPlayerReceive(player, WhitelistS2CPayload.ID)) {
+                    if (ModNet.playerCanReceive(player, WhitelistS2CPayload.ID)) {
                         ModNet.sendToPlayer(player, new WhitelistS2CPayload(payload.pos(), provider.getWhitelists()));
                     }
                 }
@@ -205,7 +205,7 @@ public final class ModNetworking {
                                         .chunkMap
                                         .getPlayers(new ChunkPos(payload.pos()), false)) {
                                     if (trackingPlayer != player
-                                            && NetworkManager.canPlayerReceive(
+                                            && ModNet.playerCanReceive(
                                                     trackingPlayer, WhitelistS2CPayload.ID)) {
                                         ModNet.sendToPlayer(
                                                 trackingPlayer,
@@ -280,7 +280,7 @@ public final class ModNetworking {
 
         // S2C channels need no explicit registration in the 1.20.1 raw-buffer API: the platform routes any
         // ResourceLocation the client has a receiver for. Receivers live in ModClientNetworking; the server
-        // guards every send with NetworkManager.canPlayerReceive(...).
+        // guards every send with ModNet.playerCanReceive(...).
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -433,7 +433,7 @@ public final class ModNetworking {
         player.inventoryMenu.broadcastChanges();
 
         // 3. Build the animation report.
-        if (NetworkManager.canPlayerReceive(player, AutoDepositResultPayload.ID)) {
+        if (ModNet.playerCanReceive(player, AutoDepositResultPayload.ID)) {
             ModNet.sendToPlayer(player, new AutoDepositResultPayload(buildFlights(moved)));
         }
     }
@@ -502,7 +502,7 @@ public final class ModNetworking {
 
         Map<BlockPos, Map<Item, Integer>> moved = new java.util.LinkedHashMap<>();
         if (!movedItems.isEmpty() && animPos != null) moved.put(animPos, movedItems);
-        if (NetworkManager.canPlayerReceive(player, AutoDepositResultPayload.ID)) {
+        if (ModNet.playerCanReceive(player, AutoDepositResultPayload.ID)) {
             ModNet.sendToPlayer(player, new AutoDepositResultPayload(buildFlights(moved), true));
         }
     }

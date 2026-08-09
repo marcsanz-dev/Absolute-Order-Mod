@@ -65,7 +65,7 @@ public abstract class LootableContainerBlockEntityMixin extends BlockEntity impl
                 && this.getLevel() != null
                 && !this.getLevel().isClientSide()
                 && player instanceof ServerPlayer serverPlayer
-                && NetworkManager.canPlayerReceive(serverPlayer, WhitelistS2CPayload.ID)) {
+                && io.github.marcsanzdev.chestseparators.network.ModNet.playerCanReceive(serverPlayer, WhitelistS2CPayload.ID)) {
             ModNet.sendToPlayer(
                     serverPlayer, new WhitelistS2CPayload(this.getBlockPos(), this.chestSeparatorsWhitelists));
         }

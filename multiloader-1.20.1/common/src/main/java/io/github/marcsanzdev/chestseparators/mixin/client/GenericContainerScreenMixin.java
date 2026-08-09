@@ -192,8 +192,13 @@ public abstract class GenericContainerScreenMixin extends Screen {
     // Suppresses the vanilla hovered-slot highlight while editing. 1.20.1 draws it via the single static
     // AbstractContainerScreen#renderSlotHighlight (no separate back/front passes); redirect that call so the
     // instance can gate it on editor state (a HEAD inject can't, since the method is static).
+    // require = 0: Forge patches AbstractContainerScreen#render and the vanilla static renderSlotHighlight
+    // INVOKE is not present there, so the redirect finds 0 targets on Forge (it applies normally on Fabric).
+    // Kept lenient so the shared mixin boots on both loaders; the only Forge-side effect is that the vanilla
+    // hovered-slot highlight is not suppressed while editing (cosmetic).
     @Redirect(
             method = "render",
+            require = 0,
             at =
                     @At(
                             value = "INVOKE",

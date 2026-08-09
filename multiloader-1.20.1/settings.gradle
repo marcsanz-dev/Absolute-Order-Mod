@@ -11,6 +11,6 @@ rootProject.name = 'absolute-order'
 
 include 'common'
 include 'fabric'
-// NeoForge dropped its 1.20.1 (47.1.x) artifacts from maven, so 1.20.1 ships Fabric + Forge. The 'forge'
-// module is created + included after the E4 overlay migration lands; 'neoforge' is intentionally dropped.
-// include 'forge'
+// NeoForge dropped its 1.20.1 (47.1.x) artifacts from maven, so 1.20.1 ships Fabric + Forge. 'neoforge' is
+// intentionally dropped (the dir is a stale scaffold leftover and is NOT included).
+include 'forge'
