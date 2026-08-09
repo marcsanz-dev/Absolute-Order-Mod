@@ -315,6 +315,11 @@ public final class AutoDepositAnimator {
 
             float spin = (age * 0.18f) % 360.0f;
 
+            // Light the flying item with the world's block/sky light at its position (like a real dropped
+            // item) so it blends with the ambient lighting of the moment, instead of always full-bright.
+            int packedLight = net.minecraft.client.renderer.LevelRenderer.getLightColor(
+                    world, new net.minecraft.core.BlockPos((int) pos.x, (int) pos.y, (int) pos.z));
+
             matrices.pushPose();
             matrices.translate(pos.x - camPos.x, pos.y - camPos.y, pos.z - camPos.z);
             matrices.mulPose(Vector3f.YP.rotationDegrees(spin));
@@ -323,7 +328,7 @@ public final class AutoDepositAnimator {
                     .renderStatic(
                             flight.stack,
                             ItemTransforms.TransformType.GROUND,
-                            FULL_BRIGHT,
+                            packedLight,
                             OverlayTexture.NO_OVERLAY,
                             matrices,
                             bufferSource,
