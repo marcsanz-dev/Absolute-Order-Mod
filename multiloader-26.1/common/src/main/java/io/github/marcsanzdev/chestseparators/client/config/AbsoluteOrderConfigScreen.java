@@ -336,13 +336,24 @@ public final class AbsoluteOrderConfigScreen {
         ConfigCategory hotkeysCategory =
                 builder.getOrCreateCategory(Component.translatable("config.chestseparators.category.hotkeys"));
 
-        // fillKeybindingField binds the Cloth field directly to the vanilla KeyMapping — it reads the current
-        // key and writes the new one back on save, so no Fabric KeyBindingHelper is needed (cross-loader).
-        BiConsumer<KeyMapping, String> addKeyEntry = (keyMapping, translationKey) -> hotkeysCategory.addEntry(
-                entryBuilder
-                        .fillKeybindingField(Component.translatable(translationKey), keyMapping)
-                        .setTooltip(Component.translatable(translationKey + ".tooltip"))
-                        .build());
+        // NOTE: Cloth's fillKeybindingField reaches into KeyMapping's PRIVATE 'key' field, which is only
+        // reachable with Cloth's own access-widener applied — and that widener is NOT applied in this Mojmap
+        // multiloader dev/runtime, so it throws IllegalAccessError (the config screen then fails to open).
+        // Build the key entry from public KeyMapping API instead (read via saveString, default via
+        // getDefaultKey, write via setKey) — identical behaviour, and works on Fabric AND Forge with no AW/AT.
+        BiConsumer<KeyMapping, String> addKeyEntry = (keyMapping, translationKey) -> {
+            com.mojang.blaze3d.platform.InputConstants.Key current =
+                    com.mojang.blaze3d.platform.InputConstants.getKey(keyMapping.saveString());
+            hotkeysCategory.addEntry(entryBuilder
+                    .startKeyCodeField(Component.translatable(translationKey), current)
+                    .setDefaultValue(keyMapping.getDefaultKey())
+                    .setKeySaveConsumer(newKey -> {
+                        keyMapping.setKey(newKey);
+                        KeyMapping.resetMapping();
+                    })
+                    .setTooltip(Component.translatable(translationKey + ".tooltip"))
+                    .build());
+        };
 
         addKeyEntry.accept(ModKeyBindings.toggleMagnifierKey, "config.chestseparators.toggle_magnifier");
         addKeyEntry.accept(ModKeyBindings.autoDepositKey, "config.chestseparators.auto_deposit");
