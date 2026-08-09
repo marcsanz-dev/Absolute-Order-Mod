@@ -60,7 +60,7 @@ public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements 
         if (this.getLevel() != null
                 && !this.getLevel().isClientSide()
                 && user instanceof ServerPlayer serverPlayer
-                && NetworkManager.canPlayerReceive(serverPlayer, ShulkerUUIDPayload.ID)) {
+                && io.github.marcsanzdev.chestseparators.network.ModNet.playerCanReceive(serverPlayer, ShulkerUUIDPayload.ID)) {
             ModNet.sendToPlayer(serverPlayer, new ShulkerUUIDPayload(this.getShulkerUUID()));
         }
     }

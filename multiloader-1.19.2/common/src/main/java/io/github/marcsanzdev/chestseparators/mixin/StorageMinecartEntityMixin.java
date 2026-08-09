@@ -59,7 +59,7 @@ public abstract class StorageMinecartEntityMixin implements IWhitelistProvider {
                 && self.getLevel() != null
                 && !self.getLevel().isClientSide()
                 && player instanceof ServerPlayer serverPlayer
-                && NetworkManager.canPlayerReceive(serverPlayer, EntityWhitelistS2CPayload.ID)) {
+                && io.github.marcsanzdev.chestseparators.network.ModNet.playerCanReceive(serverPlayer, EntityWhitelistS2CPayload.ID)) {
             ModNet.sendToPlayer(
                     serverPlayer, new EntityWhitelistS2CPayload(self.getUUID(), this.chestSeparatorsWhitelists));
         }
