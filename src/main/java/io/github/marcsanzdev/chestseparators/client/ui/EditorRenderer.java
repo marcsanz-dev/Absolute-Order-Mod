@@ -103,7 +103,10 @@ public class EditorRenderer {
             // so the dim overlay below fades the ghost together with the stationary items. This keeps it
             // coherent with the rest of the darkened inventory instead of floating bright above the dim. It
             // still lands below the sub-screen's filter indicators, which are drawn later.
-            renderTransferPreviewOverlay(context, mouseX, mouseY);
+            // Suppressed while the colour picker is open so hovering the push/pull zone does nothing.
+            if (!session.isColorPickerOpen) {
+                renderTransferPreviewOverlay(context, mouseX, mouseY);
+            }
 
             if (!session.isEyedropperActive) {
                 context.fill(0, 0, layout.screenWidth, layout.screenHeight, 0x66000000);
