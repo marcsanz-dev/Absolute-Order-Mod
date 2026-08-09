@@ -35,3 +35,6 @@ side = "CLIENT"
 
 [[mixins]]
 config = "absoluteorder.mixins.json"
+
+[[mixins]]
+config = "absoluteorder-forge.mixins.json"

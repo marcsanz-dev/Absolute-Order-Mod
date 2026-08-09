@@ -7,6 +7,16 @@ architectury {
     forge()
 }
 
+loom {
+    forge {
+        // In DEV, Forge loads mixin configs from ModLauncher's --mixin.config args (loom-generated),
+        // NOT from mods.toml [[mixins]] (that path is production-only). Loom auto-registers the common
+        // config; this Forge-only config must be declared explicitly or it never applies in runClient.
+        mixinConfig "absoluteorder.mixins.json"
+        mixinConfig "absoluteorder-forge.mixins.json"
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
