@@ -1,0 +1,30 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.marcsanzdev.chestseparators.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.absoluteorder.refmap.json",
+  "mixins": [
+    "AbstractContainerMenuAccessor",
+    "ArmorEquipFilterMixin",
+    "DoubleInventoryMixin",
+    "HopperBlockEntityMixin",
+    "LootableContainerBlockEntityMixin",
+    "PlayerInventoryFilterMixin",
+    "PlayerScreenHandlerFallbackMixin",
+    "ScreenHandlerClickMixin",
+    "ScreenHandlerSwapFilterMixin",
+    "ScreenHandlerWhitelistMixin",
+    "ServerPlayNetworkHandlerSwapFilterMixin",
+    "ShulkerBoxBlockEntityMixin",
+    "ShulkerBoxBlockMixin",
+    "ShulkerBoxSlotMixin",
+    "SimpleInventoryMixin",
+    "SlotWhitelistMixin",
+    "StorageMinecartEntityMixin"
+  ],
+  "client": [
+    "WorldMixin",
+    "client.HandledScreenAccessor"
+  ]
+}

@@ -1,0 +1,4 @@
+// Standalone project — the 1.12.2 "mythic" port shares NO code with the Architectury multiloader base
+// (E1 immediate-mode GL, MCP mappings, Forge-only). It is intentionally NOT a subproject of the
+// Architectury settings.gradle; it is built on its own with ForgeGradle 2.3 (anatawa12 fork).
+rootProject.name = 'AbsoluteOrder-1.12.2'
