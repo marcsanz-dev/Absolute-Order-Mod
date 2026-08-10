@@ -143,7 +143,7 @@ public class GuiGraphics {
     private int pendingTooltipY;
 
     public void renderTooltip(FontRenderer font, ITextComponent text, int x, int y) {
-        pendingTooltip = Arrays.asList(text.getFormattedText().split("\n"));
+        pendingTooltip = Arrays.asList(text.getFormattedText().replace("\\n", "\n").split("\n"));
         pendingTooltipX = x;
         pendingTooltipY = y;
     }

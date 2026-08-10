@@ -60,7 +60,7 @@ public class ToolButtonWidget extends CustomWidget {
 
         if (this.hovered && this.tooltipText != null) {
             java.util.List<ITextComponent> tooltipLines = new java.util.ArrayList<>();
-            for (String line : this.tooltipText.split("\n")) {
+            for (String line : this.tooltipText.replace("\\n", "\n").split("\n")) {
                 tooltipLines.add(new net.minecraft.util.text.TextComponentString(line));
             }
             context.renderComponentTooltip(Minecraft.getMinecraft().fontRenderer, tooltipLines, mouseX, mouseY);
