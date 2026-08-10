@@ -7,6 +7,16 @@ architectury {
     forge()
 }
 
+loom {
+    forge {
+        // Forge (mixin 0.8.4) registers mixin configs from the jar's MixinConfigs manifest attribute, which
+        // loom only writes for configs declared here — Forge 1.16.5 does NOT honour mods.toml [[mixins]], so
+        // without this the common config never registers and no mod mixin applies (vanilla chest, no editor).
+        // 1.16.5 has no Forge-only mixin config (the renderSlotHighlight one doesn't exist this far back).
+        mixinConfig "absoluteorder.mixins.json"
+    }
+}
+
 
 configurations {
     common {

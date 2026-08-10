@@ -200,8 +200,11 @@ public abstract class GenericContainerScreenMixin extends Screen {
     }
 
     // 1.16.5 draws the hovered-slot highlight inline in render() as a fillGradient(..., 0x80FFFFFF, 0x80FFFFFF)
-    // (there is no static renderSlotHighlight). Redirect that fillGradient and skip ONLY the highlight-coloured
-    // one while the colour picker / eyedropper covers the slots — otherwise it bleeds through those panels.
+    // (there is no static renderSlotHighlight, so the modern versions' renderSlotHighlight @Redirect can't be
+    // reused). Redirect that fillGradient and skip ONLY the highlight-coloured one while a mod sub-screen is up
+    // — matching the 1.18.2+ suppression gate exactly: !(isEditMode() || isPresetsMenuOpen). isEditMode() is
+    // currentState != HIDDEN, so this already covers the colour picker / eyedropper (both sub-states of editing)
+    // AND the filter/edit menu itself, where the vanilla hover highlight otherwise bleeds over the panels.
     // The same call also draws other gradients (a different colour), which pass straight through unchanged.
     @Redirect(
             method = "render",
@@ -216,7 +219,7 @@ public abstract class GenericContainerScreenMixin extends Screen {
         if (this.editor != null
                 && colorFrom == 0x80FFFFFF
                 && colorTo == 0x80FFFFFF
-                && (this.editor.getSession().isColorPickerOpen || this.editor.getSession().isEyedropperActive)) {
+                && (this.editor.isEditMode() || this.editor.getSession().isPresetsMenuOpen)) {
             return;
         }
         this.fillGradient(pose, x1, y1, x2, y2, colorFrom, colorTo);

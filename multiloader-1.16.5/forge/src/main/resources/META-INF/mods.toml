@@ -7,7 +7,7 @@ modId = "chestseparators"
 version = "${version}"
 displayName = "Absolute Order"
 authors = "marcsanz-dev"
-logoFile = "assets/chestseparators/icon.png"
+logoFile = "icon.png"
 description = '''
 Custom chest auto-sorter with visual separators and per-slot filters.
 '''
@@ -27,7 +27,7 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.chestseparators]]
-modId = "cloth_config"
+modId = "cloth-config"
 mandatory = true
 versionRange = "[0,)"
 ordering = "NONE"
