@@ -25,6 +25,15 @@
   ],
   "client": [
     "WorldMixin",
-    "client.HandledScreenAccessor"
+    "client.HandledScreenAccessor",
+    "client.GenericContainerScreenMixin",
+    "client.GuiScreenScrollMixin",
+    "client.CreativeInventoryScreenMixin",
+    "client.InGameHudHotbarLinesMixin",
+    "client.StatusEffectsDisplayMixin",
+    "client.ArmorEquipClientMixin",
+    "client.ChestInteractionMixin",
+    "client.CreativeInventoryScreenAccessor",
+    "client.CreativeSlotAccessor"
   ]
 }
