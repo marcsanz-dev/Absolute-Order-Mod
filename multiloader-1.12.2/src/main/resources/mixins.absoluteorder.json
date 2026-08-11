@@ -7,9 +7,13 @@
   "mixins": [
     "AbstractContainerMenuAccessor",
     "ArmorEquipFilterMixin",
+    "ContainerInventorySlotsAccessor",
     "DoubleInventoryMixin",
     "HopperBlockEntityMixin",
+    "InventoryLargeChestAccessor",
+    "InventoryPlayerAccessor",
     "LootableContainerBlockEntityMixin",
+    "NetHandlerPlayServerAccessor",
     "PlayerInventoryFilterMixin",
     "PlayerScreenHandlerFallbackMixin",
     "ScreenHandlerClickMixin",

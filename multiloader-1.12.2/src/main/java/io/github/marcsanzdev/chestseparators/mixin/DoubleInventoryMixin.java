@@ -6,9 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.world.ILockableContainer;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 
 /**
  * Exposes a unified whitelist across both halves of a double chest ({@link InventoryLargeChest}, Mojmap
@@ -20,29 +18,26 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(InventoryLargeChest.class)
 public abstract class DoubleInventoryMixin implements IWhitelistProvider {
 
-    @Shadow
-    @Final
-    private ILockableContainer upperChest;
-
-    @Shadow
-    @Final
-    private ILockableContainer lowerChest;
-
     @Override
     public Map<Integer, SlotWhitelist> getWhitelists() {
         Map<Integer, SlotWhitelist> combined = new HashMap<>();
 
+        ILockableContainer upperChest =
+                ((InventoryLargeChestAccessor) (Object) this).chestseparators$getUpperChest();
+        ILockableContainer lowerChest =
+                ((InventoryLargeChestAccessor) (Object) this).chestseparators$getLowerChest();
+
         // 1. Fetch data from the primary half (slots 0-26).
-        if (this.upperChest instanceof IWhitelistProvider) {
-            IWhitelistProvider p1 = (IWhitelistProvider) this.upperChest;
+        if (upperChest instanceof IWhitelistProvider) {
+            IWhitelistProvider p1 = (IWhitelistProvider) upperChest;
             if (p1.getWhitelists() != null) {
                 combined.putAll(p1.getWhitelists());
             }
         }
 
         // 2. Fetch data from the secondary half and shift the visual index up by 27 (slots 27-53).
-        if (this.lowerChest instanceof IWhitelistProvider) {
-            IWhitelistProvider p2 = (IWhitelistProvider) this.lowerChest;
+        if (lowerChest instanceof IWhitelistProvider) {
+            IWhitelistProvider p2 = (IWhitelistProvider) lowerChest;
             if (p2.getWhitelists() != null) {
                 for (Map.Entry<Integer, SlotWhitelist> entry : p2.getWhitelists().entrySet()) {
                     combined.put(entry.getKey() + 27, entry.getValue());
@@ -67,11 +62,15 @@ public abstract class DoubleInventoryMixin implements IWhitelistProvider {
             }
         }
 
-        if (this.upperChest instanceof IWhitelistProvider) {
-            ((IWhitelistProvider) this.upperChest).setWhitelists(firstMap);
+        ILockableContainer upperChest =
+                ((InventoryLargeChestAccessor) (Object) this).chestseparators$getUpperChest();
+        ILockableContainer lowerChest =
+                ((InventoryLargeChestAccessor) (Object) this).chestseparators$getLowerChest();
+        if (upperChest instanceof IWhitelistProvider) {
+            ((IWhitelistProvider) upperChest).setWhitelists(firstMap);
         }
-        if (this.lowerChest instanceof IWhitelistProvider) {
-            ((IWhitelistProvider) this.lowerChest).setWhitelists(secondMap);
+        if (lowerChest instanceof IWhitelistProvider) {
+            ((IWhitelistProvider) lowerChest).setWhitelists(secondMap);
         }
     }
 }

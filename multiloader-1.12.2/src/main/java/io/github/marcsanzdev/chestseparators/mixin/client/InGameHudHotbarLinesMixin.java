@@ -30,11 +30,13 @@ public abstract class InGameHudHotbarLinesMixin {
 
     @Inject(method = "renderHotbar", at = @At("RETURN"))
     private void chestseparators$renderHotbarLines(ScaledResolution res, float partialTicks, CallbackInfo ci) {
+        // Bail before touching ChestConfigManager when there is no live player/world (e.g. the HUD frame drawn
+        // during world teardown) — triggering the class's first load in that torn-down state crashed the client.
+        Minecraft client = Minecraft.getMinecraft();
+        if (client.player == null || client.world == null) return;
+
         ChestConfigManager m = ChestConfigManager.getInstance();
         if (m.getPlayerInventoryVisual().isEmpty()) return;
-
-        Minecraft client = Minecraft.getMinecraft();
-        if (client.player == null) return;
 
         GuiGraphics context = new GuiGraphics();
         int selected = client.player.inventory.currentItem;

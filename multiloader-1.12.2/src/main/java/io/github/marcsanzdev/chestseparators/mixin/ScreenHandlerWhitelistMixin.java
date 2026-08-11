@@ -11,7 +11,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -25,9 +24,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Mixin(Container.class)
 public abstract class ScreenHandlerWhitelistMixin {
-
-    @Shadow
-    public List<Slot> inventorySlots;
 
     @Redirect(
             method = "mergeItemStack",
@@ -62,7 +58,9 @@ public abstract class ScreenHandlerWhitelistMixin {
         // Ordering rule: while a slot dedicated to this item still has room, ordinary slots decline it
         // so vanilla keeps scanning and drops the item into its dedicated slot.
         int[] range = ClickTracker.INSERT_RANGE.get();
-        if (range != null && FilterPriority.shouldDefer(this.inventorySlots, range[0], range[1], slot, stack)) {
+        List<Slot> inventorySlots =
+                ((ContainerInventorySlotsAccessor) (Object) this).chestseparators$getInventorySlots();
+        if (range != null && FilterPriority.shouldDefer(inventorySlots, range[0], range[1], slot, stack)) {
             return false;
         }
 

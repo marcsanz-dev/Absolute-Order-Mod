@@ -46,9 +46,14 @@ public class GuiGraphics {
 
     // --- Fills ---------------------------------------------------------------------------------------------
 
-    /** Filled ARGB rectangle. {@link Gui#drawRect} manages its own blend/color state on E1. */
+    /** Filled ARGB rectangle. */
     public void fill(int x1, int y1, int x2, int y2, int color) {
         Gui.drawRect(x1, y1, x2, y2, color);
+        // E1 GL-state leak: Gui.drawRect leaves GlStateManager.color set to the rect's colour. Any textured
+        // draw afterwards (blit/renderItem) with no explicit setColor would be tinted by it — e.g. the sub-menu
+        // dim (0x55000000) tinted every toolbar icon drawn after it black/translucent. Reset to white so fills
+        // never leak their colour into later draws.
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     /** E4 hollow 1px rectangle outline. */
@@ -61,8 +66,14 @@ public class GuiGraphics {
 
     // --- Textures ------------------------------------------------------------------------------------------
 
-    /** E4 {@code GuiGraphics.setColor}: tints subsequent draws. E1 has no shader colour — use the GL colour. */
+    // A tint requested via setColor() for the NEXT blit only. On E1 the GL colour is global and leaks between
+    // draws (a coloured fill or dark text left it non-white, which then tinted every icon drawn afterwards),
+    // so blit() forces white unless a tint was just requested. Mirrors UiTheme's setColor→blit→setColor(white).
+    private float[] pendingBlitColor = null;
+
+    /** E4 {@code GuiGraphics.setColor}: tints the next {@link #blit} draw. */
     public void setColor(float r, float g, float b, float a) {
+        this.pendingBlitColor = new float[] {r, g, b, a};
         GlStateManager.color(r, g, b, a);
     }
 
@@ -76,6 +87,14 @@ public class GuiGraphics {
     public void blit(ResourceLocation atlas, int x, int y, int width, int height,
                      float u, float v, int regionWidth, int regionHeight, int texWidth, int texHeight) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(atlas);
+        // Reset the leaked GL colour: white unless setColor() just requested a one-shot tint.
+        if (this.pendingBlitColor != null) {
+            GlStateManager.color(
+                    pendingBlitColor[0], pendingBlitColor[1], pendingBlitColor[2], pendingBlitColor[3]);
+            this.pendingBlitColor = null;
+        } else {
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        }
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA,
@@ -131,6 +150,9 @@ public class GuiGraphics {
      * caller applied is respected automatically.
      */
     public void renderItem(ItemStack stack, int x, int y) {
+        // Clear any leaked GL tint so the item model renders at its true colours.
+        this.pendingBlitColor = null;
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         RenderHelper.enableGUIStandardItemLighting();
         Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, x, y);
         RenderHelper.disableStandardItemLighting();

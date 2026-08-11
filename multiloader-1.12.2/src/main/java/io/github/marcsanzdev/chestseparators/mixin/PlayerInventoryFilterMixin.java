@@ -8,9 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,14 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(InventoryPlayer.class)
 public abstract class PlayerInventoryFilterMixin {
-
-    @Shadow
-    public EntityPlayer player;
-
-    // The 36 main-inventory slots (hotbar 0-8 + main 9-35) are the `mainInventory` field.
-    @Shadow
-    @Final
-    public NonNullList<ItemStack> mainInventory;
 
     // The stack currently being auto-inserted, so the empty-slot search can reserve filtered slots.
     @Unique
@@ -76,11 +66,12 @@ public abstract class PlayerInventoryFilterMixin {
         ItemStack stack = chestseparators$insertingStack;
         if (stack == null || stack.isEmpty()) return;
 
+        EntityPlayer player = ((InventoryPlayerAccessor) (Object) this).chestseparators$getPlayer();
         Map<Integer, SlotWhitelist> filters = ChestSeparatorsState.INVENTORY_FILTERS.get(player.getUniqueID());
         if (filters == null || filters.isEmpty()) return;
 
         String itemId = stack.getItem().getRegistryName().toString();
-        NonNullList<ItemStack> main = this.mainInventory;
+        NonNullList<ItemStack> main = ((InventoryPlayerAccessor) (Object) this).chestseparators$getMainInventory();
 
         // Prefer an empty slot whose filter matches this item, ranked by the filter's own order (same
         // priority the shift/hopper/deposit paths use); ties keep the lowest index.

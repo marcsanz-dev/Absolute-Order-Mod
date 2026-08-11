@@ -1,12 +1,10 @@
 package io.github.marcsanzdev.chestseparators.mixin;
 
-import net.minecraft.block.BlockChest;
+import io.github.marcsanzdev.chestseparators.hook.WorldMixinHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -24,33 +22,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(World.class)
 public abstract class WorldMixin {
 
-    @Shadow
-    public boolean isRemote;
-
-    @Shadow
-    public WorldProvider provider;
-
-    @Shadow
-    public abstract IBlockState getBlockState(BlockPos pos);
-
     @Inject(
             method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z",
             at = @At("HEAD"))
     private void onSetBlockState(
             BlockPos pos, IBlockState newState, int flags, CallbackInfoReturnable<Boolean> cir) {
-        // Only act on the logical client side of the world.
-        if (this.isRemote) {
-            IBlockState oldState = this.getBlockState(pos);
-
-            // Position-keyed containers whose separator config is stored by BlockPos: chests (incl. trapped).
-            // Shulker boxes (UUID-keyed) and ender chests (global) use their own persistence and are skipped.
-            boolean wasPosKeyedContainer = oldState.getBlock() instanceof BlockChest;
-
-            if (wasPosKeyedContainer && oldState.getBlock() != newState.getBlock()) {
-                String dim = String.valueOf(this.provider.getDimension());
-                io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
-                        .clearChest(pos, dim);
-            }
-        }
+        // Logic lives in a plain helper so the vanilla field/method access is reobfuscated normally
+        // (the manual montage does not emit @Shadow mappings to the refmap).
+        WorldMixinHelper.onSetBlockState((World) (Object) this, pos, newState);
     }
 }

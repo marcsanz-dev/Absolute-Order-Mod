@@ -113,10 +113,14 @@ jar {
     // Include the AP-generated mixin refmap at the jar root (see the compileJava wiring above).
     from(refMapDir)
 
-    // MixinBooter registers mixin configs listed here at load time — works identically in dev and production,
-    // replacing the notorious hand-written 1.12.2 coremod/tweaker bootstrap.
+    // Being a coremod (FMLCorePlugin) puts the jar on the launch classloader during PREINIT, so MixinBooter's
+    // scan of the `MixinConfigs` manifest attribute can actually READ mixins.absoluteorder.json (a plain mod
+    // jar isn't on the classloader yet at scan time -> "resource could not be read"). AbsoluteOrderCore is a
+    // no-op IFMLLoadingPlugin that references nothing beyond FML. FMLCorePluginContainsFMLMod tells FML the
+    // coremod jar also holds the @Mod.
     manifest {
         attributes(
+            'FMLCorePlugin': 'io.github.marcsanzdev.chestseparators.core.AbsoluteOrderCore',
             'MixinConfigs': 'mixins.absoluteorder.json',
             'FMLCorePluginContainsFMLMod': 'true',
             'ForceLoadAsMod': 'true'

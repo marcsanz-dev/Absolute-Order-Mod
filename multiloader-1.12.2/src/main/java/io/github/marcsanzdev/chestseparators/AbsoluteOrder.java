@@ -20,7 +20,8 @@ import org.apache.logging.log4j.Logger;
         modid = AbsoluteOrder.MODID,
         name = AbsoluteOrder.NAME,
         version = AbsoluteOrder.VERSION,
-        acceptedMinecraftVersions = "[1.12.2]")
+        acceptedMinecraftVersions = "[1.12.2]",
+        guiFactory = "io.github.marcsanzdev.chestseparators.config.AbsoluteOrderGuiFactory")
 public class AbsoluteOrder {
 
     public static final String MODID = "chestseparators";

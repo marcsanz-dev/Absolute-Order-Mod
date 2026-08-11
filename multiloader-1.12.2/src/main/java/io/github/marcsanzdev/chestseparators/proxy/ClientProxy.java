@@ -25,12 +25,24 @@ public class ClientProxy extends CommonProxy {
     public void init(FMLInitializationEvent event) {
         // super wires the channel + server-authoritative handlers (needed by the integrated server).
         super.init(event);
+        // Load our .lang by hand (the coremod jar's resource pack can't serve lang/ — see LangFix).
+        io.github.marcsanzdev.chestseparators.client.LangFix.register();
+        // Force ChestConfigManager to load NOW, in a safe context. Otherwise its first load can happen inside a
+        // HUD render frame during world teardown, where loading a mod class off the coremod jar crashed the
+        // client (NoClassDefFoundError). Loading it here means every later getInstance() just returns the cached
+        // singleton.
+        io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance();
+        // Copy the ready-made presets (chest 27/54 + inventory) into the config on first run.
+        io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance().seedDefaultPresetsIfNeeded();
         // Client-bound receivers must register AFTER CsNetwork.init() created the channel (done in super).
         ModClientNetworking.init();
         // Chest-closed hotkey polling (preview panel / magnifier / auto-deposit gestures).
         KeyInputHandler.register();
         // World-render hook for the flying-item auto-deposit animation + chest-lid tick.
         AutoDepositAnimator.register();
+        // Build the Forge Configuration mirror (backing the mods-list Config screen) from the now-loaded
+        // GlobalChestConfig values, and hook OnConfigChangedEvent so edits persist back to the JSON.
+        io.github.marcsanzdev.chestseparators.config.ForgeConfigBridge.init();
     }
 
     @Override

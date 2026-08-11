@@ -203,9 +203,13 @@ public final class AutoDepositAnimator {
 
         if (be instanceof TileEntityChest || be instanceof TileEntityEnderChest) {
             boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
-            // TODO(1.12.2 port): the E5 LidAnimatorAccess mixin that force-raises a chest lid client-side is
-            // out of scope for this cluster, so the lid does not visibly rise; the open/close SOUND still
-            // plays and the dwell tracking still runs, preserving the deposit feedback.
+            // Raise the lid client-side: numPlayersUsing is a public field the chest TE's update() tick animates
+            // its lidAngle from (exactly what vanilla's receiveClientEvent sets). 1 = lid up.
+            if (be instanceof TileEntityChest) {
+                ((TileEntityChest) be).numPlayersUsing = 1;
+            } else {
+                ((TileEntityEnderChest) be).numPlayersUsing = 1;
+            }
             markOpen(pos, closeAt, true);
             if (firstOpen) playContainerSound(world, pos, openSoundFor(be));
 
@@ -246,7 +250,12 @@ public final class AutoDepositAnimator {
     private static void closeContainer(WorldClient world, BlockPos pos, boolean playSound) {
         TileEntity be = world.getTileEntity(pos);
         if (be instanceof TileEntityChest || be instanceof TileEntityEnderChest) {
-            // TODO(1.12.2 port): lid lowering (LidAnimatorAccess) is out of scope; only the close sound plays.
+            // Lower the lid: numPlayersUsing back to 0 so the TE's update() tick animates the lid closed.
+            if (be instanceof TileEntityChest) {
+                ((TileEntityChest) be).numPlayersUsing = 0;
+            } else {
+                ((TileEntityEnderChest) be).numPlayersUsing = 0;
+            }
             if (playSound) playContainerSound(world, pos, closeSoundFor(be));
         } else if (be instanceof TileEntityShulkerBox) {
             // TODO(1.12.2 port): shulker CLOSING stage (ShulkerAnimationAccessor) is out of scope; only the
