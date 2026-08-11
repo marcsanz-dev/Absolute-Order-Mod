@@ -1135,7 +1135,10 @@ public class ChestConfigManager {
 
     // Written once the pre-made presets have been created, so they are never regenerated — a deleted or
     // overwritten default stays gone. Bump the suffix to ship a new default set to existing players.
-    private static final String DEFAULTS_MARKER = ".defaults_seeded_v2";
+    // v3: the bundled presets were re-authored with valid 1.12.2 item ids (the originals shipped modern
+    // 1.17-1.20 ids that don't exist here). Bumping the marker + overwriting the bundled slots re-seeds the
+    // corrected data for players who already had the broken v2 copies.
+    private static final String DEFAULTS_MARKER = ".defaults_seeded_v3";
 
     // The ready-made presets shipped as resources under /chestseparators_presets. Copied verbatim into
     // the config on first run, so what the player gets is byte-for-byte what was authored in-game.
@@ -1176,7 +1179,8 @@ public class ChestConfigManager {
 
         for (String name : BUNDLED_PRESETS) {
             Path target = getGlobalConfigDir().resolve(name);
-            if (Files.exists(target)) continue;
+            // Overwrite the bundled default slots (guarded once by the v3 marker) so the corrected 1.12.2
+            // presets replace the broken modern-id ones. Custom presets live in other slots and are untouched.
             try (java.io.InputStream in =
                     ChestConfigManager.class.getResourceAsStream("/chestseparators_presets/" + name)) {
                 if (in == null) continue;
