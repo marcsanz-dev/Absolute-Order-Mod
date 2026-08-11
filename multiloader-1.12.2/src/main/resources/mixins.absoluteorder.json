@@ -25,7 +25,8 @@
     "ShulkerBoxSlotMixin",
     "SimpleInventoryMixin",
     "SlotWhitelistMixin",
-    "StorageMinecartEntityMixin"
+    "StorageMinecartEntityMixin",
+    "TileEntityChestWhitelistMixin"
   ],
   "client": [
     "WorldMixin",
