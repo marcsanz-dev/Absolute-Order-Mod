@@ -218,8 +218,8 @@ public class ScreenEditFilter extends AbstractEditorScreen {
      */
     private void drawGhostRow(
             GuiGraphics context, String itemId, int gx, int gy, float presence, float shrink, boolean danger) {
-        Item item = Item.getByNameOrId(itemId);
-        if (item == null) return;
+        net.minecraft.item.ItemStack ghostStack = io.github.marcsanzdev.chestseparators.util.ItemKey.stack(itemId);
+        if (ghostStack.isEmpty()) return;
 
         Minecraft client = Minecraft.getMinecraft();
         int rowW = layout.listW - 20; // the row's width inside the list's inset
@@ -249,9 +249,9 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                 rowH,
                 danger ? (barAlpha << 24) | 0xFF5555 : ((barAlpha * 0x55 / 0xFF) << 24) | 0xFFFFFF);
 
-        context.renderItem(new net.minecraft.item.ItemStack(item), 3, 1);
+        context.renderItem(ghostStack, 3, 1);
 
-        String name = new net.minecraft.item.ItemStack(item).getDisplayName();
+        String name = ghostStack.getDisplayName();
         context.pose().pushPose();
         float textScale = 0.75f;
         context.pose().scale(textScale, textScale, 1.0F);
@@ -518,7 +518,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
                     } else {
                         List<String> extracted = editor.extractItemsFromSelection();
                         extracted.removeIf(id -> {
-                            Item it = Item.getByNameOrId(id);
+                            Item it = io.github.marcsanzdev.chestseparators.util.ItemKey.item(id);
                             return it != null && !editor.isItemAllowedForFilter(it);
                         });
                         if (!extracted.isEmpty()) {

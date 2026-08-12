@@ -829,7 +829,7 @@ public class ChestConfigManager {
                         // Drop ids that don't resolve to a real item in this MC version (the bundled presets
                         // carry ids from newer versions like pale_oak_*/mace). Item#getByNameOrId returns null
                         // for an unregistered id, so those would otherwise appear as an unusable entry.
-                        items.removeIf(id -> net.minecraft.item.Item.getByNameOrId(id) == null);
+                        items.removeIf(id -> io.github.marcsanzdev.chestseparators.util.ItemKey.item(id) == null);
 
                         // Default to true when absent so files written before a flag existed still load.
                         boolean manual = !wlTag.hasKey("AllowManual") || wlTag.getBoolean("AllowManual");
@@ -1138,7 +1138,7 @@ public class ChestConfigManager {
     // v3: the bundled presets were re-authored with valid 1.12.2 item ids (the originals shipped modern
     // 1.17-1.20 ids that don't exist here). Bumping the marker + overwriting the bundled slots re-seeds the
     // corrected data for players who already had the broken v2 copies.
-    private static final String DEFAULTS_MARKER = ".defaults_seeded_v3";
+    private static final String DEFAULTS_MARKER = ".defaults_seeded_v4";
 
     // The ready-made presets shipped as resources under /chestseparators_presets. Copied verbatim into
     // the config on first run, so what the player gets is byte-for-byte what was authored in-game.

@@ -129,10 +129,10 @@ public class EditorInputHandler {
                     for (String id : session.currentAllowedItems) {
                         // 1.12.2: Registry.ITEM.get(ResourceLocation) → Item.getByNameOrId(id); item display
                         // name (getDescription().getString()) → new ItemStack(item).getDisplayName() (String).
-                        Item item = Item.getByNameOrId(id);
+                        Item item = io.github.marcsanzdev.chestseparators.util.ItemKey.item(id);
                         if (item != null
                                 && (wlSearch.isEmpty()
-                                        || new ItemStack(item)
+                                        || io.github.marcsanzdev.chestseparators.util.ItemKey.stack(id)
                                                 .getDisplayName()
                                                 .toLowerCase()
                                                 .contains(wlSearch))) displayedAllowedItems.add(id);

@@ -44,8 +44,7 @@ public abstract class ServerPlayNetworkHandlerSwapFilterMixin {
         // Offhand filter (raw index 40): does the main-hand item pass the Shift rule?
         SlotWhitelist offhandFilter = filters.get(40);
         if (offhandFilter != null && offhandFilter.allowShift() && !mainHandItem.isEmpty()) {
-            String id = mainHandItem.getItem().getRegistryName().toString();
-            if (!offhandFilter.allowedItems().contains(id)) {
+            if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(offhandFilter.allowedItems(), mainHandItem)) {
                 ci.cancel();
                 player.openContainer.detectAndSendChanges();
                 return;
@@ -55,8 +54,7 @@ public abstract class ServerPlayNetworkHandlerSwapFilterMixin {
         // Selected hotbar slot filter: does the offhand item pass the Shift rule?
         SlotWhitelist hotbarFilter = filters.get(hotbarIndex);
         if (hotbarFilter != null && hotbarFilter.allowShift() && !offhandItem.isEmpty()) {
-            String id = offhandItem.getItem().getRegistryName().toString();
-            if (!hotbarFilter.allowedItems().contains(id)) {
+            if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(hotbarFilter.allowedItems(), offhandItem)) {
                 ci.cancel();
                 player.openContainer.detectAndSendChanges();
             }

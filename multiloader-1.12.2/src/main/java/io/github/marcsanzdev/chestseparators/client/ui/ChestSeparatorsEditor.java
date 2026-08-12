@@ -552,9 +552,17 @@ public class ChestSeparatorsEditor {
      */
     public void ensureCreativeInventoryTab() {
         if (this.screen instanceof net.minecraft.client.gui.inventory.GuiContainerCreative) {
-            // TODO(1.12.2 port): switching the creative tab requires the CreativeInventoryScreenAccessor mixin
-            // (GuiContainerCreative#setCurrentCreativeTab is protected), which is out of scope for this cluster.
-            // Left as a no-op; the player must switch to the inventory tab manually on the creative screen.
+            // Jump to the survival-inventory tab (the only one that shows the player's real inventory slots to
+            // edit). The tab-switch block mixin normally cancels this while editing, so flag it as the mod's
+            // own switch. Then rebuild the layout, since the tab change swaps the container's slot set.
+            allowCreativeTabSwitch = true;
+            try {
+                ((io.github.marcsanzdev.chestseparators.mixin.client.CreativeInventoryScreenAccessor) this.screen)
+                        .chestseparators$setSelectedTab(net.minecraft.creativetab.CreativeTabs.INVENTORY);
+            } finally {
+                allowCreativeTabSwitch = false;
+            }
+            this.layout.update(this.screen, this.accessor, getSidebarYOffset());
         }
     }
 
@@ -1155,7 +1163,7 @@ public class ChestSeparatorsEditor {
                 if (slot == null) continue;
                 ItemStack stack = slot.getStack();
                 if (!stack.isEmpty()) {
-                    String id = stack.getItem().getRegistryName().toString();
+                    String id = io.github.marcsanzdev.chestseparators.util.ItemKey.of(stack);
                     if (!session.currentAllowedItems.contains(id)) extracted.add(id);
                 }
             }
@@ -1324,7 +1332,7 @@ public class ChestSeparatorsEditor {
                 : "";
 
         for (String id : session.currentAllowedItems) {
-            Item item = Item.getByNameOrId(id);
+            Item item = io.github.marcsanzdev.chestseparators.util.ItemKey.item(id);
             if (item != null) {
                 boolean matches = false;
                 if (wlSearch.isEmpty()) {
@@ -1334,7 +1342,10 @@ public class ChestSeparatorsEditor {
                     // filtering cannot resolve tags, so tag queries match nothing here.
                     matches = false;
                 } else {
-                    matches = new ItemStack(item).getDisplayName().toLowerCase().contains(wlSearch);
+                    matches = io.github.marcsanzdev.chestseparators.util.ItemKey.stack(id)
+                            .getDisplayName()
+                            .toLowerCase()
+                            .contains(wlSearch);
                 }
 
                 if (matches) session.visibleLeftListItems.add(id);
@@ -1513,7 +1524,7 @@ public class ChestSeparatorsEditor {
             }
             if (stacks.isEmpty()) continue;
             stacks.sort(java.util.Comparator.<net.minecraft.item.ItemStack>comparingInt(st -> {
-                        int r = order.indexOf(st.getItem().getRegistryName().toString());
+                        int r = io.github.marcsanzdev.chestseparators.util.ItemKey.rank(order, st);
                         return r < 0 ? Integer.MAX_VALUE : r;
                     })
                     .thenComparing(java.util.Comparator.comparingInt(
@@ -1541,7 +1552,9 @@ public class ChestSeparatorsEditor {
 
             boolean hasFilter = whitelists != null && whitelists.containsKey(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot));
             boolean matchesFilter = hasFilter
-                    && whitelists.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot)).allowedItems().contains(itemId);
+                    && io.github.marcsanzdev.chestseparators.util.ItemKey.matches(
+                            whitelists.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot)).allowedItems(),
+                            stack);
 
             if (unfilteredOnly) {
                 if (hasFilter) continue;
@@ -1566,7 +1579,7 @@ public class ChestSeparatorsEditor {
         if (!checkExisting && !unfilteredOnly) {
             collected.sort(java.util.Comparator.comparingInt(
                     s -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
-                            whitelists, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(s), itemId)));
+                            whitelists, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(s), stack)));
         }
         list.addAll(collected);
     }
@@ -1599,13 +1612,12 @@ public class ChestSeparatorsEditor {
             if (chestSlot.inventory instanceof net.minecraft.entity.player.InventoryPlayer || !chestSlot.getHasStack())
                 continue;
             net.minecraft.item.ItemStack stack = chestSlot.getStack();
-            String itemId = stack.getItem().getRegistryName().toString();
 
             // Mirrors performFillFromOpenContainer: pull items the inventory filters list; with Shift, pull
             // everything into free space.
-            if (!shift && !inventoryListsItemClient(invFilters, itemId)) continue;
+            if (!shift && !inventoryListsItemClient(invFilters, stack)) continue;
 
-            int placed = placeIntoPlayerPreview(playerSlots, invFilters, stack, itemId, stack.getCount());
+            int placed = placeIntoPlayerPreview(playerSlots, invFilters, stack, stack.getCount());
             if (placed <= 0) continue; // inventory full — nothing actually moves from this slot
             previewSourceRemaining.put(chestSlot.slotNumber, stack.getCount() - placed);
         }
@@ -1637,7 +1649,6 @@ public class ChestSeparatorsEditor {
             java.util.List<net.minecraft.inventory.Slot> playerSlots,
             java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
             net.minecraft.item.ItemStack stack,
-            String itemId,
             int amount) {
         int maxC = stack.getMaxStackSize();
         int left = amount;
@@ -1667,7 +1678,7 @@ public class ChestSeparatorsEditor {
 
         // Pass 2: empty slots, one at a time via the filter-aware getEmptySlot equivalent.
         while (left > 0) {
-            net.minecraft.inventory.Slot target = findPreviewEmptySlot(playerSlots, invFilters, itemId);
+            net.minecraft.inventory.Slot target = findPreviewEmptySlot(playerSlots, invFilters, stack);
             if (target == null) break;
             int add = Math.min(left, maxC);
             previewTargetIncoming.put(target.slotNumber, copyWithCount(stack, add));
@@ -1680,7 +1691,7 @@ public class ChestSeparatorsEditor {
     private net.minecraft.inventory.Slot findPreviewEmptySlot(
             java.util.List<net.minecraft.inventory.Slot> playerSlots,
             java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
-            String itemId) {
+            net.minecraft.item.ItemStack stack) {
         // Preferred: the empty slot whose active filter lists this item and whose place in the filter's
         // order best fits it (item first in the list -> group's first slot, and so on; ties keep the
         // lowest index). Mirrors the same slotPreference choice getEmptySlot makes at pull time.
@@ -1690,9 +1701,12 @@ public class ChestSeparatorsEditor {
             if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.slotNumber)) continue;
             io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
                     invFilters != null ? invFilters.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps)) : null;
-            if (wl == null || !isSlotFilterActive(wl) || !wl.allowedItems().contains(itemId)) continue;
+            if (wl == null
+                    || !isSlotFilterActive(wl)
+                    || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                continue;
             int preference = io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
-                    invFilters, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps), itemId);
+                    invFilters, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps), stack);
             if (preference < bestPreference) {
                 bestPreference = preference;
                 best = ps;
@@ -1704,8 +1718,9 @@ public class ChestSeparatorsEditor {
             if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.slotNumber)) continue;
             io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl =
                     invFilters != null ? invFilters.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps)) : null;
-            boolean reservedForOther =
-                    wl != null && isSlotFilterActive(wl) && !wl.allowedItems().contains(itemId);
+            boolean reservedForOther = wl != null
+                    && isSlotFilterActive(wl)
+                    && !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack);
             if (!reservedForOther) return ps;
         }
         return null;
@@ -1718,10 +1733,10 @@ public class ChestSeparatorsEditor {
     /** Client mirror of the server's inventoryListsItem: does any inventory filter list this item? */
     private boolean inventoryListsItemClient(
             java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
-            String itemId) {
+            net.minecraft.item.ItemStack stack) {
         if (invFilters == null) return false;
         for (io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl : invFilters.values()) {
-            if (wl.allowedItems().contains(itemId)) return true;
+            if (io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) return true;
         }
         return false;
     }
@@ -1796,7 +1811,7 @@ public class ChestSeparatorsEditor {
         if (!checkExisting && !unfilteredOnly) {
             orderedSlots.sort(java.util.Comparator.comparingInt(
                     s -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
-                            whitelists, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(s), itemId)));
+                            whitelists, io.github.marcsanzdev.chestseparators.util.SlotIndex.of(s), stack)));
         }
 
         for (net.minecraft.inventory.Slot chestSlot : orderedSlots) {
@@ -1804,7 +1819,9 @@ public class ChestSeparatorsEditor {
 
             boolean hasFilter = whitelists != null && whitelists.containsKey(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot));
             boolean matchesFilter = hasFilter
-                    && whitelists.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot)).allowedItems().contains(itemId);
+                    && io.github.marcsanzdev.chestseparators.util.ItemKey.matches(
+                            whitelists.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(chestSlot)).allowedItems(),
+                            stack);
 
             if (unfilteredOnly) {
                 if (hasFilter) continue;
@@ -1907,7 +1924,7 @@ public class ChestSeparatorsEditor {
                 if (!fin.isEmpty()) finals.add(fin);
             }
             finals.sort(java.util.Comparator.<net.minecraft.item.ItemStack>comparingInt(st -> {
-                        int r = order.indexOf(st.getItem().getRegistryName().toString());
+                        int r = io.github.marcsanzdev.chestseparators.util.ItemKey.rank(order, st);
                         return r < 0 ? Integer.MAX_VALUE : r;
                     })
                     // Match reorderFilteredGroups: same-item overflow packs the fuller stack first, so the

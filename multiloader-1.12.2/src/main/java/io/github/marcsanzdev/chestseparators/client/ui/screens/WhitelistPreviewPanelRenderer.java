@@ -185,14 +185,15 @@ final class WhitelistPreviewPanelRenderer {
 
             String itemIdStr = session.previewItems.get(idx);
             // 1.12.2: net.minecraft.core.Registry no longer exists — resolve the id via Item#getByNameOrId.
-            net.minecraft.item.Item item = net.minecraft.item.Item.getByNameOrId(itemIdStr);
-            // getByNameOrId returns null for an absent id (the E4 Registry#get returned AIR); skip it.
-            if (item == null) continue;
+            net.minecraft.item.ItemStack itemStack =
+                    io.github.marcsanzdev.chestseparators.util.ItemKey.stack(itemIdStr);
+            // An empty stack means the id is absent in this MC version; skip it.
+            if (itemStack.isEmpty()) continue;
 
             int itemY = listViewY + (i * 18) - (int) (session.listScrollY % 18) + 2;
-            context.renderItem(new net.minecraft.item.ItemStack(item), listX + 8, itemY);
+            context.renderItem(itemStack, listX + 8, itemY);
 
-            String name = new net.minecraft.item.ItemStack(item).getDisplayName();
+            String name = itemStack.getDisplayName();
             context.pose().pushPose();
             float scale = 0.75f;
             context.pose().scale(scale, scale, 1.0F);
@@ -261,8 +262,9 @@ final class WhitelistPreviewPanelRenderer {
             int idx = startIndex + i;
             if (idx >= totalListItems) break;
             // 1.12.2: resolve the id via Item#getByNameOrId (net.minecraft.core.Registry is gone).
-            net.minecraft.item.Item item = net.minecraft.item.Item.getByNameOrId(session.previewItems.get(idx));
-            if (item == null) continue;
+            net.minecraft.item.ItemStack itemStack =
+                    io.github.marcsanzdev.chestseparators.util.ItemKey.stack(session.previewItems.get(idx));
+            if (itemStack.isEmpty()) continue;
             int itemY = listViewY + (i * 18) - (int) (session.listScrollY % 18) + 2;
 
             if (editor.isHovering(listX + 8, itemY, 16, 16, mouseX, mouseY)
@@ -270,7 +272,7 @@ final class WhitelistPreviewPanelRenderer {
                     && mouseY <= listViewY + listViewH) {
                 context.renderOutline(listX + 7, itemY - 1, 18, 18, 0xFFFFFFFF);
                 context.renderTooltip(Minecraft.getMinecraft().fontRenderer,
-                        new net.minecraft.util.text.TextComponentString(new net.minecraft.item.ItemStack(item).getDisplayName()), mouseX, mouseY);
+                        new net.minecraft.util.text.TextComponentString(itemStack.getDisplayName()), mouseX, mouseY);
             }
         }
     }

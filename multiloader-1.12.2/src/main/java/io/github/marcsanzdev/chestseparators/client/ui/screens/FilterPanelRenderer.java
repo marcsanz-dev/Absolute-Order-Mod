@@ -159,7 +159,6 @@ final class FilterPanelRenderer {
             // the same entry twice.
             if (!session.reorderFromGrid && itemIdStr.equals(session.reorderDragItem)) continue;
 
-            Item item = Item.getByNameOrId(itemIdStr);
             int itemY = listViewY + (i * 18) - (int) (activeScrollY % 18) + 2;
 
             // Settle animation: right after a drop, every row starts from where it used to be and slides
@@ -174,9 +173,9 @@ final class FilterPanelRenderer {
                 }
             }
 
-            context.renderItem(item.getDefaultInstance(), listX + 8, itemY);
+            context.renderItem(io.github.marcsanzdev.chestseparators.util.ItemKey.stack(itemIdStr), listX + 8, itemY);
 
-            String name = new ItemStack(item).getDisplayName();
+            String name = io.github.marcsanzdev.chestseparators.util.ItemKey.stack(itemIdStr).getDisplayName();
             context.pose().pushPose();
             float scale = 0.75f;
             context.pose().scale(scale, scale, 1.0F);

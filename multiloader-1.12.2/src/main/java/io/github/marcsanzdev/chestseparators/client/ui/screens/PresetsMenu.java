@@ -788,11 +788,11 @@ public final class PresetsMenu {
                 continue;
             }
 
-            Item item = Item.getByNameOrId(row.itemId());
-            if (item == null) item = net.minecraft.init.Items.AIR; // 1.12.2: getByNameOrId returns null for a missing id
-            context.renderItem(new ItemStack(item), x + 22, ry);
+            net.minecraft.item.ItemStack rowStack =
+                    io.github.marcsanzdev.chestseparators.util.ItemKey.stack(row.itemId());
+            context.renderItem(rowStack, x + 22, ry);
 
-            String name = new ItemStack(item).getDisplayName();
+            String name = rowStack.getDisplayName();
             context.pose().pushPose();
             float s = 0.75f;
             context.pose().scale(s, s, 1.0F);

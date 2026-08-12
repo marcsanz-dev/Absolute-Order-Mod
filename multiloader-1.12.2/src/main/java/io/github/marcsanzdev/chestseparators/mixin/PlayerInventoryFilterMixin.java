@@ -70,7 +70,6 @@ public abstract class PlayerInventoryFilterMixin {
         Map<Integer, SlotWhitelist> filters = ChestSeparatorsState.INVENTORY_FILTERS.get(player.getUniqueID());
         if (filters == null || filters.isEmpty()) return;
 
-        String itemId = stack.getItem().getRegistryName().toString();
         NonNullList<ItemStack> main = ((InventoryPlayerAccessor) (Object) this).chestseparators$getMainInventory();
 
         // Prefer an empty slot whose filter matches this item, ranked by the filter's own order (same
@@ -80,8 +79,11 @@ public abstract class PlayerInventoryFilterMixin {
         for (int i = 0; i < main.size(); i++) {
             if (!main.get(i).isEmpty()) continue;
             SlotWhitelist wl = filters.get(i);
-            if (wl == null || !isSlotActive(wl) || !wl.allowedItems().contains(itemId)) continue;
-            int preference = FilterPriority.slotPreference(filters, i, itemId);
+            if (wl == null
+                    || !isSlotActive(wl)
+                    || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                continue;
+            int preference = FilterPriority.slotPreference(filters, i, stack);
             if (preference < bestPreference) {
                 bestPreference = preference;
                 bestSlot = i;
@@ -95,7 +97,9 @@ public abstract class PlayerInventoryFilterMixin {
         for (int i = 0; i < main.size(); i++) {
             if (!main.get(i).isEmpty()) continue;
             SlotWhitelist wl = filters.get(i);
-            boolean reservedForOther = wl != null && isSlotActive(wl) && !wl.allowedItems().contains(itemId);
+            boolean reservedForOther = wl != null
+                    && isSlotActive(wl)
+                    && !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack);
             if (!reservedForOther) {
                 cir.setReturnValue(i);
                 return;

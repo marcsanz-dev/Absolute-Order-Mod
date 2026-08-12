@@ -62,8 +62,7 @@ public abstract class ArmorEquipFilterMixin {
         SlotWhitelist wl = filters.get(rawIndex);
         if (wl == null || !wl.allowShift()) return;
 
-        String itemId = stack.getItem().getRegistryName().toString();
-        if (!wl.allowedItems().contains(itemId)) {
+        if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) {
             ci.cancel();
             player.openContainer.detectAndSendChanges();
         }

@@ -37,8 +37,7 @@ public abstract class HopperBlockEntityMixin {
 
                 // Hopper rule ON: enforce the whitelist. Rule OFF: let vanilla decide.
                 if (wl.allowHopper()) {
-                    String itemId = stack.getItem().getRegistryName().toString();
-                    if (!wl.allowedItems().contains(itemId)) {
+                    if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) {
                         cir.setReturnValue(false);
                         return;
                     }

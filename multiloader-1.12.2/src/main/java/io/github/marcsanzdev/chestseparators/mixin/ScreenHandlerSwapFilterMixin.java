@@ -50,8 +50,7 @@ public abstract class ScreenHandlerSwapFilterMixin {
         // Can sourceItem enter the swap-target slot?
         SlotWhitelist wlTarget = filters.get(targetRawIndex);
         if (wlTarget != null && wlTarget.allowShift() && !sourceItem.isEmpty()) {
-            String id = sourceItem.getItem().getRegistryName().toString();
-            if (!wlTarget.allowedItems().contains(id)) {
+            if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wlTarget.allowedItems(), sourceItem)) {
                 cir.setReturnValue(ItemStack.EMPTY);
                 return;
             }
@@ -61,8 +60,7 @@ public abstract class ScreenHandlerSwapFilterMixin {
         if (sourceSlot.inventory instanceof InventoryPlayer) {
             SlotWhitelist wlSource = filters.get(SlotIndex.of(sourceSlot));
             if (wlSource != null && wlSource.allowShift() && !targetItem.isEmpty()) {
-                String id = targetItem.getItem().getRegistryName().toString();
-                if (!wlSource.allowedItems().contains(id)) {
+                if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wlSource.allowedItems(), targetItem)) {
                     cir.setReturnValue(ItemStack.EMPTY);
                 }
             }

@@ -47,8 +47,7 @@ public abstract class ScreenHandlerWhitelistMixin {
 
                 // Shift rule ON: enforce the item filter. Shift rule OFF: treat as vanilla.
                 if (whitelist.allowShift()) {
-                    String incomingItemId = stack.getItem().getRegistryName().toString();
-                    if (!whitelist.allowedItems().contains(incomingItemId)) {
+                    if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(whitelist.allowedItems(), stack)) {
                         return false;
                     }
                 }

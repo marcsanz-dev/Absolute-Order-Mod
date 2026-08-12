@@ -52,8 +52,8 @@ public abstract class SlotWhitelistMixin {
 
         if (whitelists != null && whitelists.containsKey(slotIndex)) {
             SlotWhitelist wl = whitelists.get(slotIndex);
-            String itemId = stack.getItem().getRegistryName().toString();
-            boolean isAllowedItem = wl.allowedItems().contains(itemId);
+            boolean isAllowedItem =
+                    io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack);
             boolean isShift = ClickTracker.IS_SHIFT_CLICK.get();
 
             if (isShift) {

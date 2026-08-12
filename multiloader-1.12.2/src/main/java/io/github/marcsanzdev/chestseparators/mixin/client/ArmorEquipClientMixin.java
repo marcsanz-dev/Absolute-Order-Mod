@@ -62,8 +62,7 @@ public abstract class ArmorEquipClientMixin {
         SlotWhitelist wl = filters.get(rawIndex);
         if (wl == null || !wl.allowShift()) return;
 
-        String itemId = stack.getItem().getRegistryName().toString();
-        if (!wl.allowedItems().contains(itemId)) {
+        if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) {
             cir.setReturnValue(EnumActionResult.FAIL);
         }
     }

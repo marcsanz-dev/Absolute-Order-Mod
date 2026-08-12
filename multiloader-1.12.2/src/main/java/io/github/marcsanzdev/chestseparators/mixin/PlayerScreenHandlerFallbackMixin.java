@@ -63,8 +63,7 @@ public abstract class PlayerScreenHandlerFallbackMixin {
         if (filters == null) return;
         SlotWhitelist wl = filters.get(rawIndex);
         if (wl == null || !wl.allowShift()) return;
-        String itemId = slotStack.getItem().getRegistryName().toString();
-        if (wl.allowedItems().contains(itemId)) return;
+        if (io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), slotStack)) return;
 
         ItemStack copy = slotStack.copy();
         boolean fromHotbar = slotIndex >= 36 && slotIndex < 45;

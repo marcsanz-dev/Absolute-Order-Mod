@@ -227,9 +227,8 @@ public final class ModNetworking {
                             SlotWhitelist wl = payload.whitelists().get(i);
 
                             if (wl.allowManual() && wl.allowShift() && wl.allowHopper()) {
-                                String itemId = stack.getItem().getRegistryName().toString();
-
-                                if (!wl.allowedItems().contains(itemId)) {
+                                if (!io.github.marcsanzdev.chestseparators.util.ItemKey.matches(
+                                        wl.allowedItems(), stack)) {
                                     ItemStack extracted = targetInventory.removeStackFromSlot(i);
 
                                     double dropX = payload.pos().getX() + 0.5D;
@@ -451,14 +450,13 @@ public final class ModNetworking {
             ItemStack stack = inventory.getStackInSlot(i);
             if (stack.isEmpty()) continue;
             Item item = stack.getItem();
-            String itemId = item.getRegistryName().toString();
 
             for (Candidate candidate : candidates) {
                 if (stack.isEmpty()) break;
-                if (!containerListsItem(candidate.whitelists, itemId)) continue;
+                if (!containerListsItem(candidate.whitelists, stack)) continue;
 
                 int before = stack.getCount();
-                insertRespectingFilter(candidate.inv, candidate.whitelists, stack, itemId);
+                insertRespectingFilter(candidate.inv, candidate.whitelists, stack);
                 int delta = before - stack.getCount();
                 if (delta > 0) {
                     candidate.inv.markDirty();
@@ -512,10 +510,9 @@ public final class ModNetworking {
             ItemStack stack = container.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
             Item item = stack.getItem();
-            String itemId = item.getRegistryName().toString();
 
             // Pull items the inventory filters list; with Shift, pull everything (into free space).
-            if (!includeEmpty && !inventoryListsItem(invFilters, itemId)) continue;
+            if (!includeEmpty && !inventoryListsItem(invFilters, stack)) continue;
 
             int take = stack.getCount();
             ItemStack portion = copyWithCount(stack, take);
@@ -566,18 +563,18 @@ public final class ModNetworking {
     }
 
     /** True when any of the player's inventory filters lists the item (so a Fill should pull it in). */
-    private static boolean inventoryListsItem(Map<Integer, SlotWhitelist> invFilters, String itemId) {
+    private static boolean inventoryListsItem(Map<Integer, SlotWhitelist> invFilters, ItemStack stack) {
         if (invFilters == null) return false;
         for (SlotWhitelist wl : invFilters.values()) {
-            if (wl.allowedItems().contains(itemId)) return true;
+            if (io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) return true;
         }
         return false;
     }
 
-    /** True if any slot whitelist of the container lists the given item id. */
-    private static boolean containerListsItem(Map<Integer, SlotWhitelist> whitelists, String itemId) {
+    /** True if any slot whitelist of the container lists the given item (variant-aware, with base fallback). */
+    private static boolean containerListsItem(Map<Integer, SlotWhitelist> whitelists, ItemStack stack) {
         for (SlotWhitelist wl : whitelists.values()) {
-            if (wl.allowedItems().contains(itemId)) return true;
+            if (io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack)) return true;
         }
         return false;
     }
@@ -588,13 +585,14 @@ public final class ModNetworking {
      * filtered slots. Mutates {@code stack}'s count in place.
      */
     private static void insertRespectingFilter(
-            IInventory inv, Map<Integer, SlotWhitelist> whitelists, ItemStack stack, String itemId) {
+            IInventory inv, Map<Integer, SlotWhitelist> whitelists, ItemStack stack) {
         int size = inv.getSizeInventory();
 
         // Phase 1: top up existing identical stacks in filtered slots.
         for (int slot = 0; slot < size && !stack.isEmpty(); slot++) {
             SlotWhitelist wl = whitelists.get(slot);
-            if (wl == null || !wl.allowedItems().contains(itemId)) continue;
+            if (wl == null || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                continue;
             ItemStack dest = inv.getStackInSlot(slot);
             if (dest.isEmpty() || !io.github.marcsanzdev.chestseparators.util.ItemMatch.sameItemSameTags(dest, stack)) continue;
             int max = Math.min(inv.getInventoryStackLimit(), dest.getMaxStackSize());
@@ -609,12 +607,13 @@ public final class ModNetworking {
         List<Integer> emptySlots = new java.util.ArrayList<>();
         for (int slot = 0; slot < size; slot++) {
             SlotWhitelist wl = whitelists.get(slot);
-            if (wl == null || !wl.allowedItems().contains(itemId)) continue;
+            if (wl == null || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                continue;
             if (!inv.getStackInSlot(slot).isEmpty() || !inv.isItemValidForSlot(slot, stack)) continue;
             emptySlots.add(slot);
         }
         emptySlots.sort(java.util.Comparator.comparingInt(
-                        (Integer slot) -> FilterPriority.slotPreference(whitelists, slot, itemId))
+                        (Integer slot) -> FilterPriority.slotPreference(whitelists, slot, stack))
                 .thenComparingInt(slot -> slot));
         for (int slot : emptySlots) {
             if (stack.isEmpty()) break;
@@ -656,8 +655,7 @@ public final class ModNetworking {
             }
             if (stacks.isEmpty()) continue;
             stacks.sort(java.util.Comparator.<ItemStack>comparingInt(st -> {
-                        int rank = order.indexOf(
-                                st.getItem().getRegistryName().toString());
+                        int rank = io.github.marcsanzdev.chestseparators.util.ItemKey.rank(order, st);
                         return rank < 0 ? Integer.MAX_VALUE : rank;
                     })
                     // Tie-break equal-ranked stacks (the same item overflowing several of the group's slots)
