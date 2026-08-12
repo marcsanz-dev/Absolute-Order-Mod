@@ -141,19 +141,16 @@ public class EditorRenderer {
             renderUndoHighlights(context);
             context.pose().popPose();
 
-            switch (session.currentState) {
-                case DRAW_LINES:
-                    editor.screenDrawLines.render(context, mouseX, mouseY, delta);
-                    break;
-                case VIEW_GROUPS:
-                case SELECT_SLOTS:
-                    editor.screenViewGroups.render(context, mouseX, mouseY, delta);
-                    break;
-                case EDIT_FILTER:
-                    editor.screenEditFilter.render(context, mouseX, mouseY, delta);
-                    break;
-                default:
-                    break;
+            // if/else instead of switch(enum): a switch over an enum makes javac emit a synthetic
+            // EditorRenderer$1 $SwitchMap class which Forge's LaunchClassLoader fails to transform in this
+            // coremod env (crash: NoClassDefFoundError EditorRenderer$1). Direct enum == comparisons avoid it.
+            EditorState state = session.currentState;
+            if (state == EditorState.DRAW_LINES) {
+                editor.screenDrawLines.render(context, mouseX, mouseY, delta);
+            } else if (state == EditorState.VIEW_GROUPS || state == EditorState.SELECT_SLOTS) {
+                editor.screenViewGroups.render(context, mouseX, mouseY, delta);
+            } else if (state == EditorState.EDIT_FILTER) {
+                editor.screenEditFilter.render(context, mouseX, mouseY, delta);
             }
 
             renderStatusMessage(context);
@@ -310,12 +307,11 @@ public class EditorRenderer {
     }
 
     private static int undoHighlightColor(ChestConfigManager.SlotChange ch) {
-        switch (ch) {
-            case FILTER_CREATED: return 0x55FF55;
-            case FILTER_REMOVED: return 0xFF5555;
-            case FILTER_MODIFIED: return 0xFFD24C;
-            case LAYOUT: return 0x55D6FF;
-        }
+        // if/else (not switch) to avoid the synthetic EditorRenderer$1 $SwitchMap class — see render().
+        if (ch == ChestConfigManager.SlotChange.FILTER_CREATED) return 0x55FF55;
+        if (ch == ChestConfigManager.SlotChange.FILTER_REMOVED) return 0xFF5555;
+        if (ch == ChestConfigManager.SlotChange.FILTER_MODIFIED) return 0xFFD24C;
+        if (ch == ChestConfigManager.SlotChange.LAYOUT) return 0x55D6FF;
         return 0;
     }
 

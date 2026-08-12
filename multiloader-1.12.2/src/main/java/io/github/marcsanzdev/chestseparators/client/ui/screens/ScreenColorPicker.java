@@ -6,8 +6,12 @@ import io.github.marcsanzdev.chestseparators.client.ui.widgets.WideButtonWidget;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import java.awt.Color;
+import java.nio.ByteBuffer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import io.github.marcsanzdev.chestseparators.client.compat.GuiGraphics;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -265,7 +269,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         if (!session.isColorPickerOpen) return;
 
         if (session.isEyedropperActive) {
-            int sampled = ColorPickerGradients.readHoveredPixelColor(mouseX, mouseY);
+            int sampled = readHoveredPixelColor(mouseX, mouseY);
             // Trust a near-white reading only after it has held for a second frame: a real white target
             // stays put, but the previous frame's white dropper icon flashing onto the sample point during
             // a fast move lasts a single frame. Every other colour updates live and instantly.
@@ -359,7 +363,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         int contentY = layout.popupY + 45;
         int contentX = layout.popupX + 12;
 
-        ColorPickerGradients.drawSaturationValueBox(
+        drawSaturationValueBox(
                 context, contentX, contentY, layout.pickerBoxSize, layout.pickerBoxSize, session.pickerHue);
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
                 context, contentX - 1, contentY - 1, 102, 102, 0x33FFFFFF);
@@ -370,7 +374,7 @@ public class ScreenColorPicker extends AbstractEditorScreen {
         context.renderOutline(cursorX - 1, cursorY - 1, 3, 3, 0xFFFFFFFF);
 
         int hueX = contentX + 115;
-        ColorPickerGradients.drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
+        drawHueBar(context, hueX, contentY, layout.pickerHueWidth, layout.pickerBoxSize);
         io.github.marcsanzdev.chestseparators.client.ui.UiTheme.roundBorder(
                 context, hueX - 1, contentY - 1, 22, 102, 0x33FFFFFF);
 
@@ -451,5 +455,46 @@ public class ScreenColorPicker extends AbstractEditorScreen {
                 128,
                 128,
                 -1);
+    }
+
+    // --- Color-picker drawing helpers (inlined; kept in this class so they load with it — a separate
+    // package-private ColorPickerGradients class failed to load lazily under the coremod classloader). ---
+
+    /** Fills a saturation (x) by value (y) gradient for a fixed hue. */
+    private static void drawSaturationValueBox(GuiGraphics context, int x, int y, int w, int h, float hue) {
+        int step = 2;
+        for (int i = 0; i < w; i += step) {
+            for (int j = 0; j < h; j += step) {
+                float sat = (float) i / w;
+                float val = 1.0f - ((float) j / h);
+                int color = Color.HSBtoRGB(hue, sat, val);
+                context.fill(x + i, y + j, x + i + step, y + j + step, color);
+            }
+        }
+    }
+
+    /** Fills a vertical hue strip at full saturation and value. */
+    private static void drawHueBar(GuiGraphics context, int x, int y, int w, int h) {
+        for (int i = 0; i < h; i++) {
+            float hue = (float) i / h;
+            int color = Color.HSBtoRGB(hue, 1.0f, 1.0f);
+            context.fill(x, y + i, x + w, y + i + 1, color);
+        }
+    }
+
+    /** Reads the RGB colour of the framebuffer pixel under the cursor (for the eyedropper). */
+    private static int readHoveredPixelColor(int mouseX, int mouseY) {
+        Minecraft client = Minecraft.getMinecraft();
+        int scale = new ScaledResolution(client).getScaleFactor();
+        int fbX = mouseX * scale;
+        int fbY = client.displayHeight - mouseY * scale - 1;
+
+        // E1 ships LWJGL 2, which has no MemoryStack — allocate the 4-byte read buffer via BufferUtils instead.
+        ByteBuffer buffer = BufferUtils.createByteBuffer(4);
+        GL11.glReadPixels(fbX, fbY, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+        int r = buffer.get(0) & 0xFF;
+        int g = buffer.get(1) & 0xFF;
+        int b = buffer.get(2) & 0xFF;
+        return (r << 16) | (g << 8) | b;
     }
 }
