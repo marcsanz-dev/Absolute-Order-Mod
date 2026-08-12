@@ -22,3 +22,13 @@ dependencies {
     // Recipe-viewer compat is dropped for 1.16.5: EMI has no 1.16.5 build, and REI's 1.16.5 API (5.x) differs
     // enough from the 8.x used elsewhere that the plugin would need a full rewrite for an optional feature.
 }
+
+// --- autotests (data-layer JUnit) ---
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+tasks.named("test") { useJUnitPlatform() }
+
+tasks.named("compileTestJava") { options.release = 11 }
