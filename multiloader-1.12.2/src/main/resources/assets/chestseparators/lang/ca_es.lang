@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Aquest cofre encara no té filtres.
 message.chestseparators.push_no_slot=No hi ha lloc lliure als filtres.
 message.chestseparators.pull_no_filters=El teu inventari encara no té filtres.
 message.chestseparators.pull_no_match=Res d'aquí coincideix amb els teus filtres.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Vermell
+color.minecraft.orange=Taronja
+color.minecraft.yellow=Groc
+color.minecraft.lime=Verd llima
+color.minecraft.green=Verd
+color.minecraft.cyan=Cian
+color.minecraft.light_blue=Blau clar
+color.minecraft.blue=Blau
+color.minecraft.purple=Lila
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Rosa
+color.minecraft.brown=Marró
+color.minecraft.white=Blanc
+color.minecraft.light_gray=Gris clar
+color.minecraft.gray=Gris
+color.minecraft.black=Negre

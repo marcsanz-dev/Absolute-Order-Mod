@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Questo baule non ha ancora filtri.
 message.chestseparators.push_no_slot=Nessuno slot filtro libero.
 message.chestseparators.pull_no_filters=Il tuo inventario non ha ancora filtri.
 message.chestseparators.pull_no_match=Niente qui corrisponde ai tuoi filtri.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Rosso
+color.minecraft.orange=Arancione
+color.minecraft.yellow=Giallo
+color.minecraft.lime=Verde lime
+color.minecraft.green=Verde
+color.minecraft.cyan=Ciano
+color.minecraft.light_blue=Azzurro
+color.minecraft.blue=Blu
+color.minecraft.purple=Viola
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Rosa
+color.minecraft.brown=Marrone
+color.minecraft.white=Bianco
+color.minecraft.light_gray=Grigio chiaro
+color.minecraft.gray=Grigio
+color.minecraft.black=Nero

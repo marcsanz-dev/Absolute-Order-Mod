@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Peti ini belum punya filter.
 message.chestseparators.push_no_slot=Tak ada slot filter kosong.
 message.chestseparators.pull_no_filters=Inventarismu belum punya filter.
 message.chestseparators.pull_no_match=Tak ada yang cocok dengan filtermu.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Merah
+color.minecraft.orange=Oranye
+color.minecraft.yellow=Kuning
+color.minecraft.lime=Hijau Limau
+color.minecraft.green=Hijau
+color.minecraft.cyan=Sian
+color.minecraft.light_blue=Biru Muda
+color.minecraft.blue=Biru
+color.minecraft.purple=Ungu
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Merah Muda
+color.minecraft.brown=Cokelat
+color.minecraft.white=Putih
+color.minecraft.light_gray=Abu-abu Muda
+color.minecraft.gray=Abu-abu
+color.minecraft.black=Hitam

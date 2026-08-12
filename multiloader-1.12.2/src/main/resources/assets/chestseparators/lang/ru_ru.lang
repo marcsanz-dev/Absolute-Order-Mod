@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=У этого сундука ещё не
 message.chestseparators.push_no_slot=Нет свободного слота фильтра.
 message.chestseparators.pull_no_filters=В инвентаре ещё нет фильтров.
 message.chestseparators.pull_no_match=Здесь ничего не подходит под фильтры.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Красный
+color.minecraft.orange=Оранжевый
+color.minecraft.yellow=Жёлтый
+color.minecraft.lime=Лаймовый
+color.minecraft.green=Зелёный
+color.minecraft.cyan=Бирюзовый
+color.minecraft.light_blue=Голубой
+color.minecraft.blue=Синий
+color.minecraft.purple=Фиолетовый
+color.minecraft.magenta=Пурпурный
+color.minecraft.pink=Розовый
+color.minecraft.brown=Коричневый
+color.minecraft.white=Белый
+color.minecraft.light_gray=Светло-серый
+color.minecraft.gray=Серый
+color.minecraft.black=Чёрный

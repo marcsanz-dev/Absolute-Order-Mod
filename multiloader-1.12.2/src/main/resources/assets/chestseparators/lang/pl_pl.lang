@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Ta skrzynia nie ma jeszcze filtrów.
 message.chestseparators.push_no_slot=Brak wolnego miejsca w filtrach.
 message.chestseparators.pull_no_filters=Twój ekwipunek nie ma jeszcze filtrów.
 message.chestseparators.pull_no_match=Nic tu nie pasuje do twoich filtrów.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Czerwony
+color.minecraft.orange=Pomarańczowy
+color.minecraft.yellow=Żółty
+color.minecraft.lime=Jasnozielony
+color.minecraft.green=Zielony
+color.minecraft.cyan=Cyjan
+color.minecraft.light_blue=Jasnoniebieski
+color.minecraft.blue=Niebieski
+color.minecraft.purple=Fioletowy
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Różowy
+color.minecraft.brown=Brązowy
+color.minecraft.white=Biały
+color.minecraft.light_gray=Jasnoszary
+color.minecraft.gray=Szary
+color.minecraft.black=Czarny

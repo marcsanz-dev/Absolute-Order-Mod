@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Deze kist heeft nog geen filters.
 message.chestseparators.push_no_slot=Geen vrij filtervak hiervoor.
 message.chestseparators.pull_no_filters=Je inventaris heeft nog geen filters.
 message.chestseparators.pull_no_match=Niets hier past bij je filters.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Rood
+color.minecraft.orange=Oranje
+color.minecraft.yellow=Geel
+color.minecraft.lime=Limoen
+color.minecraft.green=Groen
+color.minecraft.cyan=Cyaan
+color.minecraft.light_blue=Lichtblauw
+color.minecraft.blue=Blauw
+color.minecraft.purple=Paars
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Roze
+color.minecraft.brown=Bruin
+color.minecraft.white=Wit
+color.minecraft.light_gray=Lichtgrijs
+color.minecraft.gray=Grijs
+color.minecraft.black=Zwart

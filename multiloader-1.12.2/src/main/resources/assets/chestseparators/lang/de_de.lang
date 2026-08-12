@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Diese Truhe hat noch keine Filter.
 message.chestseparators.push_no_slot=Kein freier Filter-Slot dafür.
 message.chestseparators.pull_no_filters=Dein Inventar hat noch keine Filter.
 message.chestseparators.pull_no_match=Nichts hier passt zu deinen Filtern.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Rot
+color.minecraft.orange=Orange
+color.minecraft.yellow=Gelb
+color.minecraft.lime=Hellgrün
+color.minecraft.green=Grün
+color.minecraft.cyan=Türkis
+color.minecraft.light_blue=Hellblau
+color.minecraft.blue=Blau
+color.minecraft.purple=Violett
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Rosa
+color.minecraft.brown=Braun
+color.minecraft.white=Weiß
+color.minecraft.light_gray=Hellgrau
+color.minecraft.gray=Grau
+color.minecraft.black=Schwarz

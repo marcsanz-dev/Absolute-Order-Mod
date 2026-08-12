@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=이 상자에는 아직 필터가 없습
 message.chestseparators.push_no_slot=빈 필터 칸이 없습니다.
 message.chestseparators.pull_no_filters=인벤토리에 아직 필터가 없습니다.
 message.chestseparators.pull_no_match=여기에 필터와 맞는 것이 없습니다.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=빨간색
+color.minecraft.orange=주황색
+color.minecraft.yellow=노란색
+color.minecraft.lime=연두색
+color.minecraft.green=초록색
+color.minecraft.cyan=청록색
+color.minecraft.light_blue=하늘색
+color.minecraft.blue=파란색
+color.minecraft.purple=보라색
+color.minecraft.magenta=자홍색
+color.minecraft.pink=분홍색
+color.minecraft.brown=갈색
+color.minecraft.white=하얀색
+color.minecraft.light_gray=회백색
+color.minecraft.gray=회색
+color.minecraft.black=검은색

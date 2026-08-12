@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Kutxa honek ez du iragazkirik oraindik.
 message.chestseparators.push_no_slot=Ez dago leku librerik iragazkietan.
 message.chestseparators.pull_no_filters=Zure inbentarioak ez du iragazkirik oraindik.
 message.chestseparators.pull_no_match=Hemen ezerk ez dator bat zure iragazkiekin.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Gorria
+color.minecraft.orange=Laranja
+color.minecraft.yellow=Horia
+color.minecraft.lime=Berde argia
+color.minecraft.green=Berdea
+color.minecraft.cyan=Ziana
+color.minecraft.light_blue=Urdin argia
+color.minecraft.blue=Urdina
+color.minecraft.purple=Morea
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Arrosa
+color.minecraft.brown=Marroia
+color.minecraft.white=Zuria
+color.minecraft.light_gray=Gris argia
+color.minecraft.gray=Grisa
+color.minecraft.black=Beltza

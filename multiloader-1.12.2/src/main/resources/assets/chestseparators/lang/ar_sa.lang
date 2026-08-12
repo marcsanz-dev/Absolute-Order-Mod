@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=لا توجد مرشحات في هذا �
 message.chestseparators.push_no_slot=لا توجد خانة مرشح فارغة.
 message.chestseparators.pull_no_filters=لا توجد مرشحات في حقيبتك بعد.
 message.chestseparators.pull_no_match=لا شيء هنا يطابق مرشحاتك.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=أحمر
+color.minecraft.orange=برتقالي
+color.minecraft.yellow=أصفر
+color.minecraft.lime=أخضر فاتح
+color.minecraft.green=أخضر
+color.minecraft.cyan=سماوي
+color.minecraft.light_blue=أزرق فاتح
+color.minecraft.blue=أزرق
+color.minecraft.purple=بنفسجي
+color.minecraft.magenta=أرجواني
+color.minecraft.pink=وردي
+color.minecraft.brown=بني
+color.minecraft.white=أبيض
+color.minecraft.light_gray=رمادي فاتح
+color.minecraft.gray=رمادي
+color.minecraft.black=أسود

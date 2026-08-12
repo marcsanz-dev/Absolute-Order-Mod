@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=इस संदूक में अभ�
 message.chestseparators.push_no_slot=कोई खाली फ़िल्टर स्लॉट नहीं है।
 message.chestseparators.pull_no_filters=आपकी इन्वेंटरी में अभी कोई फ़िल्टर नहीं है।
 message.chestseparators.pull_no_match=यहाँ कुछ भी आपके फ़िल्टर से मेल नहीं खाता।
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=लाल
+color.minecraft.orange=नारंगी
+color.minecraft.yellow=पीला
+color.minecraft.lime=चटख हरा
+color.minecraft.green=हरा
+color.minecraft.cyan=स्यान
+color.minecraft.light_blue=हल्का नीला
+color.minecraft.blue=नीला
+color.minecraft.purple=बैंगनी
+color.minecraft.magenta=मैजेंटा
+color.minecraft.pink=गुलाबी
+color.minecraft.brown=भूरा
+color.minecraft.white=सफ़ेद
+color.minecraft.light_gray=हल्का स्लेटी
+color.minecraft.gray=स्लेटी
+color.minecraft.black=काला

@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=这个箱子还没有筛选。
 message.chestseparators.push_no_slot=没有空闲的筛选槽。
 message.chestseparators.pull_no_filters=你的背包还没有筛选。
 message.chestseparators.pull_no_match=这里没有符合筛选的物品。
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=红色
+color.minecraft.orange=橙色
+color.minecraft.yellow=黄色
+color.minecraft.lime=黄绿色
+color.minecraft.green=绿色
+color.minecraft.cyan=青色
+color.minecraft.light_blue=淡蓝色
+color.minecraft.blue=蓝色
+color.minecraft.purple=紫色
+color.minecraft.magenta=品红色
+color.minecraft.pink=粉红色
+color.minecraft.brown=棕色
+color.minecraft.white=白色
+color.minecraft.light_gray=淡灰色
+color.minecraft.gray=灰色
+color.minecraft.black=黑色

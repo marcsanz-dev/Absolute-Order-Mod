@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=このチェストにはまだフィル�
 message.chestseparators.push_no_slot=空きのフィルタースロットがありません。
 message.chestseparators.pull_no_filters=インベントリにまだフィルターがありません。
 message.chestseparators.pull_no_match=フィルターに合うものがここにありません。
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=赤色
+color.minecraft.orange=橙色
+color.minecraft.yellow=黄色
+color.minecraft.lime=黄緑色
+color.minecraft.green=緑色
+color.minecraft.cyan=青緑色
+color.minecraft.light_blue=空色
+color.minecraft.blue=青色
+color.minecraft.purple=紫色
+color.minecraft.magenta=赤紫色
+color.minecraft.pink=桃色
+color.minecraft.brown=茶色
+color.minecraft.white=白色
+color.minecraft.light_gray=薄灰色
+color.minecraft.gray=灰色
+color.minecraft.black=黒色

@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Bu sandıkta henüz filtre yok.
 message.chestseparators.push_no_slot=Boş filtre yuvası yok.
 message.chestseparators.pull_no_filters=Envanterinde henüz filtre yok.
 message.chestseparators.pull_no_match=Buradaki hiçbir şey filtrelerine uymuyor.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Kırmızı
+color.minecraft.orange=Turuncu
+color.minecraft.yellow=Sarı
+color.minecraft.lime=Fıstık Yeşili
+color.minecraft.green=Yeşil
+color.minecraft.cyan=Camgöbeği
+color.minecraft.light_blue=Açık Mavi
+color.minecraft.blue=Mavi
+color.minecraft.purple=Mor
+color.minecraft.magenta=Macenta
+color.minecraft.pink=Pembe
+color.minecraft.brown=Kahverengi
+color.minecraft.white=Beyaz
+color.minecraft.light_gray=Açık Gri
+color.minecraft.gray=Gri
+color.minecraft.black=Siyah

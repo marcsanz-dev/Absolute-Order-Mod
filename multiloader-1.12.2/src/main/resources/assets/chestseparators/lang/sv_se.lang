@@ -250,3 +250,21 @@ message.chestseparators.push_no_filters=Denna kista har inga filter än.
 message.chestseparators.push_no_slot=Ingen ledig filterplats.
 message.chestseparators.pull_no_filters=Ditt inventarium har inga filter än.
 message.chestseparators.pull_no_match=Inget här matchar dina filter.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Röd
+color.minecraft.orange=Orange
+color.minecraft.yellow=Gul
+color.minecraft.lime=Ljusgrön
+color.minecraft.green=Grön
+color.minecraft.cyan=Cyan
+color.minecraft.light_blue=Ljusblå
+color.minecraft.blue=Blå
+color.minecraft.purple=Lila
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Rosa
+color.minecraft.brown=Brun
+color.minecraft.white=Vit
+color.minecraft.light_gray=Ljusgrå
+color.minecraft.gray=Grå
+color.minecraft.black=Svart
