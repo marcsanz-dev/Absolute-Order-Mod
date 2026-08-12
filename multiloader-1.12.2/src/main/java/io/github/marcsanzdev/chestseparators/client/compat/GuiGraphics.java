@@ -48,6 +48,11 @@ public class GuiGraphics {
 
     /** Filled ARGB rectangle. */
     public void fill(int x1, int y1, int x2, int y2, int color) {
+        // Vanilla item rendering (renderItemAndEffectIntoGUI) enables GL_ALPHA_TEST at 0.1 and does not reset it,
+        // so any fill below ~10% alpha — the cristal's hairline borders, top highlights and disabled-button
+        // boxes (alpha 0x0A-0x14) — would be DISCARDED and never drawn. Disable it before every fill (a no-op
+        // when already off) so those faint layers render, matching the modern (shader-based) ports.
+        GlStateManager.disableAlpha();
         Gui.drawRect(x1, y1, x2, y2, color);
         // E1 GL-state leak: Gui.drawRect leaves GlStateManager.color set to the rect's colour. Any textured
         // draw afterwards (blit/renderItem) with no explicit setColor would be tinted by it — e.g. the sub-menu

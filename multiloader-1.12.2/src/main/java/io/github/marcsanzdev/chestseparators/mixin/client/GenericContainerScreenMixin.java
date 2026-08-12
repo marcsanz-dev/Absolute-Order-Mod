@@ -9,6 +9,7 @@ import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
 import io.github.marcsanzdev.chestseparators.event.KeyInputHandler;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Slot;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.text.TextFormatting;
@@ -47,11 +48,23 @@ public abstract class GenericContainerScreenMixin extends GuiScreen {
     @Inject(method = "drawScreen", at = @At("TAIL"))
     private void chestseparators$renderOverlay(int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (this.chestseparators$editor == null) return;
+        // Reset to a clean 2D-GUI GL state before the mod draws, undoing what vanilla left after item/tooltip
+        // rendering (the mod cancels renderHoveredToolTip, one place vanilla would restore it):
+        //  - GL_LIGHTING on darkens the mod's flat drawRect fills (whole cristal reads too dark).
+        //  - GL_ALPHA_TEST at 0.1 DISCARDS any fill/border below ~10% alpha, so the cristal's thin hairline
+        //    borders, top highlights and disabled-button boxes (alpha 0x0A-0x14) vanish entirely.
+        GlStateManager.disableLighting();
+        GlStateManager.disableAlpha();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GuiGraphics ctx = new GuiGraphics((GuiScreen) (Object) this);
         this.chestseparators$editor.render(ctx, mouseX, mouseY, delta);
         this.chestseparators$editor.renderNormalModeOverlay(ctx, mouseX, mouseY);
         ctx.flush();
         ctx.flushTooltip();
+        // Restore the state we (and the fill() primitive) turned off, so vanilla's alpha-tested/lit draws next
+        // frame — the creative player model and the armour/offhand slot icons — are not left rendering black.
+        GlStateManager.enableAlpha();
+        GlStateManager.enableLighting();
     }
 
     // Capa de líneas guardadas: justo tras el fondo del contenedor (matriz en origen en 1.12.2),
@@ -64,12 +77,19 @@ public abstract class GenericContainerScreenMixin extends GuiScreen {
                     shift = At.Shift.AFTER))
     private void chestseparators$renderSavedLines(int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (this.chestseparators$editor == null) return;
+        GlStateManager.disableLighting();
+        GlStateManager.disableAlpha();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GuiGraphics ctx = new GuiGraphics();
         HandledScreenAccessor acc = (HandledScreenAccessor) this;
         ctx.pose().pushPose();
         ctx.pose().translate(acc.getX(), acc.getY(), 0.0);
         this.chestseparators$editor.renderSavedLinesLayer(ctx);
         ctx.pose().popPose();
+        // This hook runs BEFORE the slots and the creative player model are drawn, so restore the alpha test
+        // and lighting our fills disabled — otherwise those vanilla, alpha-tested draws render black.
+        GlStateManager.enableAlpha();
+        GlStateManager.enableLighting();
     }
 
     // Suprime los tooltips de item de vanilla mientras se edita.
