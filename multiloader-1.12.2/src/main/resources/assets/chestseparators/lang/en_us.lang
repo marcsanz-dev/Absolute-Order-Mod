@@ -274,3 +274,21 @@ message.chestseparators.push_no_filters=This chest has no filters yet.
 message.chestseparators.push_no_slot=No free filter slot for these items.
 message.chestseparators.pull_no_filters=Your inventory has no filters yet.
 message.chestseparators.pull_no_match=Nothing here matches your filters.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Red
+color.minecraft.orange=Orange
+color.minecraft.yellow=Yellow
+color.minecraft.lime=Lime
+color.minecraft.green=Green
+color.minecraft.cyan=Cyan
+color.minecraft.light_blue=Light Blue
+color.minecraft.blue=Blue
+color.minecraft.purple=Purple
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Pink
+color.minecraft.brown=Brown
+color.minecraft.white=White
+color.minecraft.light_gray=Light Gray
+color.minecraft.gray=Gray
+color.minecraft.black=Black

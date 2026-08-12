@@ -271,3 +271,21 @@ message.chestseparators.push_no_filters=Este cofre aún no tiene filtros.
 message.chestseparators.push_no_slot=No hay hueco libre en los filtros.
 message.chestseparators.pull_no_filters=Tu inventario aún no tiene filtros.
 message.chestseparators.pull_no_match=Nada aquí coincide con tus filtros.
+
+# Vanilla dye/colour names (1.13+ keys; backfilled for 1.12.2)
+color.minecraft.red=Rojo
+color.minecraft.orange=Naranja
+color.minecraft.yellow=Amarillo
+color.minecraft.lime=Verde lima
+color.minecraft.green=Verde
+color.minecraft.cyan=Cian
+color.minecraft.light_blue=Azul claro
+color.minecraft.blue=Azul
+color.minecraft.purple=Morado
+color.minecraft.magenta=Magenta
+color.minecraft.pink=Rosa
+color.minecraft.brown=Marrón
+color.minecraft.white=Blanco
+color.minecraft.light_gray=Gris claro
+color.minecraft.gray=Gris
+color.minecraft.black=Negro
