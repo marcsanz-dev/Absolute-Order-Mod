@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.GlStateManager;
@@ -19,6 +18,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityEnderChest;
 import net.minecraft.tileentity.TileEntityShulkerBox;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -31,6 +31,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.opengl.GL11;
 
 /**
  * Renders the auto-deposit feedback: each deposited item flies from the player toward its destination
@@ -80,7 +81,11 @@ public final class AutoDepositAnimator {
     private static final class ChestOpen {
         long closeAt;
         boolean sound;
+        boolean closeSoundPlayed;
     }
+
+    // How fast the lid rotates per client tick (vanilla TileEntityChest.update uses 0.1f).
+    private static final float LID_STEP = 0.1f;
 
     /** Chests (and double-chest neighbours) currently held open by the animation, client-side only. */
     private static final Map<BlockPos, ChestOpen> OPEN_CHESTS = new HashMap<>();
@@ -203,18 +208,14 @@ public final class AutoDepositAnimator {
 
         if (be instanceof TileEntityChest || be instanceof TileEntityEnderChest) {
             boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
-            // Raise the lid client-side: numPlayersUsing is a public field the chest TE's update() tick animates
-            // its lidAngle from (exactly what vanilla's receiveClientEvent sets). 1 = lid up.
-            if (be instanceof TileEntityChest) {
-                ((TileEntityChest) be).numPlayersUsing = 1;
-            } else {
-                ((TileEntityEnderChest) be).numPlayersUsing = 1;
-            }
+            // The lid itself is driven every client tick in tickChests() (see driveChest/driveEnder): we don't
+            // rely on the TE's own update() tick here, because in this client env it does not reliably animate
+            // lidAngle from numPlayersUsing. Registering the pos is enough; the tick does the rest.
             markOpen(pos, closeAt, true);
             if (firstOpen) playContainerSound(world, pos, openSoundFor(be));
 
-            // TODO(1.12.2 port): double-chest neighbour lid sync depended on ChestBlock.TYPE/FACING block
-            // properties (E4+); 1.12.2 chests have no such state, so the second half is not opened here.
+            // Double chests (Large Chest) are two adjacent single-chest TEs, each with its own lidAngle; the
+            // neighbour half is opened together in driveChest() so the whole model animates.
         } else if (be instanceof TileEntityShulkerBox) {
             boolean firstOpen = !OPEN_CHESTS.containsKey(pos);
             // TODO(1.12.2 port): the ShulkerAnimationAccessor mixin (mixin.client) is out of scope for this
@@ -230,6 +231,9 @@ public final class AutoDepositAnimator {
         state.sound = state.sound || sound;
     }
 
+    // Runs every client tick: for each held-open container, drive its lid toward open (until closeAt) or
+    // toward closed (after), removing it once fully shut. The lid is animated HERE rather than by the TE's
+    // own update() tick, which does not reliably run/animate for these client-side chests in this env.
     private static void tickChests() {
         if (OPEN_CHESTS.isEmpty()) return;
         WorldClient world = Minecraft.getMinecraft().world;
@@ -241,27 +245,81 @@ public final class AutoDepositAnimator {
         Iterator<Map.Entry<BlockPos, ChestOpen>> it = OPEN_CHESTS.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<BlockPos, ChestOpen> entry = it.next();
-            if (now < entry.getValue().closeAt) continue;
-            closeContainer(world, entry.getKey(), entry.getValue().sound);
-            it.remove();
+            BlockPos pos = entry.getKey();
+            ChestOpen state = entry.getValue();
+            TileEntity be = world.getTileEntity(pos);
+            if (be == null) {
+                it.remove();
+                continue;
+            }
+
+            boolean open = now < state.closeAt;
+            if (!open && state.sound && !state.closeSoundPlayed) {
+                playContainerSound(world, pos, closeSoundFor(be));
+                state.closeSoundPlayed = true;
+            }
+
+            boolean atRest;
+            if (be instanceof TileEntityChest) {
+                atRest = driveChest(world, pos, (TileEntityChest) be, open);
+            } else if (be instanceof TileEntityEnderChest) {
+                atRest = driveEnder((TileEntityEnderChest) be, open);
+            } else {
+                // Shulker boxes: no lid field to drive here (animation stage is out of scope), so they simply
+                // close on schedule once the dwell elapses.
+                atRest = !open;
+            }
+
+            if (!open && atRest) it.remove();
         }
     }
 
-    private static void closeContainer(WorldClient world, BlockPos pos, boolean playSound) {
-        TileEntity be = world.getTileEntity(pos);
-        if (be instanceof TileEntityChest || be instanceof TileEntityEnderChest) {
-            // Lower the lid: numPlayersUsing back to 0 so the TE's update() tick animates the lid closed.
-            if (be instanceof TileEntityChest) {
-                ((TileEntityChest) be).numPlayersUsing = 0;
-            } else {
-                ((TileEntityEnderChest) be).numPlayersUsing = 0;
-            }
-            if (playSound) playContainerSound(world, pos, closeSoundFor(be));
-        } else if (be instanceof TileEntityShulkerBox) {
-            // TODO(1.12.2 port): shulker CLOSING stage (ShulkerAnimationAccessor) is out of scope; only the
-            // close sound plays.
-            if (playSound) playContainerSound(world, pos, SoundEvents.BLOCK_SHULKER_BOX_CLOSE);
+    /** Drives a chest lid (and its double-chest neighbour half) toward open/closed. Returns true once at rest. */
+    private static boolean driveChest(WorldClient world, BlockPos pos, TileEntityChest be, boolean open) {
+        TileEntityChest other = adjacentChestHalf(world, pos, be);
+        boolean atRest = stepChestLid(be, open);
+        if (other != null) atRest &= stepChestLid(other, open);
+        return atRest;
+    }
+
+    /** Advances one chest half's lidAngle one tick; keeps numPlayersUsing pinned so update() won't fight it. */
+    private static boolean stepChestLid(TileEntityChest chest, boolean open) {
+        chest.numPlayersUsing = open ? 1 : 0;
+        chest.prevLidAngle = chest.lidAngle;
+        if (open) {
+            if (chest.lidAngle >= 1.0f) return true;
+            chest.lidAngle = Math.min(1.0f, chest.lidAngle + LID_STEP);
+            return false;
         }
+        if (chest.lidAngle <= 0.0f) return true;
+        chest.lidAngle = Math.max(0.0f, chest.lidAngle - LID_STEP);
+        return false;
+    }
+
+    private static boolean driveEnder(TileEntityEnderChest be, boolean open) {
+        be.numPlayersUsing = open ? 1 : 0;
+        be.prevLidAngle = be.lidAngle;
+        if (open) {
+            if (be.lidAngle >= 1.0f) return true;
+            be.lidAngle = Math.min(1.0f, be.lidAngle + LID_STEP);
+            return false;
+        }
+        if (be.lidAngle <= 0.0f) return true;
+        be.lidAngle = Math.max(0.0f, be.lidAngle - LID_STEP);
+        return false;
+    }
+
+    // Finds the other half of a double chest: a horizontally-adjacent chest TE of the SAME block (a normal
+    // chest never pairs with a trapped chest). 1.12.2 double chests are two single-chest blocks, no state.
+    private static TileEntityChest adjacentChestHalf(WorldClient world, BlockPos pos, TileEntityChest self) {
+        net.minecraft.block.Block block = world.getBlockState(pos).getBlock();
+        for (EnumFacing facing : EnumFacing.HORIZONTALS) {
+            BlockPos n = pos.offset(facing);
+            if (world.getBlockState(n).getBlock() != block) continue;
+            TileEntity nbe = world.getTileEntity(n);
+            if (nbe instanceof TileEntityChest && nbe != self) return (TileEntityChest) nbe;
+        }
+        return null;
     }
 
     private static SoundEvent openSoundFor(TileEntity be) {
@@ -269,18 +327,9 @@ public final class AutoDepositAnimator {
     }
 
     private static SoundEvent closeSoundFor(TileEntity be) {
-        return be instanceof TileEntityEnderChest
-                ? SoundEvents.BLOCK_ENDERCHEST_CLOSE
-                : SoundEvents.BLOCK_CHEST_CLOSE;
-    }
-
-    private static BlockPos doubleNeighbor(WorldClient world, BlockPos pos) {
-        // TODO(1.12.2 port): double-chest detection used ChestBlock.TYPE/FACING block-state properties that do
-        // not exist in 1.12.2 (double chests are two adjacent single-chest blocks, no ChestType state), so the
-        // paired-lid sync is dropped. Kept for structural parity; always reports no neighbour.
-        IBlockState state = world.getBlockState(pos);
-        if (!(state.getBlock() instanceof net.minecraft.block.BlockChest)) return null;
-        return null;
+        if (be instanceof TileEntityEnderChest) return SoundEvents.BLOCK_ENDERCHEST_CLOSE;
+        if (be instanceof TileEntityShulkerBox) return SoundEvents.BLOCK_SHULKER_BOX_CLOSE;
+        return SoundEvents.BLOCK_CHEST_CLOSE;
     }
 
     private static void playContainerSound(WorldClient world, BlockPos pos, SoundEvent sound) {
@@ -350,6 +399,17 @@ public final class AutoDepositAnimator {
 
             float spin = (age * 0.18f) % 360.0f;
 
+            // Dim the flying item to the world light at its position (like a dropped item) instead of the full
+            // GUI-bright look. Item models use DefaultVertexFormats.ITEM, which carries NO lightmap coord, so
+            // setting the lightmap does nothing — the fixed-function item lighting itself must be scaled.
+            // getLightBrightness() ignores time of day (stored sky light stays 15 at night), so combine block
+            // light with sky light scaled by the sun brightness; floor at 0.2 so it stays visible in the dark.
+            BlockPos lightPos = new BlockPos(pos.x, pos.y, pos.z);
+            float skyLight = world.getLightFor(net.minecraft.world.EnumSkyBlock.SKY, lightPos) / 15.0f;
+            float blockLight = world.getLightFor(net.minecraft.world.EnumSkyBlock.BLOCK, lightPos) / 15.0f;
+            float brightness = Math.max(0.2f, Math.max(blockLight, skyLight * world.getSunBrightness(1.0f)));
+            scaleItemLights(brightness);
+
             GlStateManager.pushMatrix();
             GlStateManager.translate(pos.x - camX, pos.y - camY, pos.z - camZ);
             GlStateManager.rotate(spin, 0.0f, 1.0f, 0.0f);
@@ -365,5 +425,31 @@ public final class AutoDepositAnimator {
 
     private static Vec3d lerp(Vec3d a, Vec3d b, double t) {
         return new Vec3d(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+    }
+
+    // Reused 4-float buffer for the glLight* calls below (LWJGL2 needs a FloatBuffer, not varargs).
+    private static final java.nio.FloatBuffer LIGHT_BUF = org.lwjgl.BufferUtils.createFloatBuffer(4);
+
+    private static java.nio.FloatBuffer lightBuf(float r, float g, float b, float a) {
+        // Cast to java.nio.Buffer for clear()/flip(): compiled on JDK 11 (where FloatBuffer overrides them
+        // with a covariant FloatBuffer return) but run on Java 8 (where they only exist on Buffer). Calling
+        // them on the FloatBuffer type emits a JDK-11-only signature → NoSuchMethodError at runtime on 8.
+        ((java.nio.Buffer) LIGHT_BUF).clear();
+        LIGHT_BUF.put(r).put(g).put(b).put(a);
+        ((java.nio.Buffer) LIGHT_BUF).flip();
+        return LIGHT_BUF;
+    }
+
+    /**
+     * Scales the standard item lighting (the two diffuse lights + the global ambient set by {@link
+     * RenderHelper#enableStandardItemLighting()}) by a 0..1 world-brightness, so the flying item is lit like a
+     * dropped item at that spot — bright by day, dim at night/underground — instead of full GUI brightness.
+     */
+    private static void scaleItemLights(float brightness) {
+        float diffuse = 0.6f * brightness; // vanilla enableStandardItemLighting uses 0.6 diffuse per light
+        float ambient = 0.4f * brightness; // and a 0.4 global ambient
+        GL11.glLight(GL11.GL_LIGHT0, GL11.GL_DIFFUSE, lightBuf(diffuse, diffuse, diffuse, 1.0f));
+        GL11.glLight(GL11.GL_LIGHT1, GL11.GL_DIFFUSE, lightBuf(diffuse, diffuse, diffuse, 1.0f));
+        GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT, lightBuf(ambient, ambient, ambient, 1.0f));
     }
 }
