@@ -693,9 +693,12 @@ public class ChestConfigManager {
 
     public void loadShulkerConfig(UUID uuid) {
         clearCurrentConfig();
-        // Preserve the server-authoritative whitelist; only update visual config from local storage.
         RawData data = readRawData(getFileForShulker(uuid));
         currentChestConfig.putAll(data.visual);
+        // Shulkers are UUID-keyed and self-contained (same as ender/entity configs), so their filters live
+        // in the .dat and must be restored from it — the server drops the in-memory whitelist when the block
+        // entity is broken, so it cannot be the source of truth here. The editor re-syncs it on open.
+        currentWhitelists.putAll(data.filters);
     }
 
     public void saveConfig(BlockPos pos, String dimensionId) {

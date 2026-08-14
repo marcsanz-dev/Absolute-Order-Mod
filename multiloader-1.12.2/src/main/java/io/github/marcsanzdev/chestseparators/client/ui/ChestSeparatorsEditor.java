@@ -345,8 +345,12 @@ public class ChestSeparatorsEditor {
                     || group == CreativeTabs.INVENTORY) continue;
 
             boolean isSearch = group == CreativeTabs.SEARCH;
+            // Resolve the tab name through the CLIENT I18n (net.minecraft.client.resources.I18n), which holds
+            // the vanilla itemGroup.* keys; group.getTranslatedTabLabel() goes through the common LanguageMap,
+            // which does not carry these client-only keys here, so it renders the raw "itemGroup.buildingBlocks".
             EditorSessionData.CreativeTabInfo tab = new EditorSessionData.CreativeTabInfo(
-                    new net.minecraft.util.text.TextComponentString(group.getTranslatedTabLabel()),
+                    new net.minecraft.util.text.TextComponentString(
+                            net.minecraft.client.resources.I18n.format("itemGroup." + group.getTabLabel())),
                     group.getIconItemStack(), group, isSearch, false);
 
             if (group == CreativeTabs.BUILDING_BLOCKS) session.availableTabs.set(0, tab);
@@ -462,10 +466,15 @@ public class ChestSeparatorsEditor {
 
     /** Fetches the chest's server-authoritative whitelists, when a real chest is open. */
     private void requestChestWhitelistsIfNeeded() {
+        // Shulker boxes are UUID-keyed and self-contained like ender/entity configs: their whitelist is
+        // restored from the local .dat by loadShulkerConfig, so must NOT be overwritten by the position-keyed
+        // server request — the server drops the block entity's whitelist when the shulker is broken, so it
+        // would answer empty and wipe the just-loaded filters.
         if (!session.isInventoryScreenContext
                 && session.currentChestPos != null
                 && !session.isEntityChest
-                && !session.isEnderChest) {
+                && !session.isEnderChest
+                && !session.isShulkerBox) {
             io.github.marcsanzdev.chestseparators.network.ModNet.sendToServer(
                     new io.github.marcsanzdev.chestseparators.network.WhitelistRequestPayload(
                             session.currentChestPos));
@@ -996,14 +1005,16 @@ public class ChestSeparatorsEditor {
         copy.getStyle().setColor(color);
         session.statusMessage = copy;
         session.statusMessageTime = System.currentTimeMillis();
+        session.statusMessageColor = -1; // keep the §-code named colour
     }
 
     /** Shows a status message tinted with an exact ARGB/RGB color (used for color copy/paste feedback). */
     public void showStatus(ITextComponent message, int rgbColor) {
-        // TODO(1.12.2 port): E1 text styling has no arbitrary-RGB TextColor (only the 16 named TextFormatting
-        // colors), so the exact copy/paste feedback tint cannot be applied; the message shows uncolored.
+        // E1 §-codes only carry the 16 named colours, so the arbitrary RGB can't live on the text component;
+        // stash it and let renderStatusMessage draw the (unstyled) message with this exact colour instead.
         session.statusMessage = message.createCopy();
         session.statusMessageTime = System.currentTimeMillis();
+        session.statusMessageColor = rgbColor & 0xFFFFFF;
     }
 
     public boolean isHovering(int x, int y, int width, int height, double mouseX, double mouseY) {

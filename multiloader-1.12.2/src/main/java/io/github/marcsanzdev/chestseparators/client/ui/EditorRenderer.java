@@ -415,7 +415,10 @@ public class EditorRenderer {
             if (elapsed < 2000) {
                 int alpha = 255;
                 if (elapsed > 1500) alpha = (int) (255 * (1.0f - (elapsed - 1500) / 500.0f));
-                int color = (alpha << 24) | 0xFFFFFF;
+                // Copy/paste feedback carries an exact RGB in the session (E1 §-codes can't); everything else
+                // keeps its §-code named colour, drawn over a white base.
+                int rgb = (session.statusMessageColor >= 0) ? session.statusMessageColor : 0xFFFFFF;
+                int color = (alpha << 24) | rgb;
                 context.drawCenteredString(
                         Minecraft.getMinecraft().fontRenderer,
                         session.statusMessage,

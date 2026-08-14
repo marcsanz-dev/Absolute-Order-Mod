@@ -82,4 +82,18 @@ public abstract class ShulkerBoxBlockEntityMixin implements IShulkerUUIDProvider
             tag.setString("ChestSeparatorsUUID", this.chestSeparatorsUUID.toString());
         }
     }
+
+    /**
+     * Vanilla drops a broken Shulker Box by writing its data through {@code saveToNbt} into the item's
+     * {@code BlockEntityTag} — NOT through {@code writeToNBT} — so the mod UUID must be added here too. Without
+     * it the dropped item carries no UUID, the re-placed shulker mints a fresh one on next open, and its
+     * filters (keyed by the old UUID) are lost. {@code writeToNBT} above still covers world-save and the
+     * empty-in-Creative force drop; {@code readFromNBT} restores the UUID on placement for both paths.
+     */
+    @Inject(method = "saveToNbt", at = @At("TAIL"))
+    protected void chestseparators$onSaveToNbt(NBTTagCompound tag, CallbackInfoReturnable<NBTTagCompound> cir) {
+        if (this.chestSeparatorsUUID != null) {
+            tag.setString("ChestSeparatorsUUID", this.chestSeparatorsUUID.toString());
+        }
+    }
 }

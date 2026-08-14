@@ -160,6 +160,9 @@ public class EditorSessionData {
     public UUID currentShulkerUUID;
     public ITextComponent statusMessage = null;
     public long statusMessageTime = 0;
+    // Base RGB (0xRRGGBB) the status text is drawn in, or -1 to keep the message's own §-code styling. Lets
+    // the copy/paste feedback show in the exact copied colour, which E1 §-codes (16 named colours) can't carry.
+    public int statusMessageColor = -1;
 
     // Whitelist Tools
     public int wlToolMode = 0; // 0 = Area, 1 = Trace
