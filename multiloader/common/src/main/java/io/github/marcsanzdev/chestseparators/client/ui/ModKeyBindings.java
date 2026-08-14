@@ -9,6 +9,7 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBindings {
     public static KeyMapping openEditorKey;
     public static KeyMapping showPanelModifierKey;
+    public static KeyMapping toggleEditButtonsKey;
     public static KeyMapping toggleMagnifierKey;
     public static KeyMapping pushKey;
     public static KeyMapping pullKey;
@@ -28,6 +29,12 @@ public class ModKeyBindings {
         showPanelModifierKey = new KeyMapping(
                 "key.chestseparators.show_panel_modifier", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, CATEGORY);
         KeyMappingRegistry.register(showPanelModifierKey);
+
+        // Master toggle for the whole top toolbar (showEditButtons). Default H; works in the world and
+        // over an open container.
+        toggleEditButtonsKey = new KeyMapping(
+                "key.chestseparators.toggle_edit_buttons", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
+        KeyMappingRegistry.register(toggleEditButtonsKey);
 
         toggleMagnifierKey = new KeyMapping(
                 "key.chestseparators.toggle_magnifier", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY);

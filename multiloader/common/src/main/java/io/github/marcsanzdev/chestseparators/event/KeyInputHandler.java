@@ -1,5 +1,6 @@
 package io.github.marcsanzdev.chestseparators.event;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
@@ -16,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
+import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {
 
@@ -36,6 +38,7 @@ public class KeyInputHandler {
 
             if (client.player == null) return;
             while (ModKeyBindings.openEditorKey.consumeClick()) actionBar(client, togglePreviewPanel());
+            while (ModKeyBindings.toggleEditButtonsKey.consumeClick()) actionBar(client, toggleEditButtons());
             while (ModKeyBindings.toggleMagnifierKey.consumeClick()) actionBar(client, toggleMagnifier());
 
             handleAutoDepositTriggers(client);
@@ -142,8 +145,16 @@ public class KeyInputHandler {
     }
 
     public static boolean isModifierPressed() {
-        // Whether the "show panel" modifier key (default Left Alt) is currently held. Reading the mapping's
-        // live pressed state keeps this loader-agnostic (no Fabric KeyBindingHelper / raw GLFW poll needed).
+        // Whether the "show panel" modifier key (default Left Alt) is currently held. While a container
+        // screen is open — exactly where the left panel lives — vanilla stops updating KeyMapping down-state
+        // (movement keys are released), so showPanelModifierKey.isDown() reads false and the hold-to-peek
+        // gesture would never fire over an open chest. Poll the bound key's raw GLFW state instead (the same
+        // technique the Shift checks use), falling back to isDown() for non-keysym binds.
+        InputConstants.Key bound = InputConstants.getKey(ModKeyBindings.showPanelModifierKey.saveString());
+        if (bound.getType() == InputConstants.Type.KEYSYM && bound.getValue() != GLFW.GLFW_KEY_UNKNOWN) {
+            long window = Minecraft.getInstance().getWindow().handle();
+            if (GLFW.glfwGetKey(window, bound.getValue()) == GLFW.GLFW_PRESS) return true;
+        }
         return ModKeyBindings.showPanelModifierKey.isDown();
     }
 }

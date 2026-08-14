@@ -358,6 +358,7 @@ public final class AbsoluteOrderConfigScreen {
         addKeyEntry.accept(ModKeyBindings.toggleMagnifierKey, "config.chestseparators.toggle_magnifier");
         addKeyEntry.accept(ModKeyBindings.autoDepositKey, "config.chestseparators.auto_deposit");
         addKeyEntry.accept(ModKeyBindings.openEditorKey, "config.chestseparators.toggle_preview_panel");
+        addKeyEntry.accept(ModKeyBindings.toggleEditButtonsKey, "config.chestseparators.toggle_edit_buttons");
         addKeyEntry.accept(ModKeyBindings.showPanelModifierKey, "config.chestseparators.show_panel_modifier");
         addKeyEntry.accept(ModKeyBindings.pushKey, "config.chestseparators.push");
         addKeyEntry.accept(ModKeyBindings.pullKey, "config.chestseparators.pull");

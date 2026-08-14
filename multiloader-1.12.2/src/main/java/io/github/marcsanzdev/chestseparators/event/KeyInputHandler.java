@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.ITextComponent;
+import org.lwjgl.input.Keyboard;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
@@ -50,6 +51,7 @@ public class KeyInputHandler {
         if (client.currentScreen != null) return;
 
         while (ModKeyBindings.openEditorKey.isPressed()) actionBar(client, togglePreviewPanel());
+        while (ModKeyBindings.toggleEditButtonsKey.isPressed()) actionBar(client, toggleEditButtons());
         while (ModKeyBindings.toggleMagnifierKey.isPressed()) actionBar(client, toggleMagnifier());
 
         handleAutoDepositTriggers(client);
@@ -160,8 +162,11 @@ public class KeyInputHandler {
     }
 
     public static boolean isModifierPressed() {
-        // Whether the "show panel" modifier key (default Left Alt) is currently held. Reading the mapping's
-        // live pressed state keeps this loader-agnostic (no raw LWJGL key poll needed).
+        // Over an open GUI 1.12.2 stops updating KeyBinding pressed-state, so isKeyDown() reads false there —
+        // exactly where the left panel lives. Poll the bound key raw via LWJGL2 Keyboard (falling back to
+        // isKeyDown() for unbound/negative codes) so the hold-to-peek gesture works over an open chest.
+        int code = ModKeyBindings.showPanelModifierKey.getKeyCode();
+        if (code > 0 && Keyboard.isKeyDown(code)) return true;
         return ModKeyBindings.showPanelModifierKey.isKeyDown();
     }
 }

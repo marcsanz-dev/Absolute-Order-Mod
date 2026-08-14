@@ -179,6 +179,12 @@ public abstract class GenericContainerScreenMixin extends GuiScreen {
             ci.cancel();
             return;
         }
+        if (!editor.isEditMode() && ModKeyBindings.matches(ModKeyBindings.toggleEditButtonsKey, keyCode)) {
+            editor.showStatus(KeyInputHandler.toggleEditButtons(), TextFormatting.GRAY);
+            editor.playClickSound(1.0f);
+            ci.cancel();
+            return;
+        }
         if (!editor.isEditMode() && GlobalChestConfig.instance.showDepositButton) {
             boolean shift = GuiScreen.isShiftKeyDown();
             if (ModKeyBindings.matches(ModKeyBindings.pushKey, keyCode)) {

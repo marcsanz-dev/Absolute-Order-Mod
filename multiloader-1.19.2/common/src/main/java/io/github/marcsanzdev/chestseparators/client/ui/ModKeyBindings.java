@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBindings {
     public static KeyMapping openEditorKey;
     public static KeyMapping showPanelModifierKey;
+    public static KeyMapping toggleEditButtonsKey;
     public static KeyMapping toggleMagnifierKey;
     public static KeyMapping pushKey;
     public static KeyMapping pullKey;
@@ -31,6 +32,10 @@ public class ModKeyBindings {
         toggleMagnifierKey = new KeyMapping(
                 "key.chestseparators.toggle_magnifier", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY);
         KeyMappingRegistry.register(toggleMagnifierKey);
+
+        toggleEditButtonsKey = new KeyMapping(
+                "key.chestseparators.toggle_edit_buttons", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
+        KeyMappingRegistry.register(toggleEditButtonsKey);
 
         // Push inventory items INTO the open chest's filters. Hold Shift to also push into empty slots.
         pushKey = new KeyMapping("key.chestseparators.push", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_S, CATEGORY);

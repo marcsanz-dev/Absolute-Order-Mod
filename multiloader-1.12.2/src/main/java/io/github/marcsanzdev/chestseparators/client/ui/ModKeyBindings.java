@@ -17,6 +17,7 @@ public class ModKeyBindings {
 
     public static KeyBinding openEditorKey;
     public static KeyBinding showPanelModifierKey;
+    public static KeyBinding toggleEditButtonsKey;
     public static KeyBinding toggleMagnifierKey;
     public static KeyBinding pushKey;
     public static KeyBinding pullKey;
@@ -31,6 +32,11 @@ public class ModKeyBindings {
         // Default Left Alt: the "show panel" modifier, held to reveal the preview panel outside edit mode.
         showPanelModifierKey = new KeyBinding("key.chestseparators.show_panel_modifier", Keyboard.KEY_LMENU, CATEGORY);
         ClientRegistry.registerKeyBinding(showPanelModifierKey);
+
+        // Master toggle for the whole top toolbar (showEditButtons). Default H; works in the world and
+        // over an open container.
+        toggleEditButtonsKey = new KeyBinding("key.chestseparators.toggle_edit_buttons", Keyboard.KEY_H, CATEGORY);
+        ClientRegistry.registerKeyBinding(toggleEditButtonsKey);
 
         toggleMagnifierKey = new KeyBinding("key.chestseparators.toggle_magnifier", Keyboard.KEY_M, CATEGORY);
         ClientRegistry.registerKeyBinding(toggleMagnifierKey);

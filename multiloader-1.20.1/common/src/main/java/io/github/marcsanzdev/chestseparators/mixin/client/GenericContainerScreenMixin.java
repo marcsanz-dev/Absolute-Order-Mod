@@ -280,6 +280,14 @@ public abstract class GenericContainerScreenMixin extends Screen {
                     cir.setReturnValue(true);
                     return;
                 }
+                if (ModKeyBindings.toggleEditButtonsKey.matches(input.key(), input.scancode())) {
+                    this.editor.showStatus(
+                            io.github.marcsanzdev.chestseparators.event.KeyInputHandler.toggleEditButtons(),
+                            net.minecraft.ChatFormatting.GRAY);
+                    this.editor.playClickSound(1.0f);
+                    cir.setReturnValue(true);
+                    return;
+                }
             }
 
             // Push/Pull hotkeys act on the open container and only fire when no editor sub-menu is active.
