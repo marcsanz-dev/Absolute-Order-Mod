@@ -88,7 +88,7 @@ Test 2, etc.
 
 | Obj | 1.21.11 | 26.2 | 26.1 | 1.20.1 | 1.19.2 | 1.18.2 | 1.16.5 | 1.12.2 |
 |---|---|---|---|---|---|---|---|---|
-| T2 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| T2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  ← **Test 2 completo 8/8**
 
 ---
 
@@ -104,7 +104,7 @@ Test 2, etc.
 
 | Obj | 1.21.11 | 26.2 | 26.1 | 1.20.1 | 1.19.2 | 1.18.2 | 1.16.5 | 1.12.2 |
 |---|---|---|---|---|---|---|---|---|
-| T3 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| T3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  ← ya verificado previamente por el usuario en todas las versiones
 
 ---
 
@@ -120,7 +120,7 @@ Test 2, etc.
 
 | Obj | 1.21.11 | 26.2 | 26.1 | 1.20.1 | 1.19.2 | 1.18.2 | 1.16.5 | 1.12.2 |
 |---|---|---|---|---|---|---|---|---|
-| T4 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| T4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  ← ya verificado previamente por el usuario en todas las versiones
 
 ---
 
@@ -135,7 +135,7 @@ Test 2, etc.
 
 | Obj | 1.21.11 | 26.2 | 26.1 | 1.20.1 | 1.19.2 | 1.18.2 | 1.16.5 | 1.12.2 |
 |---|---|---|---|---|---|---|---|---|
-| T5 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| T5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  ← **Test 5 completo 8/8 · batería manual COMPLETA (T1-T5)**
 
 ---
 
@@ -148,6 +148,9 @@ Test 2, etc.
 | 3 | T1 | 1.19.2 Forge | Crash al seleccionar el mod en la lista de Forge (`getRootResource` estricta): `logoFile="assets/chestseparators/icon.png"` (ruta con `/`). También el logo fallaba silencioso en el resto de Forge/NeoForge | ✅ corregido | Sí (11 módulos Forge/NeoForge) — `logoFile="icon.png"` + `icon.png` en raíz de resources (patrón de 1.16.5) |
 | 4 | T1 | 1.16.5 Forge | dev-runClient crashea en horneado de modelos (`Transformation.func_227987_b_` no remapeado) + `ClassMetadataNotFound` en Mixin | ✅ corregido | Solo 1.16.5 — `forge_version 36.2.42→36.2.34` (recomendada; issue architectury-plugin#45) + juego en Java 8 |
 | 5 | T1 | 1.12.2 Forge | dev-runClient: el @Mod no se descubre cuando MixinBooter está en runtime (conflicto FG 2.3). **Solo dev** — el jar publicado carga el @Mod vía `FMLCorePluginContainsFMLMod` | ⏳ dev-only, no bloquea el jar | No aplica (dev-env); se verifica con el jar real |
+| 9 | T5 | 1.12.2 Forge (real) | Los filtros de una shulker se perdían al romper/recolocar. DOS causas: (a) el UUID no viajaba en el drop (vanilla usa `saveToNbt`, no `writeToNBT`); (b) `loadShulkerConfig` cargaba solo visual y `requestChestWhitelistsIfNeeded` pedía el whitelist al servidor por posición (vacío tras romper) y lo pisaba | ✅ corregido | Solo 1.12.2 — UUID en `saveToNbt` + `loadShulkerConfig` carga `data.filters` + excluir shulker de la petición al servidor (como ender/minecart) |
+| 10 | T3/pick | 1.12.2 Forge (real) | Título de pestaña creativa crudo (`itemGroup.buildingBlocks`) en el picker de filtros: `getTranslatedTabLabel()` resuelve por el LanguageMap común (sin claves `itemGroup.*` vanilla) | ✅ corregido | Solo 1.12.2 — resolver con el client `I18n.format("itemGroup."+getTabLabel())` |
+| 7 | T2 | 1.12.2 Forge | El mensaje "Color Copied!/Pasted" no salía teñido con el color copiado (E1 §-codes solo tienen 16 colores nombrados; el overload `showStatus(msg,int)` descartaba el RGB) | ✅ corregido | Solo 1.12.2 — guardar `statusMessageColor` en la sesión y pintar el texto con ese RGB en el `drawString` (las modernas ya usan `TextColor.fromRgb`) |
 | 6 | T1 extra | 1.12.2 Forge (instancia real) | Traducciones de keybinds crudas en el Controls de vanilla (`key.chestseparators.*`) + categoría cruda. Causa: `LangFix` solo inyectaba en el `LanguageMap` común (TextComponentTranslation); el Controls usa el `Locale` estático de `client.I18n`, que no se tocaba | ✅ corregido | 1.12.2 — `LangFix` inyecta también en el `Locale` de `I18n` (reflexión por tipo, campo estático) + `key.categories.chestseparators` añadida a lang de 1.12.2 y 1.16.5–1.20.1 (26.x/1.21.11 ya la tenían) |
 
 **Total aprox. de sesiones:** 15 (Test 1) + 8×4 (Tests 2-5) = **47**.
