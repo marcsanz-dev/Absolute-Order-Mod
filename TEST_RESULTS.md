@@ -10,6 +10,42 @@
 
 ---
 
+## 🚀 BOOT SMOKE DE LOS PORTS (2026-08-12)
+
+Verificación de arranque **versión a versión** de todos los ports construibles. Es la parte
+determinista de la batería (secciones 0/A) que **no** necesita la extensión MC-Claude MCP ni
+capturas: se lanza el cliente dev, se espera al menú principal y se analiza el log completo.
+
+**Método por versión:** `:fabric:runClient` (JDK 21 en las versiones obfuscadas, JDK 25 en 26.x) →
+esperar marcador de título (`Sound engine started` + creación de atlas) → `grep` del log por
+`Mixin apply failed` / `InvalidInjectionException` / `NoSuchMethod`/`NoSuchField` / `LinkageError` /
+crash → cerrar el proceso. **Cobertura:** carga del mod, init completo, mixins no-lazy, registro de
+red y arranque a título. **No** ejercita los screen-mixins ni la GUI del editor (eso es la batería
+GUI completa, bloqueada sin el puente MCP `http://127.0.0.1:8722/mcp`).
+
+| Versión | Loader | Mods | `chestseparators 2.0.0` | Receivers red | Título | Fallos mixin/runtime | Veredicto |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| **1.20.1** | Fabric 0.16.14 | 65 | ✅ | 14/14 (C2S+S2C) | ✅ | 0 | ✅ PASA |
+| **1.19.2** | Fabric 0.16.14 | 53 | ✅ | ✅ | ✅ | 0 | ✅ PASA |
+| **1.18.2** | Fabric 0.16.14 | 57 | ✅ | ✅ | ✅ | 0 | ✅ PASA |
+| **26.1** (26.1.2) | Fabric 0.19.3 | 57 | ✅ | ✅ | ✅ | 0 | ✅ PASA |
+| **26.2** | Fabric 0.19.3 | 56 | ✅ | ✅ | ✅ | 0 | ✅ PASA |
+| **1.16.5** | Fabric/Forge | — | ✅ | — | ✅ | 0 | ✅ PASA *(en vivo con GUI esta sesión)* |
+| **1.12.2** | Forge (legacy) | — | ✅ | — | ✅ | 0 | ✅ PASA *(en vivo con GUI esta sesión)* |
+
+**Notas:**
+- En las 5 modernas: el mod carga, corre su init entero (los ~14 receivers C2S/S2C se registran),
+  aparece en el `ResourceManager` como "Absolute Order" y llega al menú **sin un solo fallo de mixin
+  en runtime**. El único hit "mixin" del grep es un *warning de compilación* de `ArmorSlotFilterMixin`
+  (target `ArmorSlot` no resoluble en la AP), no un fallo de apply; y el `Shader … Sampler2` es vanilla.
+- Los `BUILD FAILED` de los logs son de matar yo el proceso del juego al terminar cada smoke — no del mod.
+- **1.12.2 y 1.16.5** ya se arrancaron **en vivo con GUI** durante esta sesión (presets, filtros,
+  color-picker, tapa del cofre), cobertura más profunda que un boot smoke.
+- **multiloader (1.21.11 Architectury):** cubierto por el `runClient` de referencia (fila superior de
+  este documento); su suite JUnit sigue bloqueada solo por falta de JDK 21 en el runner.
+
+---
+
 ## 🛠️ CORRECCIONES APLICADAS Y RE-VERIFICADAS (2026-07-13)
 
 Los 3 bugs reales del mod se han corregido y re-testeado en MC real (verificación determinista por
