@@ -33,6 +33,13 @@ versionRange = "[0,)"
 ordering = "NONE"
 side = "CLIENT"
 
+[[dependencies.chestseparators]]
+modId = "architectury"
+mandatory = true
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
 [[mixins]]
 config = "absoluteorder.mixins.json"
 
