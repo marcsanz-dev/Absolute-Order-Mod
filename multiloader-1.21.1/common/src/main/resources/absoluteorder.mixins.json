@@ -1,0 +1,50 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.marcsanzdev.chestseparators.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractContainerMenuAccessor",
+    "ArmorEquipFilterMixin",
+    "ArmorSlotFilterMixin",
+    "BlockDropMixin",
+    "BlockEntityComponentMixin",
+    "BlockEntityMixin",
+    "ChestBoatEntityMixin",
+    "DoubleInventoryMixin",
+    "HopperBlockEntityMixin",
+    "LootableContainerBlockEntityMixin",
+    "PlayerInventoryFilterMixin",
+    "PlayerScreenHandlerFallbackMixin",
+    "ScreenHandlerClickMixin",
+    "ScreenHandlerSwapFilterMixin",
+    "ScreenHandlerWhitelistMixin",
+    "ServerPlayNetworkHandlerSwapFilterMixin",
+    "ShulkerBoxBlockEntityMixin",
+    "ShulkerBoxBlockMixin",
+    "ShulkerBoxSlotMixin",
+    "SimpleInventoryMixin",
+    "SlotWhitelistMixin",
+    "StorageMinecartEntityMixin"
+  ],
+  "client": [
+    "client.ArmorEquipClientMixin",
+    "client.ChestInteractionMixin",
+    "client.ChestLidAccessor",
+    "client.CreativeInventoryScreenAccessor",
+    "client.CreativeInventoryScreenMixin",
+    "client.CreativeSlotAccessor",
+    "client.EnderChestLidAccessor",
+    "client.GenericContainerScreenMixin",
+    "client.HandledScreenAccessor",
+    "client.InGameHudHotbarLinesMixin",
+    "client.LevelRendererMixin",
+    "client.RecipeBookWidgetInvoker",
+    "client.ShulkerAnimationAccessor",
+    "client.StatusEffectsDisplayMixin",
+    "WorldMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
