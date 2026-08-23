@@ -1628,7 +1628,7 @@ public class ChestSeparatorsEditor {
             // everything into free space.
             if (!shift && !inventoryListsItemClient(invFilters, stack)) continue;
 
-            int placed = placeIntoPlayerPreview(playerSlots, invFilters, stack, stack.getCount());
+            int placed = placeIntoPlayerPreview(playerSlots, invFilters, stack, stack.getCount(), shift);
             if (placed <= 0) continue; // inventory full — nothing actually moves from this slot
             previewSourceRemaining.put(chestSlot.slotNumber, stack.getCount() - placed);
         }
@@ -1660,13 +1660,24 @@ public class ChestSeparatorsEditor {
             java.util.List<net.minecraft.inventory.Slot> playerSlots,
             java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> invFilters,
             net.minecraft.item.ItemStack stack,
-            int amount) {
+            int amount,
+            boolean shift) {
         int maxC = stack.getMaxStackSize();
         int left = amount;
 
-        // Pass 1: top up existing matching stacks (real contents or already-projected incoming).
+        // Pass 1: top up existing matching stacks (real contents or already-projected incoming). Without
+        // Shift this is restricted to slots whose filter lists the item (mirrors insertRespectingFilter);
+        // with Shift it tops up any matching stack (mirrors vanilla addItemStackToInventory).
         for (net.minecraft.inventory.Slot ps : playerSlots) {
             if (left <= 0) break;
+            if (!shift) {
+                io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = invFilters != null
+                        ? invFilters.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps))
+                        : null;
+                if (wl == null
+                        || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                    continue;
+            }
             net.minecraft.item.ItemStack real = ps.getStack();
             net.minecraft.item.ItemStack proj = previewTargetIncoming.get(ps.slotNumber);
             int current;
@@ -1687,13 +1698,43 @@ public class ChestSeparatorsEditor {
             left -= add;
         }
 
-        // Pass 2: empty slots, one at a time via the filter-aware getEmptySlot equivalent.
-        while (left > 0) {
-            net.minecraft.inventory.Slot target = findPreviewEmptySlot(playerSlots, invFilters, stack);
-            if (target == null) break;
-            int add = Math.min(left, maxC);
-            previewTargetIncoming.put(target.slotNumber, copyWithCount(stack, add));
-            left -= add;
+        if (!shift) {
+            // Pass 2 (no Shift): drop the remainder ONLY into empty filtered slots, in filter priority order —
+            // never overflow into unfiltered slots. Mirrors insertRespectingFilter phase 2 exactly.
+            java.util.List<net.minecraft.inventory.Slot> emptyFiltered = new java.util.ArrayList<>();
+            for (net.minecraft.inventory.Slot ps : playerSlots) {
+                if (!ps.getStack().isEmpty() || previewTargetIncoming.containsKey(ps.slotNumber)) continue;
+                io.github.marcsanzdev.chestseparators.data.SlotWhitelist wl = invFilters != null
+                        ? invFilters.get(io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps))
+                        : null;
+                if (wl == null
+                        || !io.github.marcsanzdev.chestseparators.util.ItemKey.matches(wl.allowedItems(), stack))
+                    continue;
+                emptyFiltered.add(ps);
+            }
+            emptyFiltered.sort(java.util.Comparator.comparingInt(
+                            (net.minecraft.inventory.Slot ps) ->
+                                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                                            invFilters,
+                                            io.github.marcsanzdev.chestseparators.util.SlotIndex.of(ps),
+                                            stack))
+                    .thenComparingInt(io.github.marcsanzdev.chestseparators.util.SlotIndex::of));
+            for (net.minecraft.inventory.Slot ps : emptyFiltered) {
+                if (left <= 0) break;
+                int add = Math.min(left, maxC);
+                previewTargetIncoming.put(ps.slotNumber, copyWithCount(stack, add));
+                left -= add;
+            }
+        } else {
+            // Pass 2 (Shift): empty slots one at a time via the filter-aware getEmptySlot equivalent, which
+            // falls back to any unreserved empty slot (mirrors the vanilla spill of addItemStackToInventory).
+            while (left > 0) {
+                net.minecraft.inventory.Slot target = findPreviewEmptySlot(playerSlots, invFilters, stack);
+                if (target == null) break;
+                int add = Math.min(left, maxC);
+                previewTargetIncoming.put(target.slotNumber, copyWithCount(stack, add));
+                left -= add;
+            }
         }
         return amount - left;
     }

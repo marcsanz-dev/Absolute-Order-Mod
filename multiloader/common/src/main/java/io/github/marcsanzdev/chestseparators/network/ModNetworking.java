@@ -501,7 +501,14 @@ public final class ModNetworking {
 
             int take = stack.getCount();
             ItemStack portion = stack.copyWithCount(take);
-            inventory.add(portion);
+            if (includeEmpty) {
+                // Shift: pull everything into whatever free space is left (vanilla spill).
+                inventory.add(portion);
+            } else {
+                // No Shift: only top up / fill the slots whose filter lists this item — never overflow into
+                // unfiltered slots. Any surplus the filtered slots can't hold stays in the container.
+                insertRespectingFilter(inventory, invFilters, portion, itemId);
+            }
             int delta = take - portion.getCount();
             if (delta > 0) {
                 stack.shrink(delta);
