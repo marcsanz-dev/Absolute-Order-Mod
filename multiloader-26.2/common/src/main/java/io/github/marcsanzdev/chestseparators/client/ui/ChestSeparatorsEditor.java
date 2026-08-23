@@ -1606,6 +1606,9 @@ public class ChestSeparatorsEditor {
         for (net.minecraft.world.inventory.Slot s : accessor.getHandler().slots) {
             if (s.container instanceof net.minecraft.world.entity.player.Inventory) playerSlots.add(s);
         }
+        // Match the server's fill order: Inventory#getFreeSlot scans items[0..35] (hotbar first), so sort by
+        // container slot or the shift-overflow ghost lands in the main inventory instead of the hotbar.
+        playerSlots.sort(java.util.Comparator.comparingInt(net.minecraft.world.inventory.Slot::getContainerSlot));
 
         for (net.minecraft.world.inventory.Slot chestSlot : accessor.getHandler().slots) {
             if (chestSlot.container instanceof net.minecraft.world.entity.player.Inventory || !chestSlot.hasItem())
