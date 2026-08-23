@@ -562,8 +562,17 @@ public final class ModNetworking {
         List<AutoDepositResultPayload.Flight> flights = new ArrayList<>();
         for (Map.Entry<BlockPos, Map<Item, Integer>> chestEntry : moved.entrySet()) {
             for (Map.Entry<Item, Integer> itemEntry : chestEntry.getValue().entrySet()) {
-                ItemStack representative = new ItemStack(itemEntry.getKey(), Math.min(itemEntry.getValue(), 999));
-                flights.add(new AutoDepositResultPayload.Flight(representative, chestEntry.getKey()));
+                // Split into stacks of at most the item's stack limit: PacketBuffer#writeItemStack serializes
+                // the count as a single signed byte, so a single representative whose count exceeds it
+                // (e.g. 256 -> 0) is read back corrupted and mis-reports the "grabbed/deposited N" total.
+                Item item = itemEntry.getKey();
+                int remaining = itemEntry.getValue();
+                int per = Math.max(1, item.getItemStackLimit());
+                while (remaining > 0) {
+                    int c = Math.min(remaining, per);
+                    flights.add(new AutoDepositResultPayload.Flight(new ItemStack(item, c), chestEntry.getKey()));
+                    remaining -= c;
+                }
             }
         }
         return flights;

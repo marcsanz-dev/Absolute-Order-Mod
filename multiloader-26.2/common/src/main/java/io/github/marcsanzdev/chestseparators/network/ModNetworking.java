@@ -547,7 +547,7 @@ public final class ModNetworking {
         List<AutoDepositResultPayload.Flight> flights = new ArrayList<>();
         for (Map.Entry<BlockPos, Map<Item, Integer>> chestEntry : moved.entrySet()) {
             for (Map.Entry<Item, Integer> itemEntry : chestEntry.getValue().entrySet()) {
-                ItemStack representative = new ItemStack(itemEntry.getKey(), Math.min(itemEntry.getValue(), 999));
+                ItemStack representative = new ItemStack(itemEntry.getKey(), itemEntry.getValue());
                 flights.add(new AutoDepositResultPayload.Flight(representative, chestEntry.getKey()));
             }
         }
