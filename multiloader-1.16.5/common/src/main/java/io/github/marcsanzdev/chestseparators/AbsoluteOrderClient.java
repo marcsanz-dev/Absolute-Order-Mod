@@ -30,7 +30,9 @@ public final class AbsoluteOrderClient {
             // run directory is guaranteed available.
             ChestConfigManager.getInstance().seedDefaultPresetsIfNeeded();
             ChestConfigManager.getInstance().loadInventoryProfile();
-            ModClientNetworking.sendInventoryFilters();
+            // Schedule (not send-once): the C2S channel may not be ready yet on a (re)join, so retry until it
+            // lands — otherwise the server loses the player's filters after leaving and re-entering a world.
+            ModClientNetworking.scheduleInventoryFilterSync();
         });
     }
 }

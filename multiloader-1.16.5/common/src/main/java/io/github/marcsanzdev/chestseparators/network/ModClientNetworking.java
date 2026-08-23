@@ -31,7 +31,32 @@ public class ModClientNetworking {
         }
     }
 
+    /**
+     * Client ticks left to keep retrying the inventory-filter sync after a (re)join. On join the C2S channel
+     * can still be unregistered (canServerReceive == false), which silently drops a direct send and leaves
+     * the server without the player's filters until they next edit them — so every filter (Pick Up, Pull,
+     * Hopper rule) stops working after leaving and re-entering a world. Retrying until the channel is ready
+     * makes the sync land.
+     */
+    private static int pendingInvSyncTicks = 0;
+
+    /** Schedules the inventory-filter sync to fire on the first upcoming tick the channel is ready (~5s). */
+    public static void scheduleInventoryFilterSync() {
+        pendingInvSyncTicks = 100;
+    }
+
     public static void register() {
+
+        // Drain the scheduled inventory-filter sync: retry each tick until the channel accepts it, then stop.
+        me.shedaniel.architectury.event.events.client.ClientTickEvent.CLIENT_POST.register(client -> {
+            if (pendingInvSyncTicks <= 0) return;
+            pendingInvSyncTicks--;
+            if (client.player == null) return;
+            if (NetworkManager.canServerReceive(InventoryFiltersPayload.ID)) {
+                sendInventoryFilters();
+                pendingInvSyncTicks = 0;
+            }
+        });
 
         // Receives the Shulker Box UUID from the server when a Shulker is opened.
         // Stored immediately so it is available when the screen initializes.

@@ -45,6 +45,13 @@ public class KeyInputHandler {
         if (event.phase != TickEvent.Phase.END) return;
 
         Minecraft client = Minecraft.getMinecraft();
+
+        // Re-sync the inventory filters to the server after a (re)join: the server drops them on logout
+        // (PlayerLoggedOut) and 1.12.2 has no other client-join sync, so every filter (Pick Up, Pull, Hopper
+        // rule) stopped enforcing after leaving and re-entering a world. Runs before the player-null/screen
+        // guards so it fires on every world entry.
+        chestseparators$resyncInventoryFiltersOnJoin(client);
+
         if (client.player == null) return;
 
         // These fire only with no screen open (chest closed).
@@ -55,6 +62,27 @@ public class KeyInputHandler {
         while (ModKeyBindings.toggleMagnifierKey.isPressed()) actionBar(client, toggleMagnifier());
 
         handleAutoDepositTriggers(client);
+    }
+
+    // --- Inventory-filter re-sync on world (re)join (see onClientTick) ---
+    private static boolean chestseparators$prevPlayerPresent = false;
+    private static int chestseparators$invSyncCountdown = 0;
+
+    private static void chestseparators$resyncInventoryFiltersOnJoin(Minecraft client) {
+        boolean present = client.player != null && client.world != null;
+        if (present && !chestseparators$prevPlayerPresent) {
+            // Just (re)joined a world: reload the saved profile and queue the sync a few ticks later, once the
+            // play connection has settled (Forge's SimpleNetworkWrapper has no readiness check to poll).
+            ChestConfigManager.getInstance().loadInventoryProfile();
+            chestseparators$invSyncCountdown = 10;
+        }
+        chestseparators$prevPlayerPresent = present;
+        if (present && chestseparators$invSyncCountdown > 0) {
+            chestseparators$invSyncCountdown--;
+            if (chestseparators$invSyncCountdown == 0) {
+                io.github.marcsanzdev.chestseparators.network.ModClientNetworking.sendInventoryFilters();
+            }
+        }
     }
 
     // Fires the radius auto-deposit from either the dedicated (optional) hotkey or a quick
