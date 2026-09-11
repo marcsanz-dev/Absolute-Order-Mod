@@ -1,78 +1,128 @@
-# Absolute Order
+# 📦 Absolute Order | Multi-Loader Inventory Engineering
 
-**Absolute Order** (formerly *Chest Separators*) is a Minecraft utility mod for organizing containers and your inventory. It combines a purely visual layer — colored dividers and slot backgrounds painted onto any container GUI — with a powerful per-slot **filter** system that controls which items may enter each slot, and one-key **auto-deposit / auto-pull** to move items between your inventory and nearby storage.
+![Java](https://img.shields.io/badge/Java-11_|_21_|_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Fabric](https://img.shields.io/badge/Loader-Fabric-c9b889?style=for-the-badge&logo=fabric&logoColor=black)
+![NeoForge](https://img.shields.io/badge/Loader-NeoForge-f16436?style=for-the-badge)
+![Forge](https://img.shields.io/badge/Loader-Forge-1e2d4e?style=for-the-badge)
+![Architectury](https://img.shields.io/badge/Toolchain-Architectury-5b6ee1?style=for-the-badge)
+![Mixin](https://img.shields.io/badge/Rendering-Mixin_Injection-blueviolet?style=for-the-badge)
+![Versions](https://img.shields.io/badge/Minecraft-1.12.2_→_26.2-2D7D9A?style=for-the-badge)
 
-Version **2.0** ("The Liftoff Update") rebuilt the mod as a **multi-loader, multi-version** project: one codebase now ships for Fabric, NeoForge and Forge across a wide range of Minecraft versions.
+**Absolute Order** (formerly *Chest Separators*) is an inventory-organization mod built around a **Virtual Overlay System**: instead of crafting physical dividers that waste slots, it paints separators and per-slot filters directly onto the container GUI, and enforces those filters server-side for real item-routing behavior (shift-click, hoppers, auto-deposit).
 
----
+Version **2.0 — "The Liftoff Update"** rebuilt the project from a single Fabric mod into **one shared codebase that ships for Fabric, NeoForge and Forge across nine Minecraft versions** (1.12.2 → 26.2), spanning five distinct rendering eras.
 
-## Features
+![Vanilla chaos vs. Absolute Order](img/vanilla_chaos_vs_absolute_order.png)
 
-### Visual separators (cosmetic, client-side)
-- Paint colored **lines** between slots and **backgrounds** on slots of any container (chests, barrels, shulker boxes, entity inventories, the Ender Chest…).
-- Full **HSV color picker** with an eyedropper and per-layer custom palette slots.
-- **Drag & paint** with pencil/brush/area/trace tools, plus a smart eraser and per-container reset.
-- **Undo / redo** and an NBT **clipboard** to copy a whole layout onto another container.
-- Purely client-side and cosmetic: stored per-player on your machine, never sent to the server.
-
-### Whitelist filters (functional)
-- Assign each slot a **filter** of allowed items; group several slots into one logical filter.
-- Enforced for **manual placement, shift-click, and hoppers** (each rule can be toggled per filter).
-- The filter's item order is a **priority order** you arrange by dragging — it decides which slot an item lands in.
-- **Presets** for quick reuse, import from the creative tabs / search, and export.
-- Filters on **block containers are server-authoritative** (they travel with the block); entity inventories and the Ender Chest are client-local.
-
-### Auto-deposit & auto-pull
-- One key sweeps matching items from your inventory **into** nearby filtered storage (auto-deposit), or pulls items **from** storage to top up your filtered inventory slots (pull).
-- Live **previews** show exactly what an action will do before you commit it.
-
-### Quality of life
-- Cloth Config settings screen and rebindable keys.
-- REI / EMI / JEI exclusion-zone integration so the editor never overlaps recipe UIs.
-- Localized into 20 languages.
+> **⚠️ Engineering Focus**
+> This project is a study in **cross-version portability**: a common source set driven by **Architectury** + **Mojmap/Parchment**, an abstraction over five rendering eras (from legacy `MatrixStack` to modern `RenderPipelines`), a **server-authoritative persistence layer** using Data Components / chunk NBT, and heavy **Java bytecode manipulation** via SpongePowered Mixins for insertion rules, hopper routing and GUI hooks.
 
 ---
 
-## Supported versions & loaders
+## 🧩 Feature Set
 
-| Minecraft | Loaders |
-|---|---|
-| 26.2, 26.1 | Fabric, NeoForge |
-| 1.21.11 | Fabric, NeoForge |
-| 1.21.1 | Fabric, NeoForge |
-| 1.20.1 | Fabric, Forge |
-| 1.19.2 | Fabric, Forge |
-| 1.18.2 | Fabric, Forge |
-| 1.16.5 | Fabric, Forge |
-| 1.12.2 | Forge |
+### 1. Visual Separators — client-local overlay
+Colored lines between slots and per-slot backgrounds painted onto any container GUI. A custom slot-hitting algorithm allows fluid **drag & paint** (pencil/brush/area/trace) across the grid, rendered on the client tick for zero input lag. A real-time **HSV→RGB engine** generates any of 16.7M colors with an eyedropper and per-layer custom palettes, and layouts are deep-copied through an **NBT clipboard** to replicate a design across containers instantly.
 
-> Quilt is covered by the Fabric jar. Each release jar is named `AbsoluteOrder-<version>-<loader>-mc<version-or-range>.jar`.
+![Area-mode painting](img/easy_painting_area_mode.gif)
+
+The editor floats over the container grid with layered depth control and per-zone tools, so it never Z-fights with the slots underneath.
+
+![Editor layout & zone tools](img/edit_layout_zone_tools.png)
+
+### 2. Whitelist Filters — server-authoritative
+Per-slot rules deciding which items may enter a slot, built by dragging items in and out of a filter and grouping slots into one logical unit.
+
+![Building a filter](img/filter_drag_add_remove.gif)
+
+A filter's item order is a **priority order** you arrange by dragging — it drives which slot each item lands in, and powers one-click auto-sort. Rules are enforced for **manual placement, shift-click and hoppers** (each axis toggleable), refused at the insertion mixin rather than silently swallowed.
+
+![Filter priority & auto-sort](img/filter_priority_autosort.gif)
+
+Whole filter setups can be saved as **presets** and reapplied to any container. Filters on **block containers travel with the block** (Data Component → chunk NBT); entity inventories and the Ender Chest are client-local.
+
+![Filter presets](img/filter_presets.gif)
+
+### 3. Auto-Deposit & Auto-Pull
+One keystroke sweeps matching items from your inventory **into** nearby filtered storage…
+
+![One-click auto-deposit](img/one_click_absolute_order.gif)
+
+…or pulls items **from** storage to top up your filtered inventory slots. Every action ships a **live preview** generated by the same ordering primitive as the real operation, so the predicted result and the server's authoritative result can never drift.
+
+![Pull from chest](img/pull_from_chest.gif)
+
+### 4. Configuration
+Everything is tunable through a Cloth Config screen with rebindable keys, and the editor declares REI / EMI / JEI exclusion zones so it never overlaps recipe UIs. Localized into 20 languages.
+
+![Configuration](img/config_visuals.png)
 
 ---
 
-## Installation
+## 🏗️ Technical Architecture
 
-1. Install the matching loader for your Minecraft version (Fabric, NeoForge, or Forge).
-2. On Fabric, also install the **Fabric API**; on all loaders, **Architectury API** is required (Forge/NeoForge builds bundle what they need — see the download page notes).
-3. Drop the jar for your version and loader into your `mods` folder.
+### Multi-loader, single source of truth
+Modern ports use an Architectury **`common/` + loader modules** layout: the feature code lives once in `common`, and thin Fabric / NeoForge / Forge modules bind it to each platform's entrypoints, networking and registration. The legacy **1.12.2** port is a separate hand-written Forge project (MCP names, no Architectury) that shares the design but not the code.
 
-> **Playing on a server?** Filters for block containers are **server-authoritative**, so the mod must be installed **on the server** as well as on the client for those filters to persist in multiplayer. The visual separators and inventory filters are client-side and work without a modded server.
+### Rendering-era abstraction
+The dual-layer rendering pipeline (persistent separators behind items, transient editor UI on top) is written against five eras and selected per version:
+
+| Era | Representative | GUI primitive |
+| --- | --- | --- |
+| E5 | 26.1 / 26.2 / 1.21.11 | `RenderPipelines` |
+| E4 | 1.21.1 / 1.20.1 | `GuiGraphics` |
+| E3 | 1.19.2 | `GuiGraphics` (early) |
+| E2 | 1.18.2 / 1.16.5 | `PoseStack` / `MatrixStack` |
+| E1 | 1.12.2 | legacy immediate mode |
+
+### Context-aware persistence
+A **polymorphic data strategy** picks the storage path per target:
+* **Block containers** → server-authoritative **Data Component** that rides the block into chunk NBT.
+* **Entities** (minecarts, llamas…) → keyed by the entity's persistent `UUID`.
+* **Client-local** visuals + inventory/Ender-Chest filters → per-world `.dat` NBT files.
+
+Item-count serialization, item-equality and the resource-id API all differ by version (byte vs VarInt on the wire, `isSameItemSameComponents` vs `isSameItemSameTags` vs a meta-aware `ItemKey`); these are centralized so one change propagates cleanly across all nine ports.
+
+### Enforcement pipeline
+Insertion is a **4-pass deposit sweep** — filtered stacking → filtered filling → unfiltered stacking → unfiltered filling — and every automatic path (shift, hopper, grab, deposit) shares one `FilterPriority` ordering primitive, expressed as a *conditional refusal* so vanilla performs the actual transfer and client/server stay in agreement.
 
 ---
 
-## Building from source
+## 🎮 Supported Versions & Loaders
 
-The project uses Gradle with Architectury Loom. Each version lives in its own module (`multiloader`, `multiloader-1.20.1`, `multiloader-1.12.2`, …). Build a module with its required JDK, for example:
+![Version support](img/version_support_showcase.png)
+
+| Minecraft | Loaders | Build JDK |
+| --- | --- | --- |
+| 26.2, 26.1 | Fabric, NeoForge | 25 |
+| 1.21.11, 1.21.1 | Fabric, NeoForge | 21 |
+| 1.20.1, 1.19.2, 1.18.2, 1.16.5 | Fabric, Forge | 21 |
+| 1.12.2 | Forge | 11 |
+
+> Quilt runs the Fabric jar. Release jars are named `AbsoluteOrder-<version>-<loader>-mc<version-or-range>.jar`.
+
+---
+
+## 💻 Installation
+
+1. Install the matching loader (Fabric, NeoForge, or Forge) for your Minecraft version.
+2. Add the dependencies noted on the download page — **Fabric API** (Fabric) and **Architectury API** on the modern ports.
+3. Drop the jar for your version + loader into your `mods` folder.
+
+> **Multiplayer:** filters on block containers are **server-authoritative**, so the mod must be installed **on the server** for those filters to persist online. Visual separators and inventory filters are client-side and work without a modded server.
+
+---
+
+## 🛠️ Building from Source
+
+Gradle + Architectury Loom, one module per version. Build a module with its required JDK:
 
 ```bash
-# from a version module directory
+# from a version module directory (e.g. multiloader-1.20.1/)
 ./gradlew build
 ```
 
-JDK requirements: **Java 21** for the modern ports, **Java 25** for the 26.x ports, and **Java 11** for the legacy 1.12.2 port.
+JDKs: **21** for the modern ports, **25** for the 26.x ports, **11** for legacy 1.12.2.
 
 ---
-
-## License & credits
-
-Created and maintained by **marcsanz-dev**. See the in-repo license for terms.
+*Created and maintained by **marcsanz-dev**. Looking for the internals? Start at `common/src/main/java/...` (or `src/` on 1.12.2) for the Mixin and networking implementation.*
