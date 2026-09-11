@@ -19,6 +19,11 @@ public interface HandledScreenAccessor {
     @Accessor("x")
     int getX();
 
+    // Recenters the GUI root. Used to undo the recipe book's horizontal shift while a mod sub-screen is
+    // open, so the container returns to its normal position as if the book were closed.
+    @Accessor("x")
+    void setX(int x);
+
     // Exposes the absolute Y coordinate of the GUI root.
     @Accessor("y")
     int getY();

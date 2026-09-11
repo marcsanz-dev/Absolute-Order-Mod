@@ -1,18 +1,19 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
 import io.github.marcsanzdev.chestseparators.client.EditorState;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 public class EditorSessionData {
     // State UI
@@ -37,6 +38,49 @@ public class EditorSessionData {
     public List<Item> filteredItems = new ArrayList<>();
     public List<String> visibleLeftListItems = new ArrayList<>();
 
+    // --- Drag-to-reorder in the filter's allowed-items list ---
+    /** Item id currently being dragged to a new position, or null when no drag is in progress. */
+    public String reorderDragItem = null;
+    /** Live cursor position, so the dragged item can be drawn following the mouse. */
+    public int reorderMouseX = 0;
+
+    public int reorderMouseY = 0;
+    /** True when the drag started in the centre item grid rather than in the filter's list. */
+    public boolean reorderFromGrid = false;
+    /** Where the drag started on screen, so the held row can fly out of it instead of just appearing. */
+    public int reorderOriginX = 0;
+
+    public int reorderOriginY = 0;
+    public long reorderStartTime = 0L;
+
+    /** Visible index each item held just before the last drop, driving the settle animation. */
+    public Map<String, Integer> dropAnimFrom = new HashMap<>();
+
+    public long dropAnimStart = 0L;
+
+    // A grid item held down but not yet moved far enough (or long enough) to count as a drag. Until it is
+    // promoted, releasing counts as a plain click, which adds the item at the end of the list.
+    public String pendingDragItem = null;
+    public int pendingDragX = 0;
+    public int pendingDragY = 0;
+    public long pendingDragTime = 0L;
+
+    /** Row dropped onto the item grid, shrinking away to nothing to show it left the filter. */
+    public String deleteAnimItem = null;
+
+    public int deleteAnimX = 0;
+    public int deleteAnimY = 0;
+    public long deleteAnimStart = 0L;
+
+    /** Row left behind after a drop, animating from the cursor into its final place. */
+    public String dropGhostItem = null;
+
+    public int dropGhostFromX = 0;
+    public int dropGhostFromY = 0;
+    public int dropGhostToX = 0;
+    public int dropGhostToY = 0;
+    public long dropGhostStart = 0L;
+
     public long lastSlotClickTime = 0;
     public int lastClickedSlotIndex = -1;
     public boolean isSelecting = true;
@@ -47,15 +91,28 @@ public class EditorSessionData {
 
     public int lineColorIndex = 0;
     public int bgColorIndex = 0;
-    public int comboColorIndex = 0; // Añadido para el Combo
+    public int comboColorIndex = 0;
 
     public int editingLineCustomIndex = -1;
     public int editingBgCustomIndex = -1;
-    public int editingComboCustomIndex = -1; // Añadido para el Combo
+    public int editingComboCustomIndex = -1;
+
+    // Last non-eraser color (and custom-slot index) per tab, restored when switching from the
+    // eraser back to a paint tool so the previous color is not lost.
+    public int lineColorBeforeErase = 0;
+    public int bgColorBeforeErase = 0;
+    public int comboColorBeforeErase = 0;
+    public int lineCustomBeforeErase = -1;
+    public int bgCustomBeforeErase = -1;
+    public int comboCustomBeforeErase = -1;
 
     public int lineToolMode = 0;
     public int bgToolMode = 0;
-    public int comboToolMode = 0; // Añadido para el Combo
+    public int comboToolMode = 0;
+
+    // Which tab's Clear button is currently hovered (-1 = none); drives the fade-to-empty preview of
+    // the layers that would be erased. Only honored while in the DRAW_LINES state.
+    public int clearPreviewTab = -1;
 
     // Picker
     public boolean isColorPickerOpen = false;
@@ -64,7 +121,7 @@ public class EditorSessionData {
     public float pickerSat = 1.0f;
     public float pickerVal = 1.0f;
     public int pickerCurrentRGB = 0xFFFF0000;
-    public int copiedColorRGB = 0; // -1 significa que no hay color copiado
+    public int copiedColorRGB = 0; // -1 indicates no color is currently copied
     public boolean isEyedropperActive = false;
     public boolean isDraggingSatVal = false;
     public boolean isDraggingHue = false;
@@ -86,8 +143,18 @@ public class EditorSessionData {
     // Context
     public BlockPos currentChestPos;
     public String currentDimension;
+    // True when the editor is currently targeting the player's own inventory slots (decorations +
+    // filters) instead of a container's slots. In a chest screen this can be toggled at runtime.
+    public boolean isPlayerInventory = false;
+    // True only when the screen itself is the survival inventory screen (no container). Used to decide
+    // whether the chest<->inventory edit-target toggle button is available.
+    public boolean isInventoryScreenContext = false;
     public boolean isEnderChest = false;
     public boolean isEntityChest = false;
+    // True when the open entity container is a chest/hopper minecart specifically. Unlike other entity
+    // containers (chest boats, animals), hoppers CAN insert into these, so the Hopper Insert rule is
+    // available and its filter is synced to the server for enforcement.
+    public boolean isMinecartChest = false;
     public UUID currentEntityUUID;
     public boolean isShulkerBox = false;
     public UUID currentShulkerUUID;
@@ -109,7 +176,7 @@ public class EditorSessionData {
     // Phase 4.B: Import Preview and Auto-Scroll Engine
     public List<String> previewItems = new ArrayList<>();
     public boolean isPreviewing = false;
-    public int previewType = 0; // 0 = Nada, 1 = Import, 2 = Allow All, 3 = Clear All
+    public int previewType = 0; // 0 = none, 1 = import, 2 = allow all, 3 = clear all
     public float previewScrollY = 0f;
     public boolean previewScrollDirectionDown = true;
     public long lastPreviewTime = 0;
@@ -127,6 +194,10 @@ public class EditorSessionData {
     // Unsaved Changes State
     public boolean isUnsavedPopupOpen = false;
     public boolean isExpelPopupOpen = false;
+    // The dedicated presets menu (save/load slots) overlay is open, and whether it targets the chest
+    // (true) or the player inventory (false). Chest and inventory presets are fully independent.
+    public boolean isPresetsMenuOpen = false;
+    public boolean presetsMenuChestMode = false;
     public List<String> originalItemsSnapshot = new ArrayList<>();
     public boolean originalRuleManual = true;
     public boolean originalRuleShift = true;
@@ -136,11 +207,12 @@ public class EditorSessionData {
     public static class CreativeTabInfo {
         public Text name;
         public ItemStack icon;
-        public ItemGroup group; // FIX: Guardamos el grupo entero
+        public ItemGroup group;
         public boolean isSearchTab;
         public boolean isCustomChestTab;
 
-        public CreativeTabInfo(Text name, ItemStack icon, ItemGroup group, boolean isSearchTab, boolean isCustomChestTab) {
+        public CreativeTabInfo(
+                Text name, ItemStack icon, ItemGroup group, boolean isSearchTab, boolean isCustomChestTab) {
             this.name = name;
             this.icon = icon;
             this.group = group;

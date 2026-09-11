@@ -5,11 +5,9 @@ import io.github.marcsanzdev.chestseparators.client.ui.EditorGeometry;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorLayout;
 import io.github.marcsanzdev.chestseparators.client.ui.EditorSessionData;
 import io.github.marcsanzdev.chestseparators.client.ui.widgets.CustomWidget;
-import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
-import net.minecraft.client.gui.DrawContext;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.gui.DrawContext;
 
 public abstract class AbstractEditorScreen implements IEditorSubScreen {
 
@@ -18,7 +16,6 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
     protected final EditorGeometry geometry;
     protected final EditorLayout layout;
 
-    // Lista automática donde guardaremos los botones de cada pantalla
     protected final List<CustomWidget> widgets = new ArrayList<>();
 
     public AbstractEditorScreen(ChestSeparatorsEditor editor) {
@@ -34,12 +31,10 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
         buildWidgets();
     }
 
-    // Cada pantalla hija definirá qué botones tiene aquí
     protected abstract void buildWidgets();
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Dibuja automáticamente todos los botones de esta pantalla
         for (CustomWidget widget : widgets) {
             widget.render(context, mouseX, mouseY, delta);
         }
@@ -47,39 +42,38 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Pasa el clic automáticamente a los botones
+        return clickWidgets(mouseX, mouseY, button);
+    }
+
+    /** Dispatches a click to this screen's widgets; returns true once one consumes it. */
+    boolean clickWidgets(double mouseX, double mouseY, int button) {
         for (CustomWidget widget : widgets) {
             if (widget.mouseClicked(mouseX, mouseY, button)) {
-                return true; // Si el botón consume el clic, paramos
+                return true;
             }
         }
         return false;
     }
 
-    // Métodos vacíos por defecto para no obligar a implementarlos si una pantalla no los usa
-    @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) { return false; }
-    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) { return false; }
-    @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) { return false; }
-    @Override public boolean charTyped(char chr, int modifiers) { return false; }
+    // Default no-op implementations so sub-screens only override what they need.
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return false;
+    }
 
-    protected void drawDarkBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
-        boolean isDark = GlobalChestConfig.instance.darkMode;
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        return false;
+    }
 
-        // Si es oscuro, usa tus colores actuales. Si es claro, usa los Vanilla.
-        int light = isDark ? 0xFF505050 : 0xFFFFFFFF;
-        int dark = isDark ? 0xFF000000 : 0xFF555555;
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return false;
+    }
 
-        if (sunken) {
-            context.fill(x, y, x + width - 1, y + 1, dark);
-            context.fill(x, y, x + 1, y + height - 1, dark);
-            context.fill(x + width - 1, y, x + width, y + height, light);
-            context.fill(x, y + height - 1, x + width, y + height, light);
-        } else {
-            context.fill(x, y, x + width - 1, y + 1, light);
-            context.fill(x, y, x + 1, y + height - 1, light);
-            context.fill(x + width - 1, y, x + width, y + height, dark);
-            context.fill(x, y + height - 1, x + width, y + height, dark);
-        }
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        return false;
     }
 
     protected void drawCheckerboard(DrawContext context, int x, int y, int width, int height, int squareSize) {
@@ -91,5 +85,37 @@ public abstract class AbstractEditorScreen implements IEditorSubScreen {
                 context.fill(x + i, y + j, x + i + drawW, y + j + drawH, color);
             }
         }
+    }
+
+    /** Draws a raised or sunken bevel border using explicit light/dark/shadow colors. */
+    protected void drawBaseBevel(
+            DrawContext context, int x, int y, int width, int height, int light, int dark, int shadow, boolean sunken) {
+        if (sunken) {
+            context.fill(x, y, x + width - 1, y + 1, dark);
+            context.fill(x, y, x + 1, y + height - 1, dark);
+            context.fill(x + width - 1, y, x + width, y + height, light);
+            context.fill(x, y + height - 1, x + width, y + height, light);
+        } else {
+            context.fill(x, y, x + width - 1, y + 1, light);
+            context.fill(x, y, x + 1, y + height - 1, light);
+            context.fill(x + width - 1, y, x + width, y + height, dark);
+            context.fill(x, y + height - 1, x + width, y + height, dark);
+            context.fill(x + width - 2, y + 1, x + width - 1, y + height - 1, shadow);
+            context.fill(x + 1, y + height - 2, x + width - 2, y + height - 1, shadow);
+        }
+    }
+
+    /** Draws a bevel whose light/dark/shadow tones are derived from a base color. */
+    protected void drawColorBevel(
+            DrawContext context, int x, int y, int width, int height, int baseColor, boolean sunken) {
+        int light = editor.shiftColor(baseColor, 80) | 0xFF000000;
+        int dark = editor.shiftColor(baseColor, -80) | 0xFF000000;
+        int shadow = editor.shiftColor(baseColor, -40) | 0xFF000000;
+        drawBaseBevel(context, x, y, width, height, light, dark, shadow, sunken);
+    }
+
+    /** Draws a bevel with the fixed vanilla-inventory tones used for standard palette swatches. */
+    protected void drawStandardBevel(DrawContext context, int x, int y, int width, int height, boolean sunken) {
+        drawBaseBevel(context, x, y, width, height, 0xFFFFFFFF, 0xFF373737, 0xFF8B8B8B, sunken);
     }
 }

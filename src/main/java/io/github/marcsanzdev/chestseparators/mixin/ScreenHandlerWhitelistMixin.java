@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IWhitelistProvider;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
+import java.util.Map;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.ScreenHandler;
@@ -13,23 +14,30 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.Map;
-
-// Intercepts the Shift-Click (Quick Move) logic to respect the whitelists.
+/**
+ * Intercepts the {@code Slot.canInsert} check inside the {@code ScreenHandler.insertItem} loop,
+ * which drives the shift-click quick-move flow. This redirect enforces the Shift rule on each
+ * target slot independently, complementing the HEAD/RETURN guards in {@link ScreenHandlerClickMixin}.
+ */
 @Mixin(ScreenHandler.class)
 public abstract class ScreenHandlerWhitelistMixin {
 
-    @Shadow @Final public DefaultedList<Slot> slots;
+    @Shadow
+    @Final
+    public DefaultedList<Slot> slots;
 
-    // Redirects the 'canInsert' check specifically during the 'insertItem' loop used by Shift-Click.
-    @Redirect(method = "insertItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/slot/Slot;canInsert(Lnet/minecraft/item/ItemStack;)Z"))
+    @Redirect(
+            method = "insertItem",
+            at =
+                    @At(
+                            value = "INVOKE",
+                            target = "Lnet/minecraft/screen/slot/Slot;canInsert(Lnet/minecraft/item/ItemStack;)Z"))
     private boolean enforceWhitelistOnShiftClick(Slot slot, ItemStack stack) {
-        // First, check the vanilla constraints (this also triggers our SlotWhitelistMixin).
+        // Respect vanilla constraints first (also triggers SlotWhitelistMixin).
         if (!slot.canInsert(stack)) {
             return false;
         }
 
-        // Then, enforce our custom whitelist logic for Shift-Clicks.
         if (slot.inventory instanceof IWhitelistProvider provider) {
             Map<Integer, SlotWhitelist> whitelists = provider.getWhitelists();
             int slotIndex = slot.getIndex();
@@ -37,16 +45,27 @@ public abstract class ScreenHandlerWhitelistMixin {
             if (whitelists != null && whitelists.containsKey(slotIndex)) {
                 SlotWhitelist whitelist = whitelists.get(slotIndex);
 
-                // Option A: If the toggle is ON, we enforce the item filter.
-                // If it is OFF, we bypass it completely and act as a normal vanilla slot.
+                // Shift rule ON: enforce the item filter.
+                // Shift rule OFF: treat the slot as vanilla (no restriction).
                 if (whitelist.allowShift()) {
-                    String incomingItemId = Registries.ITEM.getId(stack.getItem()).toString();
-
+                    String incomingItemId =
+                            Registries.ITEM.getId(stack.getItem()).toString();
                     if (!whitelist.allowedItems().contains(incomingItemId)) {
                         return false;
                     }
                 }
             }
+        }
+
+        // Ordering rule: while a slot dedicated to this item still has room, ordinary slots decline it
+        // so vanilla keeps scanning and drops the item into its dedicated slot. Vanilla performs the
+        // move itself, so the client's prediction and the server's result match and the item visibly
+        // lands in the right slot straight away.
+        int[] range = io.github.marcsanzdev.chestseparators.util.ClickTracker.INSERT_RANGE.get();
+        if (range != null
+                && io.github.marcsanzdev.chestseparators.util.FilterPriority.shouldDefer(
+                        this.slots, range[0], range[1], slot, stack)) {
+            return false;
         }
 
         return true;

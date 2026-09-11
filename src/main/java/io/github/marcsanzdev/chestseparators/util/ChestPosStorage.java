@@ -1,79 +1,39 @@
 package io.github.marcsanzdev.chestseparators.util;
 
-import net.minecraft.util.math.BlockPos;
 import java.util.UUID;
+import net.minecraft.util.math.BlockPos;
 
-/**
- * Functions as a transient state container for context propagation across disjoint system boundaries.
- * <p>
- * Specifically designed to bridge the gap between the initial player interaction event
- * and the subsequent GUI initialization, where direct parameter passing is restricted.
- */
+// Functions as a transient state container for context propagation across disjoint system boundaries.
+// Specifically designed to bridge the gap between the initial player interaction event (ClientPlayerInteractionManager)
+// and the subsequent GUI initialization (HandledScreen), where direct parameter passing is restricted by the vanilla
+// architecture.
 public class ChestPosStorage {
 
-    private static BlockPos lastClickedPos;
-    private static String lastClickedDimension;
-    private static UUID lastClickedEntityUUID;
-    private static boolean isEntityOpened = false;
-    private static UUID lastOpenedShulkerUUID = null;
+    // Buffer for the coordinate vectors of static block-entities (Chests, Barrels, Shulker Boxes).
+    // Note: Shulker Boxes will ignore this value and use the UUID system instead.
+    public static BlockPos lastClickedPos;
 
-    /**
-     * Resets all transient fields to their default values.
-     * <p>
-     * This should be called whenever a container GUI is closed to prevent
-     * state leaking between different interaction sessions.
-     */
-    public static void clear() {
-        lastClickedPos = null;
-        lastClickedDimension = null;
-        lastClickedEntityUUID = null;
-        isEntityOpened = false;
-        lastOpenedShulkerUUID = null;
-    }
+    // Stores the registry key of the dimension where the interaction occurred.
+    // Necessary to distinguish between identical coordinates in different worlds (Overworld vs Nether).
+    public static String lastClickedDimension;
 
-    // --- GETTERS & SETTERS ---
+    // --- ENTITY CONTEXT EXTENSIONS ---
 
-    public static BlockPos getLastClickedPos() {
-        return lastClickedPos;
-    }
+    // Unique identifier for mobile inventory holders (e.g., Donkeys, Llamas, Chest Minecarts).
+    // Required because entities lack fixed BlockPos coordinates for persistent data keying.
+    public static UUID lastClickedEntityUUID;
 
-    public static void setLastClickedPos(BlockPos pos) {
-        lastClickedPos = pos;
-    }
+    // Mode discriminator flag indicating whether the current UI context belongs to a dynamic entity
+    // or a static block. Used by the ConfigManager to select the appropriate loading strategy.
+    public static boolean isEntityOpened = false;
 
-    public static String getLastClickedDimension() {
-        return lastClickedDimension;
-    }
+    // True when the opened entity is a chest/hopper minecart. Hoppers can insert into these, so the mod
+    // enables the Hopper Insert rule for them and syncs their filter to the server for enforcement.
+    public static boolean isMinecartEntity = false;
 
-    public static void setLastClickedDimension(String dimension) {
-        lastClickedDimension = dimension;
-    }
+    // --- NETWORK EXTENSIONS ---
 
-    public static UUID getLastClickedEntityUUID() {
-        return lastClickedEntityUUID;
-    }
-
-    public static void setLastClickedEntityUUID(UUID uuid) {
-        lastClickedEntityUUID = uuid;
-    }
-
-    public static boolean isEntityContext() {
-        return isEntityOpened;
-    }
-
-    public static void setEntityOpened(boolean opened) {
-        isEntityOpened = opened;
-    }
-
-    public static boolean getEntityOpened() {
-        return isEntityOpened;
-    }
-
-    public static UUID getLastOpenedShulkerUUID() {
-        return lastOpenedShulkerUUID;
-    }
-
-    public static void setLastOpenedShulkerUUID(UUID uuid) {
-        lastOpenedShulkerUUID = uuid;
-    }
+    // Transient storage for the incoming Shulker Box UUID received via the S2C network packet.
+    // Populated precisely when the server confirms the container has been opened.
+    public static UUID lastOpenedShulkerUUID = null;
 }

@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.15-SNAPSHOT'
     id 'maven-publish'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 version = project.mod_version
@@ -13,9 +14,19 @@ base {
 loom {
     //splitEnvironmentSourceSets()
 
+    accessWidenerPath = file("src/main/resources/chestseparators.accesswidener")
+
     runs {
         client {
             runDir "run/client"
+            property "mcclaude.debugEvents", "true"
+        }
+        client2 {
+            client()
+            name = "Minecraft Client 2"
+            runDir "run/client2"
+            programArgs "--username", "Bot2"
+            property "mcclaude.port", "8723"
         }
         server {
             runDir "run/server"
@@ -57,17 +68,17 @@ dependencies {
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Cloth Config API para la interfaz y guardado
+    // Cloth Config API for the settings screen and persistence
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:21.11.153") {
         exclude(group: "net.fabricmc.fabric-api")
     }
 
-    // ModMenu para integrar el botón de configuración en la lista de mods
+    // ModMenu integration: adds the config button to the mod list
     modImplementation("com.terraformersmc:modmenu:17.0.0-beta.2") {
         exclude(group: "net.fabricmc.fabric-api")
     }
 
-    // --- COMPATIBILIDAD CON VISORES DE RECETAS ---
+    // Recipe-viewer compatibility (REI, EMI)
 
     // REI (Roughly Enough Items) API
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}") {
@@ -77,6 +88,26 @@ dependencies {
     // EMI API
     modCompileOnly("dev.emi:emi-fabric:${project.emi_version}:api") {
         exclude(group: "net.fabricmc.fabric-api")
+    }
+
+    // Unit testing (JUnit 5)
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+spotless {
+    java {
+        // Palantir Java Format keeps the project's existing 4-space indentation.
+        palantirJavaFormat("2.50.0")
+        removeUnusedImports()
+        importOrder()
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
 

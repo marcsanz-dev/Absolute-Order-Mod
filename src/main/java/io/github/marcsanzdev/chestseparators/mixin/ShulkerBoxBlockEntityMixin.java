@@ -2,6 +2,7 @@ package io.github.marcsanzdev.chestseparators.mixin;
 
 import io.github.marcsanzdev.chestseparators.access.IShulkerUUIDProvider;
 import io.github.marcsanzdev.chestseparators.network.ShulkerUUIDPayload;
+import java.util.UUID;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -18,9 +19,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.UUID;
-
-// Mixin to inject a persistent UUID into the Vanilla Shulker Box block entity.
+/**
+ * Injects a persistent mod UUID into each Shulker Box block entity.
+ *
+ * <p>The UUID is generated lazily on the server, persisted to world chunk NBT, and
+ * transmitted to the client via {@link ShulkerUUIDPayload} whenever a player opens the box.
+ * The client never generates a UUID on its own — it always waits for the authoritative payload.
+ */
 @Mixin(ShulkerBoxBlockEntity.class)
 public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements IShulkerUUIDProvider {
 
@@ -34,6 +39,10 @@ public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements 
     @Override
     public UUID getShulkerUUID() {
         if (this.chestSeparatorsUUID == null) {
+            // On the client side, never generate a UUID — wait for the authoritative S2C payload.
+            if (this.world != null && this.world.isClient()) {
+                return null;
+            }
             this.chestSeparatorsUUID = UUID.randomUUID();
             this.markDirty();
         }
@@ -46,19 +55,18 @@ public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements 
         this.markDirty();
     }
 
-    // Preserves the UUID in the world save files (.mca chunks).
     @Inject(method = "readData", at = @At("TAIL"))
     protected void onReadData(ReadView view, CallbackInfo ci) {
         view.getOptionalString("ChestSeparatorsUUID").ifPresent(uuidString -> {
             if (!uuidString.isEmpty()) {
                 try {
                     this.chestSeparatorsUUID = UUID.fromString(uuidString);
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         });
     }
 
-    // Preserves the UUID in the world save files (.mca chunks).
     @Inject(method = "writeData", at = @At("TAIL"))
     protected void onWriteData(WriteView view, CallbackInfo ci) {
         if (this.chestSeparatorsUUID != null) {
@@ -66,18 +74,16 @@ public abstract class ShulkerBoxBlockEntityMixin extends BlockEntity implements 
         }
     }
 
-    // Safely transmits the persisted UUID payload to the client interface when opened.
-    // Includes a network check to ensure vanilla clients do not receive unknown packets.
+    /**
+     * Transmits the Shulker UUID to the opening player. Includes a capability check to ensure
+     * vanilla-only clients never receive an unrecognized packet.
+     */
     @Inject(method = "onOpen", at = @At("HEAD"))
     private void onShulkerOpened(ContainerUser user, CallbackInfo ci) {
         if (this.world != null && !this.world.isClient() && user instanceof ServerPlayerEntity serverPlayer) {
-            // Verifies if the connected player's client can handle our custom S2C payload.
             if (ServerPlayNetworking.canSend(serverPlayer, ShulkerUUIDPayload.ID)) {
                 ServerPlayNetworking.send(serverPlayer, new ShulkerUUIDPayload(this.getShulkerUUID()));
             }
         }
     }
-
-
-
 }

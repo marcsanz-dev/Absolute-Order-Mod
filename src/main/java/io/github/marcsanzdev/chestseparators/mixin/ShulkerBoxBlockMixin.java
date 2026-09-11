@@ -16,38 +16,43 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Forces an empty Shulker Box to drop as an item in Creative mode when it carries mod data.
+ *
+ * <p>Vanilla skips the item drop for empty Shulker Boxes in Creative mode. If the box has a
+ * separator UUID or slot-whitelist filters, that data would be permanently lost on break.
+ * This mixin intercepts the break event and manually spawns the item with all data components
+ * already embedded via {@code createComponentMap()}.
+ */
 @Mixin(ShulkerBoxBlock.class)
 public class ShulkerBoxBlockMixin {
 
     @Inject(method = "onBreak", at = @At("HEAD"))
-    private void forceDropEmptyCustomShulker(World world, BlockPos pos, BlockState state, PlayerEntity player, CallbackInfoReturnable<BlockState> cir) {
-        // Intervenimos SOLO si el jugador está en creativo (en supervivencia el juego ya la dropea siempre)
+    private void forceDropEmptyCustomShulker(
+            World world, BlockPos pos, BlockState state, PlayerEntity player, CallbackInfoReturnable<BlockState> cir) {
+        // Survival mode always drops the item; only Creative needs special handling.
         if (!world.isClient() && player.isCreative()) {
             BlockEntity be = world.getBlockEntity(pos);
 
             if (be instanceof ShulkerBoxBlockEntity shulker && shulker.isEmpty()) {
                 boolean hasCustomData = false;
 
-                // 1. Comprobamos si tiene líneas visuales (UUID)
                 if (shulker instanceof IShulkerUUIDProvider provider && provider.getShulkerUUID() != null) {
                     hasCustomData = true;
                 }
 
-                // 2. Comprobamos si tiene Filtros
-                if (shulker instanceof IWhitelistProvider provider && provider.getWhitelists() != null && !provider.getWhitelists().isEmpty()) {
+                if (shulker instanceof IWhitelistProvider provider
+                        && provider.getWhitelists() != null
+                        && !provider.getWhitelists().isEmpty()) {
                     hasCustomData = true;
                 }
 
-                // Si la Shulker está vacía de objetos, pero TIENE datos de nuestro mod, forzamos que caiga al suelo.
                 if (hasCustomData) {
-                    // AQUÍ ESTÁ LA SOLUCIÓN: Directamente cogemos el bloque actual y lo convertimos en ítem
-                    ItemStack itemStack = new ItemStack(((ShulkerBoxBlock)(Object)this).asItem());
-
-                    // Empaquetamos nuestra memoria en el ítem usando los métodos nativos
+                    ItemStack itemStack = new ItemStack(((ShulkerBoxBlock) (Object) this).asItem());
                     itemStack.applyComponentsFrom(shulker.createComponentMap());
 
-                    // Hacemos aparecer el ítem en el mundo
-                    ItemEntity itemEntity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack);
+                    ItemEntity itemEntity =
+                            new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack);
                     itemEntity.setToDefaultPickupDelay();
                     world.spawnEntity(itemEntity);
                 }

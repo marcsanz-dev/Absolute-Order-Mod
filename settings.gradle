@@ -7,4 +7,10 @@ pluginManagement {
     }
 }
 
+// Lets Gradle resolve and auto-provision the Java 21 toolchain on any machine,
+// removing the need for a hardcoded JDK path in gradle.properties.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'chestseparators'

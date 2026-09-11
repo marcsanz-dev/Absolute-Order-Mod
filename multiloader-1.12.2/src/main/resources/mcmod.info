@@ -1,0 +1,15 @@
+[
+  {
+    "modid": "chestseparators",
+    "name": "Absolute Order",
+    "description": "Custom chest auto-sorter with visual separators and per-slot filters.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "authorList": ["marcsanz-dev"],
+    "credits": "",
+    "logoFile": "assets/chestseparators/icon.png",
+    "screenshots": [],
+    "dependencies": ["mixinbooter"]
+  }
+]

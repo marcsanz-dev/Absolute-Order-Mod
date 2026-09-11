@@ -1,0 +1,45 @@
+modLoader = "javafml"
+loaderVersion = "[36,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "chestseparators"
+version = "${version}"
+displayName = "Absolute Order"
+authors = "marcsanz-dev"
+logoFile = "icon.png"
+description = '''
+Custom chest auto-sorter with visual separators and per-slot filters.
+'''
+
+[[dependencies.chestseparators]]
+modId = "forge"
+mandatory = true
+versionRange = "[36,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.chestseparators]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.16.5,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.chestseparators]]
+modId = "cloth-config"
+mandatory = true
+versionRange = "[0,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.chestseparators]]
+modId = "architectury"
+mandatory = true
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[mixins]]
+config = "absoluteorder.mixins.json"
+

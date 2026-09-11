@@ -15,8 +15,10 @@ public class ChestSeparatorsEmiPlugin implements EmiPlugin {
         registry.addGenericExclusionArea((screen, consumer) -> {
             ChestSeparatorsEditor editor = ChestSeparatorsEditor.getInstance();
 
-            // Si el editor está activo, reclamamos toda la pantalla
-            if (editor != null && editor.getSession() != null && editor.getSession().currentState != EditorState.HIDDEN) {
+            // While the editor is active, claim the entire screen to prevent EMI from rendering over it.
+            if (editor != null
+                    && editor.getSession() != null
+                    && editor.getSession().currentState != EditorState.HIDDEN) {
                 consumer.accept(new Bounds(0, 0, 10000, 10000));
             }
         });

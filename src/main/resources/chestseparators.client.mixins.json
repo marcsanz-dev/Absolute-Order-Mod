@@ -7,7 +7,18 @@
   ],
   "client": [
     "client.GenericContainerScreenMixin",
-    "client.HandledScreenAccessor"
+    "client.HandledScreenAccessor",
+    "client.CreativeInventoryScreenAccessor",
+    "client.CreativeInventoryScreenMixin",
+    "client.CreativeSlotAccessor",
+    "client.ChestLidAccessor",
+    "client.EnderChestLidAccessor",
+    "client.RecipeBookScreenAccessor",
+    "client.RecipeBookWidgetInvoker",
+    "client.StatusEffectsDisplayMixin",
+    "client.ShulkerAnimationAccessor",
+    "client.ArmorEquipClientMixin",
+    "client.InGameHudHotbarLinesMixin"
   ],
   "injectors": {
     "defaultRequire": 1

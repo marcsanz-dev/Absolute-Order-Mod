@@ -1,0 +1,137 @@
+// ---------------------------------------------------------------------------------------------------
+// Absolute Order — Minecraft 1.12.2 (Phase 4, mythic / Forge legacy, render era E1).
+//
+// This is a STANDALONE ForgeGradle 2.3 project (no Architectury, no loom, no Mojmap). The 1.12.2 port
+// shares no code with the modern multiloader base — it is hand-written against the legacy Forge API and
+// immediate-mode GL rendering. The build runs on JDK 11 via the anatawa12 ForgeGradle-2.3 fork while
+// still producing Java 8 bytecode (the game runs on Java 8).
+// ---------------------------------------------------------------------------------------------------
+
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://jitpack.io' } // anatawa12 ForgeGradle-2.3 fork
+        mavenCentral()
+    }
+    dependencies {
+        // Patched ForgeGradle 2.3 that runs on modern Gradle (7.6.x) + JDK 11, unlike stock FG 2.3 (JDK 8 only).
+        classpath('com.anatawa12.forge:ForgeGradle:2.3-1.0.+') {
+            changing = true
+        }
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+// MixinGradle is NOT usable here: the only version supporting ForgeGradle 2.x (0.6-SNAPSHOT) relies on a
+// Gradle-internal class removed in Gradle 7, and we must run Gradle 7.6.x for the anatawa12 fork on JDK 11.
+// Instead the Mixin annotation processor is wired to ForgeGradle's MCP→SRG mapping by hand below (see the
+// compileJava block), which is exactly what MixinGradle would have configured.
+
+version = project.mod_version
+group = 'io.github.marcsanzdev.chestseparators'
+archivesBaseName = "AbsoluteOrder-${project.mod_version}-forge-mc${project.minecraft_version}"
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+    options.encoding = 'UTF-8'
+}
+
+minecraft {
+    version = "${project.minecraft_version}-${project.forge_version}"
+    runDir = 'run'
+    mappings = project.mcp_mappings
+}
+
+// --- Mixin annotation-processor wiring (manual, replacing MixinGradle) --------------------------------------
+// The AP needs ForgeGradle's MCP→SRG mapping to translate @Inject/@Shadow/@Accessor targets to searge names
+// and to emit the refmap. genSrgs produces mcp-srg.srg in the Gradle cache; point the AP at it and collect
+// the refmap into the jar root as mixins.absoluteorder.refmap.json (referenced by mixins.absoluteorder.json).
+def mcpSnapshot = project.mcp_mappings.tokenize('_')[1] // snapshot_20171003 -> 20171003
+def srgFile = new File(gradle.gradleUserHomeDir,
+        "caches/minecraft/de/oceanlabs/mcp/mcp_snapshot/${mcpSnapshot}/${project.minecraft_version}/srgs/mcp-srg.srg")
+def refMapDir = file("$buildDir/refmap")
+def refMapFile = new File(refMapDir, 'mixins.absoluteorder.refmap.json')
+
+compileJava {
+    dependsOn 'genSrgs'
+    doFirst { refMapDir.mkdirs() }
+    options.compilerArgs += [
+            "-AreobfSrgFile=${srgFile.absolutePath}".toString(),
+            "-AoutRefMapFile=${refMapFile.absolutePath}".toString(),
+            "-AdefaultObfuscationEnv=searge"
+    ]
+}
+
+repositories {
+    maven { url = 'https://maven.cleanroommc.com' } // MixinBooter (zone.rong:mixinbooter)
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' } // Mixin annotation processor
+    maven { url = 'https://cursemaven.com' }
+    maven { url = 'https://dvs1.progwml6.com/files/maven/' } // JEI
+    maven { url = 'https://jitpack.io' }
+    mavenCentral()
+}
+
+dependencies {
+    // MixinBooter: ships CleanMix (fork of Mixin 0.8.7) + the runtime bootstrap. transitive=false so it does
+    // not drag LaunchWrapper/Guava onto the compile classpath. It is ALSO a runtime dependency the end user
+    // installs alongside the mod (same model as architectury/cloth on the modern ports).
+    compileOnly('zone.rong:mixinbooter:' + project.mixinbooter_version) {
+        transitive = false
+    }
+    // Mixin annotation processor — generates mixins.absoluteorder.refmap.json at compile time. Matched to
+    // CleanMix's 0.8.x line (bundled by MixinBooter). asm/guava/gson are the AP's own runtime deps.
+    annotationProcessor('org.spongepowered:mixin:' + project.mixin_ap_version) {
+        exclude group: 'org.ow2.asm'
+        exclude group: 'com.google.guava'
+    }
+    annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+    annotationProcessor 'com.google.guava:guava:24.1.1-jre'
+    annotationProcessor 'com.google.code.gson:gson:2.8.6'
+
+    // JEI (Just Enough Items) — the 1.12.2 recipe-viewer integration (REI/EMI do not exist this far back).
+    // deobfCompile so it is remapped to the dev mappings.
+    // deobfCompile "mezz.jei:jei_1.12.2:${project.jei_version}"
+}
+
+processResources {
+    inputs.property 'version', project.mod_version
+    inputs.property 'mcversion', project.minecraft_version
+
+    // Expand version/mcversion in mcmod.info.
+    filesMatching('mcmod.info') {
+        expand 'version': project.mod_version, 'mcversion': project.minecraft_version
+    }
+}
+
+jar {
+    // archivesBaseName already carries the version + loader + mc (AbsoluteOrder-2.0.0-forge-mc1.12.2), so drop
+    // the version Gradle would otherwise append → final name AbsoluteOrder-2.0.0-forge-mc1.12.2.jar.
+    archiveVersion.set('')
+
+    // Include the AP-generated mixin refmap at the jar root (see the compileJava wiring above).
+    from(refMapDir)
+
+    // Being a coremod (FMLCorePlugin) puts the jar on the launch classloader during PREINIT, so MixinBooter's
+    // scan of the `MixinConfigs` manifest attribute can actually READ mixins.absoluteorder.json (a plain mod
+    // jar isn't on the classloader yet at scan time -> "resource could not be read"). AbsoluteOrderCore is a
+    // no-op IFMLLoadingPlugin that references nothing beyond FML. FMLCorePluginContainsFMLMod tells FML the
+    // coremod jar also holds the @Mod.
+    manifest {
+        attributes(
+            'FMLCorePlugin': 'io.github.marcsanzdev.chestseparators.core.AbsoluteOrderCore',
+            'MixinConfigs': 'mixins.absoluteorder.json',
+            'FMLCorePluginContainsFMLMod': 'true',
+            'ForceLoadAsMod': 'true'
+        )
+    }
+}
+
+// --- autotests ---
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+test { useJUnitPlatform() }
