@@ -1,78 +1,78 @@
-# 📦 Chest Separators | Visual Inventory Organization
+# Absolute Order
 
-![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Fabric](https://img.shields.io/badge/Loader-Fabric-c9b889?style=for-the-badge&logo=fabric&logoColor=black)
-![Render](https://img.shields.io/badge/Rendering-Mixin_Injection-blueviolet?style=for-the-badge)
-![NBT](https://img.shields.io/badge/Data-Persistent_NBT-2D7D9A?style=for-the-badge)
+**Absolute Order** (formerly *Chest Separators*) is a Minecraft utility mod for organizing containers and your inventory. It combines a purely visual layer — colored dividers and slot backgrounds painted onto any container GUI — with a powerful per-slot **filter** system that controls which items may enter each slot, and one-key **auto-deposit / auto-pull** to move items between your inventory and nearby storage.
 
-**Chest Separators** is a lightweight, client-side utility mod designed to enhance inventory management UX without altering server-side data. Unlike traditional mods that require crafting physical items (wasting inventory slots), this project implements a **Virtual Overlay System**, allowing users to draw visual dividers directly onto the container GUI.
-
-> **⚠️ Engineering Focus**
-> This project demonstrates advanced **Java Bytecode Manipulation** using Mixins for rendering hooks and implements a custom **HSV-to-RGB Color Engine** for real-time dynamic palette generation.
+Version **2.0** ("The Liftoff Update") rebuilt the mod as a **multi-loader, multi-version** project: one codebase now ships for Fabric, NeoForge and Forge across a wide range of Minecraft versions.
 
 ---
 
-## 📸 Interface & Workflow (v1.1 Update)
+## Features
 
-The user experience focuses on fluidity ("Drag & Paint") and deep customization via the new RGB Engine.
+### Visual separators (cosmetic, client-side)
+- Paint colored **lines** between slots and **backgrounds** on slots of any container (chests, barrels, shulker boxes, entity inventories, the Ender Chest…).
+- Full **HSV color picker** with an eyedropper and per-layer custom palette slots.
+- **Drag & paint** with pencil/brush/area/trace tools, plus a smart eraser and per-container reset.
+- **Undo / redo** and an NBT **clipboard** to copy a whole layout onto another container.
+- Purely client-side and cosmetic: stored per-player on your machine, never sent to the server.
 
-### 1. Modular UI Architecture
-New in v1.1: Layered UI rendering with depth control. The editor now floats independently over the container grid, preventing Z-fighting artifacts.
+### Whitelist filters (functional)
+- Assign each slot a **filter** of allowed items; group several slots into one logical filter.
+- Enforced for **manual placement, shift-click, and hoppers** (each rule can be toggled per filter).
+- The filter's item order is a **priority order** you arrange by dragging — it decides which slot an item lands in.
+- **Presets** for quick reuse, import from the creative tabs / search, and export.
+- Filters on **block containers are server-authoritative** (they travel with the block); entity inventories and the Ender Chest are client-local.
 
-![Modular UI Architecture](img/rendering_layers_architecture.png)
+### Auto-deposit & auto-pull
+- One key sweeps matching items from your inventory **into** nearby filtered storage (auto-deposit), or pulls items **from** storage to top up your filtered inventory slots (pull).
+- Live **previews** show exactly what an action will do before you commit it.
 
-<br>
-
-### 2. HSV Color Engine & Persistence
-Moving away from static byte arrays, the mod now uses real-time `Math.hsvToRgb` conversion. Users can generate any color (16.7M possibilities) and persist them into custom NBT slots.
-
-![HSV Color Picker Integration](img/hsv_color_picker_integration.gif)
-
-<br>
-
-### 3. Raycast Drag & Paint
-Utilizes a custom slot-hitting algorithm to allow fluid "painting" across the GUI. Updates are rendered in real-time on the client tick event, ensuring zero input lag.
-
-![Raycast Drag System](img/raycast_drag_paint.gif)
-
-<br>
-
-### 4. NBT Clipboard Serialization
-Implements a deep-copy mechanism. Complex layouts are serialized into NBT data to replicate designs across multiple containers (Chests, Barrels, Shulkers) instantly.
-
-![Clipboard System](img/nbt_serialization_clipboard.gif)
-
-<br>
-
-### 5. State Management Tools
-Precise control over the visual layer. The **Smart Eraser** modifies specific bits in the array, while the **Trash Can** triggers a full array reset for the container.
-
-![State Tools](img/state_management_tools.gif)
+### Quality of life
+- Cloth Config settings screen and rebindable keys.
+- REI / EMI / JEI exclusion-zone integration so the editor never overlaps recipe UIs.
+- Localized into 20 languages.
 
 ---
 
-## 🏗️ Technical Architecture
+## Supported versions & loaders
 
-The core engineering challenge in v1.1 was integrating a complex UI state (Color Picker) while maintaining the zero-conflict rendering pipeline.
+| Minecraft | Loaders |
+|---|---|
+| 26.2, 26.1 | Fabric, NeoForge |
+| 1.21.11 | Fabric, NeoForge |
+| 1.21.1 | Fabric, NeoForge |
+| 1.20.1 | Fabric, Forge |
+| 1.19.2 | Fabric, Forge |
+| 1.18.2 | Fabric, Forge |
+| 1.16.5 | Fabric, Forge |
+| 1.12.2 | Forge |
 
-### The Rendering Pipeline (Dual-Layer Strategy)
-To achieve the visual effect where lines appear *behind* items but *above* the background texture, the rendering logic is split:
-* **Layer 1 (Background):** Injected at the `HEAD` of the `drawSlots` method. This renders the persistent separator data relative to the container's coordinate system.
-* **Layer 2 (Transient UI):** The new v1.1 Editor and Color Picker are rendered at the `TAIL` of the render loop. This ensures high Z-Index priority for the floating windows and tooltips.
+> Quilt is covered by the Fabric jar. Each release jar is named `AbsoluteOrder-<version>-<loader>-mc<version-or-range>.jar`.
 
-### Context-Aware Persistence
-The mod employs a **Polymorphic Data Strategy** to save configurations:
-* **Static Blocks:** Uses `BlockPos` + `DimensionID` to create unique NBT files.
-* **Dynamic Entities:** Detects if the inventory belongs to an entity (e.g., Llama, Minecart) and uses the entity's persistent `UUID`.
+---
+
+## Installation
+
+1. Install the matching loader for your Minecraft version (Fabric, NeoForge, or Forge).
+2. On Fabric, also install the **Fabric API**; on all loaders, **Architectury API** is required (Forge/NeoForge builds bundle what they need — see the download page notes).
+3. Drop the jar for your version and loader into your `mods` folder.
+
+> **Playing on a server?** Filters for block containers are **server-authoritative**, so the mod must be installed **on the server** as well as on the client for those filters to persist in multiplayer. The visual separators and inventory filters are client-side and work without a modded server.
 
 ---
 
-## 💻 Installation & Setup
+## Building from source
 
-1.  **Prerequisites:** Install [Minecraft Java Edition](https://www.minecraft.net/) and [Fabric Loader](https://fabricmc.net/).
-2.  **Fabric API:** Ensure the [Fabric API](https://modrinth.com/mod/fabric-api) is installed.
-3.  **Deployment:** Drop the [ChestSeparators-v1.1.0.jar](https://modrinth.com/mod/chest-separators) file into your `.minecraft/mods` folder.
-4.  **Usage:** Open any chest and click the **Pencil (✎)** icon to access the new UI.
+The project uses Gradle with Architectury Loom. Each version lives in its own module (`multiloader`, `multiloader-1.20.1`, `multiloader-1.12.2`, …). Build a module with its required JDK, for example:
+
+```bash
+# from a version module directory
+./gradlew build
+```
+
+JDK requirements: **Java 21** for the modern ports, **Java 25** for the 26.x ports, and **Java 11** for the legacy 1.12.2 port.
 
 ---
-*Looking for the source code? Check the `src` folder for the Mixin implementation.*
+
+## License & credits
+
+Created and maintained by **marcsanz-dev**. See the in-repo license for terms.
