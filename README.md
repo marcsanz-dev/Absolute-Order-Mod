@@ -8,7 +8,7 @@
 ![Mixin](https://img.shields.io/badge/Rendering-Mixin_Injection-blueviolet?style=for-the-badge)
 ![Versions](https://img.shields.io/badge/Minecraft-1.12.2_→_26.2-2D7D9A?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-3DA639?style=for-the-badge)
-[![Build](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml/badge.svg?branch=multiloader)](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml)
+[![Build](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml/badge.svg)](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml)
 
 **Absolute Order** (formerly *Chest Separators*) is an inventory-organization mod built around a **Virtual Overlay System**: instead of crafting physical dividers that waste slots, it paints separators and per-slot filters directly onto the container GUI, and enforces those filters server-side for real item-routing behavior (shift-click, hoppers, auto-deposit).
 
