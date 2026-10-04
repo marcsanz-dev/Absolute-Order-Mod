@@ -7,6 +7,8 @@
 ![Architectury](https://img.shields.io/badge/Toolchain-Architectury-5b6ee1?style=for-the-badge)
 ![Mixin](https://img.shields.io/badge/Rendering-Mixin_Injection-blueviolet?style=for-the-badge)
 ![Versions](https://img.shields.io/badge/Minecraft-1.12.2_→_26.2-2D7D9A?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-3DA639?style=for-the-badge)
+[![Build](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml/badge.svg?branch=multiloader)](https://github.com/marcsanz-dev/Absolute-Order-Mod/actions/workflows/build.yml)
 
 **Absolute Order** (formerly *Chest Separators*) is an inventory-organization mod built around a **Virtual Overlay System**: instead of crafting physical dividers that waste slots, it paints separators and per-slot filters directly onto the container GUI, and enforces those filters server-side for real item-routing behavior (shift-click, hoppers, auto-deposit).
 
@@ -125,4 +127,5 @@ Gradle + Architectury Loom, one module per version. Build a module with its requ
 JDKs: **21** for the modern ports, **25** for the 26.x ports, **11** for legacy 1.12.2.
 
 ---
-*Created and maintained by **marcsanz-dev**. Looking for the internals? Start at `common/src/main/java/...` (or `src/` on 1.12.2) for the Mixin and networking implementation.*
+*Created and maintained by **marcsanz-dev** · Released under the [MIT License](LICENSE.txt).*
+*Looking for the internals? Each Minecraft version lives in its own module — start at `multiloader-<version>/common/src/main/java/...` (e.g. `multiloader-26.2/`; `multiloader/` is 1.21.11, and `multiloader-1.12.2/src/` is the single-module Forge port) for the Mixin and networking implementation.*
