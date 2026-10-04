@@ -13,18 +13,17 @@ The two features are edited through the same in-GUI editor overlay but persist t
 
 ## Build & Run
 
-The project uses Gradle with `fabric-loom`. **There is no Gradle wrapper checked in** (`gradlew`/`gradlew.bat` are absent), so use a locally installed Gradle or the IDE's Gradle integration.
+Each Minecraft version is an independent Gradle build in its own folder — `multiloader/` (1.21.11) and `multiloader-<version>/` for the rest — with its own Gradle wrapper and `common` + loader subprojects (`fabric`, `neoforge` or `forge`). Run commands from inside the version folder:
 
 ```bash
-gradle build          # Compile, run Mixin processing, and produce the remapped jar in build/libs
-gradle runClient      # Launch a dev Minecraft client with the mod loaded
-gradle runServer      # Launch a dedicated dev server (validates server-only class loading)
-gradle clean          # Wipe build outputs
+./gradlew build                  # Compile all loaders + run the common JUnit tests; jars in <loader>/build/libs
+./gradlew fabric:runClient       # Dev client (use neoforge:/forge: for the other loader)
+./gradlew fabric:runServer       # Dedicated dev server (validates server-only class loading)
 ```
 
-> **Gotcha:** `gradle.properties` hardcodes `org.gradle.java.home` to a machine-specific JDK path
-> (`C:/Users/Usuario/.jdks/ms-21.0.10`). On any other machine this line must be edited or removed so
-> Gradle can resolve a Java 21 toolchain itself. The compile target is pinned to Java 21 via `build.gradle`.
+JDKs: 21 for the 1.16.5–1.21.11 ports, 25 for 26.x, 11 for 1.12.2 (single-module Forge port). CI (`.github/workflows/build.yml`) builds 26.2, 1.21.11 and 1.20.1 on every push — add new ports to its matrix.
+
+> The original single-loader project (v1.3.1 "Chest Separators": root `src/` + root Gradle build) was removed from the branch and is preserved at the git tag `legacy-root-v1.3.1`. Architecture notes below that mention `src/main` now apply to each version's `common/src/main`.
 
 Always smoke-test changes that touch Mixins or the `mixin/` (non-`client`) package with **both** `runClient` and `runServer` — a server-side `ClassNotFoundException` on a client-only class is the most common breakage (see `WorldMixin` and its dual `EnvType.CLIENT` + `isClient()` guard).
 
