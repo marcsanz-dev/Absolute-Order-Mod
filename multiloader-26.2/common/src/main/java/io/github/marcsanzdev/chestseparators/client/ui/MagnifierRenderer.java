@@ -1,10 +1,7 @@
 package io.github.marcsanzdev.chestseparators.client.ui;
 
-import java.nio.ByteBuffer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryUtil;
 
 /**
  * Cursor zoom loupe. It samples a small block of the real framebuffer under the cursor and draws it
@@ -44,20 +41,9 @@ public final class MagnifierRenderer {
         int fbX = clamp((int) Math.round((cursorX - srcHalf) * scale), 0, fbW - blockFb);
         int fbYBottom = clamp(fbH - (int) Math.round((cursorY + srcHalf) * scale), 0, fbH - blockFb);
 
-        int[] pixels = new int[blockFb * blockFb];
-        // Heap-allocated native buffer: a stack buffer (MemoryStack) overflows for large loupe sizes.
-        ByteBuffer buf = MemoryUtil.memAlloc(blockFb * blockFb * 4);
-        try {
-            GL11.glReadPixels(fbX, fbYBottom, blockFb, blockFb, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
-            for (int i = 0; i < pixels.length; i++) {
-                int r = buf.get(i * 4) & 0xFF;
-                int g = buf.get(i * 4 + 1) & 0xFF;
-                int b = buf.get(i * 4 + 2) & 0xFF;
-                pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
-            }
-        } finally {
-            MemoryUtil.memFree(buf);
-        }
+        // Crash-safe readback (forces a sane pixel-pack state, bounds-checked read). See SafePixelReader.
+        int[] pixels = SafePixelReader.readArgb(fbX, fbYBottom, blockFb, blockFb);
+        if (pixels == null) return;
 
         // Place the loupe up-right of the cursor, flipping to stay on screen.
         int sw = client.getWindow().getGuiScaledWidth();
