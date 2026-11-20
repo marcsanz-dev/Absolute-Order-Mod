@@ -208,8 +208,23 @@ public final class ModNetworking {
                         BlockState state = world.getBlockState(payload.pos());
                         boolean isEnderChest = state.getBlock() == Blocks.ENDER_CHEST;
 
-                        // Ender Chest filters are local-only (hoppers cannot access them); nothing to do here.
-                        if (isEnderChest) return;
+                        // An Ender Chest uses the player's own inventory (27 slots in vanilla, possibly
+                        // larger in a compatible inventory-expansion mod). The local filter is sent at
+                        // screen open and on edits; cache it on this player's live ender inventory so
+                        // vanilla shift-click reaches the same IWhitelistProvider rule as ordinary chests.
+                        // Do not persist it on the world block: each player's Ender Chest is private.
+                        if (isEnderChest) {
+                            Container ender = player.getEnderChestInventory();
+                            if (ender instanceof IWhitelistProvider provider) {
+                                Map<Integer, SlotWhitelist> valid = new java.util.HashMap<>();
+                                payload.whitelists().forEach((slot, wl) -> {
+                                    if (slot != null && wl != null && slot >= 0
+                                            && slot < ender.getContainerSize()) valid.put(slot, wl);
+                                });
+                                provider.setWhitelists(valid);
+                            }
+                            return;
+                        }
 
                         Container targetInventory = getChestInventorySafe(world, payload.pos());
 
@@ -422,8 +437,12 @@ public final class ModNetworking {
 
         List<Candidate> candidates = collectCandidates(player, radius, throughWalls, enderWhitelists, entityWhitelists);
 
-        // 2. Deposit each stack into matching candidate slots, recording moved amounts per container.
+        // 2. Deposit only the movable portion of each source stack. Inventory filters are client-local
+        // but already synced to this server for pickup enforcement; reuse that authoritative snapshot.
         Inventory inventory = player.getInventory();
+        Map<Integer, SlotWhitelist> playerFilters = ChestSeparatorsState.INVENTORY_FILTERS.get(player.getUUID());
+        // Rehome loose non-hotbar stacks before deciding how many items can leave each filter.
+        io.github.marcsanzdev.chestseparators.util.InventorySlotRefill.refill(inventory, playerFilters);
         // Preserve discovery order so the animation roughly mirrors inventory layout.
         Map<BlockPos, Map<Item, Integer>> moved = new java.util.LinkedHashMap<>();
         // Containers that actually received items, so only those get their groups re-sorted afterwards.
@@ -432,16 +451,20 @@ public final class ModNetworking {
         for (int i = 0; i < Inventory.INVENTORY_SIZE; i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) continue;
+            int available = io.github.marcsanzdev.chestseparators.util.InventoryProtection
+                    .movableCount(inventory, playerFilters, i);
+            if (available <= 0) continue;
+            ItemStack outgoing = stack.copyWithCount(available);
             Item item = stack.getItem();
             String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
 
             for (Candidate candidate : candidates) {
-                if (stack.isEmpty()) break;
+                if (outgoing.isEmpty()) break;
                 if (!containerListsItem(candidate.whitelists, itemId)) continue;
 
-                int before = stack.getCount();
-                insertRespectingFilter(candidate.inv, candidate.whitelists, stack, itemId);
-                int delta = before - stack.getCount();
+                int before = outgoing.getCount();
+                insertRespectingFilter(candidate.inv, candidate.whitelists, outgoing, itemId);
+                int delta = before - outgoing.getCount();
                 if (delta > 0) {
                     candidate.inv.setChanged();
                     touched.add(candidate);
@@ -449,6 +472,8 @@ public final class ModNetworking {
                             .merge(item, delta, Integer::sum);
                 }
             }
+            int deposited = available - outgoing.getCount();
+            if (deposited > 0) stack.shrink(deposited);
             inventory.setItem(i, stack);
         }
 
@@ -589,7 +614,9 @@ public final class ModNetworking {
             int max = Math.min(inv.getMaxStackSize(dest), dest.getMaxStackSize());
             int space = max - dest.getCount();
             if (space <= 0) continue;
-            int move = Math.min(space, stack.getCount());
+            int move = Math.min(Math.min(space, stack.getCount()),
+                    availableInboundRoom(inv, whitelists, slot, itemId));
+            if (move <= 0) continue;
             dest.grow(move);
             stack.shrink(move);
         }
@@ -608,10 +635,34 @@ public final class ModNetworking {
         for (int slot : emptySlots) {
             if (stack.isEmpty()) break;
             int max = Math.min(inv.getMaxStackSize(stack), stack.getMaxStackSize());
-            int move = Math.min(max, stack.getCount());
+            int move = Math.min(Math.min(max, stack.getCount()),
+                    availableInboundRoom(inv, whitelists, slot, itemId));
+            if (move <= 0) continue;
             inv.setItem(slot, stack.copyWithCount(move));
             stack.shrink(move);
         }
+    }
+
+    /** The per-group inbound cap applies only when filling the player's inventory, not storage. */
+    private static int availableInboundRoom(
+            Container inv, Map<Integer, SlotWhitelist> whitelists, int destSlot, String itemId) {
+        if (!(inv instanceof Inventory) || whitelists == null) return Integer.MAX_VALUE;
+        SlotWhitelist filter = whitelists.get(destSlot);
+        if (filter == null || filter.targetCount() <= 0 || filter.groupId() == null) return Integer.MAX_VALUE;
+
+        int held = 0;
+        for (Map.Entry<Integer, SlotWhitelist> entry : whitelists.entrySet()) {
+            if (!filter.groupId().equals(entry.getValue().groupId())
+                    || !entry.getValue().allowedItems().contains(itemId)) continue;
+            int slot = entry.getKey();
+            if (slot < 0 || slot >= inv.getContainerSize()) continue;
+            ItemStack existing = inv.getItem(slot);
+            if (!existing.isEmpty() && BuiltInRegistries.ITEM.getKey(existing.getItem()).toString().equals(itemId)) {
+                held += existing.getCount();
+            }
+        }
+        return io.github.marcsanzdev.chestseparators.util.InventoryTransferPolicy
+                .inboundRoom(filter.targetCount(), held);
     }
 
     /**

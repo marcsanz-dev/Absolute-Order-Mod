@@ -149,6 +149,13 @@ public class ChestSeparatorsEditor {
 
         ChestConfigManager.getInstance().loadWorldPalette();
         loadConfigForCurrentTarget();
+        // Ender Chest filters are stored on this client, but shift-click is server-side. Attach
+        // them to the live GUI container and send them to the server whenever it opens, including
+        // after relog; dynamically sized inventories need no fixed 27/54-slot assumptions.
+        if (session.isEnderChest) {
+            syncClientInventoryWhitelists(ChestConfigManager.getInstance().chestOnlyWhitelists());
+            sendWhitelistToServer();
+        }
         requestChestWhitelistsIfNeeded();
 
         int x = accessor.getX();
@@ -718,6 +725,7 @@ public class ChestSeparatorsEditor {
 
     public void prepareFilterMenu() {
         session.currentAllowedItems.clear();
+        session.targetCount = 0;
         // The third rule is context-dependent: "Hopper" for a chest filter, "Pick Up" for an inventory
         // filter (they share the ruleHopper flag). Seed its default from the matching config option so an
         // inventory group defaults to the Pick Up default and a chest group to the Hopper default.
@@ -759,6 +767,7 @@ public class ChestSeparatorsEditor {
                             session.ruleManual = entry.getValue().allowManual();
                             session.ruleShift = entry.getValue().allowShift();
                             session.ruleHopper = entry.getValue().allowHopper();
+                            session.targetCount = Math.max(0, entry.getValue().targetCount());
                             loadedRules = true;
                         }
                     }
@@ -788,7 +797,7 @@ public class ChestSeparatorsEditor {
                             session.ruleManual,
                             session.ruleShift,
                             session.ruleHopper,
-                            0);
+                            session.targetCount);
             whitelists.put(slotIndex, wl);
         }
         ChestConfigManager.getInstance().setCurrentWhitelists(whitelists);
@@ -818,12 +827,12 @@ public class ChestSeparatorsEditor {
 
     /**
      * Pushes the container's own filters to the server. Self-guarding: it only sends for targets the
-     * server can actually enforce and persist — real block chests/shulkers, and chest/hopper minecarts
-     * (synced by entity UUID). Ender chests, the player inventory, and other entity containers (chest
-     * boats, animals) stay local-only and are skipped here.
+     * server can actually enforce — real block chests/shulkers, chest/hopper minecarts, and the
+     * player's private Ender Chest inventory. Ender filters remain client-persisted; the server
+     * receives only a temporary copy for shift-click enforcement.
      */
     public void sendWhitelistToServer() {
-        if (session.isEnderChest || session.isPlayerInventory) return;
+        if (session.isPlayerInventory) return;
 
         var chestOnly = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
                 .chestOnlyWhitelists();
@@ -1384,6 +1393,72 @@ public class ChestSeparatorsEditor {
         }
     }
 
+    /**
+     * Place loose main-inventory stacks into matching home slots before the open-container Push
+     * click sequence. Using real container clicks (rather than editing predicted client stacks)
+     * keeps the client and server inventories synchronized. The server's inventory-menu refill
+     * hook does not run in this container, so it cannot interrupt these clicks halfway through.
+     * Never source items from the hotbar, armor, offhand, or other filtered slots.
+     */
+    private void consolidatePlayerBeforeDeposit(
+            Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> filters,
+            net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode,
+            net.minecraft.world.entity.player.Player player, int menuId) {
+        if (filters == null || filters.isEmpty()) return;
+        Map<Integer, net.minecraft.world.inventory.Slot> mainSlots = new java.util.TreeMap<>();
+        for (net.minecraft.world.inventory.Slot slot : accessor.getHandler().slots) {
+            if (slot.container instanceof net.minecraft.world.entity.player.Inventory
+                    && slot.getContainerSlot() >= 9
+                    && slot.getContainerSlot() < net.minecraft.world.entity.player.Inventory.INVENTORY_SIZE) {
+                mainSlots.put(slot.getContainerSlot(), slot);
+            }
+        }
+        // Fill partial matching stacks first; empty homes in a second pass.
+        for (int pass = 0; pass < 2; pass++) {
+            for (Map.Entry<Integer, net.minecraft.world.inventory.Slot> homeEntry : mainSlots.entrySet()) {
+                net.minecraft.world.inventory.Slot home = homeEntry.getValue();
+                var filter = filters.get(homeEntry.getKey());
+                if (filter == null || filter.allowedItems().isEmpty()) continue;
+                net.minecraft.world.item.ItemStack stack = home.getItem();
+                if (pass == 0 && (stack.isEmpty() || !filter.allowedItems().contains(
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()))) {
+                    continue;
+                }
+                if (pass == 1 && !stack.isEmpty()) continue;
+
+                // When the home is empty, try the filter's allowed items in the configured order.
+                List<String> preferred = stack.isEmpty() ? filter.allowedItems() :
+                        List.of(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+                for (String itemId : preferred) {
+                    for (Map.Entry<Integer, net.minecraft.world.inventory.Slot> sourceEntry : mainSlots.entrySet()) {
+                        if (filters.containsKey(sourceEntry.getKey()) || sourceEntry.getKey().equals(homeEntry.getKey())) continue;
+                        net.minecraft.world.inventory.Slot source = sourceEntry.getValue();
+                        net.minecraft.world.item.ItemStack extra = source.getItem();
+                        if (extra.isEmpty() || !net.minecraft.core.registries.BuiltInRegistries.ITEM
+                                .getKey(extra.getItem()).toString().equals(itemId)) continue;
+                        net.minecraft.world.item.ItemStack current = home.getItem();
+                        if (!current.isEmpty()
+                                && !net.minecraft.world.item.ItemStack.isSameItemSameComponents(current, extra)) continue;
+                        int maximum = Math.min(extra.getMaxStackSize(), home.getMaxStackSize(extra));
+                        if (current.getCount() >= maximum) break;
+                        // Pickup source, merge into home, then return any leftover to the source.
+                        gameMode.handleContainerInput(menuId, source.index, 0,
+                                net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+                        gameMode.handleContainerInput(menuId, home.index, 0,
+                                net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+                        if (!accessor.getHandler().getCarried().isEmpty()) {
+                            gameMode.handleContainerInput(menuId, source.index, 0,
+                                    net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+                        }
+                        if (accessor.getHandler().getCarried().isEmpty() && home.hasItem()
+                                && home.getItem().getCount() >= maximum) break;
+                    }
+                    if (home.hasItem()) break;
+                }
+            }
+        }
+    }
+
     public void executeDeposit(boolean shift) {
         if (accessor.getHandler() == null || net.minecraft.client.Minecraft.getInstance().player == null) return;
         if (!accessor.getHandler().getCarried().isEmpty()) return;
@@ -1394,12 +1469,22 @@ public class ChestSeparatorsEditor {
                 net.minecraft.client.Minecraft.getInstance().gameMode;
         int syncId = accessor.getHandler().containerId;
         net.minecraft.world.entity.player.Player player = net.minecraft.client.Minecraft.getInstance().player;
+        var playerFilters = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
+                .getPlayerInventoryFilters();
+
+        // Refill dedicated main-inventory stacks BEFORE determining per-slot deposit allowances.
+        // The subsequent Keep limit still protects the selected number of items overall.
+        consolidatePlayerBeforeDeposit(playerFilters, interactionManager, player, syncId);
 
         int totalMovedCount = 0;
 
         for (net.minecraft.world.inventory.Slot playerSlot : accessor.getHandler().slots) {
             if (playerSlot.container instanceof net.minecraft.world.entity.player.Inventory && playerSlot.hasItem()) {
-                net.minecraft.world.item.ItemStack stackToMove = playerSlot.getItem().copy();
+                int movable = io.github.marcsanzdev.chestseparators.util.InventoryProtection
+                        .movableCount(player.getInventory(), playerFilters, playerSlot.getContainerSlot());
+                if (movable <= 0) continue;
+                int reserved = playerSlot.getItem().getCount() - movable;
+                net.minecraft.world.item.ItemStack stackToMove = playerSlot.getItem().copyWithCount(movable);
                 String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
                         .getKey(stackToMove.getItem())
                         .toString();
@@ -1436,6 +1521,14 @@ public class ChestSeparatorsEditor {
                                         net.minecraft.world.inventory.ContainerInput.PICKUP,
                                         player);
                                 pickedUp = true;
+                                // Leave the protected part in its original slot BEFORE depositing.
+                                // Right-click on the emptied source places one item per click, allowing
+                                // an exact retained count without adding a new server packet.
+                                for (int keep = 0; keep < reserved; keep++) {
+                                    interactionManager.handleContainerInput(
+                                            syncId, playerSlot.index, 1,
+                                            net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+                                }
                             }
                             interactionManager.handleContainerInput(
                                     syncId, targetSlot.index, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
@@ -1683,6 +1776,9 @@ public class ChestSeparatorsEditor {
             int canAdd = maxC - current;
             if (canAdd <= 0) continue;
             int add = Math.min(left, canAdd);
+            if (!shift) add = Math.min(add,
+                    previewInboundRoom(playerSlots, invFilters, ps.getContainerSlot(), itemId));
+            if (add <= 0) continue;
             if (proj == null) previewTargetIncoming.put(ps.index, stack.copyWithCount(add));
             else proj.setCount(proj.getCount() + add);
             left -= add;
@@ -1707,6 +1803,8 @@ public class ChestSeparatorsEditor {
             for (net.minecraft.world.inventory.Slot ps : emptyFiltered) {
                 if (left <= 0) break;
                 int add = Math.min(left, maxC);
+                add = Math.min(add, previewInboundRoom(playerSlots, invFilters, ps.getContainerSlot(), itemId));
+                if (add <= 0) continue;
                 previewTargetIncoming.put(ps.index, stack.copyWithCount(add));
                 left -= add;
             }
@@ -1722,6 +1820,31 @@ public class ChestSeparatorsEditor {
             }
         }
         return amount - left;
+    }
+
+    /** Client-side mirror of ModNetworking.availableInboundRoom (includes projected incoming items). */
+    private int previewInboundRoom(
+            java.util.List<net.minecraft.world.inventory.Slot> playerSlots,
+            java.util.Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> filters,
+            int destIndex, String itemId) {
+        if (filters == null) return Integer.MAX_VALUE;
+        var filter = filters.get(destIndex);
+        if (filter == null || filter.targetCount() <= 0 || filter.groupId() == null) return Integer.MAX_VALUE;
+
+        int held = 0;
+        for (net.minecraft.world.inventory.Slot s : playerSlots) {
+            var otherFilter = filters.get(s.getContainerSlot());
+            if (otherFilter == null || !filter.groupId().equals(otherFilter.groupId())
+                    || !otherFilter.allowedItems().contains(itemId)) continue;
+            var existing = s.getItem();
+            if (!existing.isEmpty() && net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(existing.getItem()).toString().equals(itemId)) held += existing.getCount();
+            var pending = previewTargetIncoming.get(s.index);
+            if (pending != null && !pending.isEmpty() && net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(pending.getItem()).toString().equals(itemId)) held += pending.getCount();
+        }
+        return io.github.marcsanzdev.chestseparators.util.InventoryTransferPolicy
+                .inboundRoom(filter.targetCount(), held);
     }
 
     /** Mirror of PlayerInventoryFilterMixin#getEmptySlot: preferred filtered empty slot, else first unreserved. */
@@ -1784,122 +1907,157 @@ public class ChestSeparatorsEditor {
         return previewSourceRemaining.containsKey(slot.index) || previewTargetIncoming.containsKey(slot.index);
     }
 
+    /**
+     * Predicts the complete Push action, starting with the SAME main-inventory refill that Push performs.
+     * Every projected slot is a full final stack (including newly filled player slots), not an incoming
+     * delta. No real inventory or menu contents are changed when the player merely hovers the button.
+     */
     public void updateDepositPreview(boolean shift) {
         previewSourceRemaining.clear();
         previewTargetIncoming.clear();
-
         if (accessor.getHandler() == null || net.minecraft.client.Minecraft.getInstance().player == null) return;
+        if (!accessor.getHandler().getCarried().isEmpty()) return; // Push refuses a nonempty cursor
+
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        var inventory = player.getInventory();
         var whitelists = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
                 .getCurrentWhitelists();
+        var invFilters = io.github.marcsanzdev.chestseparators.data.ChestConfigManager.getInstance()
+                .getPlayerInventoryFilters();
 
-        for (net.minecraft.world.inventory.Slot playerSlot : accessor.getHandler().slots) {
-            if (playerSlot.container instanceof net.minecraft.world.entity.player.Inventory && playerSlot.hasItem()) {
-                net.minecraft.world.item.ItemStack pristineStack = playerSlot.getItem();
-                String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
-                        .getKey(pristineStack.getItem())
-                        .toString();
+        java.util.List<net.minecraft.world.item.ItemStack> predicted = new java.util.ArrayList<>();
+        for (int raw = 0; raw < inventory.getContainerSize(); raw++) {
+            predicted.add(inventory.getItem(raw).copy());
+        }
+        io.github.marcsanzdev.chestseparators.util.InventorySlotRefill.refillStacks(
+                predicted, invFilters, inventory::getMaxStackSize);
 
-                int remaining = pristineStack.getCount();
-                int initialCount = remaining;
-
-                // 4-pass priority system mirrors the logic in executeDeposit.
-                remaining = simulateDepositPass(whitelists, pristineStack, itemId, remaining, true, false);
-
-                if (remaining > 0)
-                    remaining = simulateDepositPass(whitelists, pristineStack, itemId, remaining, false, false);
-
-                if (remaining > 0 && shift)
-                    remaining = simulateDepositPass(whitelists, pristineStack, itemId, remaining, true, true);
-
-                if (remaining > 0 && shift)
-                    remaining = simulateDepositPass(whitelists, pristineStack, itemId, remaining, false, true);
-
-                if (remaining < initialCount) {
-                    previewSourceRemaining.put(playerSlot.index, remaining);
-                }
+        java.util.List<net.minecraft.world.inventory.Slot> chestSlots = new java.util.ArrayList<>();
+        java.util.Map<Integer, net.minecraft.world.item.ItemStack> chestState = new java.util.HashMap<>();
+        for (net.minecraft.world.inventory.Slot slot : accessor.getHandler().slots) {
+            if (!(slot.container instanceof net.minecraft.world.entity.player.Inventory)) {
+                chestSlots.add(slot);
+                chestState.put(slot.index, slot.getItem().copy());
             }
         }
 
-        // Mirror the server's post-push per-group priority re-sort so the ghost preview lands items in the
-        // exact slots the real deposit will after it re-organizes the chest.
-        java.util.List<net.minecraft.world.inventory.Slot> chestSlots = new java.util.ArrayList<>();
-        for (net.minecraft.world.inventory.Slot s : accessor.getHandler().slots) {
-            if (!(s.container instanceof net.minecraft.world.entity.player.Inventory)) chestSlots.add(s);
+        boolean depositedAnything = false;
+        for (net.minecraft.world.inventory.Slot slot : accessor.getHandler().slots) {
+            if (!(slot.container instanceof net.minecraft.world.entity.player.Inventory)) continue;
+            int raw = slot.getContainerSlot();
+            if (raw < 0 || raw >= predicted.size()) continue;
+            net.minecraft.world.item.ItemStack stack = predicted.get(raw);
+            if (stack.isEmpty()) continue;
+            int movable = io.github.marcsanzdev.chestseparators.util.InventoryProtection
+                    .movableCount(predicted, invFilters, raw);
+            if (movable <= 0) continue;
+            String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            int left = movable;
+            left = simulateDepositPass(chestSlots, chestState, whitelists, stack, itemId, left, true, false);
+            left = simulateDepositPass(chestSlots, chestState, whitelists, stack, itemId, left, false, false);
+            if (shift) {
+                left = simulateDepositPass(chestSlots, chestState, whitelists, stack, itemId, left, true, true);
+                left = simulateDepositPass(chestSlots, chestState, whitelists, stack, itemId, left, false, true);
+            }
+            int moved = movable - left;
+            if (moved > 0) {
+                depositedAnything = true;
+                int count = stack.getCount() - moved;
+                predicted.set(raw, count == 0 ? net.minecraft.world.item.ItemStack.EMPTY : stack.copyWithCount(count));
+            }
         }
-        applyPreviewReorder(chestSlots, whitelists, net.minecraft.world.inventory.Slot::getContainerSlot);
+
+        // The real Push requests post-deposit reordering only when it transferred something.
+        if (depositedAnything) reorderProjectedChest(chestSlots, chestState, whitelists);
+
+        for (net.minecraft.world.inventory.Slot slot : accessor.getHandler().slots) {
+            net.minecraft.world.item.ItemStack finalStack;
+            if (slot.container instanceof net.minecraft.world.entity.player.Inventory) {
+                int raw = slot.getContainerSlot();
+                if (raw < 0 || raw >= predicted.size()) continue;
+                finalStack = predicted.get(raw);
+            } else {
+                finalStack = chestState.get(slot.index);
+            }
+            net.minecraft.world.item.ItemStack actual = slot.getItem();
+            if (actual.getCount() != finalStack.getCount()
+                    || !net.minecraft.world.item.ItemStack.isSameItemSameComponents(actual, finalStack)) {
+                previewTargetIncoming.put(slot.index, finalStack.copy());
+            }
+        }
     }
 
+    /** Reproduces collectTargetSlots' four passes against predicted, mutable chest contents. */
     private int simulateDepositPass(
+            java.util.List<net.minecraft.world.inventory.Slot> chestSlots,
+            java.util.Map<Integer, net.minecraft.world.item.ItemStack> state,
             Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists,
-            net.minecraft.world.item.ItemStack stack,
-            String itemId,
-            int count,
-            boolean checkExisting,
-            boolean unfilteredOnly) {
-        // Empty filtered slots are visited in the filter's order, exactly as executeDeposit fills them, so
-        // the ghost preview lands items in the same slots the real deposit will.
-        List<net.minecraft.world.inventory.Slot> orderedSlots = new ArrayList<>();
-        for (net.minecraft.world.inventory.Slot chestSlot : accessor.getHandler().slots) {
-            if (chestSlot.container instanceof net.minecraft.world.entity.player.Inventory) continue;
-            orderedSlots.add(chestSlot);
+            net.minecraft.world.item.ItemStack source,
+            String itemId, int remaining, boolean checkExisting, boolean unfilteredOnly) {
+        if (remaining <= 0) return remaining;
+        java.util.List<net.minecraft.world.inventory.Slot> candidates = new java.util.ArrayList<>();
+        for (net.minecraft.world.inventory.Slot slot : chestSlots) {
+            var filter = whitelists == null ? null : whitelists.get(slot.getContainerSlot());
+            if (unfilteredOnly ? filter != null : filter == null || !filter.allowedItems().contains(itemId)) continue;
+            net.minecraft.world.item.ItemStack existing = state.get(slot.index);
+            if (checkExisting) {
+                if (existing.isEmpty() || !net.minecraft.world.item.ItemStack.isSameItemSameComponents(existing, source)
+                        || existing.getCount() >= source.getMaxStackSize()) continue;
+            } else if (!existing.isEmpty()) {
+                continue;
+            }
+            candidates.add(slot);
         }
         if (!checkExisting && !unfilteredOnly) {
-            orderedSlots.sort(java.util.Comparator.comparingInt(
-                    s -> io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
-                            whitelists, s.getContainerSlot(), itemId)));
+            candidates.sort(java.util.Comparator.comparingInt(slot ->
+                    io.github.marcsanzdev.chestseparators.util.FilterPriority.slotPreference(
+                            whitelists, slot.getContainerSlot(), itemId)));
         }
+        for (net.minecraft.world.inventory.Slot slot : candidates) {
+            if (remaining <= 0) break;
+            net.minecraft.world.item.ItemStack existing = state.get(slot.index);
+            int room = source.getMaxStackSize() - existing.getCount();
+            if (room <= 0) continue;
+            int moved = Math.min(room, remaining);
+            if (existing.isEmpty()) state.put(slot.index, source.copyWithCount(moved));
+            else existing.grow(moved);
+            remaining -= moved;
+        }
+        return remaining;
+    }
 
-        for (net.minecraft.world.inventory.Slot chestSlot : orderedSlots) {
-            if (count <= 0) break;
-
-            boolean hasFilter = whitelists != null && whitelists.containsKey(chestSlot.getContainerSlot());
-            boolean matchesFilter = hasFilter
-                    && whitelists.get(chestSlot.getContainerSlot()).allowedItems().contains(itemId);
-
-            if (unfilteredOnly) {
-                if (hasFilter) continue;
-            } else {
-                if (!matchesFilter) continue;
+    /** Final virtual re-sort equivalent to the real container group's post-Push packing. */
+    private void reorderProjectedChest(
+            java.util.List<net.minecraft.world.inventory.Slot> chestSlots,
+            java.util.Map<Integer, net.minecraft.world.item.ItemStack> state,
+            Map<Integer, io.github.marcsanzdev.chestseparators.data.SlotWhitelist> whitelists) {
+        if (whitelists == null || whitelists.isEmpty()) return;
+        java.util.Map<java.util.UUID, java.util.List<net.minecraft.world.inventory.Slot>> groups =
+                new java.util.LinkedHashMap<>();
+        for (var slot : chestSlots) {
+            var wl = whitelists.get(slot.getContainerSlot());
+            if (wl == null || wl.groupId() == null) continue;
+            groups.computeIfAbsent(wl.groupId(), ignored -> new java.util.ArrayList<>()).add(slot);
+        }
+        for (var group : groups.values()) {
+            if (group.size() < 2) continue;
+            group.sort(java.util.Comparator.comparingInt(net.minecraft.world.inventory.Slot::getContainerSlot));
+            java.util.List<String> priority = whitelists.get(group.get(0).getContainerSlot()).allowedItems();
+            java.util.List<net.minecraft.world.item.ItemStack> stored = new java.util.ArrayList<>();
+            for (var slot : group) {
+                var item = state.get(slot.index);
+                if (!item.isEmpty()) stored.add(item.copy());
             }
-
-            // If a slot already has a virtual preview stack, only continue if the incoming item type matches.
-            net.minecraft.world.item.ItemStack incoming = previewTargetIncoming.get(chestSlot.index);
-            if (incoming != null) {
-                if (!net.minecraft.world.item.ItemStack.isSameItem(stack, incoming)
-                        || !net.minecraft.world.item.ItemStack.isSameItemSameComponents(stack, incoming)) {
-                    continue;
-                }
-            }
-
-            if (checkExisting) {
-                if (!chestSlot.hasItem()) continue;
-                if (!net.minecraft.world.item.ItemStack.isSameItem(stack, chestSlot.getItem())
-                        || !net.minecraft.world.item.ItemStack.isSameItemSameComponents(stack, chestSlot.getItem()))
-                    continue;
-            } else {
-                if (chestSlot.hasItem()) continue;
-            }
-
-            int currentInChest = chestSlot.hasItem() ? chestSlot.getItem().getCount() : 0;
-            if (incoming != null) {
-                currentInChest += incoming.getCount();
-            }
-
-            int spaceLeft = stack.getMaxStackSize() - currentInChest;
-            if (spaceLeft > 0) {
-                int toMove = Math.min(spaceLeft, count);
-                count -= toMove;
-
-                if (incoming == null) {
-                    incoming = stack.copy();
-                    incoming.setCount(toMove);
-                } else {
-                    incoming.grow(toMove);
-                }
-                previewTargetIncoming.put(chestSlot.index, incoming);
+            stored.sort(java.util.Comparator.<net.minecraft.world.item.ItemStack>comparingInt(item -> {
+                int order = priority.indexOf(net.minecraft.core.registries.BuiltInRegistries.ITEM
+                        .getKey(item.getItem()).toString());
+                return order < 0 ? Integer.MAX_VALUE : order;
+            }).thenComparing(java.util.Comparator.comparingInt(
+                    net.minecraft.world.item.ItemStack::getCount).reversed()));
+            for (int i = 0; i < group.size(); i++) {
+                state.put(group.get(i).index, i < stored.size() ? stored.get(i) : net.minecraft.world.item.ItemStack.EMPTY);
             }
         }
-        return count;
     }
 
     /**

@@ -50,6 +50,7 @@ public class EditorInputHandler {
     // "allow" boolean: true lets the vanilla handler run, false cancels it because the editor consumed it.
 
     public boolean onMouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) editor.screenEditFilter.stopRetentionDrag();
         session.isDraggingMainScroll = false;
         session.isDraggingListScroll = false;
 
@@ -90,6 +91,7 @@ public class EditorInputHandler {
             }
 
             if (session.currentState == EditorState.EDIT_FILTER) {
+                if (editor.screenEditFilter.mouseDragged(mouseX, mouseY, 0, deltaX, deltaY)) return false;
                 layout.update(screen, accessor, editor.getSidebarYOffset());
 
                 int mainX = layout.mainX;

@@ -33,6 +33,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
     private final FilterPanelRenderer panelRenderer;
     private final FilterClickHandler clickHandler;
+    private io.github.marcsanzdev.chestseparators.client.ui.widgets.InventoryRetentionSlider quantitySlider;
 
     public ScreenEditFilter(ChestSeparatorsEditor editor) {
         super(editor);
@@ -43,6 +44,19 @@ public class ScreenEditFilter extends AbstractEditorScreen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return clickHandler.onMouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return quantitySlider != null && quantitySlider.mouseDragged(mouseX, button);
+    }
+
+    public void stopRetentionDrag() {
+        if (quantitySlider != null) quantitySlider.stopDrag();
+    }
+
+    private boolean scrollRetentionSlider(double mouseX, double mouseY, double verticalAmount) {
+        return quantitySlider != null && quantitySlider.mouseScrolled(mouseX, mouseY, verticalAmount);
     }
 
     @Override
@@ -466,6 +480,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
         if (session.originalRuleManual != session.ruleManual) return true;
         if (session.originalRuleShift != session.ruleShift) return true;
         if (session.originalRuleHopper != session.ruleHopper) return true;
+        if (session.originalTargetCount != session.targetCount) return true;
 
         // Order is part of the filter now (it can be rearranged by dragging and is saved), so compare the
         // lists as they are: reordering alone counts as an unsaved change.
@@ -474,6 +489,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
 
     @Override
     protected void buildWidgets() {
+        quantitySlider = null;
         int btnW = layout.btnW;
         int bH = layout.bH;
         int btnX = layout.rightX;
@@ -662,6 +678,22 @@ public class ScreenEditFilter extends AbstractEditorScreen {
             }
             btnHopper.texSize = 128;
             widgets.add(btnHopper);
+        }
+
+        // Compact continuous slider with marked stack sizes. All (0) stays distinct from keeping 64.
+        if (invFilter) {
+            quantitySlider = new io.github.marcsanzdev.chestseparators.client.ui.widgets.InventoryRetentionSlider(
+                    btnX, mainY + 154, btnW, 11,
+                    () -> session.targetCount,
+                    value -> {
+                        if (session.targetCount != value) {
+                            session.targetCount = value;
+                            editor.playClickSound(1.0f);
+                        }
+                    });
+            widgets.add(quantitySlider);
+        } else {
+            quantitySlider = null;
         }
 
         // Group 3 (Actions) — stacked full-width in visual order: Save, Delete, Cancel.
@@ -1014,6 +1046,7 @@ public class ScreenEditFilter extends AbstractEditorScreen {
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (scrollRetentionSlider(mouseX, mouseY, verticalAmount)) return true;
         float scrollSpeed = 18f;
 
         // While previewing, the scroll wheel always controls the preview panel.

@@ -560,6 +560,7 @@ public class ScreenViewGroups extends AbstractEditorScreen {
         session.originalRuleManual = session.ruleManual;
         session.originalRuleShift = session.ruleShift;
         session.originalRuleHopper = session.ruleHopper;
+        session.originalTargetCount = session.targetCount;
         session.isUnsavedPopupOpen = false;
 
         editor.toggleState(EditorState.EDIT_FILTER);

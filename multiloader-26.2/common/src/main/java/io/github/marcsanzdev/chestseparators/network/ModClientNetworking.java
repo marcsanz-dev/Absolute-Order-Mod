@@ -24,9 +24,16 @@ public class ModClientNetworking {
 
     /** Sends the player's current inventory filters to the server (for the Pick Up rule enforcement). */
     public static void sendInventoryFilters() {
+        var filters = new java.util.HashMap<>(ChestConfigManager.getInstance().getPlayerInventoryFilters());
+        // Client inventory clicks are predicted locally before the server responds. Both sides must
+        // consult the SAME filters or quick-moves/refills visibly snap back on synchronization.
+        var localPlayer = net.minecraft.client.Minecraft.getInstance().player;
+        if (localPlayer != null) {
+            io.github.marcsanzdev.chestseparators.ChestSeparatorsState.INVENTORY_FILTERS
+                    .put(localPlayer.getUUID(), filters);
+        }
         if (NetworkManager.canServerReceive(InventoryFiltersPayload.TYPE)) {
-            NetworkManager.sendToServer(new InventoryFiltersPayload(
-                    new java.util.HashMap<>(ChestConfigManager.getInstance().getPlayerInventoryFilters())));
+            NetworkManager.sendToServer(new InventoryFiltersPayload(filters));
         }
     }
 

@@ -34,6 +34,8 @@ public class EditorSessionData {
     public boolean ruleManual = true;
     public boolean ruleShift = true;
     public boolean ruleHopper = true;
+    /** Zero retains every matching stack; positive values retain this many per item in the group. */
+    public int targetCount = 0;
     public List<Item> allGameItems = new ArrayList<>();
     public List<Item> filteredItems = new ArrayList<>();
     public List<String> visibleLeftListItems = new ArrayList<>();
@@ -202,6 +204,7 @@ public class EditorSessionData {
     public boolean originalRuleManual = true;
     public boolean originalRuleShift = true;
     public boolean originalRuleHopper = true;
+    public int originalTargetCount = 0;
 
     // Inner class to hold tab data cleanly
     public static class CreativeTabInfo {

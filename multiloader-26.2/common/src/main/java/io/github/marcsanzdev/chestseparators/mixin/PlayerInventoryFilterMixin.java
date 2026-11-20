@@ -3,6 +3,8 @@ package io.github.marcsanzdev.chestseparators.mixin;
 import io.github.marcsanzdev.chestseparators.ChestSeparatorsState;
 import io.github.marcsanzdev.chestseparators.data.SlotWhitelist;
 import io.github.marcsanzdev.chestseparators.util.FilterPriority;
+import io.github.marcsanzdev.chestseparators.util.InventoryPickupContext;
+import io.github.marcsanzdev.chestseparators.util.InventorySlotRefill;
 import java.util.Map;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,13 +17,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Enforces the player-inventory "Pick Up" rule: a filtered inventory slot only accepts its item when
- * items are auto-added (e.g. picked up from the ground). Non-matching items skip reserved slots and
- * matching items prefer their reserved slot. Filters are synced from the client into
+ * items are picked up from the ground. Other calls to Inventory.add or returning the cursor stack
+ * should not reroute deliberately placed hotbar items. Non-matching items skip reserved slots and
+ * matching items prefer their reserved slot during pickups. Filters are synced from the client into
  * {@link ChestSeparatorsState#INVENTORY_FILTERS}; with none present this is a no-op.
  */
 @Mixin(Inventory.class)
@@ -40,22 +42,17 @@ public abstract class PlayerInventoryFilterMixin {
 
     @Inject(method = "add(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"))
     private void chestseparators$beginInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-        chestseparators$insertingStack = stack;
+        // Inventory.add is also used by inventory UI actions and other mods. Only ground-pickup
+        // insertion should prefer empty dedicated slots; deliberate hotbar moves remain vanilla.
+        chestseparators$insertingStack = InventoryPickupContext.isGroundPickup(player.getUUID()) ? stack : null;
     }
 
     @Inject(method = "add(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"))
     private void chestseparators$endInsert(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-        chestseparators$insertingStack = null;
-    }
-
-    // Also intercept placeItemBackInInventory: used when closing a screen with a cursor item.
-    @Inject(method = "placeItemBackInInventory(Lnet/minecraft/world/item/ItemStack;)V", at = @At("HEAD"))
-    private void chestseparators$beginOfferOrDrop(ItemStack stack, CallbackInfo ci) {
-        chestseparators$insertingStack = stack;
-    }
-
-    @Inject(method = "placeItemBackInInventory(Lnet/minecraft/world/item/ItemStack;)V", at = @At("RETURN"))
-    private void chestseparators$endOfferOrDrop(ItemStack stack, CallbackInfo ci) {
+        if (!player.level().isClientSide() && InventoryPickupContext.isGroundPickup(player.getUUID())) {
+            InventorySlotRefill.refill((Inventory) (Object) this,
+                    ChestSeparatorsState.INVENTORY_FILTERS.get(player.getUUID()));
+        }
         chestseparators$insertingStack = null;
     }
 

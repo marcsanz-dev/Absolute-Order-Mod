@@ -451,10 +451,9 @@ public class EditorRenderer {
                 return;
             }
             editor.isHoveringDeposit = true;
-            if (editor.depositPreviewShift != shift || editor.previewSourceRemaining.isEmpty()) {
-                editor.depositPreviewShift = shift;
-                editor.updateDepositPreview(shift);
-            }
+            // Push predicts the full post-refill state, so rebuild on hover as stacks change.
+            editor.depositPreviewShift = shift;
+            editor.updateDepositPreview(shift);
             renderDepositPreview(context);
         } else if (hoverFill) {
             editor.isHoveringDeposit = false;

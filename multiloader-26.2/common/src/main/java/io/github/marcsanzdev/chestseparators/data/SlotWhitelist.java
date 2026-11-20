@@ -13,8 +13,9 @@ import net.minecraft.network.codec.StreamCodec;
 
 // Represents the whitelist configuration for a single inventory slot.
 // Includes a groupId to visually and logically link multiple slots together.
-// targetCount is the desired amount the player wants to keep of this filter in their inventory
-// (0 = no target / unlimited); it drives the grab and deposit-junk hotkeys.
+// targetCount retains a minimum number of each listed item across the filter group's inventory slots.
+// 0 preserves the original behaviour: all matching items in filtered inventory slots are protected
+// from mod-triggered automatic deposits. Non-inventory container filters ignore this value.
 public record SlotWhitelist(
         UUID groupId,
         List<String> allowedItems,

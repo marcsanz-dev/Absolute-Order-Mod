@@ -181,7 +181,8 @@ public class ChestConfigManager {
                             new ArrayList<>(orig.allowedItems()),
                             orig.allowManual(),
                             orig.allowShift(),
-                            orig.allowHopper()));
+                            orig.allowHopper(),
+                            orig.targetCount()));
         }
         return copy;
     }
@@ -1393,7 +1394,8 @@ public class ChestConfigManager {
                         new ArrayList<>(clipboardItem.allowedItems()),
                         clipboardItem.allowManual(),
                         clipboardItem.allowShift(),
-                        clipboardItem.allowHopper());
+                        clipboardItem.allowHopper(),
+                        clipboardItem.targetCount());
                 currentWhitelists.put(entry.getKey(), independentCopy);
             }
         }
