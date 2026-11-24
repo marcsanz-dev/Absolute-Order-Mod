@@ -48,7 +48,7 @@ final class SeparatorDragInput {
                     if (toolMode == 1) {
                         // Armor/offhand are isolated non-grid cells with no grid neighbours. The
                         // vertex-connection logic below projects segments along rows/columns via grid
-                        // math (index%9, index/9, row*9+col), which is meaningless for them. But we
+                        // math (column, row, row*width+col), which is meaningless for them. But we
                         // still honour the axis lock via calculateTraceStep (patched to paint the
                         // locked edge on the hovered cell itself, without grid projection) so a
                         // vertical drag paints only the left/right edge and a horizontal one only
@@ -81,7 +81,7 @@ final class SeparatorDragInput {
                             double cRelY = mouseY - (guiY + currSlot.y);
 
                             // Calculate vertices (P1 and P2) of the previous line
-                            int c1 = prevSlotIdx % 9, r1 = prevSlotIdx / 9;
+                            int c1 = ChestConfigManager.gridCol(prevSlotIdx), r1 = ChestConfigManager.gridRow(prevSlotIdx);
                             int v1x1 = c1, v1y1 = r1, v1x2 = c1, v1y2 = r1;
                             if (prevAction == ChestConfigManager.ACTION_TOP) {
                                 v1x2 = c1 + 1;
@@ -98,7 +98,7 @@ final class SeparatorDragInput {
                             }
 
                             // Calculate vertices of the current line
-                            int c2 = currSlotIdx % 9, r2 = currSlotIdx / 9;
+                            int c2 = ChestConfigManager.gridCol(currSlotIdx), r2 = ChestConfigManager.gridRow(currSlotIdx);
                             int v2x1 = c2, v2y1 = r2, v2x2 = c2, v2y2 = r2;
                             if (currAction == ChestConfigManager.ACTION_TOP) {
                                 v2x2 = c2 + 1;
@@ -136,13 +136,13 @@ final class SeparatorDragInput {
                                 if (prevAction == ChestConfigManager.ACTION_TOP
                                         || prevAction == ChestConfigManager.ACTION_BOTTOM) {
                                     session.lockedTraceAxis = 1;
-                                    session.lockedTraceRowCol = prevSlotIdx / 9;
+                                    session.lockedTraceRowCol = ChestConfigManager.gridRow(prevSlotIdx);
                                     session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_TOP)
                                             ? (guiY + prevSlot.y)
                                             : (guiY + prevSlot.y + 16);
                                 } else {
                                     session.lockedTraceAxis = 2;
-                                    session.lockedTraceRowCol = prevSlotIdx % 9;
+                                    session.lockedTraceRowCol = ChestConfigManager.gridCol(prevSlotIdx);
                                     session.lockedLineCoord = (prevAction == ChestConfigManager.ACTION_LEFT)
                                             ? (guiX + prevSlot.x)
                                             : (guiX + prevSlot.x + 16);
@@ -168,7 +168,7 @@ final class SeparatorDragInput {
                                 double rRelX = mouseX - (guiX + rawSlot.x);
                                 double rRelY = mouseY - (guiY + rawSlot.y);
 
-                                int c1 = lastSlotIdx % 9, r1 = lastSlotIdx / 9;
+                                int c1 = ChestConfigManager.gridCol(lastSlotIdx), r1 = ChestConfigManager.gridRow(lastSlotIdx);
                                 int v1x1 = c1, v1y1 = r1, v1x2 = c1, v1y2 = r1;
                                 if (lastAction == ChestConfigManager.ACTION_TOP) {
                                     v1x2 = c1 + 1;
@@ -184,7 +184,7 @@ final class SeparatorDragInput {
                                     v1y2 = r1 + 1;
                                 }
 
-                                int c2 = rawSlotIdx % 9, r2 = rawSlotIdx / 9;
+                                int c2 = ChestConfigManager.gridCol(rawSlotIdx), r2 = ChestConfigManager.gridRow(rawSlotIdx);
                                 int v2x1 = c2, v2y1 = r2, v2x2 = c2, v2y2 = r2;
                                 if (rawAction == ChestConfigManager.ACTION_TOP) {
                                     v2x2 = c2 + 1;

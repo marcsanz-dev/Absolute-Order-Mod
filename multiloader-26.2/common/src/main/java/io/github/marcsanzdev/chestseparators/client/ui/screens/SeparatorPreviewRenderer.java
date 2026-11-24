@@ -137,6 +137,9 @@ final class SeparatorPreviewRenderer {
         int guiX = layout.guiX;
         int guiY = layout.guiY;
         int tabMode = session.currentTab;
+        // Chest namespace from here on (key 0 is its first slot), so the grid width is the container's,
+        // which is wider than 9 for some modded chests.
+        int cols = ChestConfigManager.gridColumns(0);
 
         int colorVal = 0;
         boolean explicitEraser = false;
@@ -163,10 +166,10 @@ final class SeparatorPreviewRenderer {
 
         if (tabMode == 1) {
             if (tMode == 0) {
-                int startRow = session.dragStartSlot.getContainerSlot() / 9;
-                int startCol = session.dragStartSlot.getContainerSlot() % 9;
-                int currRow = session.dragCurrentSlot.getContainerSlot() / 9;
-                int currCol = session.dragCurrentSlot.getContainerSlot() % 9;
+                int startRow = session.dragStartSlot.getContainerSlot() / cols;
+                int startCol = session.dragStartSlot.getContainerSlot() % cols;
+                int currRow = session.dragCurrentSlot.getContainerSlot() / cols;
+                int currCol = session.dragCurrentSlot.getContainerSlot() % cols;
                 int minRow = Math.min(startRow, currRow);
                 int maxRow = Math.max(startRow, currRow);
                 int minCol = Math.min(startCol, currCol);
@@ -177,8 +180,8 @@ final class SeparatorPreviewRenderer {
                     // Without this, raw getIndex() of player slots (0-35) collides with chest indices and the
                     // chest preview gets mirrored onto the inventory.
                     if (ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
-                    int r = slot.getContainerSlot() / 9;
-                    int c = slot.getContainerSlot() % 9;
+                    int r = slot.getContainerSlot() / cols;
+                    int c = slot.getContainerSlot() % cols;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (erase
                                 && ChestConfigManager.getInstance()
@@ -200,10 +203,10 @@ final class SeparatorPreviewRenderer {
             }
         } else if (tabMode == 2) {
             if (tMode == 0) {
-                int startRow = session.dragStartSlot.getContainerSlot() / 9;
-                int startCol = session.dragStartSlot.getContainerSlot() % 9;
-                int currRow = session.dragCurrentSlot.getContainerSlot() / 9;
-                int currCol = session.dragCurrentSlot.getContainerSlot() % 9;
+                int startRow = session.dragStartSlot.getContainerSlot() / cols;
+                int startCol = session.dragStartSlot.getContainerSlot() % cols;
+                int currRow = session.dragCurrentSlot.getContainerSlot() / cols;
+                int currCol = session.dragCurrentSlot.getContainerSlot() % cols;
                 int minRow = Math.min(startRow, currRow);
                 int maxRow = Math.max(startRow, currRow);
                 int minCol = Math.min(startCol, currCol);
@@ -213,8 +216,8 @@ final class SeparatorPreviewRenderer {
                     // Chest namespace only; player drags go through renderPlayerDragPreview.
                     if (ChestSeparatorsEditor.isPlayerSlot(slot)) continue;
                     int slotIdx = slot.getContainerSlot();
-                    int r = slotIdx / 9;
-                    int c = slotIdx % 9;
+                    int r = slotIdx / cols;
+                    int c = slotIdx % cols;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         int x = guiX + slot.x;
                         int y = guiY + slot.y;
@@ -252,10 +255,10 @@ final class SeparatorPreviewRenderer {
                     Slot slot = editor.accessor.getHandler().getSlot(slotIdx);
                     int x = guiX + slot.x;
                     int y = guiY + slot.y;
-                    boolean hasTop = traceSlots.contains(slotIdx - 9);
-                    boolean hasBottom = traceSlots.contains(slotIdx + 9);
-                    boolean hasLeft = (slotIdx % 9 != 0) && traceSlots.contains(slotIdx - 1);
-                    boolean hasRight = (slotIdx % 9 != 8) && traceSlots.contains(slotIdx + 1);
+                    boolean hasTop = traceSlots.contains(slotIdx - cols);
+                    boolean hasBottom = traceSlots.contains(slotIdx + cols);
+                    boolean hasLeft = (slotIdx % cols != 0) && traceSlots.contains(slotIdx - 1);
+                    boolean hasRight = (slotIdx % cols != cols - 1) && traceSlots.contains(slotIdx + 1);
 
                     if (!erase || ChestConfigManager.getInstance().getColor(slotIdx, ChestConfigManager.ACTION_BG) != 0)
                         context.fill(x, y, x + 16, y + 16, colorBg);
@@ -282,10 +285,10 @@ final class SeparatorPreviewRenderer {
             }
         } else {
             if (tMode == 0) {
-                int sRow = session.dragStartSlot.getContainerSlot() / 9;
-                int sCol = session.dragStartSlot.getContainerSlot() % 9;
-                int cRow = session.dragCurrentSlot.getContainerSlot() / 9;
-                int cCol = session.dragCurrentSlot.getContainerSlot() % 9;
+                int sRow = session.dragStartSlot.getContainerSlot() / cols;
+                int sCol = session.dragStartSlot.getContainerSlot() % cols;
+                int cRow = session.dragCurrentSlot.getContainerSlot() / cols;
+                int cCol = session.dragCurrentSlot.getContainerSlot() % cols;
                 int minRow = Math.min(sRow, cRow);
                 int maxRow = Math.max(sRow, cRow);
                 int minCol = Math.min(sCol, cCol);
@@ -321,16 +324,16 @@ final class SeparatorPreviewRenderer {
                     if (xRightRaw % 2 != 0) xRightExp++;
                 }
 
-                int maxRows = geometry.getContainerSlotCount() / 9;
+                int maxRows = geometry.getContainerSlotCount() / cols;
                 yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
                 yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
                 xLeftExp = Math.max(0, xLeftExp);
-                xRightExp = Math.max(0, Math.min(17, xRightExp));
+                xRightExp = Math.max(0, Math.min(cols * 2 - 1, xRightExp));
 
                 if (geometry.isDraggingRectangle(mouseX, mouseY)) {
-                    Slot startRowSlot = editor.accessor.getHandler().getSlot((yTopExp / 2) * 9);
+                    Slot startRowSlot = editor.accessor.getHandler().getSlot((yTopExp / 2) * cols);
                     int topY = guiY + startRowSlot.y + (yTopExp % 2 == 0 ? -1 : 16);
-                    Slot endRowSlot = editor.accessor.getHandler().getSlot((yBotExp / 2) * 9);
+                    Slot endRowSlot = editor.accessor.getHandler().getSlot((yBotExp / 2) * cols);
                     int botY = guiY + endRowSlot.y + (yBotExp % 2 == 0 ? 0 : 17);
                     Slot startColSlot = editor.accessor.getHandler().getSlot(xLeftExp / 2);
                     int leftX = guiX + startColSlot.x + (xLeftExp % 2 == 0 ? -1 : 16);
@@ -345,7 +348,7 @@ final class SeparatorPreviewRenderer {
                     if (erase) {
                         for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
                             for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
-                                int slotIdx = r * 9 + c;
+                                int slotIdx = r * cols + c;
                                 if (slotIdx >= geometry.getContainerSlotCount()) continue;
                                 Slot s = editor.accessor.getHandler().getSlot(slotIdx);
                                 int x = guiX + s.x;
@@ -384,7 +387,7 @@ final class SeparatorPreviewRenderer {
                 } else {
                     for (int r = minRow; r <= maxRow; r++) {
                         for (int c = minCol; c <= maxCol; c++) {
-                            int slotIdx = r * 9 + c;
+                            int slotIdx = r * cols + c;
                             Slot s = editor.accessor.getHandler().getSlot(slotIdx);
                             int x = guiX + s.x;
                             int y = guiY + s.y;

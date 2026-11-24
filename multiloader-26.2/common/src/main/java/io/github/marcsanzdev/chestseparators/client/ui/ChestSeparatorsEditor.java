@@ -403,6 +403,7 @@ public class ChestSeparatorsEditor {
 
     public void onClose() {
         releaseLock();
+        ChestConfigManager.setContainerColumns(9);
         ChestConfigManager.getInstance().clearCurrentConfig();
         ChestConfigManager.getInstance().getCurrentWhitelists().clear();
 
@@ -530,6 +531,52 @@ public class ChestSeparatorsEditor {
         return slot.container instanceof net.minecraft.world.entity.player.Inventory
                 ? realIndex(slot) + ChestConfigManager.PLAYER_KEY_OFFSET
                 : realIndex(slot);
+    }
+
+    /**
+     * The open menu's own inventory: the container behind its first non-player slot, or null when the
+     * menu only shows the player inventory. Works for any menu type, not just vanilla's ChestMenu.
+     */
+    public static net.minecraft.world.Container openContainer(AbstractContainerMenu menu) {
+        if (menu == null) return null;
+        for (Slot slot : menu.slots) {
+            if (!(slot.container instanceof net.minecraft.world.entity.player.Inventory)) return slot.container;
+        }
+        return null;
+    }
+
+    /**
+     * Grid width of a modded chest-like screen the editor can drive, or 0 when it can't. Vanilla screens
+     * are never matched here (they keep their explicit allow-list). A modded screen qualifies when every
+     * non-player slot belongs to one whitelist-capable container and those slots come first in the menu,
+     * in container order, laid out as one row-major grid of at least 27 cells: the editor addresses
+     * container slots by index (handler index == container index == grid cell), so anything else would
+     * draw and save lines on the wrong slots.
+     */
+    public static int moddedGridColumns(AbstractContainerScreen<?> screen) {
+        if (screen.getClass().getName().startsWith("net.minecraft.")) return 0;
+        AbstractContainerMenu menu = screen.getMenu();
+        net.minecraft.world.Container container = openContainer(menu);
+        if (!(container instanceof IWhitelistProvider)) return 0;
+
+        List<Slot> gridSlots = new ArrayList<>();
+        for (Slot slot : menu.slots) {
+            if (slot.container instanceof net.minecraft.world.entity.player.Inventory) continue;
+            if (slot.container != container) return 0;
+            gridSlots.add(slot);
+        }
+        int n = gridSlots.size();
+        if (n < 27 || n >= ChestConfigManager.PLAYER_KEY_OFFSET) return 0;
+
+        int[] xs = new int[n];
+        int[] ys = new int[n];
+        for (int i = 0; i < n; i++) {
+            Slot slot = gridSlots.get(i);
+            if (slot.index != i || slot.getContainerSlot() != i) return 0;
+            xs[i] = slot.x;
+            ys[i] = slot.y;
+        }
+        return ChestConfigManager.detectGridColumns(xs, ys);
     }
 
     /** True if a slot belongs to the player inventory namespace (used for the mutual-exclusion dimming). */

@@ -80,15 +80,16 @@ final class DrawLinesClickHandler {
                         session.tracePath.clear();
                         session.tracePath.add(ChestSeparatorsEditor.slotKey(slot) + "_" + action);
                         session.lockedTraceAction = action;
+                        int cols = ChestConfigManager.gridColumns(ChestSeparatorsEditor.slotKey(slot));
                         if (action == ChestConfigManager.ACTION_TOP || action == ChestConfigManager.ACTION_BOTTOM) {
                             session.lockedTraceAxis = 1;
-                            session.lockedTraceRowCol = slot.getContainerSlot() / 9;
+                            session.lockedTraceRowCol = slot.getContainerSlot() / cols;
                             session.lockedLineCoord = (action == ChestConfigManager.ACTION_TOP)
                                     ? (layout.guiY + slot.y)
                                     : (layout.guiY + slot.y + 16);
                         } else {
                             session.lockedTraceAxis = 2;
-                            session.lockedTraceRowCol = slot.getContainerSlot() % 9;
+                            session.lockedTraceRowCol = slot.getContainerSlot() % cols;
                             session.lockedLineCoord = (action == ChestConfigManager.ACTION_LEFT)
                                     ? (layout.guiX + slot.x)
                                     : (layout.guiX + slot.x + 16);

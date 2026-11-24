@@ -198,12 +198,22 @@ public class EditorRenderer {
             panelY -= 30;
         }
 
+        // A GUI too tall for the window leaves no room above it (the bar would start off the top of the
+        // screen), so the bar turns vertical in the column EditorLayout keeps free left of the GUI.
+        boolean vertical = layout.toolbarBeside;
+        if (vertical) {
+            panelH = panelW;
+            panelW = btn + 2 * pad;
+            panelX = layout.toolbarX;
+            panelY = accessor.getY();
+        }
+
         UiTheme.panel(context, panelX, panelY, panelW, panelH);
 
         for (int i = 0; i < n; i++) {
             var b = vis.get(i);
-            b.x = panelX + pad + i * (btn + gap);
-            b.y = panelY + pad;
+            b.x = panelX + pad + (vertical ? 0 : i * (btn + gap));
+            b.y = panelY + pad + (vertical ? i * (btn + gap) : 0);
             b.render(context, hoverX, hoverY, delta);
         }
     }

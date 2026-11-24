@@ -31,6 +31,8 @@ final class SeparatorDragCommitter {
         boolean playerNs = ChestSeparatorsEditor.isPlayerSlot(session.dragStartSlot);
         int off = playerNs ? ChestConfigManager.PLAYER_KEY_OFFSET : 0;
         int nsCount = editor.geometry.getNamespaceSlotCount(playerNs);
+        // The namespace's grid width: 9 for the inventory, the container's own width otherwise.
+        int cols = ChestConfigManager.gridColumns(off);
 
         if (session.currentTab == EditorSessionData.TAB_COMBO) {
             int colorToPaint = screen.getCurrentSelectedComboColorValue();
@@ -88,17 +90,17 @@ final class SeparatorDragCommitter {
                         // non-grid cell always gets its full box; grid cells ignore non-grid neighbours.
                         boolean nonGrid = ChestConfigManager.isNonGridInventoryKey(slotIdx);
                         boolean hasTop = !nonGrid
-                                && traceSlots.contains(slotIdx - 9)
-                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx - 9);
+                                && traceSlots.contains(slotIdx - cols)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx - cols);
                         boolean hasBottom = !nonGrid
-                                && traceSlots.contains(slotIdx + 9)
-                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 9);
+                                && traceSlots.contains(slotIdx + cols)
+                                && !ChestConfigManager.isNonGridInventoryKey(slotIdx + cols);
                         boolean hasLeft = !nonGrid
-                                && (slotIdx % 9 != 0)
+                                && (ChestConfigManager.gridCol(slotIdx) != 0)
                                 && traceSlots.contains(slotIdx - 1)
                                 && !ChestConfigManager.isNonGridInventoryKey(slotIdx - 1);
                         boolean hasRight = !nonGrid
-                                && (slotIdx % 9 != 8)
+                                && (ChestConfigManager.gridCol(slotIdx) != cols - 1)
                                 && traceSlots.contains(slotIdx + 1)
                                 && !ChestConfigManager.isNonGridInventoryKey(slotIdx + 1);
 
@@ -148,17 +150,17 @@ final class SeparatorDragCommitter {
             if (session.lineToolMode == 0) { // Pencil Area
                 boolean erase = explicitEraser || session.isDragModeErasing;
 
-                int sRow = session.dragStartSlot.getContainerSlot() / 9;
-                int sCol = session.dragStartSlot.getContainerSlot() % 9;
-                int cRow = session.dragCurrentSlot.getContainerSlot() / 9;
-                int cCol = session.dragCurrentSlot.getContainerSlot() % 9;
+                int sRow = session.dragStartSlot.getContainerSlot() / cols;
+                int sCol = session.dragStartSlot.getContainerSlot() % cols;
+                int cRow = session.dragCurrentSlot.getContainerSlot() / cols;
+                int cCol = session.dragCurrentSlot.getContainerSlot() % cols;
 
                 int minRow = Math.min(sRow, cRow);
                 int maxRow = Math.max(sRow, cRow);
                 int minCol = Math.min(sCol, cCol);
                 int maxCol = Math.max(sCol, cCol);
 
-                // Armor/offhand are isolated (non-grid) cells outside the 9-wide grid: the grid
+                // Armor/offhand are isolated (non-grid) cells outside the inventory grid: the grid
                 // rederivation below can't address them (their partial row is clamped back into the
                 // main inventory), which is why dragging lines over armor drew nothing on the armor
                 // and painted phantom lines mid-inventory. Give each covered non-grid slot its full
@@ -178,8 +180,8 @@ final class SeparatorDragCommitter {
                     if (ChestSeparatorsEditor.isPlayerSlot(slot) != playerNs) continue;
                     int key = ChestSeparatorsEditor.slotKey(slot);
                     if (!ChestConfigManager.isNonGridInventoryKey(key)) continue;
-                    int r = slot.getContainerSlot() / 9;
-                    int c = slot.getContainerSlot() % 9;
+                    int r = slot.getContainerSlot() / cols;
+                    int c = slot.getContainerSlot() % cols;
                     if (r >= minRow && r <= maxRow && c >= minCol && c <= maxCol) {
                         if (!isRect && key == startKey) {
                             if (erase) manager.removeAction(key, session.currentDragAction);
@@ -196,12 +198,12 @@ final class SeparatorDragCommitter {
                     }
                 }
 
-                // Grid rederivation only covers the true 9-wide grid: the player namespace's grid is
+                // Grid rederivation only covers the true slot grid: the player namespace's grid is
                 // its first 36 slots (everything past that is the non-grid row handled above), while
                 // the chest namespace is fully grid. Skip entirely when the drag lies wholly in the
                 // non-grid row.
                 int gridSlotCount = playerNs ? 36 : nsCount;
-                int gridRows = gridSlotCount / 9;
+                int gridRows = gridSlotCount / cols;
                 if (minRow < gridRows) {
                     int yTopRaw = minRow * 2;
                     int yBotRaw = maxRow * 2 + 1;
@@ -238,8 +240,8 @@ final class SeparatorDragCommitter {
                     int maxRows = gridRows;
                     yTopExp = Math.max(0, Math.min(maxRows * 2 - 1, yTopExp));
                     yBotExp = Math.max(0, Math.min(maxRows * 2 - 1, yBotExp));
-                    xLeftExp = Math.max(0, Math.min(17, xLeftExp));
-                    xRightExp = Math.max(0, Math.min(17, xRightExp));
+                    xLeftExp = Math.max(0, Math.min(cols * 2 - 1, xLeftExp));
+                    xRightExp = Math.max(0, Math.min(cols * 2 - 1, xRightExp));
 
                     boolean isRectangle = editor.geometry.isDraggingRectangle(mouseX, mouseY);
 
@@ -247,7 +249,7 @@ final class SeparatorDragCommitter {
                         if (erase) {
                             for (int r = Math.max(0, minRow - 1); r <= maxRow + 1; r++) {
                                 for (int c = Math.max(0, minCol - 1); c <= maxCol + 1; c++) {
-                                    int slotIdx = r * 9 + c;
+                                    int slotIdx = r * cols + c;
                                     if (slotIdx >= gridSlotCount) continue;
                                     int key = slotIdx + off;
 
@@ -280,10 +282,10 @@ final class SeparatorDragCommitter {
                             int botRow = yBotExp / 2;
 
                             for (int c = fillMinCol; c <= fillMaxCol; c++) {
-                                if (topRow * 9 + c < gridSlotCount)
-                                    manager.paintAction(topRow * 9 + c + off, topAction, colorToPaint);
-                                if (botRow * 9 + c < gridSlotCount)
-                                    manager.paintAction(botRow * 9 + c + off, botAction, colorToPaint);
+                                if (topRow * cols + c < gridSlotCount)
+                                    manager.paintAction(topRow * cols + c + off, topAction, colorToPaint);
+                                if (botRow * cols + c < gridSlotCount)
+                                    manager.paintAction(botRow * cols + c + off, botAction, colorToPaint);
                             }
 
                             int fillMinRow = (yTopExp + 1) / 2;
@@ -298,18 +300,18 @@ final class SeparatorDragCommitter {
                             int rightCol = xRightExp / 2;
 
                             for (int r = fillMinRow; r <= fillMaxRow; r++) {
-                                if (r * 9 + leftCol < gridSlotCount)
-                                    manager.paintAction(r * 9 + leftCol + off, leftAction, colorToPaint);
-                                if (r * 9 + rightCol < gridSlotCount)
-                                    manager.paintAction(r * 9 + rightCol + off, rightAction, colorToPaint);
+                                if (r * cols + leftCol < gridSlotCount)
+                                    manager.paintAction(r * cols + leftCol + off, leftAction, colorToPaint);
+                                if (r * cols + rightCol < gridSlotCount)
+                                    manager.paintAction(r * cols + rightCol + off, rightAction, colorToPaint);
                             }
                         }
                         changeMade = true;
                     } else { // 1D Line
                         for (int r = minRow; r <= Math.min(maxRow, gridRows - 1); r++) {
                             for (int c = minCol; c <= maxCol; c++) {
-                                if (erase) manager.removeAction(r * 9 + c + off, session.currentDragAction);
-                                else manager.paintAction(r * 9 + c + off, session.currentDragAction, colorToPaint);
+                                if (erase) manager.removeAction(r * cols + c + off, session.currentDragAction);
+                                else manager.paintAction(r * cols + c + off, session.currentDragAction, colorToPaint);
                             }
                         }
                         changeMade = true;

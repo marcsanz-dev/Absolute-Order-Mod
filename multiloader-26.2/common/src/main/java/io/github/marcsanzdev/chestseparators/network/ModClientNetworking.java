@@ -10,7 +10,6 @@ import io.github.marcsanzdev.chestseparators.util.ChestPosStorage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -120,9 +119,10 @@ public class ModClientNetworking {
                             provider.setWhitelists(payload.whitelists());
                         }
 
-                        // 3. THE FLICKER KILLER: inject into the client's dummy GUI inventory.
-                        if (player.containerMenu instanceof ChestMenu genericHandler
-                                && genericHandler.getContainer() instanceof IWhitelistProvider provider) {
+                        // 3. THE FLICKER KILLER: inject into the client's dummy GUI inventory. Looked up from
+                        // the menu's slots rather than ChestMenu#getContainer so modded chest menus get it too.
+                        if (ChestSeparatorsEditor.openContainer(player.containerMenu)
+                                instanceof IWhitelistProvider provider) {
                             provider.setWhitelists(payload.whitelists());
                         }
                     });
@@ -147,8 +147,8 @@ public class ModClientNetworking {
 
                         // Inject into the client's open container inventory (the minecart) to keep client-side
                         // prediction consistent and avoid a flicker.
-                        if (player.containerMenu instanceof ChestMenu genericHandler
-                                && genericHandler.getContainer() instanceof IWhitelistProvider provider) {
+                        if (ChestSeparatorsEditor.openContainer(player.containerMenu)
+                                instanceof IWhitelistProvider provider) {
                             provider.setWhitelists(payload.whitelists());
                         }
 

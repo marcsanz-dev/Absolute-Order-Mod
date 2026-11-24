@@ -13,7 +13,6 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.Identifier;
@@ -242,12 +241,10 @@ public class EditorInputHandler {
                             editor.sendWhitelistToServer();
 
                             if (Minecraft.getInstance().player != null
-                                    && Minecraft.getInstance().player.containerMenu
-                                            instanceof ChestMenu genericHandler) {
-                                if (genericHandler.getContainer() instanceof IWhitelistProvider provider) {
-                                    provider.setWhitelists(
-                                            ChestConfigManager.getInstance().getCurrentWhitelists());
-                                }
+                                    && ChestSeparatorsEditor.openContainer(
+                                                    Minecraft.getInstance().player.containerMenu)
+                                            instanceof IWhitelistProvider provider) {
+                                provider.setWhitelists(ChestConfigManager.getInstance().getCurrentWhitelists());
                             }
                             editor.showStatus(
                                     Component.translatable("message.chestseparators.filters_pasted"), ChatFormatting.GREEN);

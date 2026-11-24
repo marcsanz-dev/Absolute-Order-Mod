@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.cursor.CursorType;
 import io.github.marcsanzdev.chestseparators.client.ui.ChestSeparatorsEditor;
 import io.github.marcsanzdev.chestseparators.client.ui.ModKeyBindings;
 import io.github.marcsanzdev.chestseparators.config.GlobalChestConfig;
+import io.github.marcsanzdev.chestseparators.data.ChestConfigManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -48,8 +49,18 @@ public abstract class GenericContainerScreenMixin extends Screen {
                 || (Object) this instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
                 || isHorseScreenWithCargo();
 
+        // Modded chest screens (e.g. Iron Chests) are not ContainerScreens, so they are matched by shape
+        // instead: one whitelist-capable container laid out as a plain slot grid, possibly wider than 9.
+        int gridColumns = 9;
+        if (!isValidScreen) {
+            gridColumns = ChestSeparatorsEditor.moddedGridColumns((AbstractContainerScreen<?>) (Object) this);
+            isValidScreen = gridColumns > 0;
+        }
+
         if (!isValidScreen) return;
 
+        // Set before the editor builds its geometry: every container grid computation reads this width.
+        ChestConfigManager.setContainerColumns(gridColumns);
         this.editor = new ChestSeparatorsEditor((AbstractContainerScreen<?>) (Object) this);
         this.editor.init();
     }

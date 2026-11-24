@@ -26,6 +26,21 @@ public class EditorLayout {
     public int bH = 22;
     public int swatchSize = 12;
 
+    /**
+     * True when the toolbar has no room above the GUI (a GUI too tall for the window, e.g. a 9-row modded
+     * chest), so it stacks vertically in a column just left of the GUI at {@link #toolbarX} instead.
+     */
+    public boolean toolbarBeside;
+    public int toolbarX;
+
+    // Thickness of the toolbar (20px icons + 4px padding each side) and its gap to the GUI; these mirror
+    // EditorRenderer#renderToolbar so the column reserved here is exactly the one it draws in.
+    private static final int TOOLBAR_THICKNESS = 28;
+    private static final int TOOLBAR_GAP_TO_GUI = 3;
+    // Narrowest the left dock may get when squeezed beside a wide GUI, and the room its rule tabs need.
+    private static final int MIN_LIST_W = 80;
+    private static final int LIST_TAB_ROOM = 22;
+
     // Calculated X/Y positions for main panels
     public int mainX;
     public int mainY;
@@ -140,11 +155,29 @@ public class EditorLayout {
                         .getActiveEffects()
                         .isEmpty();
 
+        // The toolbar normally sits above the GUI. Same test as EditorRenderer#renderToolbar: when that would
+        // start above the screen top, it moves into a column left of the GUI, which the left-side panels
+        // below then keep clear of.
+        int creativeLift =
+                screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen ? 30 : 0;
+        this.toolbarBeside = io.github.marcsanzdev.chestseparators.config.GlobalChestConfig.instance.showEditButtons
+                && this.guiY - TOOLBAR_THICKNESS - TOOLBAR_GAP_TO_GUI - creativeLift < 0;
+        this.toolbarX = this.guiX - TOOLBAR_GAP_TO_GUI - TOOLBAR_THICKNESS;
+        int leftEdge = this.toolbarBeside ? this.toolbarX : this.guiX;
+
         // Mirror the exact separation the left dock leaves, so the right dock is not visually tighter.
         int dockGap = this.guiX - this.mainX + this.gap;
+        this.listW = 120;
         if (!bookOpen) {
             this.listOnRight = false;
-            this.listX = this.mainX - this.listW - this.gap;
+            // Docks off the centre panel's left edge, unless the GUI (or the toolbar column) reaches further
+            // left: a modded chest wider than the centre panel would otherwise sit under the dock. When the
+            // window is too narrow for the full width there, narrow the panel (keeping its rule tabs on
+            // screen) rather than cover slots; below the minimum it runs off the screen edge instead.
+            int dockRight = Math.min(this.mainX, leftEdge);
+            int room = dockRight - this.gap - LIST_TAB_ROOM;
+            if (dockRight < this.mainX && room < this.listW) this.listW = Math.max(MIN_LIST_W, room);
+            this.listX = dockRight - this.listW - this.gap;
         } else if (hasPotion) {
             this.listOnRight = false;
             this.listX = Math.max(22, this.guiX - RECIPE_BOOK_WIDTH - this.listW - this.gap);
@@ -154,7 +187,8 @@ public class EditorLayout {
         }
         this.listY = this.mainY;
         this.listH = this.mainH;
-        this.rightX = this.mainX + this.mainW + this.gap;
+        // Right of the centre panel, or of the GUI itself when a modded chest is wider than that panel.
+        this.rightX = Math.max(this.mainX + this.mainW, this.guiX + this.bgWidth) + this.gap;
 
         // 3. Grid area
         this.gridX = this.mainX + 10;
@@ -174,7 +208,7 @@ public class EditorLayout {
         this.lsbH = this.listViewH - 1;
 
         // 6. Draw Lines Sidebar
-        this.sidebarX = this.guiX - this.sidebarWidth - 4;
+        this.sidebarX = leftEdge - this.sidebarWidth - 4;
         this.paletteBoxY = this.guiY + customSidebarYOffset + 48;
         int contentX = this.sidebarX + 7;
         this.paletteY = this.paletteBoxY + 3;

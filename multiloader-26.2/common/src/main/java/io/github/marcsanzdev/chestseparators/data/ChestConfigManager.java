@@ -877,13 +877,15 @@ public class ChestConfigManager {
     /**
      * Flood-fills the contiguous region of slots reachable from {@code startSlot} without crossing a
      * separator, confined to the key window {@code [lo, hi)} (one namespace: the container starts at 0,
-     * the player inventory at {@link #PLAYER_KEY_OFFSET}). {@code lo} must be a multiple of 9.
+     * the player inventory at {@link #PLAYER_KEY_OFFSET}). {@code lo} must be that namespace's base key;
+     * the grid width comes from the namespace (see {@link #gridColumns(int)}).
      */
     public Set<Integer> getContiguousSlots(int startSlot, int lo, int hi) {
         Set<Integer> result = new HashSet<>();
         if (startSlot < lo || startSlot >= hi) return result;
 
-        int rowCount = (hi - lo + 8) / 9;
+        int cols = gridColumns(lo);
+        int rowCount = (hi - lo + cols - 1) / cols;
         java.util.Queue<Integer> queue = new java.util.LinkedList<>();
         queue.add(startSlot);
         result.add(startSlot);
@@ -891,10 +893,10 @@ public class ChestConfigManager {
         while (!queue.isEmpty()) {
             int current = queue.poll();
             int rel = current - lo;
-            int row = rel / 9;
-            int col = rel % 9;
+            int row = rel / cols;
+            int col = rel % cols;
 
-            int up = current - 9;
+            int up = current - cols;
             if (row > 0 && up >= lo && !result.contains(up)) {
                 if (getColor(current, ACTION_TOP) == 0 && getColor(up, ACTION_BOTTOM) == 0) {
                     result.add(up);
@@ -902,7 +904,7 @@ public class ChestConfigManager {
                 }
             }
 
-            int down = current + 9;
+            int down = current + cols;
             if (row < rowCount - 1 && down < hi && !result.contains(down)) {
                 if (getColor(current, ACTION_BOTTOM) == 0 && getColor(down, ACTION_TOP) == 0) {
                     result.add(down);
@@ -919,7 +921,7 @@ public class ChestConfigManager {
             }
 
             int right = current + 1;
-            if (col < 8 && right < hi && !result.contains(right)) {
+            if (col < cols - 1 && right < hi && !result.contains(right)) {
                 if (getColor(current, ACTION_RIGHT) == 0 && getColor(right, ACTION_LEFT) == 0) {
                     result.add(right);
                     queue.add(right);
@@ -1146,11 +1148,61 @@ public class ChestConfigManager {
      * so chest slots (raw indices) and inventory slots (offset indices) — which would otherwise share
      * the same index — coexist while editing both at once. Must exceed any container's slot count and
      * be a multiple of 9 so the 9-wide grid math stays aligned within the inventory namespace.
+     * The offset keys only ever live in memory (every save and every payload re-keys or drops them),
+     * so the value is free to change. It used to be 117, which modded chests with more slots (a
+     * 126-slot Iron Chests netherite chest) overlapped: their top slots read as inventory keys.
      */
-    public static final int PLAYER_KEY_OFFSET = 117;
+    public static final int PLAYER_KEY_OFFSET = 1008;
 
     public static boolean isInventoryKey(int key) {
         return key >= PLAYER_KEY_OFFSET;
+    }
+
+    /**
+     * Width of the open container's slot grid. 9 for every vanilla container; a modded chest screen
+     * (e.g. Iron Chests' 12- and 14-wide chests) sets its own width when the editor opens on it.
+     */
+    private static int containerColumns = 9;
+
+    public static void setContainerColumns(int cols) {
+        containerColumns = cols > 0 ? cols : 9;
+    }
+
+    /** Grid width for a working-map key: the player inventory is always 9 wide, the container varies. */
+    public static int gridColumns(int key) {
+        return isInventoryKey(key) ? 9 : containerColumns;
+    }
+
+    /** Row of a key inside its own namespace's grid (row 0 is the namespace's first slot). */
+    public static int gridRow(int key) {
+        return (key - namespaceBase(key)) / gridColumns(key);
+    }
+
+    /** Column of a key inside its own namespace's grid. */
+    public static int gridCol(int key) {
+        return (key - namespaceBase(key)) % gridColumns(key);
+    }
+
+    private static int namespaceBase(int key) {
+        return isInventoryKey(key) ? PLAYER_KEY_OFFSET : 0;
+    }
+
+    /**
+     * Column count of slots laid out as one row-major grid of 18 px cells (slot i at column i % cols,
+     * row i / cols), or 0 when the positions are not such a grid. The width is the run of slots sharing
+     * the first slot's row. Used to accept a modded chest screen only when the editor's index-based grid
+     * math will line up with what is drawn.
+     */
+    public static int detectGridColumns(int[] xs, int[] ys) {
+        int n = xs.length;
+        if (n == 0 || ys.length != n) return 0;
+        int cols = 1;
+        while (cols < n && ys[cols] == ys[0]) cols++;
+        if (n % cols != 0) return 0;
+        for (int i = 0; i < n; i++) {
+            if (xs[i] != xs[0] + (i % cols) * 18 || ys[i] != ys[0] + (i / cols) * 18) return 0;
+        }
+        return cols;
     }
 
     /**
@@ -1272,9 +1324,12 @@ public class ChestConfigManager {
      * File backing chest preset slot {@code index} for a container of {@code size} slots (27 vs 54).
      * Presets are split by container size so a single chest and a double chest keep independent sets,
      * shown only when a container of that size is open. Global reusable template across worlds.
+     * A grid that is not 9 wide also carries its width ("108x12"), so two modded containers with the same
+     * slot count but a different shape never share presets; 9-wide containers keep their original names.
      */
     private Path getChestPresetFile(int size, int index) {
-        return getGlobalConfigDir().resolve(CHEST_PRESET_PREFIX + size + "_" + index + ".json");
+        String shape = containerColumns == 9 ? String.valueOf(size) : size + "x" + containerColumns;
+        return getGlobalConfigDir().resolve(CHEST_PRESET_PREFIX + shape + "_" + index + ".json");
     }
 
     /** Whether chest preset slot {@code index} of the {@code size}-slot set has been saved. */

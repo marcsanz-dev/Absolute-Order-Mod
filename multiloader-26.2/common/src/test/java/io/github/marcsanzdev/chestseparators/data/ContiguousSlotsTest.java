@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,8 @@ import org.junit.jupiter.api.Test;
  * Tests {@link ChestConfigManager#getContiguousSlots} — the BFS that finds all slots reachable
  * from a starting slot without crossing a painted separator line.
  *
- * <p>Uses a 27-slot (3×9) single chest layout for all cases.
+ * <p>Uses a 27-slot (3×9) single chest layout, plus a 108-slot (9×12) modded chest for the wide-grid
+ * cases.
  */
 class ContiguousSlotsTest {
 
@@ -28,6 +30,11 @@ class ContiguousSlotsTest {
     @BeforeEach
     void reset() {
         manager.clearCurrentConfig();
+    }
+
+    @AfterEach
+    void restoreColumns() {
+        ChestConfigManager.setContainerColumns(9);
     }
 
     @Test
@@ -91,5 +98,43 @@ class ContiguousSlotsTest {
 
         result = manager.getContiguousSlots(MAX_SLOTS, 0, MAX_SLOTS);
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void wideChest_rowsAreTwelveSlotsLong() {
+        // A 108-slot chest drawn 12 wide (Iron Chests diamond/obsidian/crystal).
+        ChestConfigManager.setContainerColumns(12);
+        for (int col = 0; col < 12; col++) {
+            manager.paintAction(12 + col, ACTION_TOP, RED);
+        }
+
+        Set<Integer> topRow = manager.getContiguousSlots(0, 0, 108);
+        assertEquals(12, topRow.size());
+        for (int i = 0; i < 12; i++) assertTrue(topRow.contains(i));
+        assertFalse(topRow.contains(12));
+    }
+
+    @Test
+    void wideChest_lastColumnDoesNotWrapIntoNextRow() {
+        // With 12 columns, slot 11 ends row 0 and slot 12 starts row 1. Walling slot 11 off from the
+        // slot below it must isolate it: a 9-wide step would wrongly reach 12 as a right-hand neighbour.
+        ChestConfigManager.setContainerColumns(12);
+        manager.paintAction(11, ACTION_LEFT | ACTION_BOTTOM, RED);
+
+        Set<Integer> region = manager.getContiguousSlots(11, 0, 108);
+        assertEquals(1, region.size());
+    }
+
+    @Test
+    void wideChest_doesNotChangeTheInventoryGrid() {
+        // The player inventory stays 9 wide whatever the open container's width is.
+        ChestConfigManager.setContainerColumns(14);
+        int lo = ChestConfigManager.PLAYER_KEY_OFFSET;
+        for (int col = 0; col < 9; col++) {
+            manager.paintAction(lo + 9 + col, ACTION_TOP, RED);
+        }
+
+        Set<Integer> hotbar = manager.getContiguousSlots(lo, lo, lo + 36);
+        assertEquals(9, hotbar.size());
     }
 }
